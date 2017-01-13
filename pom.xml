@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<packaging>pom</packaging>
+
+	<groupId>net.certiv</groupId>
+	<artifactId>adept</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
+	<name>net.certiv.adept :: parent</name>
+	<description>net.certiv.adept parent</description>
+	<organization>
+		<name>Certiv Analytics</name>
+		<url>www.certiv.net</url>
+	</organization>
+
+	<prerequisites>
+		<maven>3.0.2</maven>
+	</prerequisites>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<jdk.version>1.8</jdk.version>
+	</properties>
+
+	<modules>
+		<module>net.certiv.adept.core</module>
+		<!-- <module>net.certiv.adept.vis</module> -->
+	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<source>${jdk.version}</source>
+					<target>${jdk.version}</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

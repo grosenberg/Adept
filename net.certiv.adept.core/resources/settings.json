@@ -1,0 +1,10 @@
+{
+	"tabWidth": "4",
+	"useTabs": "true",
+	"removeBlankLines": "true",
+	"keepBlankLines": "1",
+	"joinLines": "true",
+	"lineWidth": "120",
+	"commentWidth": "100",
+	"removeTrailingWS": "true"
+}
