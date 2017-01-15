@@ -124,6 +124,14 @@ public class Feature implements Comparable<Feature> {
 		this.weight = weight;
 	}
 
+	public boolean isRule() {
+		return featureType == FeatureType.RULE;
+	}
+
+	public boolean isNode() {
+		return featureType == FeatureType.NODE;
+	}
+
 	public Feature getMatched() {
 		return matched;
 	}

@@ -1,5 +1,6 @@
 package net.certiv.adept.parser;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,5 +51,9 @@ public class Parse {
 
 	public int getParseErrCount() {
 		return errCount;
+	}
+
+	public List<String> getRuleNames() {
+		return Arrays.asList(parser.getRuleNames());
 	}
 }

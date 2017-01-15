@@ -8,7 +8,6 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.FeatureType;
 import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.parser.Parse;
 import net.certiv.adept.topo.Facet;
@@ -39,7 +38,7 @@ public class Formatter {
 
 			index = new Index(data.getTokenStream().size() - 1);
 			for (Feature feature : model.getFeatures()) {
-				if (feature.getFeatureType() == FeatureType.RULE) continue;
+				if (feature.isRule()) continue;
 				index.add(feature.getStart(), feature);
 			}
 
@@ -80,8 +79,7 @@ public class Formatter {
 
 	private void processIndent(TokenLine line, LineInfo info) {
 		AdeptToken token = line.get(info.first);
-		Feature feature = index.get(token.getTokenIndex());
-		int format = feature.getMatched().getFormat();
+		int format = getFormat(token);
 		List<Facet> facets = Facet.get(format);
 		currIndent = 0;
 		if (facets.contains(Facet.INDENT)) {
@@ -98,16 +96,14 @@ public class Formatter {
 	private void processTokens(TokenLine line, LineInfo info) {
 		for (int idx = info.first; idx < info.terminator; idx++) {
 			AdeptToken tokenCurr = line.get(idx);
-			Feature fCurr = index.get(tokenCurr.getTokenIndex());
-			int formCurr = fCurr.getMatched().getFormat();
-			List<Facet> facets = Facet.get(formCurr);
+			if (tokenCurr.getType() == data.HWS) continue;
+
+			int formCurr = getFormat(tokenCurr);
 
 			AdeptToken tokenNext = line.getNextReal(idx);
-			if (tokenNext != null) {
-				Feature fNext = index.get(tokenNext.getTokenIndex());
-				int formNext = fNext.getMatched().getFormat();
-				facets = Form.resolveOverlap(formCurr, formNext);
-			}
+			int formNext = getFormat(tokenNext);
+
+			List<Facet> facets = Form.resolveOverlap(formCurr, formNext);
 
 			buffer.add(tokenCurr.getText());
 			if (facets.contains(Facet.ALIGNED)) {
@@ -127,5 +123,18 @@ public class Formatter {
 			AdeptToken terminal = line.get(info.terminator);
 			buffer.add(terminal.getText());
 		}
+	}
+
+	private int getFormat(AdeptToken token) {
+		if (token != null) {
+			Feature feature = index.get(token.getTokenIndex());
+			if (feature != null) {
+				Feature matched = feature.getMatched();
+				if (matched != null) {
+					return matched.getFormat();
+				}
+			}
+		}
+		return -1;
 	}
 }

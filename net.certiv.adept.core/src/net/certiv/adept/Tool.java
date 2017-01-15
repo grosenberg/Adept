@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -126,6 +127,11 @@ public class Tool extends ToolBase {
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(List<String> pathnames) {
 		this.sourceFiles = pathnames;
+	}
+
+	/** Provides the set of doc pathnames of the files to be processed */
+	public void setSourceFiles(String... pathnames) {
+		this.sourceFiles = Arrays.asList(pathnames);
 	}
 
 	/** Sets whether to only perform a parse evaluation of the documents */
@@ -289,6 +295,7 @@ public class Tool extends ToolBase {
 		try {
 			mgr.initialize(corpusDir, corpusExt, corpusTabWidth, rebuild);
 		} catch (Exception e) {
+			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg, e);
 			errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, "Failed to create model manager");
 			return false;
 		}
@@ -297,6 +304,7 @@ public class Tool extends ToolBase {
 			try {
 				getDefaultListener().setLevel(Level.valueOf(verbose.trim().toUpperCase()));
 			} catch (IllegalArgumentException e) {
+				Log.error(this, ErrorType.INVALID_VERBOSE_LEVEL.msg + ": " + verbose);
 				errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, verbose);
 			}
 		}
@@ -318,9 +326,11 @@ public class Tool extends ToolBase {
 			try {
 				parser.process(collector, doc);
 			} catch (RecognitionException e) {
+				Log.error(this, ErrorType.PARSE_ERROR.msg + ": " + doc.getPathname());
 				errMgr.toolError(ErrorType.PARSE_ERROR, doc.getPathname());
 				continue;
 			} catch (Exception e) {
+				Log.error(this, ErrorType.PARSE_FAILURE.msg + ": " + doc.getPathname());
 				errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
 				continue;
 			}
@@ -328,17 +338,20 @@ public class Tool extends ToolBase {
 			try {
 				parser.annotate(collector);
 			} catch (Exception e) {
-				errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
+				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname());
+				errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
 				continue;
 			}
 
 			collector.annotateComments();
 			mgr.createDocModel(collector);
+
 			if (check) continue;
 
 			try {			// compare document model to corpus model
 				mgr.evaluate();
 			} catch (Exception e) {
+				Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg + ": " + doc.getPathname(), e);
 				errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, doc.getPathname());
 				continue;
 			}

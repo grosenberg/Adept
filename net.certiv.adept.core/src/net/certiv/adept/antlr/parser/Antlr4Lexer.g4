@@ -9,6 +9,15 @@ options {
 	import net.certiv.adept.parser.LexerErrorStrategy;
 }
 
+@members {
+	protected void handleEndAction() {
+		popMode();
+		if (_modeStack.size() > 0) {
+			setType(ACTION_CONTENT);
+		}
+	}
+}
+
 BLOCKCOMMENT
  	: ( DocComment | BlockComment ) -> channel(HIDDEN)
 	;
@@ -19,10 +28,16 @@ LINECOMMENT
 
 INT	: DecimalNumeral ;
 
+SET : LBRACK ( ESC | ~']' )* RBRACK ;
+
 STRING
 	: SQuoteLiteral
 	| DQuoteLiteral
 	;
+
+BEGIN_ACTION
+   : LBrace -> pushMode(Action)
+   ;
 
 OPTIONS		: 'options'		;
 TOKENS		: 'tokens'		;
@@ -57,29 +72,29 @@ THROWS		: 'throws'		;
 CATCH		: 'catch'		;
 FINALLY		: 'finally'		;
 
-AT			: '@'			;
-COLON		: ':'			;
-COLONCOLON	: '::'			;
-COMMA		: ','			;
-SEMI		: ';'			;
-LPAREN		: '('			;
-RPAREN		: ')'			;
-LBRACE		: '{'			;
-RBRACE		: '}'			;
-LBRACK		: '['			;
-RBRACK		: ']'			;
-RARROW		: '->'			;
-EQ			: '='			;
-QMARK		: '?'			;
-STAR		: '*'			;
-PLUS		: '+'			;
-PLUSEQ		: '+='			;
-NOT			: '~'			;
-ALT			: '|'			;
-DOT			: '.'			;
-RANGE		: '..'			;
-DOLLAR		: '$'			;
-POUND		: '#'			;
+AT			: At			;
+COLON		: Colon			;
+COLONCOLON	: ColonColon	;
+COMMA		: Comma			;
+SEMI		: Semi			;
+LPAREN		: LParen		;
+RPAREN		: RParen		;
+LBRACE		: LBrace		;
+RBRACE		: RBrace		;
+LBRACK		: LBrack		;
+RBRACK		: RBrack		;
+RARROW		: RArrow		;
+EQ			: Eq			;
+QMARK		: QMark			;
+STAR		: Star			;
+PLUS		: Plus			;
+PLUSEQ		: Pluseq		;
+NOT			: Not			;
+ALT			: Alt			;
+DOT			: Dot			;
+RANGE		: Range			;
+DOLLAR		: Dollar		;
+POUND		: Pound			;
 
 ESC			: Esc			;
 SQUOTE		: SQuote		;
@@ -93,7 +108,48 @@ VWS	:	Vws		-> channel(HIDDEN)	;
 
 ERRCHAR	: .		-> channel(HIDDEN)	;
 
+
+mode Action;
+
+	ACTION_NESTED : LBrace			-> type(ACTION_CONTENT), pushMode(Action)	;
+	ACTION_ESCAPE : Esc				-> type(ACTION_CONTENT)	;
+	ACTION_STRING : DQuoteLiteral	-> type(ACTION_CONTENT)	;
+	ACTION_CHAR   : SQuoteLiteral	-> type(ACTION_CONTENT)	;
+	ACTION_DOC    : DocComment 		-> type(ACTION_CONTENT)	;
+	ACTION_BLOCK  : BlockComment 	-> type(ACTION_CONTENT)	;
+	ACTION_LINE   : LineComment 	-> type(ACTION_CONTENT)	;
+	ACTION_EOF    : EOF 			-> popMode    			;
+
+	END_ACTION    : RBrace			{ handleEndAction(); };
+
+	ACTION_CONTENT : .   ;
+
 // =======================
+
+fragment At			: '@'	;
+fragment Colon		: ':'	;
+fragment ColonColon	: '::'	;
+fragment Comma		: ','	;
+fragment Semi		: ';'	;
+fragment LParen		: '('	;
+fragment RParen		: ')'	;
+fragment LBrace		: '{'	;
+fragment RBrace		: '}'	;
+fragment LBrack		: '['	;
+fragment RBrack		: ']'	;
+fragment RArrow		: '->'	;
+fragment Eq			: '='	;
+fragment QMark		: '?'	;
+fragment Star		: '*'	;
+fragment Plus		: '+'	;
+fragment Pluseq		: '+='	;
+fragment Not		: '~'	;
+fragment Alt		: '|'	;
+fragment Dot		: '.'	;
+fragment Range		: '..'	;
+fragment Dollar		: '$'	;
+fragment Pound		: '#'	;
+
 
 fragment Esc			: '\\'	;
 fragment SQuote			: '\''	;

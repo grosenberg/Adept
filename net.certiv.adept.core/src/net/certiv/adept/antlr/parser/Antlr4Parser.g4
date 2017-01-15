@@ -35,7 +35,7 @@ body
 	;
 
 atBlock
-	: AT keyword+ action
+	: AT ( ID | keyword )+ action
 	;
 
 listStmt
@@ -47,7 +47,7 @@ assignStmt
 	;
 
 grammarRule
-	: keyword* id COLON elementList action? function? SEMI
+	: keyword* id atBlock? COLON elementList action? function? SEMI
 	;
 
 elementList
@@ -58,21 +58,25 @@ elementList
 element
 	: label? id mod?
 	| STRING RANGE STRING
-	| NOT? ( STRING | DOT | set | punct | id ) mod?
+	| NOT? ( STRING | DOT | set | id ) mod?
 	| pred
 	| LEOF
 	;
 
 set
-	: LBRACK ( ESC | ~RBRACK )* RBRACK mod?
+	: SET mod?
 	;
 
 pred
-	: action QMARK
+	: actionBlock QMARK
 	;
 
 action
-	: LBRACE ( action | ~RBRACE )* RBRACE
+	: ID actionBlock
+	;
+
+actionBlock
+	: BEGIN_ACTION ACTION_CONTENT* END_ACTION
 	;
 
 function
@@ -118,7 +122,7 @@ mod
 	;
 
 punct
-	: AT | COLON | COLONCOLON | COMMA | SEMI
+	: AT | COLON | COMMA
 	| LPAREN | RPAREN | LBRACE | RBRACE | LBRACK | RBRACK
 	| RARROW | EQ | QMARK | STAR | PLUS | PLUSEQ
 	| NOT | ALT | DOT | RANGE | DOLLAR | POUND

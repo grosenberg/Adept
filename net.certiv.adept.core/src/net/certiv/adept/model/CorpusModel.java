@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.google.gson.annotations.Expose;
@@ -36,13 +38,17 @@ public class CorpusModel extends CorpusStore {
 
 	private boolean consistent; // current state of model
 
-	public CorpusModel(Path corpusDir) {
+	public CorpusModel() {
 		super();
-		setCorpusDir(corpusDir);
 		pathnames = new LinkedHashMap<>();
 		features = new ArrayList<>();
 		docFeatures = new LinkedHashMap<>();
 		index = new LinkedHashMap<>();
+	}
+
+	public CorpusModel(Path corpusDir) {
+		this();
+		setCorpusDir(corpusDir);
 	}
 
 	/**
@@ -155,7 +161,7 @@ public class CorpusModel extends CorpusStore {
 	}
 
 	public void clear() {
-		index.clear();
+		if (index != null) index.clear();
 		pathnames.clear();
 		features.clear();
 		lastModified = 0;
@@ -185,11 +191,6 @@ public class CorpusModel extends CorpusStore {
 			om.put(feature.distance(sub), sub);
 		}
 
-		Double[] sims = om.keySet().toArray(new Double[om.size()]);
-		if (sims.length > 10) {
-			Double lim = sims[10];
-			return (TreeMap<Double, Feature>) om.headMap(lim);
-		}
 		return om;
 	}
 

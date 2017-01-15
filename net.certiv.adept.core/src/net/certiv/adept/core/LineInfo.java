@@ -18,7 +18,7 @@ public class LineInfo {
 	private int end;
 	private int len;
 	private int leadLen;
-	private boolean blank;
+	private boolean blank = true;
 
 	/* Characterize a line represented by a sequence of tokens. */
 	public LineInfo(Parse data, List<AdeptToken> line) {
@@ -49,7 +49,7 @@ public class LineInfo {
 
 		leadLen = line.get(first).getStartIndex() - offset;
 	}
-	
+
 	public boolean isBlank() {
 		return blank;
 	}

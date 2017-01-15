@@ -13,6 +13,7 @@ public class DocModel {
 	public DocModel(Collector collector) {
 		doc = collector.getDocument();
 		doc.setModel(this);
+		features = collector.getFeatures();
 	}
 
 	public List<Feature> getFeatures() {

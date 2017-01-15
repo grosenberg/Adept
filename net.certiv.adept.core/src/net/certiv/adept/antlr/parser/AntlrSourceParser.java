@@ -1,6 +1,7 @@
 package net.certiv.adept.antlr.parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -9,6 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
@@ -23,10 +25,13 @@ import net.certiv.adept.tool.ErrorType;
 
 public class AntlrSourceParser implements ISourceParser {
 
+	private Collector collector;
 	protected int errorCount;
 
 	@Override
 	public void process(Collector collector, Document doc) throws RecognitionException, Exception {
+		this.collector = collector;
+
 		ParserErrorListener errors = new ParserErrorListener(this);
 		CharStream input = new ANTLRInputStream(doc.getContent());
 		collector.lexer = new Antlr4Lexer(input);
@@ -71,5 +76,15 @@ public class AntlrSourceParser implements ISourceParser {
 		excludes.add(Antlr4Parser.ERRCHAR);
 		excludes.add(Antlr4Parser.RULE_other << 10);
 		return excludes;
+	}
+
+	@Override
+	public ParseTree getParseTree() {
+		return collector.tree;
+	}
+
+	@Override
+	public List<String> getRuleNames() {
+		return Arrays.asList(collector.parser.getRuleNames());
 	}
 }

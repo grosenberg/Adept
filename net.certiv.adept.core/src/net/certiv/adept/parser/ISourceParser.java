@@ -3,6 +3,7 @@ package net.certiv.adept.parser;
 import java.util.List;
 
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import net.certiv.adept.model.Document;
 
@@ -21,4 +22,8 @@ public interface ISourceParser extends IParseErrorReporter {
 
 	/** Returns the language specific list of feature types that are to be excluded. */
 	List<Integer> excludedTypes();
+
+	ParseTree getParseTree();
+
+	List<String> getRuleNames();
 }

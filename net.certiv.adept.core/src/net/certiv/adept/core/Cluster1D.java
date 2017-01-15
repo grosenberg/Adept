@@ -46,7 +46,7 @@ public class Cluster1D {
 
 	public List<Cluster<DoublePoint>> getClusters() {
 		if (results == null) {
-			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(0.1, 3);
+			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(2, 3);
 			results = op.cluster(points);
 		}
 		return results;

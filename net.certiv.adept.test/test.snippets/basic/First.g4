@@ -1,5 +1,9 @@
 grammar First ;
 
+options {
+	superClass = LexerErrorStrategy ;
+}
+
 rule
 	: A
 	| B ;
@@ -11,6 +15,8 @@ B
 : A 'b'
 ;
 
+
+
 WS
-	: [ \t\r\n\f]* -> channel(HIDDEN) ;
+	: [ \t\r\n\f]*           -> channel(HIDDEN) ;
 

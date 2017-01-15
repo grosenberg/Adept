@@ -39,8 +39,10 @@ public enum Facet {
 	/** Returns the list of facets that compose the given format */
 	public static List<Facet> get(int format) {
 		List<Facet> facets = new ArrayList<>();
-		for (Facet facet : Facet.values()) {
-			if (facet.isSet(format)) facets.add(facet);
+		if (format > 0) {
+			for (Facet facet : Facet.values()) {
+				if (facet.isSet(format)) facets.add(facet);
+			}
 		}
 		return facets;
 	}
