@@ -10,32 +10,28 @@ options {
 
 adept
 	:	( statement
-		| grammarRule
+		| ruleSpec
 		| other
 		)*
 		EOF
 	;
 
 statement
-	: simple
-	| block
+	: primary
+	| cmdBlock
 	| atBlock
 	;
 
-simple
+primary // grammar, import, mode
 	: keyword+ id+ SEMI
 	;
 
-block
+cmdBlock // options, tokens, channels, imports
 	: keyword+ body
 	;
 
 body
 	: LBRACE ( listStmt | assignStmt+ )? RBRACE
-	;
-
-atBlock
-	: AT ( ID | keyword )+ action
 	;
 
 listStmt
@@ -46,21 +42,49 @@ assignStmt
 	: id EQ ( dottedID | STRING | INT ) SEMI
 	;
 
-grammarRule
-	: keyword* id atBlock? COLON elementList action? function? SEMI
+atBlock
+	: AT ( ID | keyword )+ action
 	;
 
-elementList
-	: ( label | NOT )? LPAREN elementList RPAREN mod?
-	| element+ ( ALT element+ )*
+ruleSpec
+	: prefix* id argsBlock* prequel?
+		COLON altList action? function?
+		SEMI
+	;
+
+argsBlock // parameters, return, throws
+	: keyword? arguments
+	;
+
+prequel
+	: cmdBlock
+	| atBlock
+	;
+
+altList
+	: elements ( OR elements )*
+	;
+
+elements
+	: element+ ( POUND id )?
+	| // empty alt
 	;
 
 element
-	: label? id mod?
-	| STRING RANGE STRING
+	: namedElement
+	| altBlock mod?
 	| NOT? ( STRING | DOT | set | id ) mod?
+	| STRING RANGE STRING
 	| pred
 	| LEOF
+	;
+
+namedElement
+	: label ( element | altBlock) mod?
+	;
+
+altBlock
+	: LPAREN ( cmdBlock? atBlock* COLON )? altList RPAREN
 	;
 
 set
@@ -68,15 +92,15 @@ set
 	;
 
 pred
-	: actionBlock QMARK
+	: action QMARK
 	;
 
 action
-	: ID actionBlock
+	: BEG_ACTION ACT_CONTENT* END_ACTION
 	;
 
-actionBlock
-	: BEGIN_ACTION ACTION_CONTENT* END_ACTION
+arguments
+	: BEG_ARGS ARG_CONTENT* END_ARGS
 	;
 
 function
@@ -103,9 +127,12 @@ keyword
 	: GRAMMAR | LEXER | PARSER
 	| OPTIONS | TOKENS | IMPORT | CHANNELS
 	| COLONCOLON | HEADER | MEMBERS | INIT | AFTER
-	| FRAGMENT | PROTECTED | PUBLIC | PRIVATE
 	| RETURNS | LOCALS | THROWS | CATCH | FINALLY
 	| MODE | LEOF
+	;
+
+prefix
+	: FRAGMENT | PUBLIC | PROTECTED | PRIVATE
 	;
 
 attribute
@@ -121,12 +148,12 @@ mod
 	: STAR QMARK? | PLUS QMARK? | QMARK
 	;
 
-punct
-	: AT | COLON | COMMA
-	| LPAREN | RPAREN | LBRACE | RBRACE | LBRACK | RBRACK
-	| RARROW | EQ | QMARK | STAR | PLUS | PLUSEQ
-	| NOT | ALT | DOT | RANGE | DOLLAR | POUND
-	;
+//punct
+//	: AT | COLON | COMMA
+//	| LPAREN | RPAREN | LBRACE | RBRACE | LBRACK | RBRACK
+//	| RARROW | EQ | QMARK | STAR | PLUS | PLUSEQ
+//	| NOT | ALT | DOT | RANGE | DOLLAR | POUND
+//	;
 
 other
 	: .

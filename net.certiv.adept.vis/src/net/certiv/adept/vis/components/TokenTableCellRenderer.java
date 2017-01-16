@@ -21,7 +21,7 @@ public class TokenTableCellRenderer extends DefaultTableCellRenderer {
 
 		Object val = model.getValueAt(row, 1); // hidden
 
-		if (val.equals("H")) {
+		if (val.equals("Hdn")) {
 			c.setForeground(Color.gray);
 		} else {
 			c.setForeground(Color.black);

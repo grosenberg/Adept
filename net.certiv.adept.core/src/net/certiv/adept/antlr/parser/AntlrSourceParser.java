@@ -74,7 +74,7 @@ public class AntlrSourceParser implements ISourceParser {
 	public List<Integer> excludedTypes() {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Antlr4Parser.ERRCHAR);
-		excludes.add(Antlr4Parser.RULE_other << 10);
+		// excludes.add(Antlr4Parser.RULE_other << 10);
 		return excludes;
 	}
 

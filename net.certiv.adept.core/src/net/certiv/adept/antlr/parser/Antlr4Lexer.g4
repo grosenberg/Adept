@@ -13,7 +13,14 @@ options {
 	protected void handleEndAction() {
 		popMode();
 		if (_modeStack.size() > 0) {
-			setType(ACTION_CONTENT);
+			setType(ACT_CONTENT);
+		}
+	}
+
+	protected void handleEndArgs() {
+		popMode();
+		if (_modeStack.size() > 0) {
+			setType(ARG_CONTENT);
 		}
 	}
 }
@@ -26,7 +33,7 @@ LINECOMMENT
  	: LineComment -> channel(HIDDEN)
 	;
 
-INT	: DecimalNumeral ;
+INT	: Int ;
 
 SET : LBRACK ( ESC | ~']' )* RBRACK ;
 
@@ -35,14 +42,13 @@ STRING
 	| DQuoteLiteral
 	;
 
-BEGIN_ACTION
-   : LBrace -> pushMode(Action)
-   ;
+BEG_ACTION	: LBrace 		-> pushMode(Action)		;
+BEG_ARGS	: LBrack 		-> pushMode(Args)		;
+OPTIONS		: 'options'		-> pushMode(Options) 	;
+TOKENS		: 'tokens'		-> pushMode(ListBlock)	;
+CHANNELS	: 'channels'	-> pushMode(ListBlock)	;
 
-OPTIONS		: 'options'		;
-TOKENS		: 'tokens'		;
 IMPORT		: 'import'		;
-CHANNELS	: 'channels'	;
 CHANNEL		: 'channel'		;
 
 LSKIP		: 'skip'		;
@@ -90,7 +96,7 @@ STAR		: Star			;
 PLUS		: Plus			;
 PLUSEQ		: Pluseq		;
 NOT			: Not			;
-ALT			: Alt			;
+OR			: Or			;
 DOT			: Dot			;
 RANGE		: Range			;
 DOLLAR		: Dollar		;
@@ -101,30 +107,86 @@ SQUOTE		: SQuote		;
 DQUOTE		: DQuote		;
 
 
-ID	: NameStartChar NameChar* ;
+ID	: Id ;
 
-HWS	:	Hws+	-> channel(HIDDEN)	;
-VWS	:	Vws		-> channel(HIDDEN)	;
+HWS	: Hws+	-> channel(HIDDEN)	;
+VWS	: Vws	-> channel(HIDDEN)	;
 
-ERRCHAR	: .		-> channel(HIDDEN)	;
+ERRCHAR	: .	-> channel(HIDDEN)	;
 
+
+// -------------------------
 
 mode Action;
 
-	ACTION_NESTED : LBrace			-> type(ACTION_CONTENT), pushMode(Action)	;
-	ACTION_ESCAPE : Esc				-> type(ACTION_CONTENT)	;
-	ACTION_STRING : DQuoteLiteral	-> type(ACTION_CONTENT)	;
-	ACTION_CHAR   : SQuoteLiteral	-> type(ACTION_CONTENT)	;
-	ACTION_DOC    : DocComment 		-> type(ACTION_CONTENT)	;
-	ACTION_BLOCK  : BlockComment 	-> type(ACTION_CONTENT)	;
-	ACTION_LINE   : LineComment 	-> type(ACTION_CONTENT)	;
-	ACTION_EOF    : EOF 			-> popMode    			;
+	ACT_NESTED  : LBrace		-> type(ACT_CONTENT), pushMode(Action)	;
+	END_ACTION	: RBrace		{ handleEndAction(); }	;
 
-	END_ACTION    : RBrace			{ handleEndAction(); };
+	ACT_DOC		: DocComment 	-> type(ACT_CONTENT)	;
+	ACT_BLOCK	: BlockComment 	-> type(ACT_CONTENT)	;
+	ACT_LINE	: LineComment 	-> type(ACT_CONTENT)	;
+	ACT_STRING	: DQuoteLiteral	-> type(ACT_CONTENT)	;
+	ACT_CHAR	: SQuoteLiteral	-> type(ACT_CONTENT)	;
+	ACT_ESCAPE	: Esc			-> type(ACT_CONTENT)	;
+	ACT_EOF		: EOF 			-> popMode    			;
 
-	ACTION_CONTENT : .   ;
+	ACT_CONTENT : .		;
+
+// -------------------------
+
+mode Args; // [int x, List<String> a[]]
+
+	ARG_NESTED	: LBrack		-> type (ARG_CONTENT), pushMode(Args)	;
+	END_ARGS	: RBrack		{ handleEndArgs(); }	;
+
+	ARG_ESC		: Esc			-> type (ARG_CONTENT)   ;
+	ARG_STRING	: DQuoteLiteral -> type (ARG_CONTENT)   ;
+	ARG_CHAR	: SQuoteLiteral -> type (ARG_CONTENT)   ;
+	ARG_EOF		: EOF			-> popMode				;
+
+	ARG_CONTENT	: . 	;
+
+// -------------------------
+
+mode Options;
+
+	OPT_DOC		: DocComment	-> type(BLOCKCOMMENT), channel(HIDDEN)	;
+	OPT_BLOCK	: BlockComment	-> type(BLOCKCOMMENT), channel(HIDDEN)	;
+	OPT_LINE	: LineComment	-> type(LINECOMMENT), channel(HIDDEN)	;
+	OPT_HWS		: Hws+			-> type(HWS), channel(HIDDEN)			;
+	OPT_VWS		: Vws			-> type(VWS), channel(HIDDEN)			;
+
+	OPT_LBRACE	: LBrace		-> type(LBRACE)   			;
+	OPT_RBRACE	: RBrace		-> type(RBRACE), popMode	;
+
+	OPT_ID		: Id			-> type(ID)   	;
+	OPT_DOT		: Dot			-> type(DOT)	;
+	OPT_ASSIGN	: Eq			-> type(EQ)	;
+	OPT_STRING	: SQuoteLiteral	-> type(STRING)	;
+	OPT_INT		: Int			-> type(INT)	;
+	OPT_STAR	: Star			-> type(STAR)	;
+	OPT_SEMI	: Semi			-> type(SEMI)	;
+
+// -------------------------
+
+mode ListBlock; // tokens and channel blocks
+
+	LST_DOC		: DocComment	-> type(BLOCKCOMMENT), channel(HIDDEN)	;
+	LST_BLOCK	: BlockComment	-> type(BLOCKCOMMENT), channel(HIDDEN)	;
+	LST_LINE	: LineComment	-> type(LINECOMMENT), channel(HIDDEN)	;
+	LST_HWS		: Hws+			-> type(HWS), channel(HIDDEN)			;
+	LST_VWS		: Vws			-> type(VWS), channel(HIDDEN)			;
+
+	LST_LBRACE	: LBrace 		-> type(LBRACE)				;
+	LST_RBRACE	: RBrace		-> type(RBRACE), popMode	;
+
+	LST_ID		: Id			-> type(ID)		;
+	LST_DOT		: Dot			-> type(DOT)	;
+	LST_COMMA	: Comma			-> type(COMMA)	;
 
 // =======================
+
+fragment Id 	: NameStartChar NameChar* ;
 
 fragment At			: '@'	;
 fragment Colon		: ':'	;
@@ -144,7 +206,7 @@ fragment Star		: '*'	;
 fragment Plus		: '+'	;
 fragment Pluseq		: '+='	;
 fragment Not		: '~'	;
-fragment Alt		: '|'	;
+fragment Or			: '|'	;
 fragment Dot		: '.'	;
 fragment Range		: '..'	;
 fragment Dollar		: '$'	;
@@ -177,7 +239,7 @@ fragment UnicodeEsc
 	:	'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)?
 	;
 
-fragment DecimalNumeral
+fragment Int
 	:	'0'
 	|	[1-9] DecDigit*
 	;

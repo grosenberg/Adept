@@ -68,7 +68,7 @@ public class ParseTreeView {
 
 	public ParseTreeView() {
 		frame = new JFrame("Parse tree visiualization");
-		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("vis.gif"));
+		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("tree.gif"));
 		frame.setIconImage(imgicon.getImage());
 
 		prefs = Preferences.userNodeForPackage(TreeViewer.class);
@@ -81,6 +81,7 @@ public class ParseTreeView {
 				prefs.putDouble(KEY_Y, frame.getLocationOnScreen().getY());
 				prefs.putInt(KEY_WIDTH, (int) frame.getSize().getWidth());
 				prefs.putInt(KEY_HEIGHT, (int) frame.getSize().getHeight());
+				prefs.putInt(KEY_SPLIT_VERT, mainPane.getDividerLocation());
 				prefs.putInt(KEY_SPLIT_HORZ, bottomPane.getDividerLocation());
 			}
 		});
@@ -152,7 +153,7 @@ public class ParseTreeView {
 		tool.setTabWidth(4);
 		tool.setSourceFiles(file.getAbsolutePath());
 
-		tool.setRebuild(true);
+		tool.setRebuild(false);
 
 		boolean ok = tool.loadResources();
 		ok = ok && tool.validateOptions();
@@ -181,15 +182,16 @@ public class ParseTreeView {
 		cModel.getColumn(5).setPreferredWidth(10);
 
 		// indented string tree
-		String tree = toTextTree(data.getTree(), data.getRuleNames());
+		String tree = createTextTree(data.getTree(), data.getRuleNames());
 		textPane.setText(tree);
+		textPane.setCaretPosition(0);
 	}
 
 	/**
 	 * Pretty print out a whole tree. {@link #getNodeText} is used on the node payloads to get the
 	 * text for the nodes. (Derived from Trees.toStringTree(....))
 	 */
-	public String toTextTree(final Tree t, final List<String> ruleNames) {
+	private String createTextTree(final Tree t, final List<String> ruleNames) {
 		level = 0;
 		return process(t, ruleNames).replaceAll("(?m)^\\s+$", "").replaceAll("\\r?\\n\\r?\\n", Eol);
 	}
