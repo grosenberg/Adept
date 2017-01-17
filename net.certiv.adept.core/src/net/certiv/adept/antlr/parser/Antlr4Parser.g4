@@ -72,9 +72,8 @@ elements
 
 element
 	: namedElement
-	| altBlock mod?
-	| NOT? ( STRING | DOT | set | id ) mod?
-	| STRING RANGE STRING
+	| NOT? ( altBlock | STRING | DOT | set | id ) mod?
+	| STRING RANGE STRING mod?
 	| pred
 	| LEOF
 	;

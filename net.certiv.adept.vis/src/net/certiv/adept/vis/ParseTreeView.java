@@ -34,7 +34,7 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.parser.Parse;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.TextLineNumber;
-import net.certiv.adept.vis.components.TokenTableCellRenderer;
+import net.certiv.adept.vis.components.TokenCellRenderer;
 import net.certiv.adept.vis.components.TokenTableModel;
 import net.certiv.adept.vis.components.TreeViewer;
 
@@ -153,7 +153,7 @@ public class ParseTreeView {
 		tool.setTabWidth(4);
 		tool.setSourceFiles(file.getAbsolutePath());
 
-		tool.setRebuild(false);
+		tool.setRebuild(true);
 
 		boolean ok = tool.loadResources();
 		ok = ok && tool.validateOptions();
@@ -173,7 +173,7 @@ public class ParseTreeView {
 		// tokens table
 		TokenTableModel model = new TokenTableModel(data.getTokens(), data.lexer.getTokenNames());
 		table.setModel(model);
-		table.setDefaultRenderer(Object.class, new TokenTableCellRenderer(model));
+		table.setDefaultRenderer(Object.class, new TokenCellRenderer(model));
 		TableColumnModel cModel = table.getColumnModel();
 		cModel.getColumn(0).setPreferredWidth(10);
 		cModel.getColumn(1).setPreferredWidth(10);

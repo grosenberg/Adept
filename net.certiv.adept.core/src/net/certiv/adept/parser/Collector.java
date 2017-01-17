@@ -29,7 +29,7 @@ public class Collector extends Parse {
 	public Collector(Document doc) {
 		super();
 		this.doc = doc;
-		doc.setParse(this);
+		if (doc != null) doc.setParse(this);
 		features = new ArrayList<>();
 		exTypes = Tool.mgr.excludedLangTypes();
 		group = new Group(this);
@@ -56,7 +56,7 @@ public class Collector extends Parse {
 		if (stop.getTokenIndex() < start.getTokenIndex()) {
 			stop = start;
 		}
-		
+
 		contextIndex.put(start, ctx);
 
 		String aspect = parser.getRuleNames()[rule];
@@ -72,7 +72,7 @@ public class Collector extends Parse {
 		Token token = node.getSymbol();
 		int type = token.getType();
 		if (exTypes.contains(type)) {
-			Log.info(this, "Skipping " + node.getText() + token.toString());
+			if (type != -1) Log.info(this, "Skipping " + node.getText() + token.toString());
 			return;
 		}
 

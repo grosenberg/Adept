@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
@@ -14,6 +15,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class Parse {
 
+	public ANTLRInputStream input;
 	public CommonTokenStream stream;
 	public Lexer lexer;
 	public int VWS;

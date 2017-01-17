@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
@@ -33,28 +32,34 @@ public class AntlrSourceParser implements ISourceParser {
 		this.collector = collector;
 
 		ParserErrorListener errors = new ParserErrorListener(this);
-		CharStream input = new ANTLRInputStream(doc.getContent());
-		collector.lexer = new Antlr4Lexer(input);
-		collector.VWS = Antlr4Lexer.VWS;
-		collector.HWS = Antlr4Lexer.HWS;
-		collector.BLOCKCOMMENT = Antlr4Lexer.BLOCKCOMMENT;
-		collector.LINECOMMENT = Antlr4Lexer.LINECOMMENT;
+		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(input);
+		AdeptTokenFactory factory = new AdeptTokenFactory(collector.input);
 		collector.lexer.setTokenFactory(factory);
-		collector.stream = new CommonTokenStream(collector.lexer);
-
-		collector.parser = new Antlr4Parser(collector.stream);
 		collector.parser.setTokenFactory(factory);
 		collector.parser.removeErrorListeners();
 		collector.parser.addErrorListener(errors);
-		collector.tree = ((Antlr4Parser) collector.parser).adept();
 
+		collector.tree = ((Antlr4Parser) collector.parser).adept();
 		collector.errCount = errorCount;
 
 		if (collector.tree == null || collector.tree instanceof ErrorNode || collector.errCount > 0) {
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, "Bad parse tree: " + doc.getPathname());
 		}
+	}
+
+	private void fillCollector(String content) {
+		if (collector == null) {
+			collector = new Collector(null);
+		}
+		collector.input = new ANTLRInputStream(content);
+		collector.lexer = new Antlr4Lexer(collector.input);
+		collector.VWS = Antlr4Lexer.VWS;
+		collector.HWS = Antlr4Lexer.HWS;
+		collector.BLOCKCOMMENT = Antlr4Lexer.BLOCKCOMMENT;
+		collector.LINECOMMENT = Antlr4Lexer.LINECOMMENT;
+		collector.stream = new CommonTokenStream(collector.lexer);
+		collector.parser = new Antlr4Parser(collector.stream);
 	}
 
 	@Override
@@ -73,8 +78,9 @@ public class AntlrSourceParser implements ISourceParser {
 	@Override
 	public List<Integer> excludedTypes() {
 		List<Integer> excludes = new ArrayList<>();
+		excludes.add(Token.EOF);
 		excludes.add(Antlr4Parser.ERRCHAR);
-		// excludes.add(Antlr4Parser.RULE_other << 10);
+		excludes.add(Antlr4Parser.RULE_other << 10);
 		return excludes;
 	}
 
@@ -85,6 +91,14 @@ public class AntlrSourceParser implements ISourceParser {
 
 	@Override
 	public List<String> getRuleNames() {
+		if (collector == null) fillCollector("");;
 		return Arrays.asList(collector.parser.getRuleNames());
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public List<String> getTokenNames() {
+		if (collector == null) fillCollector("");;
+		return Arrays.asList(collector.lexer.getTokenNames());
 	}
 }

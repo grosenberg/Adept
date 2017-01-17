@@ -150,6 +150,17 @@ public class CorpusModel extends CorpusStore {
 		return docFeatures;
 	}
 
+	/** Returns a map, keyed by feature type, of all features in the Corpus model */
+	public Map<Integer, List<Feature>> getFeatureIndex() {
+		if (index.isEmpty()) buildIndex();
+		return index;
+	}
+
+	/** Returns all features in the Corpus model */
+	public List<Feature> getFeatures() {
+		return features;
+	}
+
 	public boolean isConsistent() {
 		return consistent;
 	}

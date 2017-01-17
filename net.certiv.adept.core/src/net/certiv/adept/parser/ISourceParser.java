@@ -26,4 +26,6 @@ public interface ISourceParser extends IParseErrorReporter {
 	ParseTree getParseTree();
 
 	List<String> getRuleNames();
+
+	List<String> getTokenNames();
 }

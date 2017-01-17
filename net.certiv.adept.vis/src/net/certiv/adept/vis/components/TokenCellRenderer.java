@@ -6,11 +6,11 @@ import java.awt.Component;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
-public class TokenTableCellRenderer extends DefaultTableCellRenderer {
+public class TokenCellRenderer extends DefaultTableCellRenderer {
 
 	private TokenTableModel model;
 
-	public TokenTableCellRenderer(TokenTableModel model) {
+	public TokenCellRenderer(TokenTableModel model) {
 		this.model = model;
 	}
 
