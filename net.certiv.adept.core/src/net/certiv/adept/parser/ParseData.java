@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-public class Parse {
+public class ParseData {
 
 	public ANTLRInputStream input;
 	public CommonTokenStream stream;
@@ -33,10 +33,14 @@ public class Parse {
 	// key=rule feature start token; value=token's context
 	public Map<Token, ParserRuleContext> contextIndex;
 
-	public Parse() {
+	// key=line number; value=tokens of line
+	public Map<Integer, List<Token>> lineIndex;
+
+	public ParseData() {
 		super();
 		nodeIndex = new HashMap<>();
 		contextIndex = new HashMap<>();
+		lineIndex = new HashMap<>();
 	}
 
 	public CommonTokenStream getTokenStream() {

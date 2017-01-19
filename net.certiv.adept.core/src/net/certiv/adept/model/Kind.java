@@ -1,6 +1,6 @@
 package net.certiv.adept.model;
 
-public enum FeatureType {
+public enum Kind {
 	RULE("Rule"),
 	NODE("Node"),
 	BLOCKCOMMENT("Block Comment"),
@@ -8,7 +8,7 @@ public enum FeatureType {
 
 	private String fName;
 
-	FeatureType(String name) {
+	Kind(String name) {
 		fName = name;
 	}
 

@@ -1,4 +1,4 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.renderers;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -6,13 +6,14 @@ import java.awt.Component;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import net.certiv.adept.model.FeatureType;
+import net.certiv.adept.model.Kind;
+import net.certiv.adept.vis.models.FeaturesTableModel;
 
-public class FeatureTypeCellRenderer extends DefaultTableCellRenderer {
+public class FeaturesCellRenderer extends DefaultTableCellRenderer {
 
-	private FeatureTypeTableModel model;
+	private FeaturesTableModel model;
 
-	public FeatureTypeCellRenderer(FeatureTypeTableModel model) {
+	public FeaturesCellRenderer(FeaturesTableModel model) {
 		this.model = model;
 	}
 
@@ -23,11 +24,11 @@ public class FeatureTypeCellRenderer extends DefaultTableCellRenderer {
 		int mRow = table.convertRowIndexToModel(row);
 		Object kind = model.getValueAt(mRow, 1); // kind
 
-		if (kind.equals(FeatureType.BLOCKCOMMENT.toString())) {
+		if (kind.equals(Kind.BLOCKCOMMENT.toString())) {
 			c.setForeground(Color.green);
-		} else if (kind.equals(FeatureType.LINECOMMENT.toString())) {
+		} else if (kind.equals(Kind.LINECOMMENT.toString())) {
 			c.setForeground(Color.cyan);
-		} else if (kind.equals(FeatureType.RULE.toString())) {
+		} else if (kind.equals(Kind.RULE.toString())) {
 			c.setForeground(Color.blue);
 		} else {
 			c.setForeground(Color.black);

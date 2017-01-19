@@ -10,7 +10,6 @@ public class Edge {
 	@Expose public int rootId;
 	@Expose public int leafId;
 
-	public String rootAspect;
 	@Expose public String leafAspect;
 
 	@Expose public double metric;
@@ -22,8 +21,6 @@ public class Edge {
 
 		rootId = root.getId();
 		leafId = leaf.getId();
-
-		rootAspect = root.getAspect();
 		leafAspect = leaf.getAspect();
 
 		// euclidean distance
@@ -38,6 +35,6 @@ public class Edge {
 
 	@Override
 	public String toString() {
-		return String.format("{%s -> %s}", rootAspect, leafAspect);
+		return String.format("{%s -> %s}", root.getAspect(), leafAspect);
 	}
 }

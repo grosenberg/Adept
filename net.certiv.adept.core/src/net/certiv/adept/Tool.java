@@ -344,6 +344,7 @@ public class Tool extends ToolBase {
 			}
 
 			collector.annotateComments();
+			collector.index();
 			mgr.createDocModel(collector);
 
 			if (check) continue;

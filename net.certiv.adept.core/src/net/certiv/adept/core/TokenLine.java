@@ -5,15 +5,15 @@ import java.util.Collection;
 import java.util.List;
 
 import net.certiv.adept.parser.AdeptToken;
-import net.certiv.adept.parser.Parse;
+import net.certiv.adept.parser.ParseData;
 
 /** Array of tokens representing a source line, including HWS. */
 public class TokenLine {
 
 	private List<AdeptToken> line = new ArrayList<>();
-	private Parse data;
+	private ParseData data;
 
-	public TokenLine(Parse data) {
+	public TokenLine(ParseData data) {
 		this.data = data;
 	}
 

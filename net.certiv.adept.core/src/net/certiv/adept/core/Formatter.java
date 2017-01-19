@@ -9,7 +9,7 @@ import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.AdeptToken;
-import net.certiv.adept.parser.Parse;
+import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.util.Strings;
@@ -18,7 +18,7 @@ public class Formatter {
 
 	private DocModel model;
 	private Document doc;
-	private Parse data;
+	private ParseData data;
 	private Index index;
 	private OutputBuilder buffer;
 

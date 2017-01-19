@@ -10,14 +10,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.FeatureType;
+import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Group;
 import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Size;
 import net.certiv.adept.util.Log;
 
-public class Collector extends Parse {
+public class Collector extends ParseData {
 
 	private Document doc;
 	private List<Integer> exTypes;
@@ -43,6 +43,18 @@ public class Collector extends Parse {
 		return features;
 	}
 
+	public void index() {
+		for (Token token : getTokens()) {
+			int num = token.getLine() - 1;
+			List<Token> line = lineIndex.get(num);
+			if (line == null) {
+				line = new ArrayList<>();
+				lineIndex.put(num, line);
+			}
+			line.add(token);
+		}
+	}
+
 	public void annotateRule(ParserRuleContext ctx) {
 		int rule = ctx.getRuleIndex();
 		int type = rule << 10;
@@ -64,7 +76,7 @@ public class Collector extends Parse {
 		Size size = getSize(start, stop);
 		int format = Form.characterize(this, ctx);
 		Feature feature = new Feature(aspect, type, start, stop, location, size, format);
-		feature.setFeatureType(FeatureType.RULE);
+		feature.setKind(Kind.RULE);
 		add(feature);
 	}
 
@@ -83,7 +95,7 @@ public class Collector extends Parse {
 		Size size = getSize(token, token);
 		int format = Form.characterize(this, node);
 		Feature feature = new Feature(aspect, type, token, location, size, format);
-		feature.setFeatureType(FeatureType.NODE);
+		feature.setKind(Kind.NODE);
 		add(feature);
 	}
 
@@ -96,7 +108,7 @@ public class Collector extends Parse {
 				Size size = getSize(token, token);
 				int format = Form.characterize(this, token);
 				Feature feature = new Feature(aspect, type, token, location, size, format);
-				feature.setFeatureType(type == BLOCKCOMMENT ? FeatureType.BLOCKCOMMENT : FeatureType.LINECOMMENT);
+				feature.setKind(type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT);
 				add(feature);
 			}
 		}
@@ -107,12 +119,10 @@ public class Collector extends Parse {
 		features.add(feature);
 
 		group.setLocus(feature);
-		for (int idx = features.size() - 2; idx >= 0; idx--) {
-			Feature prior = features.get(idx);
-			if (group.isLocal(prior)) {
-				feature.addEdge(prior);
-				prior.addEdge(feature);
-			}
+		List<Feature> locals = group.getLocalFeatures();
+		for (Feature local : locals) {
+			feature.addEdge(local);
+			local.addEdge(feature);
 		}
 	}
 

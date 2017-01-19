@@ -1,14 +1,19 @@
 package net.certiv.adept.topo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.Parse;
+import net.certiv.adept.parser.ParseData;
 
-/** Identifies features that exist within a well-defined local group */
+/**
+ * Identifies features that exist within a well-defined local group. The 'local' scope is defined
+ * for a locus feature representing a node as
+ * <ul>
+ */
 public class Group {
 
 	private static final int INTERNODE = 4;
@@ -16,9 +21,9 @@ public class Group {
 	private static final int NODE2RULE = 4;
 
 	private Feature locus;
-	private Parse data;
+	private ParseData data;
 
-	public Group(Parse data) {
+	public Group(ParseData data) {
 		this.data = data;
 	}
 
@@ -26,14 +31,19 @@ public class Group {
 		this.locus = locus;
 	}
 
+	public List<Feature> getLocalFeatures() {
+		List<Feature> locals = new ArrayList<>();
+		return locals;
+	}
+
 	public boolean isLocal(Feature target) {
 		final int tStart = target.getStart();
 		final int lStart = locus.getStart();
 
-		switch (locus.getFeatureType()) {
+		switch (locus.getKind()) {
 			case BLOCKCOMMENT:
 			case LINECOMMENT:
-				switch (target.getFeatureType()) {
+				switch (target.getKind()) {
 					case BLOCKCOMMENT:
 					case LINECOMMENT:
 						if (samePriorLine(target)) return true;
@@ -46,7 +56,7 @@ public class Group {
 				}
 				break;
 			case NODE:
-				switch (target.getFeatureType()) {
+				switch (target.getKind()) {
 					case BLOCKCOMMENT:
 					case LINECOMMENT:
 						if (Math.abs(tStart - lStart) <= NODE2COMMENT) return true;
@@ -61,12 +71,12 @@ public class Group {
 				}
 				break;
 			case RULE:
-				switch (target.getFeatureType()) {
+				switch (target.getKind()) {
 					case BLOCKCOMMENT:
 					case LINECOMMENT:
 						break;
 					case NODE:
-						if (parentRank(locus, target) <= NODE2RULE) return true;
+						if (parentRank(target, locus) <= NODE2RULE) return true;
 						break;
 					case RULE:
 						break;
@@ -74,6 +84,21 @@ public class Group {
 				break;
 		}
 		return false;
+	}
+
+	private int parentRank(Feature rule, Feature node) {
+		Token token = data.getTokens().get(rule.getStart());
+		ParseTree ruleCtx = data.contextIndex.get(token);
+
+		int rank = 1;
+		token = data.getTokens().get(node.getStart());
+		ParseTree parent = data.nodeIndex.get(token).getParent();
+		while (parent != null) {
+			if (parent == ruleCtx) return rank;
+			parent = parent.getParent();
+			rank++;
+		}
+		return rank;
 	}
 
 	private boolean samePriorLine(Feature target) {
@@ -100,20 +125,5 @@ public class Group {
 			}
 		}
 		return vws;
-	}
-
-	private int parentRank(Feature rule, Feature node) {
-		Token token = data.getTokens().get(rule.getStart());
-		ParseTree context = data.contextIndex.get(token);
-
-		int rank = 1;
-		token = data.getTokens().get(node.getStart());
-		ParseTree parent = data.nodeIndex.get(token).getParent();
-		while (parent != null) {
-			if (parent.equals(context)) return rank;
-			parent = parent.getParent();
-			rank++;
-		}
-		return rank;
 	}
 }

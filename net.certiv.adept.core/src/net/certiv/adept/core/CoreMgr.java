@@ -14,7 +14,7 @@ import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.FeatureType;
+import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
@@ -41,11 +41,11 @@ public class CoreMgr {
 		corpus = CorpusModel.load(corpusDir, rebuild);
 		corpusDocs = corpus.read(corpusDir, corpusExt, tabWidth);
 		if (rebuild || !corpus.isValid(corpusDocs)) {
-			rebuild();
+			doRebuild();
 		}
 	}
 
-	private void rebuild() {
+	private void doRebuild() {
 		Log.info(this, "Rebuilding...");
 
 		corpus.clear();
@@ -63,8 +63,17 @@ public class CoreMgr {
 				Tool.errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
 				continue;
 			}
-			parser.annotate(collector);
+
+			try {
+				parser.annotate(collector);
+			} catch (Exception e) {
+				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname());
+				Tool.errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
+				continue;
+			}
+
 			collector.annotateComments();
+			collector.index();
 			corpus.include(collector);
 		}
 
@@ -107,7 +116,7 @@ public class CoreMgr {
 	 */
 	public void evaluate() {
 		for (Feature feature : model.getFeatures()) {
-			if (feature.getFeatureType() == FeatureType.RULE) continue;
+			if (feature.getKind() == Kind.RULE) continue;
 
 			TreeMap<Double, Feature> selected = corpus.match(feature);
 			Confidence.eval(feature, selected);

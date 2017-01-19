@@ -4,9 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -17,26 +21,32 @@ import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableColumnModel;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Utils;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.parser.Parse;
+import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.vis.components.SliderDialog;
 import net.certiv.adept.vis.components.TextLineNumber;
-import net.certiv.adept.vis.components.TokenCellRenderer;
-import net.certiv.adept.vis.components.TokenTableModel;
 import net.certiv.adept.vis.components.TreeViewer;
+import net.certiv.adept.vis.models.TokenTableModel;
+import net.certiv.adept.vis.renderers.TokenCellRenderer;
 
 public class ParseTreeView {
 
@@ -46,6 +56,11 @@ public class ParseTreeView {
 		} catch (Exception e) {}
 		new ParseTreeView();
 	}
+
+	private static final FileFilter pngFilter = new FileNameExtensionFilter("PNG Files", "png");
+
+	private static final String name = "ParseTree";
+	private static final String ext = ".png";
 
 	private static final String Eol = System.lineSeparator();
 	private static final String KEY_WIDTH = "frame_width";
@@ -64,14 +79,15 @@ public class ParseTreeView {
 	private Preferences prefs;
 
 	private Action openAction = new OpenAction();
+	private Action pngSaveAction = new PngSaveAction();
 	private int level;
 
 	public ParseTreeView() {
-		frame = new JFrame("Parse tree visiualization");
+		frame = new JFrame("ParseData tree visiualization");
 		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("tree.gif"));
 		frame.setIconImage(imgicon.getImage());
 
-		prefs = Preferences.userNodeForPackage(TreeViewer.class);
+		prefs = Preferences.userNodeForPackage(ParseTreeView.class);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.addWindowListener(new WindowAdapter() {
 
@@ -87,6 +103,17 @@ public class ParseTreeView {
 		});
 
 		viewer = new TreeViewer();
+		viewer.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON3) {
+					handleScaleChange();
+				} else if (e.getButton() == MouseEvent.BUTTON1) {
+					handleAlignment(e.getX(), e.getY());
+				}
+			}
+		});
 		JScrollPane scrollTree = new JScrollPane(viewer);
 
 		table = new JTable();
@@ -134,14 +161,51 @@ public class ParseTreeView {
 		frame.setVisible(true);
 	}
 
+	protected void handleScaleChange() {
+		int value = (int) ((viewer.getScale() - 1.0) * 1000);
+
+		SliderDialog dialog = new SliderDialog(frame, "Adjust Scale", viewer);
+		dialog.pack();
+		dialog.setLocationRelativeTo(frame);
+		dialog.setVisible(true);
+
+		int result = dialog.getResult();
+		if (result == JOptionPane.CANCEL_OPTION) {
+			viewer.setScale(value);
+		}
+	}
+
+	protected void handleAlignment(int x, int y) {
+		Tree tree = viewer.getGridTree(x, y);
+		if (tree == null) return;
+
+		int index = 0;
+		if (tree instanceof TerminalNode) {
+			TerminalNode node = (TerminalNode) tree;
+			index = node.getSymbol().getTokenIndex();
+		} else {
+			ParserRuleContext ctx = (ParserRuleContext) tree;
+			index = ctx.getStart().getTokenIndex();
+		}
+
+		table.getSelectionModel().setSelectionInterval(index, index);
+		table.scrollRectToVisible(table.getCellRect(index, 0, true));
+	}
+
 	protected JToolBar createToolBar() {
 		JToolBar bar = new JToolBar();
 		bar.add(getOpenAction()).setText("");
+		bar.addSeparator();
+		bar.add(getPngSaveAction()).setText("");
 		return bar;
 	}
 
 	protected Action getOpenAction() {
 		return openAction;
+	}
+
+	protected Action getPngSaveAction() {
+		return pngSaveAction;
 	}
 
 	@SuppressWarnings("deprecation")
@@ -165,7 +229,7 @@ public class ParseTreeView {
 
 		tool.execute();
 		Document doc = tool.getDocuments().get(0);
-		Parse data = doc.getParse();
+		ParseData data = doc.getParse();
 
 		// graphical rep of tree
 		viewer.inspect(data.getTree(), data.getRuleNames());
@@ -244,5 +308,43 @@ public class ParseTreeView {
 
 			createData(file);
 		}
+	}
+
+	class PngSaveAction extends AbstractAction {
+
+		public PngSaveAction() {
+			super("Save png", new ImageIcon("resources/png.png"));
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			JFileChooser chooser = new JFileChooser();
+			Path path = Paths.get("doc");
+			if (!path.toFile().exists()) {
+				try {
+					Files.createDirectory(path);
+				} catch (IOException e) {}
+			}
+
+			chooser.setSelectedFile(proposeName(path));
+			chooser.setCurrentDirectory(path.toFile());
+			chooser.addChoosableFileFilter(pngFilter);
+			chooser.setFileFilter(pngFilter);
+
+			if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
+			File file = chooser.getSelectedFile();
+
+			viewer.generatePng(file);
+		}
+	}
+
+	private File proposeName(Path path) {
+		int cnt = 1;
+		File png = new File(path.toString(), name + ext);
+		while (png.exists()) {
+			png = new File(path.toString(), String.format("%s%03d%s", name, cnt, ext));
+			cnt++;
+		}
+		return png;
 	}
 }

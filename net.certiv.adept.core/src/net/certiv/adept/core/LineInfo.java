@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.certiv.adept.parser.AdeptToken;
-import net.certiv.adept.parser.Parse;
+import net.certiv.adept.parser.ParseData;
 
 public class LineInfo {
 
@@ -21,7 +21,7 @@ public class LineInfo {
 	private boolean blank = true;
 
 	/* Characterize a line represented by a sequence of tokens. */
-	public LineInfo(Parse data, List<AdeptToken> line) {
+	public LineInfo(ParseData data, List<AdeptToken> line) {
 		for (int idx = 0; idx < line.size(); idx++) {
 			AdeptToken token = line.get(idx);
 			int type = token.getType();

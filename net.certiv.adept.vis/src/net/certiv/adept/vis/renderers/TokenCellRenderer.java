@@ -1,10 +1,12 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.renderers;
 
 import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+
+import net.certiv.adept.vis.models.TokenTableModel;
 
 public class TokenCellRenderer extends DefaultTableCellRenderer {
 

@@ -182,4 +182,14 @@ public class TreeViewer extends TreeViewerBase {
 		scaledTreeSize = new Dimension((int) (scaledTreeSize.width * scale), (int) (scaledTreeSize.height * scale));
 		return scaledTreeSize;
 	}
+
+	public Tree getGridTree(int x, int y) {
+		int col = (int) Math.round(x / gapBetweenLevels);
+		int row = (int) Math.round(y / gapBetweenLevels);
+		Tree tree = table.get(col, row);
+		if (tree == null) {
+			tree = table.get(col - 1, row);
+		}
+		return tree;
+	}
 }

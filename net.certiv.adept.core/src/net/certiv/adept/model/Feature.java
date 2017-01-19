@@ -6,21 +6,25 @@ import java.util.Map;
 import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.Utils;
 
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Size;
+import net.certiv.adept.topo.Stats;
 
 public class Feature implements Comparable<Feature> {
 
 	@Expose private int docId;	// unique id of the document containing this feature
 	@Expose private int id;		// unique id of this feature
 
-	@Expose private FeatureType featureType; // feature category
+	@Expose private Kind kind;	// feature category
 
 	@Expose private String aspect;	// rule or token name
+	@Expose private String text;	// rule or token text
 	@Expose private int type;		// encoded token type or rule id (ids are << 10)
 	@Expose private int format;		// describes this feature's Facet
 
@@ -55,6 +59,13 @@ public class Feature implements Comparable<Feature> {
 		this.endLine = stop.getLine() - 1;
 		this.format = format;
 
+		int begIdx = start.getStartIndex();
+		int endIdx = stop.getStopIndex();
+		int endIdx2 = endIdx - 10 > begIdx ? begIdx + 7 : endIdx;
+		this.text = start.getInputStream().getText(new Interval(begIdx, endIdx2));
+		if (endIdx != endIdx2) this.text += "...";
+		this.text = Utils.escapeWhitespace(this.text, true);
+
 		x = location.getCol();
 		y = location.getLine();
 		w = size.getWidth();
@@ -63,12 +74,12 @@ public class Feature implements Comparable<Feature> {
 		update = true;
 	}
 
-	public FeatureType getFeatureType() {
-		return featureType;
+	public Kind getKind() {
+		return kind;
 	}
 
-	public void setFeatureType(FeatureType type) {
-		this.featureType = type;
+	public void setKind(Kind kind) {
+		this.kind = kind;
 	}
 
 	public int getDocId() {
@@ -87,6 +98,10 @@ public class Feature implements Comparable<Feature> {
 
 	public String getAspect() {
 		return aspect;
+	}
+
+	public String getText() {
+		return text;
 	}
 
 	/** Returns the combined type of the feature */
@@ -125,11 +140,11 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public boolean isRule() {
-		return featureType == FeatureType.RULE;
+		return kind == Kind.RULE;
 	}
 
 	public boolean isNode() {
-		return featureType == FeatureType.NODE;
+		return kind == Kind.NODE;
 	}
 
 	public Feature getMatched() {
@@ -214,6 +229,10 @@ public class Feature implements Comparable<Feature> {
 		return edges.typeSize();
 	}
 
+	public Stats getStats() {
+		return new Stats(this);
+	}
+
 	@Override
 	public int compareTo(Feature o) {
 		if (equals(o)) return 0;
@@ -285,6 +304,6 @@ public class Feature implements Comparable<Feature> {
 
 	@Override
 	public String toString() {
-		return String.format("Feature [id=%s, x=%s, edges=%s]", id, x, edges);
+		return String.format("Feature [@%s %s %s '%s']", id, kind, aspect, text);
 	}
 }

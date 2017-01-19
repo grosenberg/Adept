@@ -2,6 +2,7 @@ package net.certiv.adept.vis.components;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -9,7 +10,11 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 
 import org.abego.treelayout.TreeForTreeLayout;
@@ -18,6 +23,11 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.Tree;
+
+import com.google.common.collect.HashBasedTable;
+
+import net.certiv.adept.topo.Point;
+import net.certiv.adept.util.Log;
 
 public abstract class TreeViewerBase extends JComponent {
 
@@ -42,7 +52,11 @@ public abstract class TreeViewerBase extends JComponent {
 	protected Color borderColor = null;
 	protected Color textColor = Color.black;
 
-	public TreeViewerBase() {}
+	protected HashBasedTable<Integer, Integer, Tree> table;
+
+	public TreeViewerBase() {
+		table = HashBasedTable.create();
+	}
 
 	// ----------------
 
@@ -156,6 +170,9 @@ public abstract class TreeViewerBase extends JComponent {
 
 	protected void paintBox(Graphics g, Tree tree) {
 		Rectangle2D.Double box = getBoundsOfNode(tree);
+		Point grid = calcGrid(box);
+		table.put(grid.getCol(), grid.getLine(), tree);
+
 		// draw the box in the background
 		boolean ruleFailedAndMatchedNothing = false;
 		if (tree instanceof ParserRuleContext) {
@@ -190,8 +207,13 @@ public abstract class TreeViewerBase extends JComponent {
 		}
 	}
 
+	private Point calcGrid(Rectangle2D.Double box) {
+		int x = (int) Math.round(box.getCenterX() / gapBetweenLevels);
+		int y = (int) Math.round(box.getCenterY() / gapBetweenLevels);
+		return new Point(x, y);
+	}
+
 	public void text(Graphics g, String s, int x, int y) {
-		// System.out.println("drawing '"+s+"' @ "+x+","+y);
 		s = Utils.escapeWhitespace(s, true);
 		g.drawString(s, x, y);
 	}
@@ -204,22 +226,12 @@ public abstract class TreeViewerBase extends JComponent {
 		if (getTreeLayout() == null) return;
 
 		Graphics2D g2 = (Graphics2D) g;
-		// anti-alias the lines
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-		// Anti-alias the text
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-		// AffineTransform at = g2.getTransform();
-		// g2.scale(
-		// (double) this.getWidth() / 400,
-		// (double) this.getHeight() / 400);
-		//
-		// g2.setTransform(at);
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
 		paintEdges(g, getTree().getRoot());
-
-		// paint the boxes
 		for (Tree Tree : getTreeLayout().getNodeBounds().keySet()) {
 			paintBox(g, Tree);
 		}
@@ -232,4 +244,24 @@ public abstract class TreeViewerBase extends JComponent {
 		return super.getComponentGraphics(g2d);
 	}
 
+	// PNG ------
+
+	public void generatePng(File png) {
+		BufferedImage bi = new BufferedImage(getSize().width, getSize().height, BufferedImage.TYPE_INT_ARGB);
+		Graphics g = bi.createGraphics();
+		paint(g);
+		g.dispose();
+
+		try {
+			ImageIO.write(bi, "png", png);
+		} catch (IOException e) {
+			Log.error(this, "Write failed to " + png.getPath());
+		}
+
+		try {
+			Desktop.getDesktop().open(png);
+		} catch (Exception ex) {
+			Log.error(this, "Failed to open " + png.getPath());
+		}
+	}
 }

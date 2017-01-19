@@ -1,4 +1,4 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.models;
 
 import java.util.ArrayList;
 import java.util.List;

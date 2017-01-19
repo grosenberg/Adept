@@ -55,11 +55,6 @@ LSKIP		: 'skip'		;
 LMORE		: 'more'		;
 LEOF 		: 'EOF'			;
 
-HEADER		: 'header'		;
-MEMBERS		: 'members'		;
-INIT		: 'init'		;
-AFTER		: 'after'		;
-
 MODE		: 'mode'		;
 PUSHMODE	: 'pushMode'	;
 POPMODE		: 'popMode'		;

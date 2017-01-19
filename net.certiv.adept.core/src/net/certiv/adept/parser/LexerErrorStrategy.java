@@ -26,6 +26,6 @@ public abstract class LexerErrorStrategy extends Lexer {
 		super.recover(e);
 	}
 
-	// ///// Parse stream management ////////////////////
+	// ///// ParseData stream management ////////////////////
 
 }
