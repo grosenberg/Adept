@@ -69,7 +69,7 @@ public class AntlrSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void annotate(Collector collector) {
+	public void annotateFeatures(Collector collector) {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		AntlrVisitor visitor = new AntlrVisitor(collector);
 		walker.walk(visitor, collector.tree);

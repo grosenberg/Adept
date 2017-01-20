@@ -69,7 +69,7 @@ public class XVisitorSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void annotate(Collector collector) {
+	public void annotateFeatures(Collector collector) {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		XVisitorVisitor visitor = new XVisitorVisitor(collector);
 		walker.walk(visitor, collector.tree);

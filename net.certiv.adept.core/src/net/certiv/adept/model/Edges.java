@@ -11,7 +11,7 @@ import com.google.gson.annotations.Expose;
 public class Edges {
 
 	// defines connections between this feature and others in the local group
-	// key=type of feature connected; value=edges to unique features of type
+	// key=kind of feature connected; value=edges to unique features of type
 	@Expose private Map<Integer, List<Edge>> edges;
 
 	public Edges() {
@@ -51,6 +51,16 @@ public class Edges {
 			size += value.size();
 		}
 		return size;
+	}
+
+	public boolean contains(Edge edge) {
+		int type = edge.leaf.getType();
+		List<Edge> value = edges.get(type);
+		if (value == null) return false;
+		for (Edge v : value) {
+			if (v.leaf == edge.leaf) return true;
+		}
+		return false;
 	}
 
 	@Override

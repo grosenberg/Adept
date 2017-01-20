@@ -21,7 +21,7 @@
 
 	<properties>
 		<jar.finalName>${project.build.finalName}</jar.finalName>
-		<main.class>net.certiv.adept.vis.DataVisualization</main.class>
+		<main.class>net.certiv.adept.vis.FeatureTopology</main.class>
 		<archive>jar-in-jar-loader.zip</archive>
 	</properties>
 

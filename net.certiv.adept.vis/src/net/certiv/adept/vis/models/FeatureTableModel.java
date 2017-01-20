@@ -23,10 +23,11 @@ public class FeatureTableModel extends AbstractTableModel {
 
 			int tc = stats.typeCount;
 			int ec = stats.edgeCount;
+			int ep = tc > 0 ? ec / tc : ec;
 
 			int diff = (int) Math.round(stats.maxSd - stats.minSd);
 
-			Object[] row = { line, tc, ec / tc, diff };
+			Object[] row = { line, tc, ep, diff };
 			rows.add(row);
 			line++;
 		}

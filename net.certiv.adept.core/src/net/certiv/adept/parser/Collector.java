@@ -6,6 +6,7 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Document;
@@ -43,18 +44,6 @@ public class Collector extends ParseData {
 		return features;
 	}
 
-	public void index() {
-		for (Token token : getTokens()) {
-			int num = token.getLine() - 1;
-			List<Token> line = lineIndex.get(num);
-			if (line == null) {
-				line = new ArrayList<>();
-				lineIndex.put(num, line);
-			}
-			line.add(token);
-		}
-	}
-
 	public void annotateRule(ParserRuleContext ctx) {
 		int rule = ctx.getRuleIndex();
 		int type = rule << 10;
@@ -69,14 +58,14 @@ public class Collector extends ParseData {
 			stop = start;
 		}
 
-		contextIndex.put(start, ctx);
-
 		String aspect = parser.getRuleNames()[rule];
 		Point location = getLocation(start, stop);
 		Size size = getSize(start, stop);
 		int format = Form.characterize(this, ctx);
 		Feature feature = new Feature(aspect, type, start, stop, location, size, format);
 		feature.setKind(Kind.RULE);
+		contextIndex.put(start, ctx);
+		ruleIndex.put(ctx, feature);
 		add(feature);
 	}
 
@@ -88,14 +77,14 @@ public class Collector extends ParseData {
 			return;
 		}
 
-		nodeIndex.put(token, node);
-
 		String aspect = lexer.getVocabulary().getDisplayName(type);
 		Point location = getLocation(token, token);
 		Size size = getSize(token, token);
 		int format = Form.characterize(this, node);
 		Feature feature = new Feature(aspect, type, token, location, size, format);
 		feature.setKind(Kind.NODE);
+		nodeIndex.put(token, node);
+		terminalIndex.put(node, feature);
 		add(feature);
 	}
 
@@ -109,6 +98,9 @@ public class Collector extends ParseData {
 				int format = Form.characterize(this, token);
 				Feature feature = new Feature(aspect, type, token, location, size, format);
 				feature.setKind(type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT);
+				TerminalNode node = new TerminalNodeImpl(token);
+				nodeIndex.put(token, node);
+				terminalIndex.put(node, feature);
 				add(feature);
 			}
 		}
@@ -117,13 +109,6 @@ public class Collector extends ParseData {
 	private void add(Feature feature) {
 		feature.setId(doc.getDocId(), features.size());
 		features.add(feature);
-
-		group.setLocus(feature);
-		List<Feature> locals = group.getLocalFeatures();
-		for (Feature local : locals) {
-			feature.addEdge(local);
-			local.addEdge(feature);
-		}
 	}
 
 	private Point getLocation(Token start, Token stop) {
@@ -141,5 +126,28 @@ public class Collector extends ParseData {
 		int height = stop.getLine() - start.getLine() + 1;
 		int width = stop.getStopIndex() - start.getStartIndex() + 1;
 		return new Size(width, height);
+	}
+
+	public void index() {
+		for (Token token : getTokens()) {
+			int num = token.getLine() - 1;
+			List<Token> line = lineIndex.get(num);
+			if (line == null) {
+				line = new ArrayList<>();
+				lineIndex.put(num, line);
+			}
+			line.add(token);
+		}
+	}
+
+	public void genLocalEdges() {
+		for (Feature feature : features) {
+			group.setLocus(feature);
+			List<Feature> locals = group.getLocalFeatures();
+			for (Feature local : locals) {
+				feature.addEdge(local);
+				local.addEdge(feature);
+			}
+		}
 	}
 }

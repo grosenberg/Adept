@@ -13,6 +13,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.certiv.adept.model.Feature;
+
 public class ParseData {
 
 	public ANTLRInputStream input;
@@ -33,6 +35,12 @@ public class ParseData {
 	// key=rule feature start token; value=token's context
 	public Map<Token, ParserRuleContext> contextIndex;
 
+	// key=rule context; value=the owning feature
+	public Map<ParserRuleContext, Feature> ruleIndex;
+
+	// key=token; value=the owning feature
+	public Map<TerminalNode, Feature> terminalIndex;
+
 	// key=line number; value=tokens of line
 	public Map<Integer, List<Token>> lineIndex;
 
@@ -40,6 +48,8 @@ public class ParseData {
 		super();
 		nodeIndex = new HashMap<>();
 		contextIndex = new HashMap<>();
+		ruleIndex = new HashMap<>();
+		terminalIndex = new HashMap<>();
 		lineIndex = new HashMap<>();
 	}
 

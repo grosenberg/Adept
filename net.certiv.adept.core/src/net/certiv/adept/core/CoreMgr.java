@@ -65,17 +65,21 @@ public class CoreMgr {
 			}
 
 			try {
-				parser.annotate(collector);
+				parser.annotateFeatures(collector);
 			} catch (Exception e) {
-				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname());
+				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname(), e);
 				Tool.errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
 				continue;
 			}
 
 			collector.annotateComments();
 			collector.index();
+			collector.genLocalEdges();
+
 			corpus.include(collector);
 		}
+
+		corpus.reduceConstraints();
 
 		try {
 			corpus.save(corpusDir);

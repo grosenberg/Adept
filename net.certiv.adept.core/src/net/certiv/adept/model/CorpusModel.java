@@ -90,12 +90,13 @@ public class CorpusModel extends CorpusStore {
 		pathnames.put(doc.getDocId(), doc.getPathname());
 
 		List<Feature> featureList = collector.getFeatures();
-		// removeEquivalentEdges(featureList);
 
 		docFeatures.put(doc.getDocId(), featureList);
 		features.addAll(featureList);
 		Log.debug(this, String.format("Processed %s [features=%s]", doc.getPathname(), featureList.size()));
 	}
+
+	public void reduceConstraints() {}
 
 	@SuppressWarnings("unused")
 	private void removeEquivalentEdges(List<Feature> featureList) {

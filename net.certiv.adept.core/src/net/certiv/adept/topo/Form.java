@@ -13,6 +13,11 @@ import net.certiv.adept.parser.Collector;
 
 public class Form {
 
+	public static final int ABOVE = 1 << 0;
+	public static final int BELOW = 1 << 1;
+	public static final int BEFORE = 1 << 2;
+	public static final int AFTER = 1 << 3;
+
 	/** Resolve formatting overlap between two real tokens in a line */
 	public static List<Facet> resolveOverlap(int formCurr, int formNext) {
 		List<Facet> result = new ArrayList<>();
@@ -63,8 +68,8 @@ public class Form {
 		return characterize(collector, formInfo, formInfo, idx, idx, col, len);
 	}
 
-	private static int characterize(Collector collector, FormInfo startInfo, FormInfo stopInfo, int idxStart, int idxStop,
-			int col, int len) {
+	private static int characterize(Collector collector, FormInfo startInfo, FormInfo stopInfo, int idxStart,
+			int idxStop, int col, int len) {
 
 		int format = 0;
 		if (col == startInfo.beg) format |= Facet.LINE_BEG.value;

@@ -312,6 +312,7 @@ public class Tool extends ToolBase {
 		return true;
 	}
 
+	// FIX: partial duplicate of CoreMgr#rebuild
 	public void execute() {
 		documents = loadDocuments(sourceFiles);
 		Log.info(this, documents.size() + " source documents to process.");
@@ -336,7 +337,7 @@ public class Tool extends ToolBase {
 			}
 
 			try {
-				parser.annotate(collector);
+				parser.annotateFeatures(collector);
 			} catch (Exception e) {
 				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname());
 				errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
@@ -345,6 +346,8 @@ public class Tool extends ToolBase {
 
 			collector.annotateComments();
 			collector.index();
+			collector.genLocalEdges();
+
 			mgr.createDocModel(collector);
 
 			if (check) continue;

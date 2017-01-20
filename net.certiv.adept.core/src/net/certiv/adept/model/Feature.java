@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.misc.Utils;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Size;
 import net.certiv.adept.topo.Stats;
@@ -45,6 +46,7 @@ public class Feature implements Comparable<Feature> {
 
 	private Feature matched;
 	private boolean update;
+	private int aligned;
 
 	public Feature(String aspect, int type, Token token, Point location, Size size, int format) {
 		this(aspect, type, token, token, location, size, format);
@@ -139,6 +141,18 @@ public class Feature implements Comparable<Feature> {
 		this.weight = weight;
 	}
 
+	public boolean isAlignedAbove() {
+		return (aligned & Form.ABOVE) == Form.ABOVE;
+	}
+
+	public boolean isAlignedBelow() {
+		return (aligned & Form.BELOW) == Form.BELOW;
+	}
+
+	public void setAligned(int aligned) {
+		this.aligned |= aligned;
+	}
+
 	public boolean isRule() {
 		return kind == Kind.RULE;
 	}
@@ -155,9 +169,13 @@ public class Feature implements Comparable<Feature> {
 		this.matched = matched;
 	}
 
+	/** Adds an edge from the receiver to the given feature. Does not add duplicate edges. */
 	public void addEdge(Feature leaf) {
-		edges.addEdge(new Edge(this, leaf));
-		update = true;
+		Edge edge = new Edge(this, leaf);
+		if (!edges.contains(edge)) {
+			edges.addEdge(edge);
+			update = true;
+		}
 	}
 
 	public Map<Integer, List<Edge>> getEdges() {

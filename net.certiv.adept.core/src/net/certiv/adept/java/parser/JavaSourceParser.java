@@ -69,7 +69,7 @@ public class JavaSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void annotate(Collector model) {
+	public void annotateFeatures(Collector model) {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		JavaVisitor visitor = new JavaVisitor(model);
 		walker.walk(visitor, model.tree);

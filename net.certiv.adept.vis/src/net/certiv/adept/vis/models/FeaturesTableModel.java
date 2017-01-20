@@ -7,11 +7,10 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Stats;
 
 public class FeaturesTableModel extends AbstractTableModel {
-
-	private static final int CUTOFF = (1 << 10) - 1;
 
 	private final String[] columnNames = { "Line", "Kind", "Index", "Type", "Features", "Edges per" };
 	private Object[][] rowData;
@@ -28,7 +27,7 @@ public class FeaturesTableModel extends AbstractTableModel {
 
 			int tIdx = key;
 			String type;
-			if (tIdx > CUTOFF) {
+			if (feature.getKind() == Kind.RULE) {
 				tIdx = tIdx >> 10;
 				type = tIdx != 0 ? ruleNames.get(tIdx) : "adept";
 			} else {

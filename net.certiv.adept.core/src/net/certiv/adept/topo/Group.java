@@ -3,22 +3,24 @@ package net.certiv.adept.topo;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.ParseData;
+import net.certiv.adept.util.Log;
 
 /**
  * Identifies features that exist within a well-defined local group. The 'local' scope is defined
- * for a locus feature representing a node as
- * <ul>
+ * only for a locus feature representing a node. A node feature includes tokens and comments.
  */
 public class Group {
 
-	private static final int INTERNODE = 4;
 	private static final int NODE2COMMENT = 1;
-	private static final int NODE2RULE = 4;
+	private static final int NODE2RULE = 6;
+	private static final int NODE2NODE = 4;
 
 	private Feature locus;
 	private ParseData data;
@@ -33,97 +35,95 @@ public class Group {
 
 	public List<Feature> getLocalFeatures() {
 		List<Feature> locals = new ArrayList<>();
+		if (locus.getKind() == Kind.RULE) return locals;
+
+		Token token = data.getTokens().get(locus.getStart());
+		TerminalNode node = data.nodeIndex.get(token);
+		if (node == null) {
+			Log.error(this, "Node null");
+		}
+		ParserRuleContext parent = (ParserRuleContext) node.getParent();
+
+		if (parent != null) {
+			int line = token.getLine() - 1;
+
+			addEnclosing(locals, parent, token);
+			addAdjacent(locals, token, line);
+			addFromPrior(locals, token, line);
+		}
+
 		return locals;
 	}
 
-	public boolean isLocal(Feature target) {
-		final int tStart = target.getStart();
-		final int lStart = locus.getStart();
-
-		switch (locus.getKind()) {
-			case BLOCKCOMMENT:
-			case LINECOMMENT:
-				switch (target.getKind()) {
-					case BLOCKCOMMENT:
-					case LINECOMMENT:
-						if (samePriorLine(target)) return true;
-						break;
-					case NODE:
-						if (Math.abs(tStart - lStart) <= NODE2COMMENT) return true;
-						break;
-					case RULE:
-						break;
-				}
-				break;
-			case NODE:
-				switch (target.getKind()) {
-					case BLOCKCOMMENT:
-					case LINECOMMENT:
-						if (Math.abs(tStart - lStart) <= NODE2COMMENT) return true;
-						break;
-					case NODE:
-						if (samePriorLine(target)) return true;
-						if (Math.abs(tStart - lStart) <= INTERNODE) return true;
-						break;
-					case RULE:
-						if (parentRank(target, locus) <= NODE2RULE) return true;
-						break;
-				}
-				break;
-			case RULE:
-				switch (target.getKind()) {
-					case BLOCKCOMMENT:
-					case LINECOMMENT:
-						break;
-					case NODE:
-						if (parentRank(target, locus) <= NODE2RULE) return true;
-						break;
-					case RULE:
-						break;
-				}
-				break;
-		}
-		return false;
-	}
-
-	private int parentRank(Feature rule, Feature node) {
-		Token token = data.getTokens().get(rule.getStart());
-		ParseTree ruleCtx = data.contextIndex.get(token);
-
-		int rank = 1;
-		token = data.getTokens().get(node.getStart());
-		ParseTree parent = data.nodeIndex.get(token).getParent();
-		while (parent != null) {
-			if (parent == ruleCtx) return rank;
+	private void addEnclosing(List<Feature> locals, ParserRuleContext parent, Token token) {
+		int idx = 0;
+		while (parent != null && idx < NODE2RULE) {
+			Feature feature = data.ruleIndex.get(parent);
+			locals.add(feature);
 			parent = parent.getParent();
-			rank++;
+			idx++;
 		}
-		return rank;
 	}
 
-	private boolean samePriorLine(Feature target) {
-		if (locus.getType() == target.getType()) {
-			int cnt = linesBetween(locus.getStart(), target.getStart());
-			if (cnt < 2) return true;
+	private void addAdjacent(List<Feature> locals, Token token, int line) {
+		List<Token> tokens = data.lineIndex.get(line);
+		if (tokens == null) {
+			Log.error(this, "Line " + line);
 		}
-		return false;
-	}
-
-	// count excludes blank lines
-	private int linesBetween(int beg, int end) {
-		List<Token> tokens = data.getTokens();
-		int vws = 0;
-		boolean blank = true;
-		for (int ptr = beg + 1; ptr < end; ptr++) {
-			Token token = tokens.get(ptr);
-			if (token.getType() == data.HWS) continue;
-			if (token.getType() == data.VWS) {
-				if (!blank) vws++;
-				blank = true;
-			} else {
-				blank = false;
+		int idx = token.getTokenIndex();
+		for (Token t : tokens) {
+			TerminalNode n = data.nodeIndex.get(line);
+			if (n != null) {
+				int dist = Math.abs(t.getTokenIndex() - idx);
+				if (isComment(t) && dist < NODE2COMMENT || dist < NODE2NODE) {
+					Feature feature = data.terminalIndex.get(n);
+					locals.add(feature);
+				}
 			}
 		}
-		return vws;
+	}
+
+	// add same token type from prior line; also assess alignment
+	private void addFromPrior(List<Feature> locals, Token token, int line) {
+		if (!isBlank(line)) {
+			int type = token.getType();
+			List<Token> tokens = priorLine(line);
+			for (Token t : tokens) {
+				TerminalNode n = data.nodeIndex.get(line);
+				if (n != null && type == t.getType()) {
+					Feature feature = data.terminalIndex.get(n);
+					locals.add(feature);
+
+					if (token.getCharPositionInLine() == t.getCharPositionInLine()) {
+						locus.setAligned(Form.ABOVE);
+						feature.setAligned(Form.BELOW);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean isComment(Token token) {
+		return token.getType() == data.LINECOMMENT || token.getType() == data.BLOCKCOMMENT;
+	}
+
+	private boolean isWhitespace(Token token) {
+		return token.getType() == data.HWS || token.getType() == data.VWS;
+	}
+
+	private boolean isBlank(int line) {
+		List<Token> tokens = data.lineIndex.get(line);
+		for (Token token : tokens) {
+			if (!isWhitespace(token)) return true;
+		}
+		return false;
+	}
+
+	private List<Token> priorLine(int line) {
+		while (line - 1 >= 0) {
+			line--;
+			if (!isBlank(line)) return data.lineIndex.get(line);
+		}
+		return null;
 	}
 }

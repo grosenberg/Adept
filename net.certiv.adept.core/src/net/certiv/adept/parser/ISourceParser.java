@@ -18,7 +18,7 @@ public interface ISourceParser extends IParseErrorReporter {
 	void process(Collector model, Document doc) throws RecognitionException, Exception;
 
 	/** Annotate the given model with features identified by walking the parse tree. */
-	void annotate(Collector model);
+	void annotateFeatures(Collector model);
 
 	/** Returns the language specific list of feature types that are to be excluded. */
 	List<Integer> excludedTypes();
