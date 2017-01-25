@@ -58,6 +58,8 @@ public class AntlrSourceParser implements ISourceParser {
 		collector.HWS = Antlr4Lexer.HWS;
 		collector.BLOCKCOMMENT = Antlr4Lexer.BLOCKCOMMENT;
 		collector.LINECOMMENT = Antlr4Lexer.LINECOMMENT;
+		collector.ERR_TOKEN = Antlr4Lexer.ERRCHAR;
+		collector.ERR_RULE = Antlr4Parser.RULE_other << 10;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new Antlr4Parser(collector.stream);
 	}
@@ -80,6 +82,8 @@ public class AntlrSourceParser implements ISourceParser {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
 		excludes.add(Antlr4Parser.ERRCHAR);
+		excludes.add(Antlr4Parser.ACT_CONTENT);
+		excludes.add(Antlr4Parser.ARG_CONTENT);
 		excludes.add(Antlr4Parser.RULE_other << 10);
 		return excludes;
 	}

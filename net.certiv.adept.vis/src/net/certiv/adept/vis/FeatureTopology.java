@@ -2,32 +2,36 @@ package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JToolBar;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
+import edu.uci.ics.jung.algorithms.layout.KKLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.algorithms.layout.SpringLayout;
+import edu.uci.ics.jung.algorithms.util.MapSettableTransformer;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
@@ -36,7 +40,6 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AbstractModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
-import edu.uci.ics.jung.visualization.control.GraphMouseListener;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
 import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer.InsidePositioner;
 import edu.uci.ics.jung.visualization.renderers.GradientVertexRenderer;
@@ -46,24 +49,38 @@ import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.vis.components.AbstractBase;
+import net.certiv.adept.vis.components.Counter;
+import net.certiv.adept.vis.layout.EdgeData;
+import net.certiv.adept.vis.layout.TopoLayout;
 import net.certiv.adept.vis.models.FeaturesListModel;
 import net.certiv.adept.vis.models.FeaturesListModel.FeatureListItem;
 
-public class FeatureTopology {
+public class FeatureTopology extends AbstractBase {
 
-	private static final String KEY_WIDTH = "frame_width";
-	private static final String KEY_HEIGHT = "frame_height";
-	private static final String KEY_X = "frame_x";
-	private static final String KEY_Y = "frame_y";
+	private static final String KEY_START = "vertex_start";
+	private static final String KEY_LIMIT = "vertex_limit";
 
-	private Preferences prefs;
+	private static final String TOPO = "Topo";
+	private static final String KK = "KK";
+	private static final String SPRING = "Spring";
+	private static final String FR = "FR";
+
+	private static final String[] LAYOUTS = { TOPO, KK, SPRING, FR };
+
+	private JComboBox<String> layoutBox;
+	private JComboBox<FeatureListItem> typeBox;
+	private JSlider idxSlider;	// offset into the list of features to display
+	private Counter idxCounter;
+	private JSlider numSlider;	// count of features to display together
+	private Counter numCounter;
+
 	private DirectedSparseGraph<Feature, Edge> graph;
 	private VisualizationViewer<Feature, Edge> viewer;
-	private JComboBox<FeatureListItem> typeBox;
+
 	private FeaturesListModel model;
 	private ISourceParser lang;
 	private Map<Integer, List<Feature>> index;
-	private JFrame frame;
 
 	public static void main(String[] args) {
 		try {
@@ -74,28 +91,31 @@ public class FeatureTopology {
 	}
 
 	public FeatureTopology() {
-		frame = new JFrame("Feature Topology");
-		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("vis.gif"));
-		frame.setIconImage(imgicon.getImage());
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		super("Feature Topology", "vis.gif");
 
-		prefs = Preferences.userNodeForPackage(FeatureTopology.class);
-		frame.addWindowListener(new WindowAdapter() {
+		GraphZoomScrollPane graphPanel = createGraphPanel();
+		JPanel featurePanel = createFeatureControls();
+		JPanel zoomPanel = createZoomControls();
 
-			@Override
-			public void windowClosing(WindowEvent e) {
-				prefs.putDouble(KEY_X, frame.getLocationOnScreen().getX());
-				prefs.putDouble(KEY_Y, frame.getLocationOnScreen().getY());
-				prefs.putInt(KEY_WIDTH, (int) frame.getSize().getWidth());
-				prefs.putInt(KEY_HEIGHT, (int) frame.getSize().getHeight());
-			}
-		});
+		JPanel mainPanel = new JPanel(new BorderLayout(1, 1));
+		mainPanel.add(featurePanel, BorderLayout.NORTH);
+		mainPanel.add(graphPanel, BorderLayout.CENTER);
+		mainPanel.add(zoomPanel, BorderLayout.SOUTH);
 
-		Container content = frame.getContentPane();
-		content.setPreferredSize(new Dimension(1256, 1024));
+		content.add(createToolBar(), BorderLayout.NORTH);
+		content.add(mainPanel, BorderLayout.CENTER);
 
+		idxSlider.setValue(prefs.getInt(KEY_START, 0));
+		numSlider.setValue(prefs.getInt(KEY_LIMIT, 1));
+
+		setLocation();
+		frame.setVisible(true);
+	}
+
+	private GraphZoomScrollPane createGraphPanel() {
 		graph = new DirectedSparseGraph<>();
 		viewer = new VisualizationViewer<Feature, Edge>(getLayout());
+
 		viewer.addGraphMouseListener(new GraphMouseAdaptor<Feature>());
 		viewer.getRenderer().setVertexRenderer(new GradientVertexRenderer<Feature, Edge>(Color.white, Color.red,
 				Color.white, Color.blue, viewer.getPickedVertexState(), false));
@@ -111,19 +131,15 @@ public class FeatureTopology {
 
 			@Override
 			public String apply(Feature v) {
-				return v.getAspect() + " " + v.getY();
+				return v.getAspect();
 			}
-
 		});
-
-		// add my listeners for ToolTips
 		viewer.setVertexToolTipTransformer(new Function<Feature, String>() {
 
 			@Override
 			public String apply(Feature feature) {
 				return feature.toString();
 			}
-
 		});
 		viewer.setEdgeToolTipTransformer(new Function<Edge, String>() {
 
@@ -133,15 +149,114 @@ public class FeatureTopology {
 			}
 		});
 
-		final GraphZoomScrollPane panel = new GraphZoomScrollPane(viewer);
-		content.add(panel);
+		GraphZoomScrollPane graphPanel = new GraphZoomScrollPane(viewer);
 
 		final AbstractModalGraphMouse graphMouse = new DefaultModalGraphMouse<String, Number>();
 		viewer.setGraphMouse(graphMouse);
 
 		viewer.addKeyListener(graphMouse.getModeKeyListener());
 		viewer.setToolTipText("<html>Type 'p' for Pick mode<p>Type 't' for Transform mode");
+		return graphPanel;
+	}
 
+	private JPanel createFeatureControls() {
+		layoutBox = new JComboBox<>(LAYOUTS);
+		layoutBox.setSize(150, 32);
+		layoutBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				reDrawGraph();
+			}
+		});
+
+		typeBox = new JComboBox<>();
+		typeBox.setSize(250, 32);
+		typeBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateGraph();
+			}
+		});
+
+		idxSlider = new JSlider(0, 500);
+		idxSlider.setToolTipText("Features list starting offset.");
+		idxSlider.setPaintTicks(true);
+		idxSlider.setMajorTickSpacing(55);
+		idxSlider.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				updateGraph();
+			}
+		});
+
+		idxCounter = new Counter();
+		idxCounter.addPropertyChangeListener(new PropertyChangeListener() {
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				int v = idxSlider.getValue();
+				switch (evt.getPropertyName()) {
+					case Counter.ADD:
+						int m = idxSlider.getMaximum();
+						if (v < m) v++;
+						break;
+					case Counter.SUB:
+						m = idxSlider.getMinimum();
+						if (v > m) v--;
+						break;
+				}
+				idxCounter.setValue(v);
+				idxSlider.setValue(v);
+			}
+		});
+
+		numSlider = new JSlider(1, 50);
+		numSlider.setToolTipText("Number of features to display together.");
+		numSlider.setPaintTicks(true);
+		numSlider.setMajorTickSpacing(5);
+		numSlider.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				updateGraph();
+			}
+		});
+
+		numCounter = new Counter();
+		numCounter.addPropertyChangeListener(new PropertyChangeListener() {
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				int v = numSlider.getValue();
+				switch (evt.getPropertyName()) {
+					case Counter.ADD:
+						int m = numSlider.getMaximum();
+						if (v < m) v++;
+						break;
+					case Counter.SUB:
+						m = numSlider.getMinimum();
+						if (v > m) v--;
+						break;
+				}
+				numCounter.setValue(v);
+				numSlider.setValue(v);
+			}
+		});
+
+		JPanel featurePanel = new JPanel();
+		featurePanel.add(layoutBox);
+		featurePanel.add(typeBox);
+		featurePanel.add(idxSlider);
+		featurePanel.add(idxCounter);
+		featurePanel.add(numSlider);
+		featurePanel.add(numCounter);
+		return featurePanel;
+	}
+
+	private JPanel createZoomControls() {
 		final ScalingControl scaler = new CrossoverScalingControl();
 
 		JButton plus = new JButton("+");
@@ -172,31 +287,24 @@ public class FeatureTopology {
 		controls.add(plus);
 		controls.add(minus);
 		controls.add(reset);
-		content.add(controls, BorderLayout.SOUTH);
+		return controls;
+	}
 
-		typeBox = new JComboBox<>();
-		typeBox.addActionListener(new ActionListener() {
+	@Override
+	protected void saveWindowClosingPrefs(Preferences prefs) {
+		prefs.putInt(KEY_START, idxSlider.getValue());
+		prefs.putInt(KEY_LIMIT, numSlider.getValue());
+	}
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateGraph();
-			}
-		});
+	@Override
+	protected String getBaseName() {
+		return "FeatureTopology";
+	}
 
-		controls = new JPanel();
-		controls.add(typeBox);
-		content.add(controls, BorderLayout.NORTH);
-
-		int width = prefs.getInt(KEY_WIDTH, 600);
-		int height = prefs.getInt(KEY_HEIGHT, 600);
-		content.setPreferredSize(new Dimension(width, height));
-		frame.pack();
-
-		if (prefs.getDouble(KEY_X, -1) != -1) {
-			frame.setLocation((int) prefs.getDouble(KEY_X, 100), (int) prefs.getDouble(KEY_Y, 100));
-		}
-
-		frame.setVisible(true);
+	protected JToolBar createToolBar() {
+		JToolBar bar = new JToolBar();
+		bar.add(getPngAction(viewer)).setText("");
+		return bar;
 	}
 
 	protected void createBoxModel() {
@@ -224,9 +332,41 @@ public class FeatureTopology {
 	}
 
 	protected void updateGraph() {
-		clearGraph();
-		createGraph(model.getSelectedFeatures());
+		if (model != null) {
+			clearGraph();
+			createGraph(model.getSelectedFeatures());
+			reDrawGraph();
+		}
+	}
 
+	protected void createGraph(List<Feature> features) {
+		int start = idxSlider.getValue();
+		int limit = start + numSlider.getValue();
+
+		for (int idx = start; idx < limit && idx < features.size(); idx++) {
+			Feature feature = features.get(idx);
+			graph.addVertex(feature);
+			Collection<List<Edge>> edgeLists = feature.getEdges().values();
+			for (List<Edge> edges : edgeLists) {
+				for (Edge edge : edges) {
+					graph.addEdge(edge, feature, edge.leaf, EdgeType.DIRECTED);
+				}
+			}
+		}
+
+		int max = features.size();
+		idxSlider.setMaximum(max - 1);
+		idxCounter.setValue(start);
+
+		int tck = 1;
+		if (max > 2) tck = 2;
+		if (max > 10) tck = 5;
+		if (max > 50) tck = 10;
+		if (max > 100) tck = 25;
+		idxSlider.setMajorTickSpacing(tck);
+	}
+
+	protected void reDrawGraph() {
 		Layout<Feature, Edge> layout = getLayout();
 		viewer.getModel().setGraphLayout(layout);
 	}
@@ -244,35 +384,40 @@ public class FeatureTopology {
 		}
 	}
 
-	void createGraph(List<Feature> features) {
-		int count = 0;
-		for (Feature feature : features) {
-			if (count > 30) break;
-			count++;
-			graph.addVertex(feature);
-			Collection<List<Edge>> edgeLists = feature.getEdges().values();
-			for (List<Edge> edges : edgeLists) {
-				for (Edge edge : edges) {
-					graph.addEdge(edge, feature, edge.leaf, EdgeType.DIRECTED);
-				}
-			}
-		}
-	}
-
 	private Layout<Feature, Edge> getLayout() {
-		Layout<Feature, Edge> layout = new FRLayout<Feature, Edge>(graph);
-		layout.setSize(new Dimension(1024, 1024));
+		String sel = TOPO;
+		if (layoutBox != null) {
+			sel = (String) layoutBox.getSelectedItem();
+			if (sel == null) sel = layoutBox.getItemAt(0);
+		}
+
+		Layout<Feature, Edge> layout = null;
+		switch (sel) {
+			case TOPO:
+				layout = new TopoLayout(graph, createTransformMap());
+				break;
+			case KK:
+				layout = new KKLayout<Feature, Edge>(graph);
+				break;
+			case SPRING:
+				layout = new SpringLayout<Feature, Edge>(graph);
+				break;
+			case FR:
+				layout = new FRLayout<Feature, Edge>(graph);
+				break;
+		}
+
+		layout.setSize(new Dimension(800, 800));
 		return layout;
 	}
 
-	static class GraphMouseAdaptor<V> implements GraphMouseListener<V> {
-
-		public void graphClicked(V v, MouseEvent me) {
-			System.err.println("Vertex " + v);
+	private MapSettableTransformer<Edge, EdgeData> createTransformMap() {
+		Map<Edge, EdgeData> map = new HashMap<>();
+		if (graph != null) {
+			for (Edge edge : graph.getEdges()) {
+				map.put(edge, EdgeData.create(edge));
+			}
 		}
-
-		public void graphPressed(V v, MouseEvent me) {}
-
-		public void graphReleased(V v, MouseEvent me) {}
+		return new MapSettableTransformer<Edge, EdgeData>(map);
 	}
 }

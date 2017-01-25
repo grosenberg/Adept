@@ -53,7 +53,8 @@ public class FeaturesListModel extends DefaultComboBoxModel<FeatureListItem> {
 			String type;
 			if (features.get(0).getKind() == Kind.RULE) {
 				tIdx = tIdx >> 10;
-				type = tIdx != 0 ? ruleNames.get(tIdx) : "adept";
+				if (tIdx == 0) continue; // do not include "adept"
+				type = ruleNames.get(tIdx);
 			} else {
 				type = tIdx != -1 ? tokenNames.get(tIdx) : "EOF";
 			}

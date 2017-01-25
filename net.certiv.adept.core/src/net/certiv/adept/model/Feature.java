@@ -322,6 +322,6 @@ public class Feature implements Comparable<Feature> {
 
 	@Override
 	public String toString() {
-		return String.format("Feature [@%s %s %s '%s']", id, kind, aspect, text);
+		return String.format("Feature [@%s:%s %s %s '%s']", y, x, kind, aspect, text);
 	}
 }

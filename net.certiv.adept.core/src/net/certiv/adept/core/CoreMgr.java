@@ -29,6 +29,7 @@ public class CoreMgr {
 	private CorpusModel corpus;
 	private List<Document> corpusDocs;
 	private Path corpusDir;
+	private int tabWidth;
 
 	private OutputBuilder buffer;
 
@@ -38,6 +39,7 @@ public class CoreMgr {
 
 	public void initialize(Path corpusDir, String corpusExt, int tabWidth, boolean rebuild) throws Exception {
 		this.corpusDir = corpusDir;
+		this.tabWidth = tabWidth;
 		corpus = CorpusModel.load(corpusDir, rebuild);
 		corpusDocs = corpus.read(corpusDir, corpusExt, tabWidth);
 		if (rebuild || !corpus.isValid(corpusDocs)) {
@@ -74,7 +76,7 @@ public class CoreMgr {
 
 			collector.annotateComments();
 			collector.index();
-			collector.genLocalEdges();
+			collector.genLocalEdges(tabWidth);
 
 			corpus.include(collector);
 		}
@@ -155,5 +157,9 @@ public class CoreMgr {
 	/** Return the document model */
 	public DocModel getDocModel() {
 		return model;
+	}
+
+	public int getCorpusTabWidth() {
+		return tabWidth;
 	}
 }

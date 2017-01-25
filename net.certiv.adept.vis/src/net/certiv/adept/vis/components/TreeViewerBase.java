@@ -2,7 +2,6 @@ package net.certiv.adept.vis.components;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -10,11 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 
 import org.abego.treelayout.TreeForTreeLayout;
@@ -27,7 +22,6 @@ import org.antlr.v4.runtime.tree.Tree;
 import com.google.common.collect.HashBasedTable;
 
 import net.certiv.adept.topo.Point;
-import net.certiv.adept.util.Log;
 
 public abstract class TreeViewerBase extends JComponent {
 
@@ -242,26 +236,5 @@ public abstract class TreeViewerBase extends JComponent {
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.scale(scale, scale);
 		return super.getComponentGraphics(g2d);
-	}
-
-	// PNG ------
-
-	public void generatePng(File png) {
-		BufferedImage bi = new BufferedImage(getSize().width, getSize().height, BufferedImage.TYPE_INT_ARGB);
-		Graphics g = bi.createGraphics();
-		paint(g);
-		g.dispose();
-
-		try {
-			ImageIO.write(bi, "png", png);
-		} catch (IOException e) {
-			Log.error(this, "Write failed to " + png.getPath());
-		}
-
-		try {
-			Desktop.getDesktop().open(png);
-		} catch (Exception ex) {
-			Log.error(this, "Failed to open " + png.getPath());
-		}
 	}
 }

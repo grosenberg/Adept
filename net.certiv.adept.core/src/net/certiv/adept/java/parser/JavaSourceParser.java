@@ -58,6 +58,8 @@ public class JavaSourceParser implements ISourceParser {
 		collector.HWS = JavaLexer.HWS;
 		collector.BLOCKCOMMENT = JavaLexer.BLOCKCOMMENT;
 		collector.LINECOMMENT = JavaLexer.LINECOMMENT;
+		collector.ERR_TOKEN = JavaLexer.ERRCHAR;
+		// collector.ERR_RULE = JavaParser.RULE_other << 10;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new JavaParser(collector.stream);
 	}

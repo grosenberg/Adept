@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Utils;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
@@ -48,7 +50,9 @@ public class Collector extends ParseData {
 		int rule = ctx.getRuleIndex();
 		int type = rule << 10;
 		if (exTypes.contains(type)) {
-			Log.info(this, "Skipping " + ctx.getText());
+			if (type == ERR_RULE) {
+				Log.debug(this, String.format("Skipping %s", Utils.escapeWhitespace(ctx.getText(), false)));
+			}
 			return;
 		}
 
@@ -67,13 +71,26 @@ public class Collector extends ParseData {
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
 		add(feature);
+
+		if (ctx.getChildCount() > 0) {
+			for (ParseTree child : ctx.children) {
+				if (child instanceof TerminalNode) {
+					annotateNode(ctx, (TerminalNode) child);
+				}
+			}
+		}
 	}
 
 	public void annotateNode(ParserRuleContext ctx, TerminalNode node) {
+		// do not revisit nodes
+		if (terminalIndex.get(node) != null) return;
+
 		Token token = node.getSymbol();
 		int type = token.getType();
 		if (exTypes.contains(type)) {
-			if (type != -1) Log.info(this, "Skipping " + node.getText() + token.toString());
+			if (type == ERR_TOKEN) {
+				Log.debug(this, String.format("Skipping %s %s", Utils.escapeWhitespace(ctx.getText(), false), token));
+			}
 			return;
 		}
 
@@ -112,12 +129,13 @@ public class Collector extends ParseData {
 	}
 
 	private Point getLocation(Token start, Token stop) {
-		if (start == stop) return ((AdeptToken) start).location();
+		return ((AdeptToken) start).location();
 
-		int mid = stop.getTokenIndex() - start.getTokenIndex();
-		mid /= 2;
-		mid += start.getTokenIndex();
-		return ((AdeptToken) stream.get(mid)).location();
+		// if (start == stop) return ((AdeptToken) start).location();
+		// int mid = stop.getTokenIndex() - start.getTokenIndex();
+		// mid /= 2;
+		// mid += start.getTokenIndex();
+		// return ((AdeptToken) stream.get(mid)).location();
 	}
 
 	private Size getSize(Token start, Token stop) {
@@ -140,9 +158,9 @@ public class Collector extends ParseData {
 		}
 	}
 
-	public void genLocalEdges() {
+	public void genLocalEdges(int tabWidth) {
 		for (Feature feature : features) {
-			group.setLocus(feature);
+			group.setLocus(feature, tabWidth);
 			List<Feature> locals = group.getLocalFeatures();
 			for (Feature local : locals) {
 				feature.addEdge(local);

@@ -1,26 +1,13 @@
 package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.prefs.Preferences;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -28,8 +15,6 @@ import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableColumnModel;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -42,13 +27,14 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.SliderDialog;
 import net.certiv.adept.vis.components.TextLineNumber;
 import net.certiv.adept.vis.components.TreeViewer;
 import net.certiv.adept.vis.models.TokenTableModel;
 import net.certiv.adept.vis.renderers.TokenCellRenderer;
 
-public class ParseTreeView {
+public class ParseTreeView extends AbstractBase {
 
 	public static void main(String[] args) {
 		try {
@@ -57,50 +43,21 @@ public class ParseTreeView {
 		new ParseTreeView();
 	}
 
-	private static final FileFilter pngFilter = new FileNameExtensionFilter("PNG Files", "png");
-
 	private static final String name = "ParseTree";
-	private static final String ext = ".png";
 
-	private static final String Eol = System.lineSeparator();
-	private static final String KEY_WIDTH = "frame_width";
-	private static final String KEY_HEIGHT = "frame_height";
-	private static final String KEY_X = "frame_x";
-	private static final String KEY_Y = "frame_y";
 	private static final String KEY_SPLIT_VERT = "frame_split_vert";
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 
-	private JFrame frame;
 	private JSplitPane mainPane;
 	private TreeViewer viewer;
 	private JSplitPane bottomPane;
 	private JTextPane textPane;
 	private JTable table;
-	private Preferences prefs;
 
-	private Action openAction = new OpenAction();
-	private Action pngSaveAction = new PngSaveAction();
 	private int level;
 
 	public ParseTreeView() {
-		frame = new JFrame("ParseData tree visiualization");
-		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("tree.gif"));
-		frame.setIconImage(imgicon.getImage());
-
-		prefs = Preferences.userNodeForPackage(ParseTreeView.class);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.addWindowListener(new WindowAdapter() {
-
-			@Override
-			public void windowClosing(WindowEvent e) {
-				prefs.putDouble(KEY_X, frame.getLocationOnScreen().getX());
-				prefs.putDouble(KEY_Y, frame.getLocationOnScreen().getY());
-				prefs.putInt(KEY_WIDTH, (int) frame.getSize().getWidth());
-				prefs.putInt(KEY_HEIGHT, (int) frame.getSize().getHeight());
-				prefs.putInt(KEY_SPLIT_VERT, mainPane.getDividerLocation());
-				prefs.putInt(KEY_SPLIT_HORZ, bottomPane.getDividerLocation());
-			}
-		});
+		super("ParseData tree visiualization", "tree.gif");
 
 		viewer = new TreeViewer();
 		viewer.addMouseListener(new MouseAdapter() {
@@ -140,25 +97,33 @@ public class ParseTreeView {
 		mainPane.setDividerLocation(0.5);
 		bottomPane.setDividerLocation(0.5);
 
-		Container content = frame.getContentPane();
 		content.add(mainPane, BorderLayout.CENTER);
 		content.add(createToolBar(), BorderLayout.NORTH);
 
-		int width = prefs.getInt(KEY_WIDTH, 600);
-		int height = prefs.getInt(KEY_HEIGHT, 600);
-		content.setPreferredSize(new Dimension(width, height));
-		frame.pack();
+		setLocation();
 
 		int split = prefs.getInt(KEY_SPLIT_VERT, 300);
 		mainPane.setDividerLocation(split);
 		split = prefs.getInt(KEY_SPLIT_HORZ, 350);
 		bottomPane.setDividerLocation(split);
 
-		if (prefs.getDouble(KEY_X, -1) != -1) {
-			frame.setLocation((int) prefs.getDouble(KEY_X, 100), (int) prefs.getDouble(KEY_Y, 100));
-		}
-
 		frame.setVisible(true);
+	}
+
+	@Override
+	protected void saveWindowClosingPrefs(Preferences prefs) {
+		prefs.putInt(KEY_SPLIT_VERT, mainPane.getDividerLocation());
+		prefs.putInt(KEY_SPLIT_HORZ, bottomPane.getDividerLocation());
+	}
+
+	@Override
+	protected String getBaseName() {
+		return name;
+	}
+
+	@Override
+	protected void handleFileOpen(File file) {
+		createData(file);
 	}
 
 	protected void handleScaleChange() {
@@ -196,16 +161,8 @@ public class ParseTreeView {
 		JToolBar bar = new JToolBar();
 		bar.add(getOpenAction()).setText("");
 		bar.addSeparator();
-		bar.add(getPngSaveAction()).setText("");
+		bar.add(getPngAction(viewer)).setText("");
 		return bar;
-	}
-
-	protected Action getOpenAction() {
-		return openAction;
-	}
-
-	protected Action getPngSaveAction() {
-		return pngSaveAction;
 	}
 
 	@SuppressWarnings("deprecation")
@@ -288,63 +245,5 @@ public class ParseTreeView {
 
 	private String getIndents() {
 		return "    ";
-	}
-
-	class OpenAction extends AbstractAction {
-
-		public OpenAction() {
-			super("Open", new ImageIcon("resources/open.png"));
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent ev) {
-			JFileChooser chooser = new JFileChooser();
-			Path path = Paths.get("../net.certiv.adept.test/test.snippets");
-			chooser.setCurrentDirectory(path.toFile());
-
-			if (chooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) return;
-			File file = chooser.getSelectedFile();
-			if (file == null || !file.isFile()) return;
-
-			createData(file);
-		}
-	}
-
-	class PngSaveAction extends AbstractAction {
-
-		public PngSaveAction() {
-			super("Save png", new ImageIcon("resources/png.png"));
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent ev) {
-			JFileChooser chooser = new JFileChooser();
-			Path path = Paths.get("doc");
-			if (!path.toFile().exists()) {
-				try {
-					Files.createDirectory(path);
-				} catch (IOException e) {}
-			}
-
-			chooser.setSelectedFile(proposeName(path));
-			chooser.setCurrentDirectory(path.toFile());
-			chooser.addChoosableFileFilter(pngFilter);
-			chooser.setFileFilter(pngFilter);
-
-			if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
-			File file = chooser.getSelectedFile();
-
-			viewer.generatePng(file);
-		}
-	}
-
-	private File proposeName(Path path) {
-		int cnt = 1;
-		File png = new File(path.toString(), name + ext);
-		while (png.exists()) {
-			png = new File(path.toString(), String.format("%s%03d%s", name, cnt, ext));
-			cnt++;
-		}
-		return png;
 	}
 }

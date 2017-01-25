@@ -355,4 +355,20 @@ public class Strings {
 	public static boolean isLineDelimiterChar(char ch) {
 		return ch == '\n' || ch == '\r';
 	}
+
+	public static int measureVisualWidth(CharSequence line, int tabWidth) {
+		if (tabWidth < 0 || line == null) throw new IllegalArgumentException();
+
+		int length = 0;
+		int max = line.length();
+		for (int idx = 0; idx < max; idx++) {
+			if (line.charAt(idx) == '\t') {
+				int remainder = length % tabWidth;
+				length += tabWidth - remainder;
+			} else {
+				length++;
+			}
+		}
+		return length;
+	}
 }

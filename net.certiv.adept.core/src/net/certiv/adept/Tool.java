@@ -62,7 +62,7 @@ public class Tool extends ToolBase {
 	public String corpusRoot;
 	public String lang;
 	public String output;
-	public int tabWidth; 		// in the source document and for the formatter
+	public int tabWidth; 		// in the source document
 	public int corpusTabWidth;	// in the corpus documents
 	public String verbose;
 
@@ -312,7 +312,6 @@ public class Tool extends ToolBase {
 		return true;
 	}
 
-	// FIX: partial duplicate of CoreMgr#rebuild
 	public void execute() {
 		documents = loadDocuments(sourceFiles);
 		Log.info(this, documents.size() + " source documents to process.");
@@ -346,7 +345,7 @@ public class Tool extends ToolBase {
 
 			collector.annotateComments();
 			collector.index();
-			collector.genLocalEdges();
+			collector.genLocalEdges(tabWidth);
 
 			mgr.createDocModel(collector);
 
@@ -373,13 +372,15 @@ public class Tool extends ToolBase {
 
 	private List<Document> loadDocuments(List<String> filenames) {
 		List<Document> documents = new ArrayList<>();
-		for (String fileName : filenames) {
-			try {
-				Document document = loadDocument(fileName);
-				if (document == null) continue; // came back as error
-				documents.add(document);
-			} catch (IOException e) {
-				errMgr.toolError(ErrorType.CANNOT_OPEN_FILE, e, fileName);
+		if (filenames != null) {
+			for (String fileName : filenames) {
+				try {
+					Document document = loadDocument(fileName);
+					if (document == null) continue; // came back as error
+					documents.add(document);
+				} catch (IOException e) {
+					errMgr.toolError(ErrorType.CANNOT_OPEN_FILE, e, fileName);
+				}
 			}
 		}
 		return documents;

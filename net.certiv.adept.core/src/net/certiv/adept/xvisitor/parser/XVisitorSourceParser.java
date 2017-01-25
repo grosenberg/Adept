@@ -58,6 +58,8 @@ public class XVisitorSourceParser implements ISourceParser {
 		collector.HWS = XVisitorLexer.HORZ_WS;
 		collector.BLOCKCOMMENT = XVisitorLexer.BLOCK_COMMENT;
 		collector.LINECOMMENT = XVisitorLexer.LINE_COMMENT;
+		collector.ERR_TOKEN = XVisitorLexer.ERRCHAR;
+		// collector.ERR_RULE = XVisitorParser.RULE_other << 10;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new XVisitorParser(collector.stream);
 	}

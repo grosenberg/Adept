@@ -5,15 +5,11 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -27,6 +23,7 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.models.EdgeTableModel;
 import net.certiv.adept.vis.models.FeatureTableModel;
 import net.certiv.adept.vis.models.FeaturesTableModel;
@@ -34,7 +31,7 @@ import net.certiv.adept.vis.renderers.EdgeCellRenderer;
 import net.certiv.adept.vis.renderers.FeatureCellRenderer;
 import net.certiv.adept.vis.renderers.FeaturesCellRenderer;
 
-public class FeaturesView {
+public class FeaturesView extends AbstractBase {
 
 	public static void main(String[] args) {
 		try {
@@ -44,21 +41,14 @@ public class FeaturesView {
 		view.createFeaturesData();
 	}
 
-	// private static final String Eol = System.lineSeparator();
-	private static final String KEY_WIDTH = "frame_width";
-	private static final String KEY_HEIGHT = "frame_height";
-	private static final String KEY_X = "frame_x";
-	private static final String KEY_Y = "frame_y";
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	private static final String KEY_SPLIT_HORZ1 = "frame_split_horz1";
 
-	private JFrame frame;
 	private JSplitPane mainPane;
 	private JSplitPane subPane;
 	private JTable fsTable;
 	private JTable fxTable;
 	private JTable egTable;
-	private Preferences prefs;
 
 	private ISourceParser lang;
 	private Map<Integer, List<Feature>> index;
@@ -75,24 +65,7 @@ public class FeaturesView {
 	};
 
 	public FeaturesView() {
-		frame = new JFrame("Features Analysis");
-		ImageIcon imgicon = new ImageIcon(getClass().getClassLoader().getResource("features.gif"));
-		frame.setIconImage(imgicon.getImage());
-
-		prefs = Preferences.userNodeForPackage(FeaturesView.class);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.addWindowListener(new WindowAdapter() {
-
-			@Override
-			public void windowClosing(WindowEvent e) {
-				prefs.putDouble(KEY_X, frame.getLocationOnScreen().getX());
-				prefs.putDouble(KEY_Y, frame.getLocationOnScreen().getY());
-				prefs.putInt(KEY_WIDTH, (int) frame.getSize().getWidth());
-				prefs.putInt(KEY_HEIGHT, (int) frame.getSize().getHeight());
-				prefs.putInt(KEY_SPLIT_HORZ, mainPane.getDividerLocation());
-				prefs.putInt(KEY_SPLIT_HORZ1, subPane.getDividerLocation());
-			}
-		});
+		super("Features Analysis", "features.gif");
 
 		fsTable = new JTable();
 		fsTable.setFillsViewportHeight(true);
@@ -150,21 +123,20 @@ public class FeaturesView {
 		Container content = frame.getContentPane();
 		content.add(mainPane, BorderLayout.CENTER);
 
-		int width = prefs.getInt(KEY_WIDTH, 600);
-		int height = prefs.getInt(KEY_HEIGHT, 600);
-		content.setPreferredSize(new Dimension(width, height));
-		frame.pack();
+		setLocation();
 
 		int split = prefs.getInt(KEY_SPLIT_HORZ, 300);
 		mainPane.setDividerLocation(split);
 		split = prefs.getInt(KEY_SPLIT_HORZ1, 300);
 		subPane.setDividerLocation(split);
 
-		if (prefs.getDouble(KEY_X, -1) != -1) {
-			frame.setLocation((int) prefs.getDouble(KEY_X, 100), (int) prefs.getDouble(KEY_Y, 100));
-		}
-
 		frame.setVisible(true);
+	}
+
+	@Override
+	protected void saveWindowClosingPrefs(Preferences prefs) {
+		prefs.putInt(KEY_SPLIT_HORZ, mainPane.getDividerLocation());
+		prefs.putInt(KEY_SPLIT_HORZ1, subPane.getDividerLocation());
 	}
 
 	protected void createFeaturesData() {

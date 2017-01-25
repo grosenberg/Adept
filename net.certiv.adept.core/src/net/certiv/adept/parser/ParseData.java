@@ -24,6 +24,8 @@ public class ParseData {
 	public int HWS;
 	public int BLOCKCOMMENT = -2;
 	public int LINECOMMENT = -2;
+	public int ERR_TOKEN = -2;
+	public int ERR_RULE = -2;
 
 	public Parser parser;
 	public ParserRuleContext tree;
