@@ -19,8 +19,8 @@ public class CorpusModel extends CorpusStore {
 	private static final long GAP = 500000;
 
 	// list of document names that represented in the corpus
-	// key=doc id; value=document pathname
-	@Expose Map<Integer, String> pathnames;
+	// key=docId; value=document pathname
+	@Expose private Map<Integer, String> pathnames;
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
 
@@ -28,9 +28,9 @@ public class CorpusModel extends CorpusStore {
 	private Path corpusDir;
 	// list of features that represent the corpus as a whole
 	private List<Feature> features;
-	// same as sublists keyed by docId
+	// key = docId; value = contained features
 	private Map<Integer, List<Feature>> docFeatures;
-	// list of features keyed by feature type
+	// key = feature type; value = corresponding features
 	private Map<Integer, List<Feature>> index;
 
 	private boolean consistent; // current state of model
@@ -106,6 +106,7 @@ public class CorpusModel extends CorpusStore {
 		getFeatureIndex();
 		clearFeatures();
 		addUniqueFeatures();
+		updateDocFeatures();
 		clearIndex();
 	}
 
@@ -144,6 +145,16 @@ public class CorpusModel extends CorpusStore {
 			}
 		}
 		return null;
+	}
+
+	private void updateDocFeatures() {
+		for (List<Feature> fList : docFeatures.values()) {
+			fList.clear();
+		}
+		for (Feature feature : features) {
+			List<Feature> fList = docFeatures.get(feature.getDocId());
+			fList.add(feature);
+		}
 	}
 
 	/** Add new document to the corpus model */
@@ -216,7 +227,6 @@ public class CorpusModel extends CorpusStore {
 	}
 
 	private void clearIndex() {
-		// if (index != null)
 		index.clear();
 	}
 

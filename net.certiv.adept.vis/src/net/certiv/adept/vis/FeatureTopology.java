@@ -18,9 +18,11 @@ import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -37,7 +39,6 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.control.AbstractModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
@@ -51,6 +52,7 @@ import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.Counter;
+import net.certiv.adept.vis.components.PopupGraphMousePlugin;
 import net.certiv.adept.vis.layout.EdgeData;
 import net.certiv.adept.vis.layout.TopoLayout;
 import net.certiv.adept.vis.models.FeaturesListModel;
@@ -94,15 +96,15 @@ public class FeatureTopology extends AbstractBase {
 		super("Feature Topology", "vis.gif");
 
 		GraphZoomScrollPane graphPanel = createGraphPanel();
+		graphPanel.setBorder(LineBorder.createBlackLineBorder());
 		JPanel featurePanel = createFeatureControls();
 		JPanel zoomPanel = createZoomControls();
 
-		JPanel mainPanel = new JPanel(new BorderLayout(1, 1));
+		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(featurePanel, BorderLayout.NORTH);
 		mainPanel.add(graphPanel, BorderLayout.CENTER);
 		mainPanel.add(zoomPanel, BorderLayout.SOUTH);
 
-		content.add(createToolBar(), BorderLayout.NORTH);
 		content.add(mainPanel, BorderLayout.CENTER);
 
 		idxSlider.setValue(prefs.getInt(KEY_START, 0));
@@ -116,7 +118,6 @@ public class FeatureTopology extends AbstractBase {
 		graph = new DirectedSparseGraph<>();
 		viewer = new VisualizationViewer<Feature, Edge>(getLayout());
 
-		viewer.addGraphMouseListener(new GraphMouseAdaptor<Feature>());
 		viewer.getRenderer().setVertexRenderer(new GradientVertexRenderer<Feature, Edge>(Color.white, Color.red,
 				Color.white, Color.blue, viewer.getPickedVertexState(), false));
 		viewer.setForeground(Color.darkGray);
@@ -149,14 +150,20 @@ public class FeatureTopology extends AbstractBase {
 			}
 		});
 
-		GraphZoomScrollPane graphPanel = new GraphZoomScrollPane(viewer);
-
-		final AbstractModalGraphMouse graphMouse = new DefaultModalGraphMouse<String, Number>();
+		DefaultModalGraphMouse<String, Number> graphMouse = new DefaultModalGraphMouse<>();
 		viewer.setGraphMouse(graphMouse);
-
 		viewer.addKeyListener(graphMouse.getModeKeyListener());
-		viewer.setToolTipText("<html>Type 'p' for Pick mode<p>Type 't' for Transform mode");
-		return graphPanel;
+		// viewer.setToolTipText("<html>Type 'p' for Pick mode<p>Type 't' for Transform mode");
+
+		graphMouse.add(new PopupGraphMousePlugin<Feature, Edge>() {
+
+			@Override
+			public void addCanvasActions(JPopupMenu popup) {
+				popup.add(getPngAction(viewer));
+			}
+		});
+
+		return new GraphZoomScrollPane(viewer);
 	}
 
 	private JPanel createFeatureControls() {
@@ -304,6 +311,7 @@ public class FeatureTopology extends AbstractBase {
 	protected JToolBar createToolBar() {
 		JToolBar bar = new JToolBar();
 		bar.add(getPngAction(viewer)).setText("");
+		bar.setFloatable(false);
 		return bar;
 	}
 
@@ -341,7 +349,8 @@ public class FeatureTopology extends AbstractBase {
 
 	protected void createGraph(List<Feature> features) {
 		int start = idxSlider.getValue();
-		int limit = start + numSlider.getValue();
+		int count = numSlider.getValue();
+		int limit = start + count;
 
 		for (int idx = start; idx < limit && idx < features.size(); idx++) {
 			Feature feature = features.get(idx);
@@ -357,6 +366,7 @@ public class FeatureTopology extends AbstractBase {
 		int max = features.size();
 		idxSlider.setMaximum(max - 1);
 		idxCounter.setValue(start);
+		numCounter.setValue(count);
 
 		int tck = 1;
 		if (max > 2) tck = 2;

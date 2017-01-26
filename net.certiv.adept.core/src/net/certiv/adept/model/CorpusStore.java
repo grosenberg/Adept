@@ -103,10 +103,6 @@ public abstract class CorpusStore {
 			InputStream gis = new GZIPInputStream(Files.newInputStream(path));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
 			model = gson.fromJson(reader, CorpusModel.class);
-
-			// byte[] bytes = Files.readAllBytes(path);
-			// model = gson.fromJson(new String(bytes, StandardCharsets.UTF_8), CorpusModel.class);
-
 			model.setCorpusDir(corpusDir);
 		} catch (IOException | JsonSyntaxException e) {
 			Log.error(CorpusStore.class, "Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
@@ -121,11 +117,6 @@ public abstract class CorpusStore {
 				InputStream is = new GZIPInputStream(Files.newInputStream(dPath));
 				BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 				Features features = gson.fromJson(reader, Features.class);
-
-				// byte[] bytes = Files.readAllBytes(dPath);
-				// Features features = gson.fromJson(new String(bytes, StandardCharsets.UTF_8),
-				// Features.class);
-
 				features.fixEdgeRefs();
 				model.addAll(features);
 			} catch (IOException | JsonSyntaxException e) {
@@ -164,8 +155,6 @@ public abstract class CorpusStore {
 		Path path = corpusDir.resolve(MODEL + DOT + EXT);
 		JsonWriter writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
 
-		// JsonWriter writer = configWriter(Files.newOutputStream(path));
-
 		try {
 			Log.debug(this, "Saving " + path.toString());
 			gson.toJson(this, CorpusModel.class, writer);
@@ -182,8 +171,6 @@ public abstract class CorpusStore {
 
 			path = corpusDir.resolve(String.format("%s%03d%s", DATA, idx, DOT + EXT));
 			writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
-
-			// writer = configWriter(Files.newOutputStream(path));
 
 			try {
 				Log.debug(this, "Saving " + path.toString());

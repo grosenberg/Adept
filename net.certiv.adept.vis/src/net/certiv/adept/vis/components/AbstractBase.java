@@ -190,13 +190,10 @@ public abstract class AbstractBase {
 
 		public GraphMouseAdaptor() {}
 
-		public void graphClicked(V v, MouseEvent me) {
-			System.err.println("Vertex " + v);
-		}
+		public void graphClicked(V v, MouseEvent e) {}
 
-		public void graphPressed(V v, MouseEvent me) {}
+		public void graphPressed(V v, MouseEvent e) {}
 
-		public void graphReleased(V v, MouseEvent me) {}
+		public void graphReleased(V v, MouseEvent e) {}
 	}
-
 }
