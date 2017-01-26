@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import com.google.gson.annotations.Expose;
@@ -96,29 +95,55 @@ public class CorpusModel extends CorpusStore {
 		Log.debug(this, String.format("Processed %s [features=%s]", doc.getPathname(), featureList.size()));
 	}
 
-	public void reduceConstraints() {}
+	/**
+	 * Reduce the feature set of the initially constructed corpus model (containing all features
+	 * from all documents). Equivalent features are collapsed to a single instance with
+	 * correspondingly increased weight. Equivalency is defined by identity of feature type,
+	 * equality of edge sets, identity of edge leaf node text, and identity of format.
+	 */
+	public void reduceConstraints() {
+		clearIndex();
+		getFeatureIndex();
+		clearFeatures();
+		addUniqueFeatures();
+		clearIndex();
+	}
 
-	@SuppressWarnings("unused")
-	private void removeEquivalentEdges(List<Feature> featureList) {
-		for (Feature feature : featureList) {
-			Map<Integer, List<Edge>> edges = feature.getEdges();
-			for (Entry<Integer, List<Edge>> edgeSet : edges.entrySet()) {
-				List<Edge> uedges = new ArrayList<>();
-				for (Edge edge : edgeSet.getValue()) {
-					if (uedges.isEmpty()) {
-						uedges.add(edge);
-						continue;
-					}
-					for (Edge uedge : uedges) {
-						if (!edge.equivalentTo(uedge)) {
-							uedges.add(edge);
-							break;
-						}
-					}
+	private void addUniqueFeatures() {
+		int tot = 0;
+		int unq = 0;
+		for (Integer type : index.keySet()) {
+			List<Feature> set = index.get(type);
+			tot += set.size();
+			String aspect = set.get(0).getAspect();
+			List<Feature> sub = new ArrayList<>();
+			for (Feature feature : set) {
+				Feature equiv = getEquivalent(sub, feature);
+				if (equiv == null) {
+					sub.add(feature);
+				} else {
+					equiv.mergeEquivalent(feature);
 				}
-				edges.put(edgeSet.getKey(), uedges);
+			}
+			features.addAll(sub);
+			unq += sub.size();
+
+			if (sub.size() < set.size()) {
+				Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect, type, set.size(),
+						sub.size()));
 			}
 		}
+		int reduction = 100 - (unq * 100 / tot);
+		Log.debug(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
+	}
+
+	private Feature getEquivalent(List<Feature> sub, Feature feature) {
+		for (Feature f : sub) {
+			if (f.equivalentTo(feature)) {
+				return f;
+			}
+		}
+		return null;
 	}
 
 	/** Add new document to the corpus model */
@@ -158,6 +183,17 @@ public class CorpusModel extends CorpusStore {
 		return index;
 	}
 
+	private void buildIndex() {
+		for (Feature f : features) {
+			List<Feature> fSet = index.get(f.getType());
+			if (fSet == null) {
+				fSet = new ArrayList<>();
+				index.put(f.getType(), fSet);
+			}
+			fSet.add(f);
+		}
+	}
+
 	/** Returns all features in the Corpus model */
 	public List<Feature> getFeatures() {
 		return features;
@@ -172,11 +208,20 @@ public class CorpusModel extends CorpusStore {
 	}
 
 	public void clear() {
-		if (index != null) index.clear();
+		clearIndex();
+		clearFeatures();
 		pathnames.clear();
-		features.clear();
 		lastModified = 0;
 		consistent = false;
+	}
+
+	private void clearIndex() {
+		// if (index != null)
+		index.clear();
+	}
+
+	private void clearFeatures() {
+		features.clear();
 	}
 
 	@Override
@@ -203,16 +248,5 @@ public class CorpusModel extends CorpusStore {
 		}
 
 		return om;
-	}
-
-	private void buildIndex() {
-		for (Feature f : features) {
-			List<Feature> fSet = index.get(f.getType());
-			if (fSet == null) {
-				fSet = new ArrayList<>();
-				index.put(f.getType(), fSet);
-			}
-			fSet.add(f);
-		}
 	}
 }

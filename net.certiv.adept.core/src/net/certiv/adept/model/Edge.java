@@ -29,8 +29,9 @@ public class Edge {
 	}
 
 	public boolean equivalentTo(Edge other) {
-		if (leaf.getType() == other.leaf.getType()) return true;
-		return false;
+		if (leaf.getType() != other.leaf.getType()) return false;
+		if (!leaf.getText().equals(other.leaf.getText())) return false;
+		return true;
 	}
 
 	@Override

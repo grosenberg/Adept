@@ -1,5 +1,7 @@
 package net.certiv.adept.model;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +16,16 @@ import com.google.gson.annotations.Expose;
 import net.certiv.adept.Tool;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Point;
+import net.certiv.adept.topo.Position;
 import net.certiv.adept.topo.Size;
 import net.certiv.adept.topo.Stats;
 
 public class Feature implements Comparable<Feature> {
 
-	@Expose private int docId;	// unique id of the document containing this feature
-	@Expose private int id;		// unique id of this feature
+	@Expose private int docId;		// unique id of the document containing this feature
+	@Expose private int id;			// unique id of this feature
 
-	@Expose private Kind kind;	// feature category
+	@Expose private Kind kind;		// feature category
 
 	@Expose private String aspect;	// rule or token name
 	@Expose private String text;	// rule or token text
@@ -42,17 +45,27 @@ public class Feature implements Comparable<Feature> {
 	@Expose private double selfSim;
 
 	// defines connections between this feature and others in a local group
-	@Expose Edges edges = new Edges();
+	@Expose Edges edges;
+
+	// key = docId; value = positions of feature in document
+	@Expose Map<Integer, List<Position>> equivalents; // other documents containing equivalents
 
 	private Feature matched;
 	private boolean update;
 	private int aligned;
+
+	public Feature() {
+		super();
+		edges = new Edges();
+		equivalents = new HashMap<>();
+	}
 
 	public Feature(String aspect, int type, Token token, Point location, Size size, int format) {
 		this(aspect, type, token, token, location, size, format);
 	}
 
 	public Feature(String aspect, int type, Token start, Token stop, Point location, Size size, int format) {
+		this();
 		this.aspect = aspect;
 		this.type = type;
 		this.start = start.getTokenIndex();
@@ -178,7 +191,11 @@ public class Feature implements Comparable<Feature> {
 		}
 	}
 
-	public Map<Integer, List<Edge>> getEdges() {
+	public Edges getEdges() {
+		return edges;
+	}
+
+	public Map<Integer, List<Edge>> getEdgesMap() {
 		return edges.getEdges();
 	}
 
@@ -201,8 +218,8 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public double simularity(Feature other) {
-		Set<Integer> keys = new HashSet<>(getEdges().keySet());
-		keys.addAll(other.getEdges().keySet());
+		Set<Integer> keys = new HashSet<>(getEdgesMap().keySet());
+		keys.addAll(other.getEdgesMap().keySet());
 		double sim = 0;
 		for (int key : keys) {
 			List<Edge> e1 = getEdges(key);
@@ -249,6 +266,49 @@ public class Feature implements Comparable<Feature> {
 
 	public Stats getStats() {
 		return new Stats(this);
+	}
+
+	/**
+	 * Equivalency is defined by identity of feature type, equality of edge sets, identity of edge
+	 * leaf node text, and identity of format.
+	 */
+	public boolean equivalentTo(Feature o) {
+		// same format
+		if (format != o.format) return false;
+		// same type of feature
+		if (type != o.type) return false;
+		// same number of edge types
+		if (getEdgesMap().size() != o.getEdgesMap().size()) return false;
+		// same edge types
+		Set<Integer> types = new HashSet<>(getEdgesMap().keySet());
+		types.removeAll(o.getEdgesMap().keySet());
+		if (!types.isEmpty()) return false;
+		// same edges per type
+		for (Integer etype : getEdgesMap().keySet()) {
+			List<Edge> e1 = getEdges(etype);
+			List<Edge> e2 = new ArrayList<>(o.getEdges(etype));
+			if (e1.size() != e2.size()) return false;
+			for (Edge a : e1) {
+				for (Edge b : e2) {
+					if (a.equivalentTo(b)) {
+						e2.remove(b);
+						break;
+					}
+				}
+			}
+			if (!e2.isEmpty()) return false;
+		}
+		return true;
+	}
+
+	public void mergeEquivalent(Feature feature) {
+		weight++;
+		List<Position> did = equivalents.get(feature.docId);
+		if (did == null) {
+			did = new ArrayList<>();
+			equivalents.put(feature.docId, did);
+		}
+		did.add(new Position(feature.x, feature.y));
 	}
 
 	@Override

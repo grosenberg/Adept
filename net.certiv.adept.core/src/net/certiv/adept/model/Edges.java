@@ -11,7 +11,7 @@ import com.google.gson.annotations.Expose;
 public class Edges {
 
 	// defines connections between this feature and others in the local group
-	// key=kind of feature connected; value=edges to unique features of type
+	// key=type of feature connected; value=edges to unique features of type
 	@Expose private Map<Integer, List<Edge>> edges;
 
 	public Edges() {
@@ -53,6 +53,11 @@ public class Edges {
 		return size;
 	}
 
+	/**
+	 * Determines whether the given edge is present in the current map of edges. An edge is present
+	 * if the edge type and leaf feature is the same (identity) as the type and leaf feature of the
+	 * map.
+	 */
 	public boolean contains(Edge edge) {
 		int type = edge.leaf.getType();
 		List<Edge> value = edges.get(type);

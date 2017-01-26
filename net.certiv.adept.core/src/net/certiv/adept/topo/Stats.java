@@ -27,7 +27,7 @@ public class Stats {
 	}
 
 	private void edgeCount() {
-		Map<Integer, List<Edge>> edgeMap = feature.getEdges();
+		Map<Integer, List<Edge>> edgeMap = feature.getEdgesMap();
 		typeCount = edgeMap.size();
 
 		for (List<Edge> edges : edgeMap.values()) {

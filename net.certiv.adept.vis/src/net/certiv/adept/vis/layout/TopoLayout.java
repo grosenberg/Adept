@@ -11,8 +11,6 @@ import com.google.common.collect.HashBiMap;
 
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
-import edu.uci.ics.jung.algorithms.shortestpath.Distance;
-import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.algorithms.util.IterativeContext;
 import edu.uci.ics.jung.algorithms.util.MapSettableTransformer;
 import edu.uci.ics.jung.graph.Graph;
@@ -26,86 +24,108 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 
 	private String status = "Topo Layout";
 	private int currentIteration;
+	private int vertexCnt;
 	private int L; // the ideal length of an edge
-	private MapSettableTransformer<Edge, EdgeData> edt;
-
-	private Point2D[] xydata;
 
 	// key=feature; value=vertex index
 	private BiMap<Feature, Integer> vertices;
-	/** Graph distances between vertices of the visible graph */
-	protected Distance<Feature> distance;
-	/** The diameter of the visible graph. */
-	protected double diameter;
-	private int vertexCnt;
+	private Point2D[] xydata;
+	private MapSettableTransformer<Edge, EdgeData> edt;
+
+	// /** Graph distances between vertices of the visible graph */
+	// protected Distance<Feature> distance;
+	// /** The diameter of the visible graph. */
+	// protected double diameter;
+
+	private List<Edge> edges;
+	private List<Feature> roots;
+	private double oX; // X origin for root 0
+	private double oY; // Y origin
 
 	public TopoLayout(Graph<Feature, Edge> graph, MapSettableTransformer<Edge, EdgeData> edt) {
 		super(graph);
 		this.edt = edt;
-		this.distance = new UnweightedShortestPath<Feature, Edge>(graph);
+		// this.distance = new UnweightedShortestPath<Feature, Edge>(graph);
 	}
 
 	@Override
 	public void initialize() {
-		currentIteration = 0;
 		if (graph != null && size != null) {
-			vertexCnt = graph.getVertexCount();
+			currentIteration = 0;
+			initConstants();
 			if (vertexCnt < 2) return;
+			calcUnitLength();
+			initLocations();
+		}
+	}
 
-			vertices = HashBiMap.create(vertexCnt);
-			xydata = new Point2D[vertexCnt];
+	private void initConstants() {
+		while (true) {
+			try {
+				vertexCnt = graph.getVertexCount();
+				if (vertexCnt < 2) return;
 
-			while (true) {
-				try {
+				vertices = HashBiMap.create(vertexCnt);
+				xydata = new Point2D[vertexCnt];
+				edges = new ArrayList<>(graph.getEdges());
+				roots = getRoots(edges);
+				oX = size.getWidth() / (roots.size() + 1);
+				oY = size.getHeight() / 2;
 
-					// assign indices to vertices
-					int index = 0;
-					for (Feature feature : graph.getVertices()) {
-						vertices.put(feature, index);
-						index++;
+				// assign indices to vertices
+				int index = 0;
+				for (Feature feature : graph.getVertices()) {
+					vertices.put(feature, index);
+					index++;
+				}
+
+				break;
+			} catch (ConcurrentModificationException cme) {}
+		}
+	}
+
+	private void calcUnitLength() {
+		while (true) {
+			try {
+				int range = getRange(edges);
+				double L0 = Math.min(size.getHeight(), size.getWidth());
+				L = (int) Math.round((L0 / range) * UNIT);
+				break;
+			} catch (ConcurrentModificationException cme) {}
+		}
+	}
+
+	// assign locations to vertices
+	private void initLocations() {
+		while (true) {
+			try {
+				for (Edge edge : edges) {
+					Feature f1 = edge.root;
+					Feature f2 = edge.leaf;
+
+					EdgeData data = edt.apply(edge);
+					int v1 = vertices.get(f1);
+					int v2 = vertices.get(f2);
+					Point2D xy1 = xydata[v1];
+					Point2D xy2 = xydata[v2];
+					if (xy1 == null && xy2 == null) {
+						xydata[v1] = new Point2D.Double(0, 0);
+						xydata[v2] = data.getRelative(xydata[v1]);
+					} else if (xy1 == null) {
+						xydata[v1] = data.getRelativeInv(xydata[v2]);
+					} else if (xy2 == null) {
+						xydata[v2] = data.getRelative(xydata[v1]);
 					}
-
-					// calculate unit length
-					List<Edge> edges = new ArrayList<>(graph.getEdges());
-					List<Feature> roots = getRoots(edges);
-					double oX = size.getWidth() / (roots.size() + 1);
-					double oY = size.getHeight() / 2;
-					int range = getRange(edges);
-					double L0 = Math.min(size.getHeight(), size.getWidth());
-					L = (int) Math.round((L0 / range) * UNIT);
-
-					// assign locations to vertices
-					for (Edge edge : edges) {
-						Feature f1 = edge.root;
-						Feature f2 = edge.leaf;
-
-						EdgeData data = edt.apply(edge);
-						int v1 = vertices.get(f1);
-						int v2 = vertices.get(f2);
-						Point2D xy1 = xydata[v1];
-						Point2D xy2 = xydata[v2];
-						if (xy1 == null && xy2 == null) {
-							xydata[v1] = new Point2D.Double(0, 0);
-							xydata[v2] = data.getRelative(xydata[v1]);
-						} else if (xy1 == null) {
-							xydata[v1] = data.getRelativeInv(xydata[v2]);
-						} else if (xy2 == null) {
-							xydata[v2] = data.getRelative(xydata[v1]);
-						}
-					}
-
-					// scale & shift locations
-					for (int i = 0; i < vertexCnt; i++) {
-						Feature feature = vertices.inverse().get(i);
-						int m = roots.indexOf(feature) + 1;
-						double x = xydata[i].getX() * L + m * oX;
-						double y = xydata[i].getY() * L + oY;
-						xydata[i].setLocation(x, y);
-					}
-
-					break;
-				} catch (ConcurrentModificationException cme) {}
-			}
+				}
+				for (int i = 0; i < vertexCnt; i++) {
+					Feature feature = vertices.inverse().get(i);
+					int m = roots.indexOf(feature) + 1;
+					double x = xydata[i].getX() * L + m * oX;
+					double y = xydata[i].getY() * L + oY;
+					xydata[i].setLocation(x, y);
+				}
+				break;
+			} catch (ConcurrentModificationException cme) {}
 		}
 	}
 
@@ -146,7 +166,41 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		}
 	}
 
-	/** Shift vertices relative to screen center. */
+	private void adjustSpacing() {
+		int offset = L * 2;
+		int n = graph.getVertexCount();
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < i; j++) {
+
+				double ix = xydata[i].getX();
+				double iy = xydata[i].getY();
+				double jx = xydata[j].getX();
+				double jy = xydata[j].getY();
+
+				if (within(ix, jx, offset * 2 - 1) && within(iy, jy, offset * 2 - 1)) {
+					// Feature f1 = vertices.inverse().get(i);
+					// Feature f2 = vertices.inverse().get(j);
+					// Log.debug(this, String.format("Separating %s and %s", f1.getAspect(),
+					// f2.getAspect()));
+
+					ix += offset;
+					iy += offset;
+					jx -= offset;
+					jy -= offset;
+
+					xydata[i].setLocation(ix, iy);
+					xydata[j].setLocation(jx, jy);
+				}
+			}
+		}
+	}
+
+	private boolean within(double p1, double p2, int range) {
+		int diff = (int) Math.abs(Math.round(p1) - Math.round(p2));
+		return diff < range;
+	}
+
+	// Shift vertices relative to screen center
 	private void center() {
 		Dimension d = getSize();
 		double height = d.getHeight();
@@ -166,46 +220,14 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		}
 	}
 
-	private void adjustSpacing() {
-		int offset = L * 2;
-		int n = graph.getVertexCount();
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				if (i == j) continue;
-
-				double ix = xydata[i].getX();
-				double iy = xydata[i].getY();
-				double jx = xydata[j].getX();
-				double jy = xydata[j].getY();
-
-				if (within(ix, iy, offset * 2 - 1)) {
-					ix += offset;
-					jx -= offset;
-				}
-				if (within(jx, jy, offset * 2 - 1)) {
-					iy += offset;
-					jy -= offset;
-				}
-
-				xydata[i].setLocation(ix, iy);
-				xydata[j].setLocation(jx, jy);
-			}
-		}
-	}
-
-	private boolean within(double p1, double p2, int range) {
-		int diff = (int) Math.abs(Math.round(p1) - Math.round(p2));
-		return diff < range;
+	public String getStatus() {
+		return status + this.getSize();
 	}
 
 	@Override
 	public void setSize(Dimension size) {
 		if (initialized == false) setInitializer(new RandomLocationTransformer<Feature>(size));
 		super.setSize(size);
-	}
-
-	public String getStatus() {
-		return status + this.getSize();
 	}
 
 	@Override

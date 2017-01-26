@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.parser.Collector;
-import net.certiv.adept.xvisitor.parser.gen.XVisitorLexer;
 import net.certiv.adept.xvisitor.parser.gen.XVisitorParserBaseListener;
 
 public class XVisitorVisitor extends XVisitorParserBaseListener {
@@ -22,12 +21,7 @@ public class XVisitorVisitor extends XVisitorParserBaseListener {
 		for (ParseTree child : ctx.children) {
 			if (child instanceof TerminalNode) {
 				TerminalNode node = (TerminalNode) child;
-				switch (node.getSymbol().getType()) {
-					case XVisitorLexer.ID:
-						break;
-					default: // keywords and punct
-						collector.annotateNode(ctx, node);
-				}
+				collector.annotateNode(ctx, node);
 			}
 		}
 	}

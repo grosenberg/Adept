@@ -346,7 +346,7 @@ public class FeatureTopology extends AbstractBase {
 		for (int idx = start; idx < limit && idx < features.size(); idx++) {
 			Feature feature = features.get(idx);
 			graph.addVertex(feature);
-			Collection<List<Edge>> edgeLists = feature.getEdges().values();
+			Collection<List<Edge>> edgeLists = feature.getEdgesMap().values();
 			for (List<Edge> edges : edgeLists) {
 				for (Edge edge : edges) {
 					graph.addEdge(edge, feature, edge.leaf, EdgeType.DIRECTED);
@@ -374,7 +374,7 @@ public class FeatureTopology extends AbstractBase {
 	private void clearGraph() {
 		List<Feature> features = new ArrayList<>(graph.getVertices());
 		for (Feature feature : features) {
-			Collection<List<Edge>> edgeLists = feature.getEdges().values();
+			Collection<List<Edge>> edgeLists = feature.getEdgesMap().values();
 			for (List<Edge> edges : edgeLists) {
 				for (Edge edge : edges) {
 					graph.removeEdge(edge);

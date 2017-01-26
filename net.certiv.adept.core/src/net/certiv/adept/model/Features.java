@@ -37,7 +37,7 @@ public class Features {
 			cache.put(feature.getId(), feature);
 		}
 		for (Feature feature : features) {
-			for (List<Edge> edges : feature.getEdges().values()) {
+			for (List<Edge> edges : feature.getEdgesMap().values()) {
 				for (Edge edge : edges) {
 					edge.root = cache.get(edge.rootId);
 					edge.leaf = cache.get(edge.leafId);

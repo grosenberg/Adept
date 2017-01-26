@@ -20,7 +20,7 @@ public class EdgeTableModel extends AbstractTableModel {
 
 		List<Feature> features = index.get(key);
 		Feature feature = features.get(idx);
-		Collection<List<Edge>> edgeSets = feature.getEdges().values();
+		Collection<List<Edge>> edgeSets = feature.getEdgesMap().values();
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
