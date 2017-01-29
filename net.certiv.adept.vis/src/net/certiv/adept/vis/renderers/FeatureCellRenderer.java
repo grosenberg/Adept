@@ -5,13 +5,13 @@ import java.awt.Component;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import net.certiv.adept.vis.models.FeatureTableModel;
+import net.certiv.adept.vis.models.CorpusFeatureTableModel;
 
 public class FeatureCellRenderer extends DefaultTableCellRenderer {
 
-	@SuppressWarnings("unused") private FeatureTableModel model;
+	@SuppressWarnings("unused") private CorpusFeatureTableModel model;
 
-	public FeatureCellRenderer(FeatureTableModel model) {
+	public FeatureCellRenderer(CorpusFeatureTableModel model) {
 		this.model = model;
 	}
 

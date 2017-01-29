@@ -63,10 +63,10 @@ public class Collector extends ParseData {
 		}
 
 		String aspect = parser.getRuleNames()[rule];
-		Point location = getLocation(start, stop);
+		Point coords = getCoords(start);
 		Size size = getSize(start, stop);
 		int format = Form.characterize(this, ctx);
-		Feature feature = new Feature(aspect, type, start, stop, location, size, format);
+		Feature feature = new Feature(aspect, type, start, stop, coords, size, format);
 		feature.setKind(Kind.RULE);
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
@@ -95,14 +95,22 @@ public class Collector extends ParseData {
 		}
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
-		Point location = getLocation(token, token);
+		Point coords = getCoords(token);
 		Size size = getSize(token, token);
 		int format = Form.characterize(this, node);
-		Feature feature = new Feature(aspect, type, token, location, size, format);
+		Feature feature = new Feature(aspect, type, token, coords, size, format);
 		feature.setKind(Kind.NODE);
+		feature.setVar(isVar(type));
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
 		add(feature);
+	}
+
+	private boolean isVar(int type) {
+		for (int v : VARS) {
+			if (v == type) return true;
+		}
+		return false;
 	}
 
 	public void annotateComments() {
@@ -110,10 +118,10 @@ public class Collector extends ParseData {
 			int type = token.getType();
 			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
-				Point location = getLocation(token, token);
+				Point coords = getCoords(token);
 				Size size = getSize(token, token);
 				int format = Form.characterize(this, token);
-				Feature feature = new Feature(aspect, type, token, location, size, format);
+				Feature feature = new Feature(aspect, type, token, coords, size, format);
 				feature.setKind(type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT);
 				TerminalNode node = new TerminalNodeImpl(token);
 				nodeIndex.put(token, node);
@@ -128,14 +136,8 @@ public class Collector extends ParseData {
 		features.add(feature);
 	}
 
-	private Point getLocation(Token start, Token stop) {
-		return ((AdeptToken) start).location();
-
-		// if (start == stop) return ((AdeptToken) start).location();
-		// int mid = stop.getTokenIndex() - start.getTokenIndex();
-		// mid /= 2;
-		// mid += start.getTokenIndex();
-		// return ((AdeptToken) stream.get(mid)).location();
+	private Point getCoords(Token start) {
+		return ((AdeptToken) start).coords();
 	}
 
 	private Size getSize(Token start, Token stop) {

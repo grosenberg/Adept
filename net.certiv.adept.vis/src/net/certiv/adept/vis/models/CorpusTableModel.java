@@ -10,12 +10,12 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Stats;
 
-public class FeaturesTableModel extends AbstractTableModel {
+public class CorpusTableModel extends AbstractTableModel {
 
 	private final String[] columnNames = { "Line", "Kind", "Index", "Type", "Features", "Edges per" };
 	private Object[][] rowData;
 
-	public FeaturesTableModel(Map<Integer, List<Feature>> index, List<String> ruleNames, List<String> tokenNames) {
+	public CorpusTableModel(Map<Integer, List<Feature>> index, List<String> ruleNames, List<String> tokenNames) {
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;

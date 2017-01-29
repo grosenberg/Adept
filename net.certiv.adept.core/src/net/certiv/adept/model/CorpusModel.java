@@ -3,6 +3,7 @@ package net.certiv.adept.model;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,7 @@ public class CorpusModel extends CorpusStore {
 	private void addUniqueFeatures() {
 		int tot = 0;
 		int unq = 0;
+		Map<Feature, Feature> equivMap = new HashMap<>();
 		for (Integer type : index.keySet()) {
 			List<Feature> set = index.get(type);
 			tot += set.size();
@@ -123,6 +125,7 @@ public class CorpusModel extends CorpusStore {
 				if (equiv == null) {
 					sub.add(feature);
 				} else {
+					equivMap.put(feature, equiv);
 					equiv.mergeEquivalent(feature);
 				}
 			}
@@ -239,7 +242,7 @@ public class CorpusModel extends CorpusStore {
 		lastModified = Time.now();
 		super.save(corpusDir);
 		lastModified = Time.getLastModified(corpusDir);
-		consistent = false;
+		consistent = true;
 	}
 
 	@Override
@@ -253,10 +256,15 @@ public class CorpusModel extends CorpusStore {
 
 		TreeMap<Double, Feature> om = new TreeMap<>();
 		List<Feature> subList = index.get(feature.getType());
-		for (Feature sub : subList) {
-			om.put(feature.distance(sub), sub);
+		if (subList != null) {
+			for (Feature sub : subList) {
+				if (sub.getKind() == Kind.RULE) {
+					Log.error(this, "Found rule in match set");
+					continue;
+				}
+				om.put(feature.distance(sub), sub);
+			}
 		}
-
 		return om;
 	}
 }

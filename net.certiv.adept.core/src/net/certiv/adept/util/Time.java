@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -20,5 +21,13 @@ public class Time {
 
 	public static long now() {
 		return Date.from(Instant.now()).getTime();
+	}
+
+	public static Instant start() {
+		return Instant.now();
+	}
+
+	public static Duration end(Instant start) {
+		return Duration.between(start, Instant.now());
 	}
 }

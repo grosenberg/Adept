@@ -38,4 +38,9 @@ public class Point {
 	public boolean isRelative() {
 		return relative;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("Point [line=%s, col=%s]", line, col);
+	}
 }

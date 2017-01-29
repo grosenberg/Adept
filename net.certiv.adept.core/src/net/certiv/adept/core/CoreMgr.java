@@ -1,6 +1,7 @@
 package net.certiv.adept.core;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -19,11 +20,13 @@ import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Time;
 import net.certiv.adept.xvisitor.parser.XVisitorSourceParser;
 
 public class CoreMgr {
 
 	private String lang;
+	public PerfData perfData;
 
 	private DocModel model;
 	private CorpusModel corpus;
@@ -33,18 +36,31 @@ public class CoreMgr {
 
 	private OutputBuilder buffer;
 
-	public CoreMgr(String lang) {
-		this.lang = lang;
+	public CoreMgr() {
+		this.perfData = new PerfData();
 	}
 
-	public void initialize(Path corpusDir, String corpusExt, int tabWidth, boolean rebuild) throws Exception {
+	public boolean initialize(String lang, Path corpusDir, String corpusExt, int tabWidth, boolean rebuild)
+			throws Exception {
+		this.lang = lang;
 		this.corpusDir = corpusDir;
 		this.tabWidth = tabWidth;
+
+		Instant start = Time.start();
 		corpus = CorpusModel.load(corpusDir, rebuild);
 		corpusDocs = corpus.read(corpusDir, corpusExt, tabWidth);
+		perfData.load = Time.end(start);
+
 		if (rebuild || !corpus.isValid(corpusDocs)) {
+			start = Time.start();
 			doRebuild();
+			perfData.rebuild = Time.end(start);
+			if (!corpus.isConsistent()) return false;
 		}
+		// corpus.reduceConstraints();
+		perfData.corpusFeatureCnt = corpus.getFeatures().size();
+		perfData.corpusFeatureTypeCnt = corpus.getFeatureIndex().size();
+		return true;
 	}
 
 	private void doRebuild() {
@@ -81,11 +97,10 @@ public class CoreMgr {
 			corpus.include(collector);
 		}
 
-		corpus.reduceConstraints();
-
 		try {
 			corpus.save(corpusDir);
 		} catch (Exception e) {
+			corpus.setConsistent(false);
 			Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e.getMessage());
 		}
 	}
@@ -121,22 +136,31 @@ public class CoreMgr {
 	 * feature of the document model.
 	 */
 	public void evaluate() {
+		Instant start = Time.start();
 		for (Feature feature : model.getFeatures()) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			TreeMap<Double, Feature> selected = corpus.match(feature);
+			TreeMap<Double, Feature> selected = getMatchSet(feature);
 			Confidence.eval(feature, selected);
 			if (Confidence.inRange()) {
-				feature.setMatched(Confidence.best());
+				Feature best = Confidence.best();
+				feature.setMatched(best);
 			}
 		}
+		perfData.addFormatTime(Time.end(start));
+	}
+
+	public TreeMap<Double, Feature> getMatchSet(Feature node) {
+		return corpus.match(node);
 	}
 
 	/** Applies the model to format the doc content */
 	public void apply() {
+		Instant start = Time.start();
 		Formatter formatter = new Formatter(model);
 		buffer = formatter.process();
 		model.getDocument().setModified(buffer.toString());
+		perfData.addFormatTime(Time.end(start));
 	}
 
 	/** Saves the formatted doc content */
@@ -152,6 +176,7 @@ public class CoreMgr {
 
 	public void createDocModel(Collector collector) {
 		model = new DocModel(collector);
+		perfData.addDoc(collector);
 	}
 
 	/** Return the document model */

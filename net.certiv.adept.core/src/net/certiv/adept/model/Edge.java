@@ -29,7 +29,10 @@ public class Edge {
 	}
 
 	public boolean equivalentTo(Edge other) {
+		if (root == null || leaf == null) return false;
+		if (root.getType() != other.root.getType()) return false;
 		if (leaf.getType() != other.leaf.getType()) return false;
+		if (!root.getText().equals(other.root.getText())) return false;
 		if (!leaf.getText().equals(other.leaf.getText())) return false;
 		return true;
 	}

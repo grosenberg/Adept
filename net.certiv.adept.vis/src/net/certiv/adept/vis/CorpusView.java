@@ -25,19 +25,19 @@ import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.models.EdgeTableModel;
-import net.certiv.adept.vis.models.FeatureTableModel;
-import net.certiv.adept.vis.models.FeaturesTableModel;
+import net.certiv.adept.vis.models.CorpusFeatureTableModel;
+import net.certiv.adept.vis.models.CorpusTableModel;
 import net.certiv.adept.vis.renderers.EdgeCellRenderer;
 import net.certiv.adept.vis.renderers.FeatureCellRenderer;
 import net.certiv.adept.vis.renderers.FeaturesCellRenderer;
 
-public class FeaturesView extends AbstractBase {
+public class CorpusView extends AbstractBase {
 
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {}
-		FeaturesView view = new FeaturesView();
+		CorpusView view = new CorpusView();
 		view.createFeaturesData();
 	}
 
@@ -64,7 +64,7 @@ public class FeaturesView extends AbstractBase {
 		}
 	};
 
-	public FeaturesView() {
+	public CorpusView() {
 		super("Features Analysis", "features.gif");
 
 		fsTable = new JTable();
@@ -74,7 +74,7 @@ public class FeaturesView extends AbstractBase {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fsTable.getSelectedRow();
-				FeaturesTableModel m = (FeaturesTableModel) fsTable.getModel();
+				CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
 				typeKey = (int) m.getValueAt(row, 2);
 				String kind = (String) m.getValueAt(row, 1);
 				if (kind.equals(Kind.RULE.toString())) {
@@ -93,7 +93,7 @@ public class FeaturesView extends AbstractBase {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fxTable.getSelectedRow();
-				FeatureTableModel m = (FeatureTableModel) fxTable.getModel();
+				CorpusFeatureTableModel m = (CorpusFeatureTableModel) fxTable.getModel();
 				int index = (int) m.getValueAt(row, 0);
 				createEdgeData(index - 1);
 			}
@@ -160,7 +160,7 @@ public class FeaturesView extends AbstractBase {
 		index = Tool.mgr.getCorpusModel().getFeatureIndex();
 
 		// feature type fsTable
-		FeaturesTableModel model = new FeaturesTableModel(index, lang.getRuleNames(), lang.getTokenNames());
+		CorpusTableModel model = new CorpusTableModel(index, lang.getRuleNames(), lang.getTokenNames());
 		fsTable.setModel(model);
 
 		fsTable.setDefaultRenderer(Object.class, new FeaturesCellRenderer(model));
@@ -182,7 +182,7 @@ public class FeaturesView extends AbstractBase {
 	}
 
 	protected void createDependentData(int typeKey) {
-		FeatureTableModel model = new FeatureTableModel(index, lang, typeKey);
+		CorpusFeatureTableModel model = new CorpusFeatureTableModel(index, lang, typeKey);
 		fxTable.setModel(model);
 
 		fxTable.setDefaultRenderer(Object.class, new FeatureCellRenderer(model));

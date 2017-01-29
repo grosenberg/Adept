@@ -78,8 +78,8 @@ public abstract class AbstractBase {
 	}
 
 	protected void setLocation() {
-		int width = prefs.getInt(KEY_WIDTH, 600);
-		int height = prefs.getInt(KEY_HEIGHT, 600);
+		int width = prefs.getInt(KEY_WIDTH, 400);
+		int height = prefs.getInt(KEY_HEIGHT, 400);
 		content.setPreferredSize(new Dimension(width, height));
 		frame.setLocation((int) prefs.getDouble(KEY_X, 100), (int) prefs.getDouble(KEY_Y, 100));
 		frame.pack();

@@ -68,7 +68,7 @@ public class SnippetsTest extends TestBase {
 	}
 
 	// ------------------------------------------------------------------------
-	// Actual Snippet Test Methods - ----------------------------
+	// Actual Snippet Test Method ---------------------------------------------
 
 	@Test(dataProvider = "srcFilenames")
 	public void testResult(String name) throws Exception {

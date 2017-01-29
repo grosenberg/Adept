@@ -58,6 +58,16 @@ public class Strings {
 		return true;
 	}
 
+	public static String join(List<? extends Object> values, String sep) {
+		StringBuilder sb = new StringBuilder();
+		for (Object value : values) {
+			sb.append(value.toString() + sep);
+		}
+		int dot = sb.length() - sep.length();
+		if (dot > -1) sb.delete(dot, sb.length());
+		return sb.toString();
+	}
+
 	public static String csvList(List<String> stringList) {
 		if (stringList == null) return "";
 		StringBuilder sb = new StringBuilder();

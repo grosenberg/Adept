@@ -7,9 +7,9 @@ import javax.swing.DefaultComboBoxModel;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.vis.models.FeaturesListModel.FeatureListItem;
+import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
-public class FeaturesListModel extends DefaultComboBoxModel<FeatureListItem> {
+public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 
 	public static class FeatureListItem {
 
@@ -36,7 +36,7 @@ public class FeaturesListModel extends DefaultComboBoxModel<FeatureListItem> {
 	private List<String> tokenNames;
 	private Map<Integer, List<Feature>> index;
 
-	public FeaturesListModel(List<String> ruleNames, List<String> tokenNames) {
+	public CorpusListModel(List<String> ruleNames, List<String> tokenNames) {
 		super();
 		this.ruleNames = ruleNames;
 		this.tokenNames = tokenNames;

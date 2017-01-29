@@ -58,6 +58,7 @@ public class AntlrSourceParser implements ISourceParser {
 		collector.HWS = Antlr4Lexer.HWS;
 		collector.BLOCKCOMMENT = Antlr4Lexer.BLOCKCOMMENT;
 		collector.LINECOMMENT = Antlr4Lexer.LINECOMMENT;
+		collector.VARS = new int[] { Antlr4Lexer.ID, Antlr4Lexer.INT, Antlr4Lexer.SET, Antlr4Lexer.STRING };
 		collector.ERR_TOKEN = Antlr4Lexer.ERRCHAR;
 		collector.ERR_RULE = Antlr4Parser.RULE_other << 10;
 		collector.stream = new CommonTokenStream(collector.lexer);

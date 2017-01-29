@@ -15,8 +15,8 @@ import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.topo.Form;
+import net.certiv.adept.topo.Location;
 import net.certiv.adept.topo.Point;
-import net.certiv.adept.topo.Position;
 import net.certiv.adept.topo.Size;
 import net.certiv.adept.topo.Stats;
 
@@ -26,6 +26,7 @@ public class Feature implements Comparable<Feature> {
 	@Expose private int id;			// unique id of this feature
 
 	@Expose private Kind kind;		// feature category
+	@Expose private boolean isVar;	// variable content is ignored
 
 	@Expose private String aspect;	// rule or token name
 	@Expose private String text;	// rule or token text
@@ -47,8 +48,8 @@ public class Feature implements Comparable<Feature> {
 	// defines connections between this feature and others in a local group
 	@Expose Edges edges;
 
-	// key = docId; value = positions of feature in document
-	@Expose Map<Integer, List<Position>> equivalents; // other documents containing equivalents
+	// key = docId; value = locations of equivalent features
+	@Expose Map<Integer, List<Location>> equivalents;
 
 	private Feature matched;
 	private boolean update;
@@ -95,6 +96,14 @@ public class Feature implements Comparable<Feature> {
 
 	public void setKind(Kind kind) {
 		this.kind = kind;
+	}
+
+	public boolean isVar() {
+		return isVar;
+	}
+
+	public void setVar(boolean isVar) {
+		this.isVar = isVar;
 	}
 
 	public int getDocId() {
@@ -268,6 +277,16 @@ public class Feature implements Comparable<Feature> {
 		return new Stats(this);
 	}
 
+	public void mergeEquivalent(Feature feature) {
+		weight++;
+		List<Location> did = equivalents.get(feature.docId);
+		if (did == null) {
+			did = new ArrayList<>();
+			equivalents.put(feature.docId, did);
+		}
+		did.add(new Location(feature.docId, feature.id, feature.y, feature.x));
+	}
+
 	/**
 	 * Equivalency is defined by identity of feature type, equality of edge sets, identity of edge
 	 * leaf node text, and identity of format.
@@ -301,16 +320,6 @@ public class Feature implements Comparable<Feature> {
 		return true;
 	}
 
-	public void mergeEquivalent(Feature feature) {
-		weight++;
-		List<Position> did = equivalents.get(feature.docId);
-		if (did == null) {
-			did = new ArrayList<>();
-			equivalents.put(feature.docId, did);
-		}
-		did.add(new Position(feature.x, feature.y));
-	}
-
 	@Override
 	public int compareTo(Feature o) {
 		if (equals(o)) return 0;
@@ -332,14 +341,10 @@ public class Feature implements Comparable<Feature> {
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		Feature other = (Feature) obj;
-		if (type != other.type) return false;
-		if (format != other.format) return false;
-		if (weight != other.weight) return false;
-		if (x != other.x) return false;
-		if (y != other.y) return false;
-		if (w != other.w) return false;
-		if (h != other.h) return false;
+
+		Feature o = (Feature) obj;
+		if (docId != o.docId) return false;
+		if (id != o.id) return false;
 		return true;
 	}
 
@@ -347,6 +352,8 @@ public class Feature implements Comparable<Feature> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + docId;
+		result = prime * result + id;
 		result = prime * result + type;
 		result = prime * result + format;
 		result = prime * result + Double.hashCode(weight);

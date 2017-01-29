@@ -7,13 +7,13 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.vis.models.FeaturesTableModel;
+import net.certiv.adept.vis.models.CorpusTableModel;
 
 public class FeaturesCellRenderer extends DefaultTableCellRenderer {
 
-	private FeaturesTableModel model;
+	private CorpusTableModel model;
 
-	public FeaturesCellRenderer(FeaturesTableModel model) {
+	public FeaturesCellRenderer(CorpusTableModel model) {
 		this.model = model;
 	}
 

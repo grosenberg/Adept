@@ -46,12 +46,10 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 	private final static int HEIGHT = Integer.MAX_VALUE - 1000000;
 
 	// Text component this TextTextLineNumber component is in sync with
-
 	private JTextComponent component;
 
 	// Properties that can be changed
-
-	private boolean updateFont;
+	private boolean updateFont = true;
 	private int borderGap;
 	private Color currentLineForeground;
 	private float digitAlignment;
@@ -59,7 +57,6 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 
 	// Keep history information to reduce the number of times the component
 	// needs to be repainted
-
 	private int lastDigits;
 	private int lastHeight;
 	private int lastLine;

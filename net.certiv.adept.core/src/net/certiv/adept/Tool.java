@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.PerfData;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
@@ -37,18 +38,21 @@ import net.certiv.adept.util.Log;
 public class Tool extends ToolBase {
 
 	private static Options[] optionDefs = { //
-			new Options("backup", "-b", OptionType.BOOL, "create doc backup"),
-			new Options("check", "-c", OptionType.BOOL, "check doc for suitability to format"),
-			new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
-			new Options("learn", "-l", OptionType.BOOL, "add doc to corpus training"),
-			new Options("rebuild", "-r", OptionType.BOOL, "force rebuild of the corpus model"),
-			new Options("save", "-s", OptionType.BOOL, "save formatted doc to file"),
+											new Options("backup", "-b", OptionType.BOOL, "create doc backup"),
+											new Options("check", "-c", OptionType.BOOL,
+													"check doc for suitability to format"),
+											new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
+											new Options("learn", "-l", OptionType.BOOL, "add doc to corpus training"),
+											new Options("rebuild", "-r", OptionType.BOOL,
+													"force rebuild of the corpus model"),
+											new Options("save", "-s", OptionType.BOOL, "save formatted doc to file"),
 
-			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
-			new Options("lang", "-g", OptionType.STRING, "language type"),
-			new Options("output", "-e", OptionType.STRING, "formatted output settings"),
-			new Options("tabWidth", "-t", OptionType.INT, "width of a tab"),
-			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')") //
+											new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
+											new Options("lang", "-g", OptionType.STRING, "language type"),
+											new Options("output", "-e", OptionType.STRING, "formatted output settings"),
+											new Options("tabWidth", "-t", OptionType.INT, "width of a tab"),
+											new Options("verbose", "-v", OptionType.STRING,
+													"verbosity (one of 'quiet', 'info', 'warn', 'error')") //
 	};
 
 	// fields set by option manager
@@ -66,11 +70,11 @@ public class Tool extends ToolBase {
 	public int corpusTabWidth;	// in the corpus documents
 	public String verbose;
 
+	public static CoreMgr mgr; 	// holds the corpus model and doc models
 	public Path corpusDir;		// root dir + lang
 	public String corpusExt;	// lang extention type
 
 	// fields set by init
-	public static CoreMgr mgr; // holds the corpus model and doc document model
 	public static Settings settings;
 	private String version;
 	private List<String> sourceFiles;
@@ -117,87 +121,7 @@ public class Tool extends ToolBase {
 	 */
 	public Tool() {
 		super();
-	}
-
-	/** Retrieves the doc objects produced through execution, or null */
-	public List<Document> getDocuments() {
-		return documents;
-	}
-
-	/** Provides the set of doc pathnames of the files to be processed */
-	public void setSourceFiles(List<String> pathnames) {
-		this.sourceFiles = pathnames;
-	}
-
-	/** Provides the set of doc pathnames of the files to be processed */
-	public void setSourceFiles(String... pathnames) {
-		this.sourceFiles = Arrays.asList(pathnames);
-	}
-
-	/** Sets whether to only perform a parse evaluation of the documents */
-	public void setCheck(boolean check) {
-		this.check = check;
-	}
-
-	/** Sets whether to create a backup file of a doc being saved */
-	public void setBackup(boolean backup) {
-		this.backup = backup;
-	}
-
-	/** Sets whether to apply the model to the doc to create a format modified document */
-	public void setFormat(boolean format) {
-		this.format = format;
-	}
-
-	/** Sets whether to add the current model to the training, and doc document to the corpus */
-	public void setLearn(boolean learn) {
-		this.learn = learn;
-	}
-
-	/** Sets whether to save a formated document */
-	public void setSave(boolean save) {
-		this.save = save;
-	}
-
-	public void setLang(String lang) {
-		this.lang = lang;
-	}
-
-	/** Sets the pathname of the directory containing the corpus root */
-	public void setCorpusRoot(String corpusRoot) {
-		this.corpusRoot = corpusRoot;
-	}
-
-	public Path getCorpusDir() {
-		return corpusDir;
-	}
-
-	/** Sets the settings value object defining the formatted output settings. */
-	public void setSettings(Settings obj) {
-		settings = obj;
-		output = null;
-	}
-
-	/** Sets the pathname of the file (**.json) containing the formatted output settings. */
-	public void setSettings(String pathname) {
-		output = pathname;
-	}
-
-	public void setRebuild(boolean rebuild) {
-		this.rebuild = rebuild;
-	}
-
-	public void setTabWidth(int tabWidth) {
-		this.tabWidth = tabWidth;
-	}
-
-	public void setVerbose(Level level) {
-		this.verbose = level.toString();
-	}
-
-	/** Sets the verbosity level of the tool */
-	public void setVerbose(String verbose) {
-		this.verbose = verbose;
+		mgr = new CoreMgr();
 	}
 
 	/**
@@ -291,9 +215,9 @@ public class Tool extends ToolBase {
 			}
 		}
 
-		mgr = new CoreMgr(lang);
 		try {
-			mgr.initialize(corpusDir, corpusExt, corpusTabWidth, rebuild);
+			boolean ok = mgr.initialize(lang, corpusDir, corpusExt, corpusTabWidth, rebuild);
+			if (!ok) return false;
 		} catch (Exception e) {
 			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg, e);
 			errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, "Failed to create model manager");
@@ -308,7 +232,6 @@ public class Tool extends ToolBase {
 				errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, verbose);
 			}
 		}
-
 		return true;
 	}
 
@@ -346,7 +269,6 @@ public class Tool extends ToolBase {
 			collector.annotateComments();
 			collector.index();
 			collector.genLocalEdges(tabWidth);
-
 			mgr.createDocModel(collector);
 
 			if (check) continue;
@@ -366,10 +288,6 @@ public class Tool extends ToolBase {
 		}
 	}
 
-	public String getFormatted() {
-		return mgr.getDocModel().getDocument().getModified();
-	}
-
 	private List<Document> loadDocuments(List<String> filenames) {
 		List<Document> documents = new ArrayList<>();
 		if (filenames != null) {
@@ -383,6 +301,7 @@ public class Tool extends ToolBase {
 				}
 			}
 		}
+		mgr.perfData.setSize(documents.size());
 		return documents;
 	}
 
@@ -396,6 +315,100 @@ public class Tool extends ToolBase {
 
 		byte[] bytes = Files.readAllBytes(file.toPath());
 		return new Document(filename, tabWidth, new String(bytes, StandardCharsets.UTF_8));
+	}
+
+	public CoreMgr getMgr() {
+		return mgr;
+	}
+
+	/** Retrieves the doc objects produced through execution, or null */
+	public List<Document> getDocuments() {
+		return documents;
+	}
+
+	public String getFormatted() {
+		return mgr.getDocModel().getDocument().getModified();
+	}
+
+	public Path getCorpusDir() {
+		return corpusDir;
+	}
+
+	/** Returns the currently collected performance data */
+	public PerfData getPerfData() {
+		return mgr.perfData;
+	}
+
+	/** Sets whether to create a backup file of a doc being saved */
+	public void setBackup(boolean backup) {
+		this.backup = backup;
+	}
+
+	/** Sets whether to only perform a parse evaluation of the documents */
+	public void setCheck(boolean check) {
+		this.check = check;
+	}
+
+	/** Sets the pathname of the directory containing the corpus root */
+	public void setCorpusRoot(String corpusRoot) {
+		this.corpusRoot = corpusRoot;
+	}
+
+	/** Sets whether to apply the model to the doc to create a format modified document */
+	public void setFormat(boolean format) {
+		this.format = format;
+	}
+
+	public void setLang(String lang) {
+		this.lang = lang;
+	}
+
+	/** Sets whether to add the current model to the training, and doc document to the corpus */
+	public void setLearn(boolean learn) {
+		this.learn = learn;
+	}
+
+	public void setRebuild(boolean rebuild) {
+		this.rebuild = rebuild;
+	}
+
+	/** Sets whether to save a formated document */
+	public void setSave(boolean save) {
+		this.save = save;
+	}
+
+	/** Sets the settings value object defining the formatted output settings. */
+	public void setSettings(Settings obj) {
+		settings = obj;
+		output = null;
+	}
+
+	/** Sets the pathname of the file (**.json) containing the formatted output settings. */
+	public void setSettings(String pathname) {
+		output = pathname;
+	}
+
+	/** Provides the set of doc pathnames of the files to be processed */
+	public void setSourceFiles(String... pathnames) {
+		this.sourceFiles = Arrays.asList(pathnames);
+	}
+
+	/** Provides the set of doc pathnames of the files to be processed */
+	public void setSourceFiles(List<String> pathnames) {
+		this.sourceFiles = pathnames;
+	}
+
+	public void setTabWidth(int tabWidth) {
+		this.tabWidth = tabWidth;
+	}
+
+	public void setVerbose(Level level) {
+		this.verbose = level.toString();
+	}
+
+	/** Sets the verbosity level of the tool */
+	public void setVerbose(String verbose) {
+		this.verbose = verbose;
 	}
 
 	public void help() {

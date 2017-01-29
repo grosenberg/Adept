@@ -56,6 +56,7 @@ public class JavaSourceParser implements ISourceParser {
 		collector.lexer = new JavaLexer(collector.input);
 		collector.VWS = JavaLexer.VWS;
 		collector.HWS = JavaLexer.HWS;
+		collector.VARS = new int[] { JavaLexer.ID, JavaLexer.NUM, JavaLexer.STRING, JavaLexer.QID };
 		collector.BLOCKCOMMENT = JavaLexer.BLOCKCOMMENT;
 		collector.LINECOMMENT = JavaLexer.LINECOMMENT;
 		collector.ERR_TOKEN = JavaLexer.ERRCHAR;

@@ -21,7 +21,7 @@ public class AdeptToken extends CommonToken {
 		super(source, type, channel, start, stop);
 	}
 
-	public Point location() {
+	public Point coords() {
 		return new Point(getCharPositionInLine(), getLine());
 	}
 

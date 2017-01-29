@@ -55,8 +55,8 @@ import net.certiv.adept.vis.components.Counter;
 import net.certiv.adept.vis.components.PopupGraphMousePlugin;
 import net.certiv.adept.vis.layout.EdgeData;
 import net.certiv.adept.vis.layout.TopoLayout;
-import net.certiv.adept.vis.models.FeaturesListModel;
-import net.certiv.adept.vis.models.FeaturesListModel.FeatureListItem;
+import net.certiv.adept.vis.models.CorpusListModel;
+import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
 public class FeatureTopology extends AbstractBase {
 
@@ -80,7 +80,7 @@ public class FeatureTopology extends AbstractBase {
 	private DirectedSparseGraph<Feature, Edge> graph;
 	private VisualizationViewer<Feature, Edge> viewer;
 
-	private FeaturesListModel model;
+	private CorpusListModel model;
 	private ISourceParser lang;
 	private Map<Integer, List<Feature>> index;
 
@@ -334,7 +334,7 @@ public class FeatureTopology extends AbstractBase {
 
 		lang = Tool.mgr.getLanguageParser();
 		index = Tool.mgr.getCorpusModel().getFeatureIndex();
-		model = new FeaturesListModel(lang.getRuleNames(), lang.getTokenNames());
+		model = new CorpusListModel(lang.getRuleNames(), lang.getTokenNames());
 		typeBox.setModel(model);
 		model.addElements(index);
 	}

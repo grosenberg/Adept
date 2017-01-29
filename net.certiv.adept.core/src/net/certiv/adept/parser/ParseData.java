@@ -26,6 +26,7 @@ public class ParseData {
 	public int LINECOMMENT = -2;
 	public int ERR_TOKEN = -2;
 	public int ERR_RULE = -2;
+	public int[] VARS = { -2 }; // token types whose underlying values can be ignored
 
 	public Parser parser;
 	public ParserRuleContext tree;

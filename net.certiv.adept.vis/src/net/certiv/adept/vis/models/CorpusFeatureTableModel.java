@@ -10,12 +10,12 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.topo.Stats;
 
-public class FeatureTableModel extends AbstractTableModel {
+public class CorpusFeatureTableModel extends AbstractTableModel {
 
 	private final String[] columnNames = { "Line", "End Types", "Edges per", "Delta StdDev" };
 	private Object[][] rowData;
 
-	public FeatureTableModel(Map<Integer, List<Feature>> index, ISourceParser lang, int key) {
+	public CorpusFeatureTableModel(Map<Integer, List<Feature>> index, ISourceParser lang, int key) {
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
 		for (Feature feature : index.get(key)) {

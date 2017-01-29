@@ -6,6 +6,8 @@ import java.util.Map;
 
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.util.Log;
+
 public class Features {
 
 	@Expose private int docId;
@@ -41,6 +43,9 @@ public class Features {
 				for (Edge edge : edges) {
 					edge.root = cache.get(edge.rootId);
 					edge.leaf = cache.get(edge.leafId);
+					if (edge.root == null || edge.leaf == null) {
+						Log.error(this, "EdgeRef fixup failed.");
+					}
 				}
 			}
 		}

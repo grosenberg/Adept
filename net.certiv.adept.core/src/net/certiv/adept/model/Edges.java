@@ -55,7 +55,7 @@ public class Edges {
 
 	/**
 	 * Determines whether the given edge is present in the current map of edges. An edge is present
-	 * if the edge type and leaf feature is the same (identity) as the type and leaf feature of the
+	 * if an edge having the same type and terminating in the same leaf feature is present in the
 	 * map.
 	 */
 	public boolean contains(Edge edge) {
@@ -63,7 +63,7 @@ public class Edges {
 		List<Edge> value = edges.get(type);
 		if (value == null) return false;
 		for (Edge v : value) {
-			if (v.leaf == edge.leaf) return true;
+			if (v.leaf.equals(edge.leaf)) return true;
 		}
 		return false;
 	}
