@@ -70,6 +70,8 @@ public class FeatureTopology extends AbstractBase {
 
 	private static final String[] LAYOUTS = { TOPO, KK, SPRING, FR };
 
+	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
+
 	private JComboBox<String> layoutBox;
 	private JComboBox<FeatureListItem> typeBox;
 	private JSlider idxSlider;	// offset into the list of features to display
@@ -318,7 +320,7 @@ public class FeatureTopology extends AbstractBase {
 	protected void createBoxModel() {
 		Tool tool = new Tool();
 		tool.setCheck(true);
-		tool.setCorpusRoot("../net.certiv.adept.core/corpus");
+		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 

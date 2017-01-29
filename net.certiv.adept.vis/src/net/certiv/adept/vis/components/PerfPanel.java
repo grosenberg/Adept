@@ -3,7 +3,6 @@ package net.certiv.adept.vis.components;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.List;
-import java.util.TreeMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -21,11 +20,6 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.util.Strings;
-import net.certiv.adept.vis.models.MatchesTableModel;
-
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 
 public class PerfPanel extends JPanel {
 
@@ -44,7 +38,6 @@ public class PerfPanel extends JPanel {
 	private JTextField textFieldMatFormat;
 	private JTextField textFieldMatFacets;
 	private JTextField textFieldFormat;
-	private JTable table;
 	// private PerfData perfData;
 
 	public PerfPanel(Font font) {
@@ -53,7 +46,7 @@ public class PerfPanel extends JPanel {
 		setLayout(new FormLayout(
 				new ColumnSpec[] {	FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 									FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("150dlu:grow"),
-									ColumnSpec.decode("25dlu"), ColumnSpec.decode("default:grow"),
+									ColumnSpec.decode("25dlu"), FormSpecs.DEFAULT_COLSPEC,
 									FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("150dlu:grow"),
 									FormSpecs.RELATED_GAP_COLSPEC, },
 				new RowSpec[] {	FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
@@ -63,9 +56,7 @@ public class PerfPanel extends JPanel {
 								FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 								FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 								FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-								FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-								FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-								FormSpecs.RELATED_GAP_ROWSPEC, }));
+								FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, }));
 
 		JLabel lblPerformance = new JLabel("Performance");
 		add(lblPerformance, "2, 2, left, default");
@@ -188,14 +179,6 @@ public class PerfPanel extends JPanel {
 		textFieldFeatures.setEditable(false);
 		add(textFieldFeatures, "4, 20, fill, default");
 
-		JScrollPane scrollPane = new JScrollPane();
-		add(scrollPane, "6, 20, 3, 7, fill, fill");
-
-		table = new JTable();
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.setFillsViewportHeight(true);
-		scrollPane.setViewportView(table);
-
 		JLabel lblTerminals = new JLabel("Terminals");
 		add(lblTerminals, "2, 22, right, default");
 
@@ -271,9 +254,5 @@ public class PerfPanel extends JPanel {
 		textFieldMatFeature.setText("");
 		textFieldMatFormat.setText("");
 		textFieldMatFacets.setText("");
-	}
-
-	public void loadMatches(TreeMap<Double, Feature> matches) {
-		table.setModel(new MatchesTableModel(matches));
 	}
 }

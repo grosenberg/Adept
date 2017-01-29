@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.JComboBox;
@@ -36,7 +35,8 @@ import net.certiv.adept.vis.models.SourceListModel.SrcItem;
 public class FormatView extends AbstractBase {
 
 	private static final String name = "FormatView";
-	private static final String rootDir = "D:/DevFiles/Eclipse/Adept/net.certiv.adept.test/test.snippets";
+	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
+	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
 	private static final String srcExt = ".g4";
 
 	private Tool tool;
@@ -102,10 +102,6 @@ public class FormatView extends AbstractBase {
 			for (Feature feature : lfs) {
 				if (feature.getX() == loc.getCol() - 1 || feature.getX() == loc.getCol()) {
 					perfPanel.loadData(feature);
-					if (feature.getMatched() != null && feature.getKind() != Kind.RULE) {
-						TreeMap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
-						perfPanel.loadMatches(matches);
-					}
 					found = true;
 					break;
 				}
@@ -118,7 +114,7 @@ public class FormatView extends AbstractBase {
 
 	private void loadTool() {
 		tool = new Tool();
-		tool.setCorpusRoot("../net.certiv.adept.core/corpus");
+		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 

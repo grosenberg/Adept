@@ -214,7 +214,7 @@ public class Feature implements Comparable<Feature> {
 
 	/** Returns a value representing a mgr distance between the two given features */
 	public double distance(Feature other) {
-		return simularity() + simularity() - 2 * simularity(other);
+		return simularity() + other.simularity() - 2 * simularity(other);
 	}
 
 	/** Returns the self similarity of this feature */

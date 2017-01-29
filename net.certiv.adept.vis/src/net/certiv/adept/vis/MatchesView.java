@@ -37,7 +37,8 @@ public class MatchesView extends AbstractBase {
 
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	private static final String name = "MatchAnalysis";
-	private static final String rootDir = "D:/DevFiles/Eclipse/Adept/net.certiv.adept.test/test.snippets";
+	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
+	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
 	private static final String srcExt = ".g4";
 	private static final Comparator<Integer> intComparator = new Comparator<Integer>() {
 
@@ -125,7 +126,7 @@ public class MatchesView extends AbstractBase {
 
 	private void loadTool() {
 		tool = new Tool();
-		tool.setCorpusRoot("../net.certiv.adept.core/corpus");
+		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 

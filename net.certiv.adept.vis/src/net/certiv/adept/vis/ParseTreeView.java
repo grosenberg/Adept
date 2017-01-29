@@ -44,6 +44,7 @@ public class ParseTreeView extends AbstractBase {
 	}
 
 	private static final String name = "ParseTree";
+	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
 
 	private static final String KEY_SPLIT_VERT = "frame_split_vert";
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
@@ -169,7 +170,7 @@ public class ParseTreeView extends AbstractBase {
 	void createData(File file) {
 		Tool tool = new Tool();
 		tool.setCheck(true);
-		tool.setCorpusRoot("../net.certiv.adept.core/corpus");
+		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 		tool.setSourceFiles(file.getAbsolutePath());

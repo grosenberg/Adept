@@ -43,6 +43,7 @@ public class CorpusView extends AbstractBase {
 
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	private static final String KEY_SPLIT_HORZ1 = "frame_split_horz1";
+	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
 
 	private JSplitPane mainPane;
 	private JSplitPane subPane;
@@ -142,7 +143,7 @@ public class CorpusView extends AbstractBase {
 	protected void createFeaturesData() {
 		Tool tool = new Tool();
 		tool.setCheck(true);
-		tool.setCorpusRoot("../net.certiv.adept.core/corpus");
+		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 
