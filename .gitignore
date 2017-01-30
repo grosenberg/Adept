@@ -8,7 +8,5 @@
 /**/target/
 
 /**/*.log
-/**/corpus/**/Corpus*.json
-
 /**/test.expected/
 /**/test-output/

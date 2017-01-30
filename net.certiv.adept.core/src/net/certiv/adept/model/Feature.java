@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.Utils;
 
+import com.google.common.collect.ComputationException;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
@@ -50,6 +51,8 @@ public class Feature implements Comparable<Feature> {
 
 	// key = docId; value = locations of equivalent features
 	@Expose Map<Integer, List<Location>> equivalents;
+
+	private static final String InvalidDist = "Invalid distance computed (%d) for %s -> %s";
 
 	private Feature matched;
 	private boolean update;
@@ -212,13 +215,21 @@ public class Feature implements Comparable<Feature> {
 		return edges.getEdges(type);
 	}
 
-	/** Returns a value representing a mgr distance between the two given features */
+	/**
+	 * Returns a positive value representing a kernel-based distance between this and the given
+	 * feature. A distance value of <code>zero</code> indicates that the two features are identical.
+	 */
 	public double distance(Feature other) {
-		return simularity() + other.simularity() - 2 * simularity(other);
+		double dist = simularity() + other.simularity() - 2 * simularity(other);
+		if (dist < 0) {
+			String msg = String.format(InvalidDist, dist, this.toString(), other.toString());
+			throw new ComputationException(new Throwable(msg));
+		}
+		return dist;
 	}
 
 	/** Returns the self similarity of this feature */
-	public double simularity() {
+	private double simularity() {
 		if (update) {
 			selfSim = simularity(this);
 			update = false;
@@ -226,7 +237,7 @@ public class Feature implements Comparable<Feature> {
 		return selfSim;
 	}
 
-	public double simularity(Feature other) {
+	private double simularity(Feature other) {
 		Set<Integer> keys = new HashSet<>(getEdgesMap().keySet());
 		keys.addAll(other.getEdgesMap().keySet());
 		double sim = 0;
@@ -269,7 +280,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	/** Returns the number of unique types of feature type edges */
-	public int dimentionality() {
+	public int dimensionality() {
 		return edges.typeSize();
 	}
 

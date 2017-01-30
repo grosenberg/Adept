@@ -218,7 +218,7 @@ public class PerfPanel extends JPanel {
 		String was = Strings.join(facets, ", ");
 
 		textFieldId.setText(String.format("%d %s (%s:%d) '%s' [%d]", //
-				feature.getId(), feature.getAspect(), kind, type, feature.getText(), feature.dimentionality()));
+				feature.getId(), feature.getAspect(), kind, type, feature.getText(), feature.dimensionality()));
 		textFieldFormat.setText(String.valueOf(feature.getFormat()));
 		textFieldFacets.setText(was);
 
@@ -233,7 +233,7 @@ public class PerfPanel extends JPanel {
 			String now = Strings.join(facets, ", ");
 
 			textFieldMatFeature.setText(String.format("%d %s (%s:%d) '%s' [%d]", //
-					matched.getId(), matched.getAspect(), mkind, mtype, matched.getText(), matched.dimentionality()));
+					matched.getId(), matched.getAspect(), mkind, mtype, matched.getText(), matched.dimensionality()));
 			textFieldMatFormat.setText(String.valueOf(matched.getFormat()));
 			textFieldMatFacets.setText(now);
 		} else {
