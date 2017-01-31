@@ -1,6 +1,5 @@
 package net.certiv.adept.model;
 
-import java.util.Collections;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -12,7 +11,7 @@ import com.google.gson.annotations.Expose;
  */
 public class Edges {
 
-	private static final TreeSet<Edge> emptyTreeSet = (TreeSet<Edge>) Collections.unmodifiableSet(new TreeSet<Edge>());
+	private static final TreeSet<Edge> emptyTreeSet = new TreeSet<Edge>();
 
 	// key=edge key; value=edges
 	@Expose private TreeMap<EdgeKey, TreeSet<Edge>> edges;

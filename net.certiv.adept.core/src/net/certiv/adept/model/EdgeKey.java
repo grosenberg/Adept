@@ -6,7 +6,8 @@ import com.google.gson.annotations.Expose;
 
 public class EdgeKey implements Comparable<EdgeKey> {
 
-	private static Table<Integer, String, EdgeKey> pool;
+	private static Table<Integer, String, EdgeKey> pool = TreeBasedTable.create();
+
 	@Expose private int type;
 	@Expose private String text;
 
@@ -17,10 +18,6 @@ public class EdgeKey implements Comparable<EdgeKey> {
 			pool.put(type, text, key);
 		}
 		return key;
-	}
-
-	EdgeKey() {
-		if (pool == null) pool = TreeBasedTable.create();
 	}
 
 	EdgeKey(int type, String text) {
