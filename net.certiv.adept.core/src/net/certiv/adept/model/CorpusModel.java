@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.parser.Collector;
+import net.certiv.adept.topo.Label;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
@@ -24,6 +25,8 @@ public class CorpusModel extends CorpusStore {
 	@Expose private Map<Integer, String> pathnames;
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
+	// key=label; value=boost
+	@Expose private Map<String, Double> labelBoosts;
 
 	// corpus path (interface, so cannot be serialized)
 	private Path corpusDir;
@@ -39,6 +42,7 @@ public class CorpusModel extends CorpusStore {
 	public CorpusModel() {
 		super();
 		pathnames = new LinkedHashMap<>();
+		labelBoosts = new HashMap<>();
 		features = new ArrayList<>();
 		docFeatures = new LinkedHashMap<>();
 		index = new LinkedHashMap<>();
@@ -99,7 +103,7 @@ public class CorpusModel extends CorpusStore {
 	/**
 	 * Reduce the feature set of the initially constructed corpus model (containing all features
 	 * from all documents). Equivalent features are collapsed to a single instance with
-	 * correspondingly increased weight. Equivalency is defined by identity of feature type,
+	 * correspondingly increased rarity. Equivalency is defined by identity of feature type,
 	 * equality of edge sets, identity of edge leaf node text, and identity of format.
 	 */
 	public void reduceConstraints() {
@@ -189,6 +193,17 @@ public class CorpusModel extends CorpusStore {
 	@Override
 	public Map<Integer, List<Feature>> getDocFeatures() {
 		return docFeatures;
+	}
+
+	public Map<String, Double> getLabelBoosts() {
+		if (labelBoosts.isEmpty()) {
+			Label.loadDefaults(labelBoosts);
+		}
+		return labelBoosts;
+	}
+
+	public void setLabelBoosts(Map<String, Double> labelBoosts) {
+		this.labelBoosts = labelBoosts;
 	}
 
 	/** Returns a map, keyed by feature type, of all features in the Corpus model */

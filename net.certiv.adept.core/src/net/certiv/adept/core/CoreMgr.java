@@ -3,6 +3,7 @@ package net.certiv.adept.core;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.antlr.v4.runtime.RecognitionException;
@@ -13,7 +14,6 @@ import net.certiv.adept.java.parser.JavaSourceParser;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.Collector;
@@ -122,6 +122,10 @@ public class CoreMgr {
 		return null;
 	}
 
+	public Map<String, Double> getLabelBoosts() {
+		return corpus.getLabelBoosts();
+	}
+
 	public List<Integer> excludedLangTypes() {
 		return getLanguageParser().excludedTypes();
 	}
@@ -166,10 +170,6 @@ public class CoreMgr {
 	/** Saves the formatted doc content */
 	public void save() {
 		model.getDocument().saveModified(true);
-	}
-
-	public double typeBoost(Edge outer, Edge inner) {
-		return 1;
 	}
 
 	// ----

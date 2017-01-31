@@ -1,56 +1,65 @@
 package net.certiv.adept.model;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import com.google.gson.annotations.Expose;
 
+/**
+ * The collection of edges that defines the connections between a root feature and other features in
+ * the local group.
+ */
 public class Edges {
 
-	// defines connections between this feature and others in the local group
-	// key=type of feature connected; value=edges to unique features of type
-	@Expose private Map<Integer, List<Edge>> edges;
+	private static final TreeSet<Edge> emptyTreeSet = (TreeSet<Edge>) Collections.unmodifiableSet(new TreeSet<Edge>());
+
+	// key=edge key; value=edges
+	@Expose private TreeMap<EdgeKey, TreeSet<Edge>> edges;
+	// total count of edges
+	@Expose private int edgeCnt;
 
 	public Edges() {
-		edges = new LinkedHashMap<>();
+		edges = new TreeMap<>();
 	}
 
 	public void addEdge(Edge edge) {
 		int type = edge.leaf.getType();
-		List<Edge> value = edges.get(type);
+		String text = edge.leaf.getText();
+		EdgeKey key = EdgeKey.create(type, text);
+		TreeSet<Edge> value = edges.get(key);
 		if (value == null) {
-			value = new ArrayList<>();
-			edges.put(type, value);
+			value = new TreeSet<>();
+			edges.put(key, value);
 		}
 		value.add(edge);
+		edgeCnt++;
 	}
 
-	public Map<Integer, List<Edge>> getEdges() {
+	public TreeMap<EdgeKey, TreeSet<Edge>> getEdges() {
 		return edges;
 	}
 
-	/** Returns the edges that are of the given edge leaf type */
-	public List<Edge> getEdges(int type) {
-		List<Edge> typedEdges = edges.get(type);
-		if (typedEdges == null) return Collections.emptyList();
+	/** Returns the edges that are of the given edge leaf type/text */
+	public TreeSet<Edge> getEdges(int type, String text) {
+		return getEdges(EdgeKey.create(type, text));
+	}
+
+	/** Returns the edges that are of the given edge key type */
+	public TreeSet<Edge> getEdges(EdgeKey key) {
+		TreeSet<Edge> typedEdges = edges.get(key);
+		if (typedEdges == null) return emptyTreeSet;
 		return typedEdges;
 	}
 
-	/** Returns the total number of edge leaf types */
+	/** Returns the total number of edge leaf type/text combinations */
 	public int typeSize() {
-		return edges.keySet().size();
+		return edges.size();
 	}
 
 	/** Returns the total number of edges */
-	public int size() {
-		int size = 0;
-		for (List<Edge> value : edges.values()) {
-			size += value.size();
-		}
-		return size;
+	public int getEdgeCount() {
+		return edgeCnt;
 	}
 
 	/**
@@ -60,16 +69,16 @@ public class Edges {
 	 */
 	public boolean contains(Edge edge) {
 		int type = edge.leaf.getType();
-		List<Edge> value = edges.get(type);
+		String text = edge.leaf.getText();
+		EdgeKey key = EdgeKey.create(type, text);
+		TreeSet<Edge> value = edges.get(key);
 		if (value == null) return false;
-		for (Edge v : value) {
-			if (v.leaf.equals(edge.leaf)) return true;
-		}
+		if (value.contains(edge)) return true;
 		return false;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("Edges [types=%s edges=%s]", typeSize(), size());
+		return String.format("Edges [types=%s edges=%s]", typeSize(), getEdgeCount());
 	}
 }

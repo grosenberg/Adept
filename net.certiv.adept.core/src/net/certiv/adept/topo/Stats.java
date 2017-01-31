@@ -3,12 +3,14 @@ package net.certiv.adept.topo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
 import com.google.common.primitives.Doubles;
 
 import net.certiv.adept.model.Edge;
+import net.certiv.adept.model.EdgeKey;
 import net.certiv.adept.model.Feature;
 
 public class Stats {
@@ -19,7 +21,7 @@ public class Stats {
 	public int edgeCount; // total # of edges connected to this feature
 
 	public double maxSd;		// feature's max edge metric stdDev
-	public double minSd; 
+	public double minSd;
 
 	public Stats(Feature feature) {
 		this.feature = feature;
@@ -27,10 +29,10 @@ public class Stats {
 	}
 
 	private void edgeCount() {
-		Map<Integer, List<Edge>> edgeMap = feature.getEdgesMap();
+		Map<EdgeKey, TreeSet<Edge>> edgeMap = feature.getEdgesMap();
 		typeCount = edgeMap.size();
 
-		for (List<Edge> edges : edgeMap.values()) {
+		for (TreeSet<Edge> edges : edgeMap.values()) {
 			edgeCount += edges.size();
 			List<Double> metrics = new ArrayList<>();
 			for (Edge edge : edges) {

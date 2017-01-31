@@ -1,11 +1,11 @@
 package net.certiv.adept.topo;
 
-public class Size {
+public class Span {
 
 	private int width;
 	private int height;
 
-	public Size(int width, int height) {
+	public Span(int width, int height) {
 		this.width = width;
 		this.height = height;
 	}

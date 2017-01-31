@@ -22,7 +22,7 @@ public class EdgeData {
 		this.frs = edge.root.getStart();
 		this.fls = edge.leaf.getStart();
 		this.metric = edge.metric;
-		this.weight = edge.weight;
+		this.weight = edge.rarity;
 
 		int frx = edge.root.getX();
 		int fry = edge.root.getY();

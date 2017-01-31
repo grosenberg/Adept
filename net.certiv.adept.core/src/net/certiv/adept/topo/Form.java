@@ -26,8 +26,8 @@ public class Form {
 		if (curr.contains(Facet.WS_AFTER) || next.contains(Facet.WS_BEFORE)) {
 			result.add(Facet.WS_AFTER);
 		}
-		if (next.contains(Facet.ALIGNED)) {
-			result.add(Facet.ALIGNED);
+		if (next.contains(Facet.ALIGNED_ABOVE)) {
+			result.add(Facet.ALIGNED_ABOVE);
 		}
 		return result;
 	}
@@ -72,39 +72,39 @@ public class Form {
 			int idxStop, int col, int len) {
 
 		int format = 0;
-		if (col == startInfo.beg) format |= Facet.LINE_BEG.value;
-		if (len == stopInfo.len) format |= Facet.LINE_END.value;
+		if (col == startInfo.beg) format |= Facet.AT_LINE_BEG.value;
+		if (len == stopInfo.len) format |= Facet.AT_LINE_END.value;
 		if (followsWSToken(collector, idxStart)) format |= Facet.WS_BEFORE.value;
 		if (leadsWSToken(collector, idxStop)) format |= Facet.WS_AFTER.value;
 		if (startInfo.blankAbove) format |= Facet.BLANK_ABOVE.value;
 		if (stopInfo.blankBelow) format |= Facet.BLANK_BELOW.value;
 
 		if (startInfo.indents > 0) {
-			format |= Facet.INDENT.value;
+			format |= Facet.INDENTED.value;
 			switch (startInfo.indents - startInfo.priorIndents) {
 				case 1:
-					format |= Facet.INDENT1_PRIOR.value;
+					format |= Facet.INDENT1.value;
 					break;
 				case 2:
-					format |= Facet.INDENT2_PRIOR.value;
+					format |= Facet.INDENT2.value;
 					break;
 				case 3:
-					format |= Facet.INDENT3_PRIOR.value;
+					format |= Facet.INDENT3.value;
 					break;
 				case -1:
-					format |= Facet.OUTDENT1_PRIOR.value;
+					format |= Facet.OUTDENT1.value;
 					break;
 				case -2:
-					format |= Facet.OUTDENT2_PRIOR.value;
+					format |= Facet.OUTDENT2.value;
 					break;
 				case -3:
-					format |= Facet.OUTDENT3_PRIOR.value;
+					format |= Facet.OUTDENT3.value;
 					break;
 				default:
 					if (startInfo.indents > startInfo.priorIndents) {
-						format |= Facet.INDENT4_PRIOR.value;
+						format |= Facet.INDENT4.value;
 					} else {
-						format |= Facet.OUTDENT4_PRIOR.value;
+						format |= Facet.OUTDENT4.value;
 					}
 			}
 		}

@@ -4,66 +4,90 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum Facet {
-	LINE_BEG(0),
-	LINE_END(1),
-	WS_BEFORE(2),
-	WS_AFTER(3),
-	BLANK_ABOVE(4),
-	BLANK_BELOW(5),
 
-	INDENT(10),					// is this line indented? Otherwise starts at col zero.
-	INDENT1_PRIOR(11, 1),		// indented relative to the prior (real) line?
-	INDENT2_PRIOR(12, 2),		// double indented?
-	INDENT3_PRIOR(13, 3),		// triple indented?
-	INDENT4_PRIOR(14, 4),		// quad indented?
-	OUTDENT1_PRIOR(15, -1),		// outdented relative to the prior (real) line?
-	OUTDENT2_PRIOR(16, -2),		// double outdented?
-	OUTDENT3_PRIOR(17, -3),		// triple outdented?
-	OUTDENT4_PRIOR(18, -4),		// quad outdented?
+	// intrinsic facets
 
-	ALIGNED(20);				// aligned to a similar feature in the prior (real) line?
+	AT_LINE_BEG(0),		// occurs at line begin, ignoring hws and comments
+	AT_LINE_END(1),		// occurs at line end, ignoring hws and comments
+	WS_BEFORE(2),		// has leading hws or in-line block comment
+	WS_AFTER(3),		// has trailing hws or in-line block comment
+	INDENTED(4),		// a line is indented if it does not start at col zero + one tab
+	ALIGNED_ABOVE(5),	// aligned to a similar feature in the prior real line
+	ALIGNED_BELOW(6),
+
+	INDENT1(7, 1),		// levels of indenting dents to the prior real line
+	INDENT2(8, 2),
+	INDENT3(9, 3),
+	INDENT4(10, 4),
+	OUTDENT1(11, -1),	// levels of outdenting
+	OUTDENT2(12, -2),
+	OUTDENT3(13, -3),
+	OUTDENT4(14, -4),
+
+	// extrinsic facets - determinable from the corpus as a whole
+
+	BLANK_ABOVE(15),	// if always present
+	BLANK_BELOW(16),
+
+	JOIN_ALWAYS(17),	// always follows some other facet in-line
+	JOIN_SHOULD(18),	// majority follows
+	JOIN_ALLOW(19),		// can follow
+	JOIN_NEVER(20),		// always occurs at line begin
+
+	;
+
+	private static final int SIGF = 20;
+	private static final double NORM = 0.5 * SIGF * (SIGF - 1);
+	// private static final int MASK = 0xFFFF << SIGF + 1;
 
 	public final int value;
-	private final int relative;
+	private final int dents;
 
 	Facet(int shift) {
 		value = 1 << shift;
-		relative = 0;
+		dents = 0;
 	}
 
 	Facet(int shift, int num) {
 		value = 1 << shift;
-		relative = num;
+		dents = num;
 	}
 
-	/** Returns the list of facets that compose the given format */
+	/**
+	 * Returns a value reflecting the similarity of the two given formats. Similarity calculated as
+	 * the Kendall's rank correlation coefficient (or normalized tau distance) between the
+	 * significant bits of the given formats; limited to positive values.
+	 */
+	public static double similarity(int f1, int f2) {
+		int nc = Long.bitCount(f1 & f2);	// concordant pairs
+		int nd = SIGF - nc;					// discordant pairs
+		double tau = (nc - nd) / NORM;
+		return tau > 0 ? tau : 0;
+	}
+
+	/** Returns the list of facets that compose the given format. */
 	public static List<Facet> get(int format) {
 		List<Facet> facets = new ArrayList<>();
 		if (format > 0) {
 			for (Facet facet : Facet.values()) {
-				if (facet.isSet(format)) facets.add(facet);
+				if ((facet.value & format) > 0) facets.add(facet);
 			}
 		}
 		return facets;
 	}
 
-	private boolean isSet(int format) {
-		if ((value & format) > 0) return true;
-		return false;
-	}
-
-	public static int relIndent(List<Facet> facets) {
+	public static int getDentation(List<Facet> facets) {
 		for (Facet facet : facets) {
 			switch (facet) {
-				case INDENT1_PRIOR:
-				case INDENT2_PRIOR:
-				case INDENT3_PRIOR:
-				case INDENT4_PRIOR:
-				case OUTDENT1_PRIOR:
-				case OUTDENT2_PRIOR:
-				case OUTDENT3_PRIOR:
-				case OUTDENT4_PRIOR:
-					return facet.relative;
+				case INDENT1:
+				case INDENT2:
+				case INDENT3:
+				case INDENT4:
+				case OUTDENT1:
+				case OUTDENT2:
+				case OUTDENT3:
+				case OUTDENT4:
+					return facet.dents;
 				default:
 			}
 		}

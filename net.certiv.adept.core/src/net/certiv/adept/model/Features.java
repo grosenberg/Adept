@@ -3,6 +3,7 @@ package net.certiv.adept.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.google.gson.annotations.Expose;
 
@@ -39,7 +40,7 @@ public class Features {
 			cache.put(feature.getId(), feature);
 		}
 		for (Feature feature : features) {
-			for (List<Edge> edges : feature.getEdgesMap().values()) {
+			for (TreeSet<Edge> edges : feature.getEdgesMap().values()) {
 				for (Edge edge : edges) {
 					edge.root = cache.get(edge.rootId);
 					edge.leaf = cache.get(edge.leafId);

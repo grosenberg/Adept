@@ -17,7 +17,7 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Group;
 import net.certiv.adept.topo.Point;
-import net.certiv.adept.topo.Size;
+import net.certiv.adept.topo.Span;
 import net.certiv.adept.util.Log;
 
 public class Collector extends ParseData {
@@ -64,9 +64,9 @@ public class Collector extends ParseData {
 
 		String aspect = parser.getRuleNames()[rule];
 		Point coords = getCoords(start);
-		Size size = getSize(start, stop);
+		Span span = getSize(start, stop);
 		int format = Form.characterize(this, ctx);
-		Feature feature = new Feature(aspect, type, start, stop, coords, size, format);
+		Feature feature = new Feature(aspect, type, start, stop, coords, span, format);
 		feature.setKind(Kind.RULE);
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
@@ -96,9 +96,9 @@ public class Collector extends ParseData {
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
 		Point coords = getCoords(token);
-		Size size = getSize(token, token);
+		Span span = getSize(token, token);
 		int format = Form.characterize(this, node);
-		Feature feature = new Feature(aspect, type, token, coords, size, format);
+		Feature feature = new Feature(aspect, type, token, coords, span, format);
 		feature.setKind(Kind.NODE);
 		feature.setVar(isVar(type));
 		nodeIndex.put(token, node);
@@ -119,9 +119,9 @@ public class Collector extends ParseData {
 			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
 				Point coords = getCoords(token);
-				Size size = getSize(token, token);
+				Span span = getSize(token, token);
 				int format = Form.characterize(this, token);
-				Feature feature = new Feature(aspect, type, token, coords, size, format);
+				Feature feature = new Feature(aspect, type, token, coords, span, format);
 				feature.setKind(type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT);
 				TerminalNode node = new TerminalNodeImpl(token);
 				nodeIndex.put(token, node);
@@ -140,12 +140,12 @@ public class Collector extends ParseData {
 		return ((AdeptToken) start).coords();
 	}
 
-	private Size getSize(Token start, Token stop) {
-		if (start == stop) return new Size(start.getText().length(), 1);
+	private Span getSize(Token start, Token stop) {
+		if (start == stop) return new Span(start.getText().length(), 1);
 
 		int height = stop.getLine() - start.getLine() + 1;
 		int width = stop.getStopIndex() - start.getStartIndex() + 1;
-		return new Size(width, height);
+		return new Span(width, height);
 	}
 
 	public void index() {

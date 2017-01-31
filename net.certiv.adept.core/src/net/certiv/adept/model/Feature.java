@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
@@ -15,10 +17,12 @@ import com.google.common.collect.ComputationException;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Form;
+import net.certiv.adept.topo.Label;
 import net.certiv.adept.topo.Location;
 import net.certiv.adept.topo.Point;
-import net.certiv.adept.topo.Size;
+import net.certiv.adept.topo.Span;
 import net.certiv.adept.topo.Stats;
 
 public class Feature implements Comparable<Feature> {
@@ -41,8 +45,9 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int x;			// feature locus
 	@Expose private int y;
-	@Expose private int w;			// feature size
+	@Expose private int w;			// feature span
 	@Expose private int h;
+	@Expose private int size;		// feature size
 	@Expose private double weight;
 	@Expose private double selfSim;
 
@@ -64,11 +69,11 @@ public class Feature implements Comparable<Feature> {
 		equivalents = new HashMap<>();
 	}
 
-	public Feature(String aspect, int type, Token token, Point location, Size size, int format) {
-		this(aspect, type, token, token, location, size, format);
+	public Feature(String aspect, int type, Token token, Point location, Span span, int format) {
+		this(aspect, type, token, token, location, span, format);
 	}
 
-	public Feature(String aspect, int type, Token start, Token stop, Point location, Size size, int format) {
+	public Feature(String aspect, int type, Token start, Token stop, Point location, Span span, int format) {
 		this();
 		this.aspect = aspect;
 		this.type = type;
@@ -80,6 +85,7 @@ public class Feature implements Comparable<Feature> {
 
 		int begIdx = start.getStartIndex();
 		int endIdx = stop.getStopIndex();
+		this.size = endIdx - begIdx + 1;
 		int endIdx2 = endIdx - 10 > begIdx ? begIdx + 7 : endIdx;
 		this.text = start.getInputStream().getText(new Interval(begIdx, endIdx2));
 		if (endIdx != endIdx2) this.text += "...";
@@ -87,8 +93,8 @@ public class Feature implements Comparable<Feature> {
 
 		x = location.getCol();
 		y = location.getLine();
-		w = size.getWidth();
-		h = size.getHeight();
+		w = span.getWidth();
+		h = span.getHeight();
 		weight = 1;
 		update = true;
 	}
@@ -207,12 +213,12 @@ public class Feature implements Comparable<Feature> {
 		return edges;
 	}
 
-	public Map<Integer, List<Edge>> getEdgesMap() {
+	public TreeMap<EdgeKey, TreeSet<Edge>> getEdgesMap() {
 		return edges.getEdges();
 	}
 
-	public List<Edge> getEdges(int type) {
-		return edges.getEdges(type);
+	public TreeSet<Edge> getEdges(EdgeKey key) {
+		return edges.getEdges(key);
 	}
 
 	/**
@@ -237,46 +243,57 @@ public class Feature implements Comparable<Feature> {
 		return selfSim;
 	}
 
+	// sum of feature label similarities and the edge set similarity
 	private double simularity(Feature other) {
-		Set<Integer> keys = new HashSet<>(getEdgesMap().keySet());
-		keys.addAll(other.getEdgesMap().keySet());
+		double sim = featLabelSimularity(other);
+		return sim + edgeSetSimilarity(other);
+	}
+
+	// type and text (if applicable) have to be identical
+	private double featLabelSimularity(Feature other) {
 		double sim = 0;
-		for (int key : keys) {
-			List<Edge> e1 = getEdges(key);
-			List<Edge> e2 = other.getEdges(key);
-			if (e1 == null || e2 == null) continue;
-			sim += similarity(e1, e2);
-		}
+		Map<String, Double> boosts = Tool.mgr.getLabelBoosts();
+		sim += boosts.get(Label.SIZE) * norm(size, other.size);
+		sim += boosts.get(Label.WEIGHT) * norm(weight, other.weight);
+		sim += boosts.get(Label.EDGES) * norm(edges.getEdgeCount(), other.edges.getEdgeCount());
+		sim += boosts.get(Label.EDGE_TYPES) * norm(edges.typeSize(), other.edges.typeSize());
+		sim += boosts.get(Label.FORMAT) * Facet.similarity(format, other.format);
 		return sim;
 	}
 
-	private double similarity(List<Edge> e1, List<Edge> e2) {
+	private double edgeSetSimilarity(Feature o) {
+		Set<EdgeKey> sect = new TreeSet<>(getEdgesMap().keySet());
+		sect.retainAll(o.getEdgesMap().keySet());
+
+		Set<EdgeKey> diff = new TreeSet<>(getEdgesMap().keySet());
+		diff.addAll(o.getEdgesMap().keySet());
+		diff.removeAll(sect);
+
 		double sim = 0;
-		for (Edge outer : e1) {
-			for (Edge inner : e2) {
-				sim += similarity(outer, inner);
+		for (EdgeKey key : sect) {
+			double psim = 0;
+			Edge[] inner = getEdges(key).toArray(new Edge[0]);
+			Edge[] outer = o.getEdges(key).toArray(new Edge[0]);
+			int limit = Math.min(inner.length, outer.length);
+			for (int idx = 0; idx < limit; idx++) {
+				Edge e1 = inner[idx];
+				Edge e2 = outer[idx];
+				psim += e1.similarity(e2);
 			}
+
+			// estimate added dissimilarity
+			int remain = Math.max(inner.length, outer.length) - limit;
+			double boost = Tool.mgr.getLabelBoosts().get(Label.DISIM);
+			psim -= boost * (psim / limit) * remain;
+			sim += psim > 0 ? psim : 0;
 		}
 		return sim;
 	}
 
-	// use normed Hamming distance for format similarity calc
-	// use normed difference for weight, metric, and size similarity
-	private double similarity(Edge outer, Edge inner) {
-		double boost = Tool.mgr.typeBoost(outer, inner);
-		double sim = 0;
-		sim += boost * Integer.bitCount(outer.leaf.format ^ inner.leaf.format) / 32;
-		sim += boost * norm(outer.weight, inner.weight);
-		sim += boost * norm(outer.metric, inner.metric);
-		sim += boost * norm(outer.leaf.w, inner.leaf.w);
-		sim += boost * norm(outer.leaf.h, inner.leaf.h);
-		return sim;
-	}
-
-	private double norm(double a, double b) {
-		double sum = a + b;
-		double dif = Math.abs(a - b);
-		return (sum - dif) / sum;
+	public static double norm(double a, double b) {
+		double ave = (a + b) / 2;
+		double max = Math.max(a, b);
+		return ave / max;
 	}
 
 	/** Returns the number of unique types of feature type edges */
@@ -308,25 +325,19 @@ public class Feature implements Comparable<Feature> {
 		// same type of feature
 		if (type != o.type) return false;
 		// same number of edge types
-		if (getEdgesMap().size() != o.getEdgesMap().size()) return false;
-		// same edge types
-		Set<Integer> types = new HashSet<>(getEdgesMap().keySet());
-		types.removeAll(o.getEdgesMap().keySet());
-		if (!types.isEmpty()) return false;
-		// same edges per type
-		for (Integer etype : getEdgesMap().keySet()) {
-			List<Edge> e1 = getEdges(etype);
-			List<Edge> e2 = new ArrayList<>(o.getEdges(etype));
+		if (edges.typeSize() != o.edges.typeSize()) return false;
+		// same edge type/text
+		Set<EdgeKey> keys = new HashSet<>(getEdgesMap().keySet());
+		keys.removeAll(o.getEdgesMap().keySet());
+		if (!keys.isEmpty()) return false;
+		// same edges per key
+		for (EdgeKey key : getEdgesMap().keySet()) {
+			List<Edge> e1 = new ArrayList<>(getEdges(key));
+			List<Edge> e2 = new ArrayList<>(o.getEdges(key));
 			if (e1.size() != e2.size()) return false;
-			for (Edge a : e1) {
-				for (Edge b : e2) {
-					if (a.equivalentTo(b)) {
-						e2.remove(b);
-						break;
-					}
-				}
+			for (int idx = 0; idx < e1.size(); idx++) {
+				if (!e1.get(idx).equivalentTo(e2.get(idx))) return false;
 			}
-			if (!e2.isEmpty()) return false;
 		}
 		return true;
 	}
@@ -392,7 +403,7 @@ public class Feature implements Comparable<Feature> {
 			if (y != o.y) sb.append("y [" + y + ":" + o.y + "] ");
 			if (w != o.w) sb.append("w [" + w + ":" + o.w + "] ");
 			if (h != o.h) sb.append("h [" + h + ":" + o.h + "] ");
-			if (weight != o.weight) sb.append("weight [" + weight + ":" + o.weight + "] ");
+			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");
 			if (selfSim != o.selfSim) sb.append("selfSim [" + selfSim + ":" + o.selfSim + "] ");
 		}
 		return sb.toString();

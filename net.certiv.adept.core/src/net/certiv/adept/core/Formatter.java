@@ -82,8 +82,8 @@ public class Formatter {
 		int format = getFormat(token);
 		List<Facet> facets = Facet.get(format);
 		currIndent = 0;
-		if (facets.contains(Facet.INDENT)) {
-			currIndent = priorIndent + Facet.relIndent(facets);
+		if (facets.contains(Facet.INDENTED)) {
+			currIndent = priorIndent + Facet.getDentation(facets);
 			currIndent = currIndent > 0 ? currIndent : 0;
 		}
 
@@ -106,7 +106,7 @@ public class Formatter {
 			List<Facet> facets = Form.resolveOverlap(formCurr, formNext);
 
 			buffer.add(tokenCurr.getText());
-			if (facets.contains(Facet.ALIGNED)) {
+			if (facets.contains(Facet.ALIGNED_ABOVE)) {
 				// TODO: calc ws to provide alignment for next real
 				// look at prior line tokens to find new alignment position
 				buffer.add(line.getNextHws(idx).getText());
