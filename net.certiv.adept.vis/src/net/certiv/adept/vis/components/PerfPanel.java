@@ -188,8 +188,6 @@ public class PerfPanel extends JPanel {
 	}
 
 	public void load(PerfData perfData) {
-		// this.perfData = perfData;
-
 		textFieldLoad.setText(String.valueOf(perfData.load.toMillis()) + " ms");
 		textFieldRebuild.setText(String.valueOf(perfData.rebuild.toMillis()) + " ms");
 

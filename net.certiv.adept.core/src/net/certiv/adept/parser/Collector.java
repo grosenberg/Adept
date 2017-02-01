@@ -1,12 +1,13 @@
 package net.certiv.adept.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Utils;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
@@ -16,8 +17,6 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Group;
-import net.certiv.adept.topo.Point;
-import net.certiv.adept.topo.Span;
 import net.certiv.adept.util.Log;
 
 public class Collector extends ParseData {
@@ -25,15 +24,15 @@ public class Collector extends ParseData {
 	private Document doc;
 	private List<Integer> exTypes;
 
-	// list of features that represent the document
-	private List<Feature> features;
+	// unique list of features that represent the parsed document
+	private HashSet<Feature> features;
 	private Group group;
 
 	public Collector(Document doc) {
 		super();
 		this.doc = doc;
 		if (doc != null) doc.setParse(this);
-		features = new ArrayList<>();
+		features = new LinkedHashSet<>();
 		exTypes = Tool.mgr.excludedLangTypes();
 		group = new Group(this);
 	}
@@ -43,7 +42,16 @@ public class Collector extends ParseData {
 	}
 
 	public List<Feature> getFeatures() {
-		return features;
+		return new ArrayList<>(features);
+	}
+
+	public List<Feature> getNonRuleFeatures() {
+		List<Feature> nonRules = new ArrayList<>();
+		for (Feature feature : features) {
+			if (feature.getKind() == Kind.RULE) continue;
+			nonRules.add(feature);
+		}
+		return nonRules;
 	}
 
 	public void annotateRule(ParserRuleContext ctx) {
@@ -63,28 +71,15 @@ public class Collector extends ParseData {
 		}
 
 		String aspect = parser.getRuleNames()[rule];
-		Point coords = getCoords(start);
-		Span span = getSize(start, stop);
 		int format = Form.characterize(this, ctx);
-		Feature feature = new Feature(aspect, type, start, stop, coords, span, format);
-		feature.setKind(Kind.RULE);
+		Feature feature = Feature.create(Kind.RULE, aspect, doc.getDocId(), features.size(), type, start, stop, format,
+				false);
+		features.add(feature);
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
-		add(feature);
-
-		if (ctx.getChildCount() > 0) {
-			for (ParseTree child : ctx.children) {
-				if (child instanceof TerminalNode) {
-					annotateNode(ctx, (TerminalNode) child);
-				}
-			}
-		}
 	}
 
 	public void annotateNode(ParserRuleContext ctx, TerminalNode node) {
-		// do not revisit nodes
-		if (terminalIndex.get(node) != null) return;
-
 		Token token = node.getSymbol();
 		int type = token.getType();
 		if (exTypes.contains(type)) {
@@ -95,15 +90,28 @@ public class Collector extends ParseData {
 		}
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
-		Point coords = getCoords(token);
-		Span span = getSize(token, token);
 		int format = Form.characterize(this, node);
-		Feature feature = new Feature(aspect, type, token, coords, span, format);
-		feature.setKind(Kind.NODE);
-		feature.setVar(isVar(type));
+		Feature feature = Feature.create(Kind.NODE, aspect, doc.getDocId(), features.size(), type, token, format,
+				isVar(type));
+		features.add(feature);
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
-		add(feature);
+	}
+
+	public void annotateComments() {
+		for (Token token : stream.getTokens()) {
+			int type = token.getType();
+			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
+				String aspect = lexer.getVocabulary().getDisplayName(type);
+				int format = Form.characterize(this, token);
+				Kind kind = type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT;
+				Feature feature = Feature.create(kind, aspect, doc.getDocId(), features.size(), type, token, format);
+				TerminalNode node = new TerminalNodeImpl(token);
+				features.add(feature);
+				nodeIndex.put(token, node);
+				terminalIndex.put(node, feature);
+			}
+		}
 	}
 
 	private boolean isVar(int type) {
@@ -113,42 +121,8 @@ public class Collector extends ParseData {
 		return false;
 	}
 
-	public void annotateComments() {
-		for (Token token : stream.getTokens()) {
-			int type = token.getType();
-			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
-				String aspect = lexer.getVocabulary().getDisplayName(type);
-				Point coords = getCoords(token);
-				Span span = getSize(token, token);
-				int format = Form.characterize(this, token);
-				Feature feature = new Feature(aspect, type, token, coords, span, format);
-				feature.setKind(type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT);
-				TerminalNode node = new TerminalNodeImpl(token);
-				nodeIndex.put(token, node);
-				terminalIndex.put(node, feature);
-				add(feature);
-			}
-		}
-	}
-
-	private void add(Feature feature) {
-		feature.setId(doc.getDocId(), features.size());
-		features.add(feature);
-	}
-
-	private Point getCoords(Token start) {
-		return ((AdeptToken) start).coords();
-	}
-
-	private Span getSize(Token start, Token stop) {
-		if (start == stop) return new Span(start.getText().length(), 1);
-
-		int height = stop.getLine() - start.getLine() + 1;
-		int width = stop.getStopIndex() - start.getStartIndex() + 1;
-		return new Span(width, height);
-	}
-
-	public void index() {
+	/** Builds a source line->tokens indexing map */
+	public void createLineTokenIndex() {
 		for (Token token : getTokens()) {
 			int num = token.getLine() - 1;
 			List<Token> line = lineIndex.get(num);
@@ -160,13 +134,15 @@ public class Collector extends ParseData {
 		}
 	}
 
+	/** Generate edge connections for all non-RULE root features. */
 	public void genLocalEdges(int tabWidth) {
 		for (Feature feature : features) {
+			if (feature.getKind() == Kind.RULE) continue;
+
 			group.setLocus(feature, tabWidth);
 			List<Feature> locals = group.getLocalFeatures();
 			for (Feature local : locals) {
 				feature.addEdge(local);
-				local.addEdge(feature);
 			}
 		}
 	}

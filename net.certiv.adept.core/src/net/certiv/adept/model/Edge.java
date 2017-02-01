@@ -12,8 +12,7 @@ public class Edge implements Comparable<Edge> {
 
 	public Feature root; // root of this edge
 	public Feature leaf; // leaf connected by this edge
-
-	@Expose public EdgeKey edgeKey;
+	public EdgeKey edgeKey;
 
 	@Expose public int rootId;
 	@Expose public int leafId;
@@ -35,8 +34,8 @@ public class Edge implements Comparable<Edge> {
 	}
 
 	public double similarity(Edge o) {
-		Map<String, Double> boosts = Tool.mgr.getLabelBoosts();
 		double sim = 0;
+		Map<Label, Double> boosts = Tool.mgr.getLabelBoosts();
 		sim += boosts.get(Label.RARITY) * Feature.norm(rarity, o.rarity);
 		sim += boosts.get(Label.METRIC) * Feature.norm(metric, o.metric);
 		return sim;

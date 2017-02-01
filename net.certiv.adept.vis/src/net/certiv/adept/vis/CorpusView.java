@@ -75,13 +75,16 @@ public class CorpusView extends AbstractBase {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fsTable.getSelectedRow();
-				CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
-				typeKey = (int) m.getValueAt(row, 2);
-				String kind = (String) m.getValueAt(row, 1);
-				if (kind.equals(Kind.RULE.toString())) {
-					typeKey = typeKey << 10;
+				if (row >= 0) {
+					CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
+					typeKey = (int) m.getValueAt(row, 2);
+					String kind = (String) m.getValueAt(row, 1);
+					if (kind.equals(Kind.RULE.toString())) {
+						typeKey = typeKey << 10;
+					}
+					createDependentData(typeKey);
+					clearEdgeData();
 				}
-				createDependentData(typeKey);
 			}
 		});
 
@@ -94,9 +97,11 @@ public class CorpusView extends AbstractBase {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fxTable.getSelectedRow();
-				CorpusFeatureTableModel m = (CorpusFeatureTableModel) fxTable.getModel();
-				int index = (int) m.getValueAt(row, 0);
-				createEdgeData(index - 1);
+				if (row >= 0) {
+					CorpusFeatureTableModel m = (CorpusFeatureTableModel) fxTable.getModel();
+					int index = (int) m.getValueAt(row, 0);
+					createEdgeData(index - 1);
+				}
 			}
 		});
 
@@ -200,6 +205,13 @@ public class CorpusView extends AbstractBase {
 		cols.getColumn(1).setPreferredWidth(20);
 		cols.getColumn(2).setPreferredWidth(20);
 		cols.getColumn(3).setPreferredWidth(20);
+	}
+
+	protected void clearEdgeData() {
+		TableModel model = egTable.getModel();
+		if (model instanceof EdgeTableModel) {
+			((EdgeTableModel) model).clear();
+		}
 	}
 
 	protected void createEdgeData(int line) {

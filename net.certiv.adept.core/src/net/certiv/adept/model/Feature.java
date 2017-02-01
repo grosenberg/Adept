@@ -17,15 +17,18 @@ import com.google.common.collect.ComputationException;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Label;
-import net.certiv.adept.topo.Location;
 import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Span;
 import net.certiv.adept.topo.Stats;
 
 public class Feature implements Comparable<Feature> {
+
+	private static final String MsgInvDist = "Invalid distance computed (%d) for %s -> %s";
+	private static Map<FeatKey, Feature> pool = new HashMap<>();
 
 	@Expose private int docId;		// unique id of the document containing this feature
 	@Expose private int id;			// unique id of this feature
@@ -45,8 +48,7 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int x;			// feature locus
 	@Expose private int y;
-	@Expose private int w;			// feature span
-	@Expose private int h;
+	@Expose private int lines;		// feature vertical span
 	@Expose private int size;		// feature size
 	@Expose private double weight;
 	@Expose private double selfSim;
@@ -54,65 +56,94 @@ public class Feature implements Comparable<Feature> {
 	// defines connections between this feature and others in a local group
 	@Expose Edges edges;
 
-	// key = docId; value = locations of equivalent features
-	@Expose Map<Integer, List<Location>> equivalents;
-
-	private static final String InvalidDist = "Invalid distance computed (%d) for %s -> %s";
+	// // key = docId; value = locations of equivalent features
+	// @Expose Map<Integer, List<Location>> equivalents;
 
 	private Feature matched;
 	private boolean update;
 	private int aligned;
 
-	public Feature() {
+	// comments
+	public static Feature create(Kind kind, String aspect, int docId, int id, int type, Token token, int format) {
+		return create(kind, aspect, docId, id, type, token, format, false);
+	}
+
+	// nodes
+	public static Feature create(Kind kind, String aspect, int docId, int id, int type, Token token, int format,
+			boolean isVar) {
+		return create(kind, aspect, docId, id, type, token, token, format, isVar);
+	}
+
+	// rules
+	public static Feature create(Kind kind, String aspect, int docId, int id, int type, Token start, Token stop,
+			int format, boolean isVar) {
+
+		FeatKey key = FeatKey.create(docId, type, start, stop);
+		Feature feature = pool.get(key);
+		if (feature == null) {
+			feature = new Feature(kind, aspect, docId, id, type, start, stop, format, isVar);
+			pool.put(key, feature);
+		}
+		return feature;
+	}
+
+	Feature() {
 		super();
 		edges = new Edges();
-		equivalents = new HashMap<>();
+		// equivalents = new HashMap<>();
 	}
 
-	public Feature(String aspect, int type, Token token, Point location, Span span, int format) {
-		this(aspect, type, token, token, location, span, format);
-	}
-
-	public Feature(String aspect, int type, Token start, Token stop, Point location, Span span, int format) {
+	Feature(Kind kind, String aspect, int docId, int id, int type, Token start, Token stop, int format, boolean isVar) {
 		this();
+		this.kind = kind;
 		this.aspect = aspect;
+		this.docId = docId;
+		this.id = id;
 		this.type = type;
+		this.format = format;
+		this.isVar = isVar;
+
 		this.start = start.getTokenIndex();
 		this.stop = stop.getTokenIndex();
 		this.begLine = start.getLine() - 1;
 		this.endLine = stop.getLine() - 1;
-		this.format = format;
 
 		int begIdx = start.getStartIndex();
 		int endIdx = stop.getStopIndex();
 		this.size = endIdx - begIdx + 1;
-		int endIdx2 = endIdx - 10 > begIdx ? begIdx + 7 : endIdx;
+		int endIdx2 = endIdx - 16 > begIdx ? begIdx + 13 : endIdx;
 		this.text = start.getInputStream().getText(new Interval(begIdx, endIdx2));
 		if (endIdx != endIdx2) this.text += "...";
 		this.text = Utils.escapeWhitespace(this.text, true);
 
-		x = location.getCol();
-		y = location.getLine();
-		w = span.getWidth();
-		h = span.getHeight();
+		Point coords = getCoords(start);
+		Span span = getSize(start, stop);
+		x = coords.getCol();
+		y = coords.getLine();
+		size = span.getWidth();
+		lines = span.getHeight();
 		weight = 1;
 		update = true;
+	}
+
+	private Point getCoords(Token start) {
+		return ((AdeptToken) start).coords();
+	}
+
+	private Span getSize(Token start, Token stop) {
+		if (start == stop) return new Span(start.getText().length(), 1);
+
+		int height = stop.getLine() - start.getLine() + 1;
+		int width = stop.getStopIndex() - start.getStartIndex() + 1;
+		return new Span(width, height);
 	}
 
 	public Kind getKind() {
 		return kind;
 	}
 
-	public void setKind(Kind kind) {
-		this.kind = kind;
-	}
-
 	public boolean isVar() {
 		return isVar;
-	}
-
-	public void setVar(boolean isVar) {
-		this.isVar = isVar;
 	}
 
 	public int getDocId() {
@@ -121,12 +152,6 @@ public class Feature implements Comparable<Feature> {
 
 	public int getId() {
 		return id;
-	}
-
-	/** Sets the document and feature IDs */
-	public void setId(int docId, int id) {
-		this.docId = docId;
-		this.id = id;
 	}
 
 	public String getAspect() {
@@ -228,7 +253,7 @@ public class Feature implements Comparable<Feature> {
 	public double distance(Feature other) {
 		double dist = simularity() + other.simularity() - 2 * simularity(other);
 		if (dist < 0) {
-			String msg = String.format(InvalidDist, dist, this.toString(), other.toString());
+			String msg = String.format(MsgInvDist, dist, this.toString(), other.toString());
 			throw new ComputationException(new Throwable(msg));
 		}
 		return dist;
@@ -252,7 +277,7 @@ public class Feature implements Comparable<Feature> {
 	// type and text (if applicable) have to be identical
 	private double featLabelSimularity(Feature other) {
 		double sim = 0;
-		Map<String, Double> boosts = Tool.mgr.getLabelBoosts();
+		Map<Label, Double> boosts = Tool.mgr.getLabelBoosts();
 		sim += boosts.get(Label.SIZE) * norm(size, other.size);
 		sim += boosts.get(Label.WEIGHT) * norm(weight, other.weight);
 		sim += boosts.get(Label.EDGES) * norm(edges.getEdgeCount(), other.edges.getEdgeCount());
@@ -305,15 +330,15 @@ public class Feature implements Comparable<Feature> {
 		return new Stats(this);
 	}
 
-	public void mergeEquivalent(Feature feature) {
-		weight++;
-		List<Location> did = equivalents.get(feature.docId);
-		if (did == null) {
-			did = new ArrayList<>();
-			equivalents.put(feature.docId, did);
-		}
-		did.add(new Location(feature.docId, feature.id, feature.y, feature.x));
-	}
+	// public void mergeEquivalent(Feature feature) {
+	// weight++;
+	// List<Location> did = equivalents.get(feature.docId);
+	// if (did == null) {
+	// did = new ArrayList<>();
+	// equivalents.put(feature.docId, did);
+	// }
+	// did.add(new Location(feature.docId, feature.id, feature.y, feature.x));
+	// }
 
 	/**
 	 * Equivalency is defined by identity of feature type, equality of edge sets, identity of edge
@@ -347,10 +372,10 @@ public class Feature implements Comparable<Feature> {
 		if (equals(o)) return 0;
 		if (type < o.type) return -1;
 		if (type > o.type) return 1;
-		if (w < o.w) return -1;
-		if (w > o.w) return 1;
-		if (h < o.h) return -1;
-		if (h > o.h) return 1;
+		if (size < o.size) return -1;
+		if (size > o.size) return 1;
+		if (lines < o.lines) return -1;
+		if (lines > o.lines) return 1;
 		if (weight < o.weight) return -1;
 		if (weight > o.weight) return 1;
 		if (format < o.format) return -1;
@@ -381,8 +406,8 @@ public class Feature implements Comparable<Feature> {
 		result = prime * result + Double.hashCode(weight);
 		result = prime * result + x;
 		result = prime * result + y;
-		result = prime * result + w;
-		result = prime * result + h;
+		result = prime * result + size;
+		result = prime * result + lines;
 		return result;
 	}
 
@@ -401,8 +426,8 @@ public class Feature implements Comparable<Feature> {
 			if (endLine != o.endLine) sb.append("endLine [" + endLine + ":" + o.endLine + "] ");
 			if (x != o.x) sb.append("x [" + x + ":" + o.x + "] ");
 			if (y != o.y) sb.append("y [" + y + ":" + o.y + "] ");
-			if (w != o.w) sb.append("w [" + w + ":" + o.w + "] ");
-			if (h != o.h) sb.append("h [" + h + ":" + o.h + "] ");
+			if (size != o.size) sb.append("size [" + size + ":" + o.size + "] ");
+			if (lines != o.lines) sb.append("lines [" + lines + ":" + o.lines + "] ");
 			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");
 			if (selfSim != o.selfSim) sb.append("selfSim [" + selfSim + ":" + o.selfSim + "] ");
 		}

@@ -19,6 +19,7 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.topo.Label;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 import net.certiv.adept.xvisitor.parser.XVisitorSourceParser;
@@ -57,7 +58,6 @@ public class CoreMgr {
 			perfData.rebuild = Time.end(start);
 			if (!corpus.isConsistent()) return false;
 		}
-		// corpus.reduceConstraints();
 		perfData.corpusFeatureCnt = corpus.getFeatures().size();
 		perfData.corpusFeatureTypeCnt = corpus.getFeatureIndex().size();
 		return true;
@@ -91,10 +91,10 @@ public class CoreMgr {
 			}
 
 			collector.annotateComments();
-			collector.index();
+			collector.createLineTokenIndex();
 			collector.genLocalEdges(tabWidth);
 
-			corpus.include(collector);
+			corpus.merge(collector);
 		}
 
 		try {
@@ -122,7 +122,7 @@ public class CoreMgr {
 		return null;
 	}
 
-	public Map<String, Double> getLabelBoosts() {
+	public Map<Label, Double> getLabelBoosts() {
 		return corpus.getLabelBoosts();
 	}
 

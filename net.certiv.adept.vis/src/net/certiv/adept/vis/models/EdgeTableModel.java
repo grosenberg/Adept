@@ -61,4 +61,12 @@ public class EdgeTableModel extends AbstractTableModel {
 	public Object getValueAt(int row, int col) {
 		return rowData[row][col];
 	}
+
+	public void clear() {
+		int old = getRowCount();
+		if (old == 0) return;
+
+		rowData = new Object[0][columnNames.length];
+		fireTableRowsDeleted(0, old - 1);
+	}
 }

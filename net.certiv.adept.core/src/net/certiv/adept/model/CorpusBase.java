@@ -31,14 +31,14 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
 
-public abstract class CorpusStore {
+public abstract class CorpusBase {
 
 	private static final String MODEL = "CorpusModel";
 	private static final String DATA = "CorpusData";
 	private static final String DOT = ".";
 	private static final String EXT = "json.gz";
 
-	public CorpusStore() {}
+	public CorpusBase() {}
 
 	public List<Document> read(Path corpusDir, String ext, int tabWidth) {
 		List<Document> documents = new ArrayList<>();
@@ -98,29 +98,29 @@ public abstract class CorpusStore {
 		CorpusModel model;
 		Gson gson = configBuilder();
 		try {
-			Log.debug(CorpusStore.class, "Loading " + path.toString());
+			Log.debug(CorpusBase.class, "Loading " + path.toString());
 
 			InputStream gis = new GZIPInputStream(Files.newInputStream(path));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
 			model = gson.fromJson(reader, CorpusModel.class);
 			model.setCorpusDir(corpusDir);
 		} catch (IOException | JsonSyntaxException e) {
-			Log.error(CorpusStore.class, "Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
+			Log.error(CorpusBase.class, "Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
 			throw e;
 		}
 
 		List<Path> paths = getDataFiles(corpusDir);
 		for (Path dPath : paths) {
 			try {
-				Log.debug(CorpusStore.class, "Loading " + dPath.toString());
+				Log.debug(CorpusBase.class, "Loading " + dPath.toString());
 
 				InputStream is = new GZIPInputStream(Files.newInputStream(dPath));
 				BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 				Features features = gson.fromJson(reader, Features.class);
 				features.fixEdgeRefs();
-				model.addAll(features);
+				model.merge(features);
 			} catch (IOException | JsonSyntaxException e) {
-				Log.error(CorpusStore.class,
+				Log.error(CorpusBase.class,
 						"Failed loading corpus data file " + path.toString() + ": " + e.getMessage());
 				throw e;
 			}

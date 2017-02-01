@@ -267,7 +267,7 @@ public class Tool extends ToolBase {
 			}
 
 			collector.annotateComments();
-			collector.index();
+			collector.createLineTokenIndex();
 			collector.genLocalEdges(tabWidth);
 			mgr.createDocModel(collector);
 

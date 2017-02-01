@@ -1,5 +1,6 @@
 package net.certiv.adept.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,15 @@ public class Features {
 
 	public List<Feature> getFeatures() {
 		return features;
+	}
+
+	public List<Feature> getNonRuleFeatures() {
+		List<Feature> nonRules = new ArrayList<>();
+		for (Feature feature : features) {
+			if (feature.getKind() == Kind.RULE) continue;
+			nonRules.add(feature);
+		}
+		return nonRules;
 	}
 
 	/** Restore feature objects to edges using the persisted indicies */

@@ -2,14 +2,13 @@ package net.certiv.adept.model;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
-import com.google.gson.annotations.Expose;
 
 public class EdgeKey implements Comparable<EdgeKey> {
 
 	private static Table<Integer, String, EdgeKey> pool = TreeBasedTable.create();
 
-	@Expose private int type;
-	@Expose private String text;
+	private int type;
+	private String text;
 
 	public static EdgeKey create(int type, String text) {
 		EdgeKey key = pool.get(type, text);

@@ -34,9 +34,9 @@ public enum Label {
 		defValue = def;
 	}
 
-	public static void loadDefaults(Map<String, Double> labelBoosts) {
+	public static void loadDefaults(Map<Label, Double> labelBoosts) {
 		for (Label label : Label.values()) {
-			labelBoosts.put(label.name, label.defValue);
+			labelBoosts.put(label, label.defValue);
 		}
 	}
 
