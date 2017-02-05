@@ -1,6 +1,7 @@
 package net.certiv.adept.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,13 +13,14 @@ public class DocModel {
 	private List<Feature> features;
 
 	// key = feature type; value = corresponding features
-	private Map<Integer, List<Feature>> index;
+	private Map<Integer, List<Feature>> index = new HashMap<>();
 
 	/** Creates a nascent model for the given doc */
 	public DocModel(Collector collector) {
 		doc = collector.getDocument();
 		doc.setModel(this);
-		features = collector.getFeatures();
+		this.features = collector.getNonRuleFeatures();
+		buildIndex();
 	}
 
 	public Document getDocument() {
@@ -29,10 +31,6 @@ public class DocModel {
 		return features;
 	}
 
-	public void setFeatures(List<Feature> features) {
-		this.features = features;
-		index = null;
-	}
 
 	/** Returns a map, keyed by feature type, of all features in the document model */
 	public Map<Integer, List<Feature>> getFeatureIndex() {

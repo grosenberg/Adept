@@ -3,6 +3,7 @@ package net.certiv.adept.vis;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -28,12 +29,14 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
+import net.certiv.adept.vis.components.FeaturePanel;
+import net.certiv.adept.vis.components.MatchPanel;
 import net.certiv.adept.vis.models.DocTableModel;
 import net.certiv.adept.vis.models.MatchesTableModel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.SrcItem;
 
-public class MatchesView extends AbstractBase {
+public class MatchView extends AbstractBase {
 
 	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	private static final String name = "MatchAnalysis";
@@ -52,19 +55,21 @@ public class MatchesView extends AbstractBase {
 
 	private Tool tool;
 	private JComboBox<SrcItem> srcBox;
-	private JSplitPane mainPane;
-	private JTable fsTable;
-	private JTable mxTable;
+	private JSplitPane mainPanel;
+	private JTable featTable;
+	private JTable matchTable;
+	private MatchPanel matchPanel;
+	private FeaturePanel targetPanel;
 
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {}
-		MatchesView view = new MatchesView();
+		MatchView view = new MatchView();
 		view.loadTool();
 	}
 
-	public MatchesView() {
+	public MatchView() {
 		super(name, "features.gif");
 
 		SourceListModel model = new SourceListModel(rootDir, srcExt);
@@ -81,47 +86,69 @@ public class MatchesView extends AbstractBase {
 		JPanel cntlPanel = new JPanel();
 		cntlPanel.add(srcBox);
 
-		fsTable = new JTable();
-		fsTable.setFillsViewportHeight(true);
-		fsTable.addMouseListener(new MouseAdapter() {
+		// ----
+
+		JPanel dataPanel = new JPanel(new GridLayout(1, 2));
+		targetPanel = new FeaturePanel(null);
+		matchPanel = new MatchPanel(null);
+		dataPanel.add(targetPanel);
+		dataPanel.add(matchPanel);
+
+		// ----
+
+		featTable = new JTable();
+		featTable.setFillsViewportHeight(true);
+		featTable.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				createMatchData(fsTable.getSelectedRow());
+				createMatchList(featTable.getSelectedRow());
 			}
 		});
 
-		JScrollPane fsScroll = new JScrollPane(fsTable);
+		JScrollPane featScroll = new JScrollPane(featTable);
 
-		mxTable = new JTable();
-		mxTable.setFillsViewportHeight(true);
+		// ----
 
-		JScrollPane mxScroll = new JScrollPane(mxTable);
+		matchTable = new JTable();
+		matchTable.setFillsViewportHeight(true);
+		matchTable.addMouseListener(new MouseAdapter() {
 
-		mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		mainPane.setLeftComponent(fsScroll);
-		mainPane.setRightComponent(mxScroll);
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				createMatchData(featTable.getSelectedRow(), matchTable.getSelectedRow());
+			}
+		});
+
+		JScrollPane matchScroll = new JScrollPane(matchTable);
+
+		// ----
+
+		mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		mainPanel.setLeftComponent(featScroll);
+		mainPanel.setRightComponent(matchScroll);
 
 		Dimension minimumSize = new Dimension(100, 100);
-		fsScroll.setMinimumSize(minimumSize);
-		mxScroll.setMinimumSize(minimumSize);
-		mainPane.setDividerLocation(0.5);
+		featScroll.setMinimumSize(minimumSize);
+		matchScroll.setMinimumSize(minimumSize);
+		mainPanel.setDividerLocation(0.5);
 
 		Container content = frame.getContentPane();
 		content.add(cntlPanel, BorderLayout.NORTH);
-		content.add(mainPane, BorderLayout.CENTER);
+		content.add(mainPanel, BorderLayout.CENTER);
+		content.add(dataPanel, BorderLayout.SOUTH);
 
 		setLocation();
 
 		int split = prefs.getInt(KEY_SPLIT_HORZ, 300);
-		mainPane.setDividerLocation(split);
+		mainPanel.setDividerLocation(split);
 
 		frame.setVisible(true);
 	}
 
 	@Override
 	protected void saveWindowClosingPrefs(Preferences prefs) {
-		prefs.putInt(KEY_SPLIT_HORZ, mainPane.getDividerLocation());
+		prefs.putInt(KEY_SPLIT_HORZ, mainPanel.getDividerLocation());
 	}
 
 	private void loadTool() {
@@ -142,8 +169,11 @@ public class MatchesView extends AbstractBase {
 		}
 	}
 
+	// selected target source changed
 	private void process() {
 		new Formatter().execute();
+		targetPanel.clear();
+		matchPanel.clear();
 	}
 
 	private class Formatter extends SwingWorker<String, Object> {
@@ -161,17 +191,17 @@ public class MatchesView extends AbstractBase {
 		protected void done() {
 			List<Feature> features = Tool.mgr.getDocModel().getFeatures();
 			DocTableModel model = new DocTableModel(features);
-			fsTable.setModel(model);
+			featTable.setModel(model);
 
-			fsTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
+			featTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
 
 			TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-			mxTable.setRowSorter(sorter);
+			matchTable.setRowSorter(sorter);
 			sorter.setComparator(0, intComparator);
 			sorter.setComparator(1, intComparator);
 			sorter.setComparator(2, intComparator);
 
-			TableColumnModel cols = fsTable.getColumnModel();
+			TableColumnModel cols = featTable.getColumnModel();
 			cols.getColumn(0).setPreferredWidth(10);
 			cols.getColumn(1).setPreferredWidth(10);
 			cols.getColumn(2).setPreferredWidth(10);
@@ -181,24 +211,37 @@ public class MatchesView extends AbstractBase {
 		}
 	}
 
-	protected void createMatchData(int row) {
-		DocTableModel m = (DocTableModel) fsTable.getModel();
+	// clicked on the target feature table
+	protected void createMatchList(int row) {
+		DocTableModel m = (DocTableModel) featTable.getModel();
 		Feature feature = m.getFeature(row);
 		TreeMap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
 		MatchesTableModel model = new MatchesTableModel(matches);
-		mxTable.setModel(model);
+		matchTable.setModel(model);
 
-		mxTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
+		matchTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-		mxTable.setRowSorter(sorter);
+		matchTable.setRowSorter(sorter);
 		sorter.setComparator(0, intComparator);
 		sorter.setComparator(1, intComparator);
 
-		TableColumnModel cols = mxTable.getColumnModel();
+		TableColumnModel cols = matchTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(30);
 		cols.getColumn(2).setPreferredWidth(60);
-		cols.getColumn(3).setPreferredWidth(300);
+		cols.getColumn(3).setPreferredWidth(200);
+
+		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
+		targetPanel.load(feature);
+		matchPanel.clear();
+	}
+
+	protected void createMatchData(int featureRow, int matchRow) {
+		DocTableModel f = (DocTableModel) featTable.getModel();
+		Feature feature = f.getFeature(featureRow);
+		MatchesTableModel m = (MatchesTableModel) matchTable.getModel();
+		Feature matched = m.getFeature(matchRow);
+		matchPanel.load(feature, matched);
 	}
 }

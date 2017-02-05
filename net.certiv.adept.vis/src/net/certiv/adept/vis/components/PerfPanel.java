@@ -240,6 +240,19 @@ public class PerfPanel extends JPanel {
 		}
 	}
 
+	public void clearAll() {
+		textFieldLoad.setText("");
+		textFieldRebuild.setText("");
+		textFieldTotalCnt.setText("");
+		textFieldTypeCnt.setText("");
+		textFieldName.setText("");
+		textFieldFeatures.setText("");
+		textFieldTerminals.setText("");
+		textFieldFormating.setText("");
+
+		clearData();
+	}
+
 	public void clearData() {
 		textFieldId.setText("");
 		textFieldFormat.setText("");

@@ -5,14 +5,16 @@ import java.util.Map;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.topo.Label;
+import net.certiv.adept.model.equiv.EEdge;
+import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 
 public class Edge implements Comparable<Edge> {
 
 	public Feature root; // root of this edge
 	public Feature leaf; // leaf connected by this edge
-	public EdgeKey edgeKey;
+
+	@Expose public EdgeKey edgeKey;
 
 	@Expose public int rootId;
 	@Expose public int leafId;
@@ -20,24 +22,30 @@ public class Edge implements Comparable<Edge> {
 	@Expose public double metric;
 	@Expose public double rarity;
 
+	private EEdge equiv;
+
 	public Edge(Feature root, Feature leaf) {
 		this.root = root;
 		this.leaf = leaf;
 
 		rootId = root.getId();
 		leafId = leaf.getId();
-		edgeKey = EdgeKey.create(leaf.getId(), leaf.getText());
+		edgeKey = EdgeKey.create(root, leaf);
 
 		// euclidean distance
 		metric = Math.sqrt(Math.pow(root.getX() - leaf.getX(), 2) + Math.pow(root.getY() - leaf.getY(), 2));
 		rarity = 1;
 	}
 
+	public EdgeKey getEdgeKey() {
+		return edgeKey;
+	}
+
 	public double similarity(Edge o) {
 		double sim = 0;
-		Map<Label, Double> boosts = Tool.mgr.getLabelBoosts();
-		sim += boosts.get(Label.RARITY) * Feature.norm(rarity, o.rarity);
-		sim += boosts.get(Label.METRIC) * Feature.norm(metric, o.metric);
+		Map<Factor, Double> boosts = Tool.mgr.getFactors();
+		sim += boosts.get(Factor.RARITY) * Feature.norm(rarity, o.rarity);
+		sim += boosts.get(Factor.METRIC) * Feature.norm(metric, o.metric);
 		return sim;
 	}
 
@@ -50,14 +58,31 @@ public class Edge implements Comparable<Edge> {
 		return true;
 	}
 
+	public EEdge equiv() {
+		if (equiv == null) {
+			equiv = new EEdge(this);
+		}
+		return equiv;
+	}
+
 	@Override
 	public int compareTo(Edge o) {
 		if (rootId != o.rootId) Log.error(this, "Wrong orientation for " + toString());
 		if (leaf.getType() < o.leaf.getType()) return -1;
 		if (leaf.getType() > o.leaf.getType()) return 1;
-		if (root.getStart() < o.root.getStart()) return -1;
-		if (root.getStart() > o.root.getStart()) return 1;
 		return leaf.getText().compareTo(o.leaf.getText());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		Edge o = (Edge) obj;
+		if (edgeKey == null) return false;
+		if (!edgeKey.equals(o.edgeKey)) return false;
+		if (rootId != o.rootId) return false;
+		return true;
 	}
 
 	@Override
@@ -68,20 +93,6 @@ public class Edge implements Comparable<Edge> {
 		result = prime * result + leafId;
 		result = prime * result + rootId;
 		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
-		Edge other = (Edge) obj;
-		if (edgeKey == null) {
-			if (other.edgeKey != null) return false;
-		} else if (!edgeKey.equals(other.edgeKey)) return false;
-		if (leafId != other.leafId) return false;
-		if (rootId != other.rootId) return false;
-		return true;
 	}
 
 	@Override

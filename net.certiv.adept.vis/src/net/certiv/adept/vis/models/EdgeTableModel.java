@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -21,23 +20,21 @@ public class EdgeTableModel extends AbstractTableModel {
 
 		List<Feature> features = index.get(key);
 		Feature feature = features.get(idx);
-		Collection<TreeSet<Edge>> edgeSets = feature.getEdgesMap().values();
+		Collection<Edge> edges = feature.getEdgeSet().getEdges();
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
-		for (TreeSet<Edge> edges : edgeSets) {
-			for (Edge edge : edges) {
-				String root = edge.root.getAspect();
-				String rTxt = edge.root.getText();
-				String leaf = edge.leaf.getAspect();
-				String lTxt = edge.leaf.getText();
-				double metric = edge.metric;
-				double weight = edge.rarity;
+		for (Edge edge : edges) {
+			String root = edge.root.getAspect();
+			String rTxt = edge.root.getText();
+			String leaf = edge.leaf.getAspect();
+			String lTxt = edge.leaf.getText();
+			double metric = edge.metric;
+			double weight = edge.rarity;
 
-				Object[] row = { line, root, rTxt, leaf, lTxt, metric, weight };
-				rows.add(row);
-				line++;
-			}
+			Object[] row = { line, root, rTxt, leaf, lTxt, metric, weight };
+			rows.add(row);
+			line++;
 		}
 		this.rowData = rows.toArray(new Object[rows.size()][]);
 	}

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import com.google.gson.annotations.Expose;
 
@@ -43,20 +42,18 @@ public class Features {
 		return nonRules;
 	}
 
-	/** Restore feature objects to edges using the persisted indicies */
+	/** Restore feature objects to edgeSet using the persisted indicies */
 	public void fixEdgeRefs() {
 		Map<Integer, Feature> cache = new HashMap<>();
 		for (Feature feature : features) {
 			cache.put(feature.getId(), feature);
 		}
 		for (Feature feature : features) {
-			for (TreeSet<Edge> edges : feature.getEdgesMap().values()) {
-				for (Edge edge : edges) {
-					edge.root = cache.get(edge.rootId);
-					edge.leaf = cache.get(edge.leafId);
-					if (edge.root == null || edge.leaf == null) {
-						Log.error(this, "EdgeRef fixup failed.");
-					}
+			for (Edge edge : feature.getEdgeSet().getEdges()) {
+				edge.root = cache.get(edge.rootId);
+				edge.leaf = cache.get(edge.leafId);
+				if (edge.root == null || edge.leaf == null) {
+					Log.error(this, "EdgeRef fixup failed.");
 				}
 			}
 		}

@@ -121,8 +121,22 @@ public class Collector extends ParseData {
 		return false;
 	}
 
+	/** Generate edge connections for all non-RULE root features. */
+	public void genLocalEdges(int tabWidth) {
+		createLineTokenIndex();
+			for (Feature feature : features) {
+			if (feature.getKind() == Kind.RULE) continue;
+	
+			group.setLocus(feature, tabWidth);
+			List<Feature> locals = group.getLocalFeatures();
+			for (Feature local : locals) {
+				feature.addEdge(local);
+			}
+		}
+	}
+
 	/** Builds a source line->tokens indexing map */
-	public void createLineTokenIndex() {
+	private void createLineTokenIndex() {
 		for (Token token : getTokens()) {
 			int num = token.getLine() - 1;
 			List<Token> line = lineIndex.get(num);
@@ -131,19 +145,6 @@ public class Collector extends ParseData {
 				lineIndex.put(num, line);
 			}
 			line.add(token);
-		}
-	}
-
-	/** Generate edge connections for all non-RULE root features. */
-	public void genLocalEdges(int tabWidth) {
-		for (Feature feature : features) {
-			if (feature.getKind() == Kind.RULE) continue;
-
-			group.setLocus(feature, tabWidth);
-			List<Feature> locals = group.getLocalFeatures();
-			for (Feature local : locals) {
-				feature.addEdge(local);
-			}
 		}
 	}
 }

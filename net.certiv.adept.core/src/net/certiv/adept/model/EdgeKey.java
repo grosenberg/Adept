@@ -2,43 +2,48 @@ package net.certiv.adept.model;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
+import com.google.gson.annotations.Expose;
+
+import net.certiv.adept.model.equiv.EFeature;
 
 public class EdgeKey implements Comparable<EdgeKey> {
 
-	private static Table<Integer, String, EdgeKey> pool = TreeBasedTable.create();
+	private static Table<EFeature, EFeature, EdgeKey> pool = TreeBasedTable.create();
 
-	private int type;
-	private String text;
+	@Expose private int typeR;
+	@Expose private int typeL;
+	@Expose private String textR;
+	@Expose private String textL;
 
-	public static EdgeKey create(int type, String text) {
-		EdgeKey key = pool.get(type, text);
+	public static EdgeKey create(Feature root, Feature leaf) {
+		EdgeKey key = pool.get(root.equiv(), leaf.equiv());
 		if (key == null) {
-			key = new EdgeKey(type, text);
-			pool.put(type, text, key);
+			key = new EdgeKey(root, leaf);
+			pool.put(root.equiv(), leaf.equiv(), key);
 		}
 		return key;
 	}
 
-	EdgeKey(int type, String text) {
-		this.type = type;
-		this.text = text != null ? text : "";
+	public EdgeKey(Feature root, Feature leaf) {
+		this.typeR = root.getType();
+		this.typeL = leaf.getType();
+		this.textR = root.isVar() || root.isRule() ? "" : root.getText();
+		this.textL = leaf.isVar() || leaf.isRule() ? "" : leaf.getText();
 	}
 
 	public int getType() {
-		return type;
+		return typeL;
 	}
 
 	public String getText() {
-		return text;
+		return textL;
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((text == null) ? 0 : text.hashCode());
-		result = prime * result + type;
-		return result;
+	public int compareTo(EdgeKey o) {
+		if (typeR < o.getType()) return -1;
+		if (typeR > o.getType()) return 1;
+		return textR.compareTo(o.getText());
 	}
 
 	@Override
@@ -47,21 +52,30 @@ public class EdgeKey implements Comparable<EdgeKey> {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		EdgeKey other = (EdgeKey) obj;
-		if (text == null && other.text != null) return false;
-		if (!text.equals(other.text)) return false;
-		if (type != other.type) return false;
+		if (textL == null) {
+			if (other.textL != null) return false;
+		} else if (!textL.equals(other.textL)) return false;
+		if (textR == null) {
+			if (other.textR != null) return false;
+		} else if (!textR.equals(other.textR)) return false;
+		if (typeL != other.typeL) return false;
+		if (typeR != other.typeR) return false;
 		return true;
 	}
 
 	@Override
-	public int compareTo(EdgeKey o) {
-		if (type < o.getType()) return -1;
-		if (type > o.getType()) return 1;
-		return text.compareTo(o.getText());
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + textL.hashCode();
+		result = prime * result + textR.hashCode();
+		result = prime * result + typeL;
+		result = prime * result + typeR;
+		return result;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("EdgeKey [type=%s, text=%s]", type, text);
+		return String.format("%s '%s'", typeL, textL);
 	}
 }

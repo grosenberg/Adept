@@ -148,34 +148,46 @@ public class FormatView extends AbstractBase {
 
 		private String original;
 		private String formatted;
+		private boolean valid;
 
 		@Override
 		protected String doInBackground() throws Exception {
-			SourceListModel model = (SourceListModel) srcBox.getModel();
-			String pathname = model.getSelectedPathname();
-			original = loadContent(pathname);
-			tool.setSourceFiles(pathname);
-			tool.execute();
-			formatted = tool.getFormatted();
-			return null;
+			try {
+				SourceListModel model = (SourceListModel) srcBox.getModel();
+				String pathname = model.getSelectedPathname();
+				original = loadContent(pathname);
+				tool.setSourceFiles(pathname);
+				tool.execute();
+				formatted = tool.getFormatted();
+				valid = true;
+			} catch (Exception e) {
+				Log.error(this, "Error in format execution", e);
+				throw e;
+			}
+			return formatted;
 		}
 
 		@Override
 		protected void done() {
-			diffPanel.load(original, formatted);
-			perfPanel.load(tool.getPerfData());
+			if (valid) {
+				diffPanel.load(original, formatted);
+				perfPanel.load(tool.getPerfData());
 
-			// create line/features index
-			index = new HashMap<>();
-			List<Feature> features = tool.getMgr().getDocModel().getFeatures();
-			for (Feature feature : features) {
-				Integer line = feature.getY();
-				TreeSet<Feature> lfs = index.get(line);
-				if (lfs == null) {
-					lfs = sortedSet();
-					index.put(line, lfs);
+				// create line/features index
+				index = new HashMap<>();
+				List<Feature> features = tool.getMgr().getDocModel().getFeatures();
+				for (Feature feature : features) {
+					Integer line = feature.getY();
+					TreeSet<Feature> lfs = index.get(line);
+					if (lfs == null) {
+						lfs = sortedSet();
+						index.put(line, lfs);
+					}
+					lfs.add(feature);
 				}
-				lfs.add(feature);
+			} else {
+				diffPanel.clear();
+				perfPanel.clearAll();
 			}
 		}
 	}

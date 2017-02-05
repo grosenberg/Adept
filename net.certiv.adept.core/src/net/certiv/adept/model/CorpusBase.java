@@ -8,12 +8,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +23,18 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonWriter;
 
@@ -37,6 +48,8 @@ public abstract class CorpusBase {
 	private static final String DATA = "CorpusData";
 	private static final String DOT = ".";
 	private static final String EXT = "json.gz";
+
+	// private static final Type mmapType = new TypeToken<Multimap<EdgeKey, Edge>>() {}.getType();
 
 	public CorpusBase() {}
 
@@ -100,8 +113,8 @@ public abstract class CorpusBase {
 		try {
 			Log.debug(CorpusBase.class, "Loading " + path.toString());
 
-			InputStream gis = new GZIPInputStream(Files.newInputStream(path));
-			BufferedReader reader = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
+			InputStream is = new GZIPInputStream(Files.newInputStream(path));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			model = gson.fromJson(reader, CorpusModel.class);
 			model.setCorpusDir(corpusDir);
 		} catch (IOException | JsonSyntaxException e) {
@@ -189,12 +202,13 @@ public abstract class CorpusBase {
 
 	public abstract Map<Integer, List<Feature>> getDocFeatures();
 
-	/** Configures builder for pretty printing */
 	private static Gson configBuilder() {
 		GsonBuilder builder = new GsonBuilder();
 		builder.enableComplexMapKeySerialization() //
-				.excludeFieldsWithoutExposeAnnotation() //
 				.disableHtmlEscaping() //
+				.enableComplexMapKeySerialization() //
+				.excludeFieldsWithoutExposeAnnotation() //
+				.registerTypeAdapter(ArrayListMultimap.class, new MultiMapAdapter<EdgeKey, Edge>()) //
 				.serializeNulls() //
 				.setDateFormat(DateFormat.LONG) //
 				.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY) //
@@ -207,5 +221,38 @@ public abstract class CorpusBase {
 		JsonWriter writer = new JsonWriter(new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
 		writer.setIndent("  ");
 		return writer;
+	}
+
+	private static final class MultiMapAdapter<K, V>
+			implements JsonSerializer<Multimap<K, V>>, JsonDeserializer<Multimap<K, V>> {
+
+		private static final Type asMapReturnType;
+		static {
+			try {
+				asMapReturnType = Multimap.class.getDeclaredMethod("asMap").getGenericReturnType();
+			} catch (NoSuchMethodException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		@Override
+		public JsonElement serialize(Multimap<K, V> src, Type typeOfSrc, JsonSerializationContext context) {
+			return context.serialize(src.asMap(), asMapType(typeOfSrc));
+		}
+
+		@Override
+		public Multimap<K, V> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+				throws JsonParseException {
+			Map<K, Collection<V>> asMap = context.deserialize(json, asMapType(typeOfT));
+			Multimap<K, V> multimap = ArrayListMultimap.create();
+			for (Map.Entry<K, Collection<V>> entry : asMap.entrySet()) {
+				multimap.putAll(entry.getKey(), entry.getValue());
+			}
+			return multimap;
+		}
+
+		private static Type asMapType(Type multimapType) {
+			return TypeToken.of(multimapType).resolveType(asMapReturnType).getType();
+		}
 	}
 }

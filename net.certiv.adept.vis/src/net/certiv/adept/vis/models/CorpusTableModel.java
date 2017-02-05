@@ -12,7 +12,7 @@ import net.certiv.adept.topo.Stats;
 
 public class CorpusTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Kind", "Index", "Type", "Features", "Edges per" };
+	private final String[] columnNames = { "Line", "Kind", "Index", "Type", "Features", "EdgeSet per" };
 	private Object[][] rowData;
 
 	public CorpusTableModel(Map<Integer, List<Feature>> index, List<String> ruleNames, List<String> tokenNames) {

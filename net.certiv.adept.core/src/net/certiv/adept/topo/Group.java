@@ -49,6 +49,10 @@ public class Group {
 				break;
 			default:
 				TerminalNode node = data.nodeIndex.get(token);
+				if (node == null) {
+					Log.error(this, "Node not found for token " + token);
+					break;
+				}
 				ParserRuleContext parent = (ParserRuleContext) node.getParent();
 				if (parent != null) {
 					int line = token.getLine() - 1;

@@ -121,6 +121,10 @@ public class DiffPanel extends JPanel {
 		add(mainPanel);
 	}
 
+	public void clear() {
+		load("", "");
+	}
+
 	public void load(String prevContent, String currContent) {
 		prev.setText(prevContent);
 		curr.setText(currContent);

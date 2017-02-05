@@ -267,10 +267,8 @@ public class Tool extends ToolBase {
 			}
 
 			collector.annotateComments();
-			collector.createLineTokenIndex();
 			collector.genLocalEdges(tabWidth);
 			mgr.createDocModel(collector);
-
 			if (check) continue;
 
 			try {			// compare document model to corpus model

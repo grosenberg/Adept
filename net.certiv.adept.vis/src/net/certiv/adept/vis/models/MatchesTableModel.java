@@ -1,7 +1,9 @@
 package net.certiv.adept.vis.models;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import javax.swing.table.AbstractTableModel;
@@ -15,17 +17,20 @@ public class MatchesTableModel extends AbstractTableModel {
 	private final String[] columnNames = { "Order", "Distance", "Feature", "Facets" };
 	private Object[][] rowData;
 
+	private Map<Integer, Feature> index = new HashMap<>();
+
 	public MatchesTableModel(TreeMap<Double, Feature> matches) {
 		List<Object[]> rows = new ArrayList<>();
-		int order = 1;
+		int num = 0;
 		for (Double key : matches.keySet()) {
 			String dist = String.valueOf(key);
 			Feature feature = matches.get(key);
 			String facets = Strings.join(Facet.get(feature.getFormat()), ", ");
 
-			Object[] row = { order, dist, feature.toString(), facets };
+			Object[] row = { num + 1, dist, feature.toString(), facets };
 			rows.add(row);
-			order++;
+			index.put(num, feature);
+			num++;
 		}
 		this.rowData = rows.toArray(new Object[rows.size()][]);
 	}
@@ -48,5 +53,9 @@ public class MatchesTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(int row, int col) {
 		return rowData[row][col];
+	}
+
+	public Feature getFeature(int row) {
+		return index.get(row);
 	}
 }

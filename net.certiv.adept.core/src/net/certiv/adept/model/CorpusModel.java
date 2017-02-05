@@ -12,7 +12,7 @@ import java.util.TreeMap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.parser.Collector;
-import net.certiv.adept.topo.Label;
+import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
@@ -26,7 +26,7 @@ public class CorpusModel extends CorpusBase {
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
 	// key=label; value=boost
-	@Expose private Map<Label, Double> labelBoosts;
+	@Expose private Map<Factor, Double> labelBoosts;
 
 	// corpus path (interface, so cannot be serialized)
 	private Path corpusDir;
@@ -206,14 +206,14 @@ public class CorpusModel extends CorpusBase {
 		return pathnames.get(docId);
 	}
 
-	public Map<Label, Double> getLabelBoosts() {
+	public Map<Factor, Double> getLabelBoosts() {
 		if (labelBoosts.isEmpty()) {
-			Label.loadDefaults(labelBoosts);
+			Factor.loadDefaults(labelBoosts);
 		}
 		return labelBoosts;
 	}
 
-	public void setLabelBoosts(Map<Label, Double> labelBoosts) {
+	public void setLabelBoosts(Map<Factor, Double> labelBoosts) {
 		this.labelBoosts = labelBoosts;
 	}
 
