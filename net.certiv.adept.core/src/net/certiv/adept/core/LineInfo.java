@@ -8,16 +8,18 @@ import net.certiv.adept.parser.ParseData;
 
 public class LineInfo {
 
-	int first = -1;
-	int last = -1;
-	int terminator = -1;
+	// token offsets in the line buffer
+	int first = -1;			// first real or vws token
+	int last = -1;			// last real token
+	int terminator = -1;	// line terminator
 	int lineComment = -1;
+	
 	List<Integer> blockComments = new ArrayList<>();
 
-	private int offset;
-	private int end;
-	private int len;
-	private int leadLen;
+	private int lineBegOffset;
+	private int lineEndOffset;
+	private int lineCharLength;
+	private int indentCharLength;
 	private boolean blank = true;
 
 	/* Characterize a line represented by a sequence of tokens. */
@@ -25,29 +27,30 @@ public class LineInfo {
 		for (int idx = 0; idx < line.size(); idx++) {
 			AdeptToken token = line.get(idx);
 			int type = token.getType();
+			if (type == data.HWS) continue;
+
+			if (first == -1) {
+				first = idx;
+			}
 			if (type == data.VWS) {
-				if (first == -1) first = idx;
 				terminator = idx;
 			} else if (type == data.BLOCKCOMMENT) {
-				if (first == -1) first = idx;
 				blockComments.add(idx);
 				blank = false;
 			} else if (type == data.LINECOMMENT) {
-				if (first == -1) first = idx;
 				lineComment = idx;
 				blank = false;
 			} else {
-				if (first == -1) first = idx;
 				last = idx;
 				blank = false;
 			}
 		}
 
-		offset = line.get(0).getStartIndex();
-		end = line.get(line.size() - 1).getStopIndex();
-		len = end - offset + 1;
+		lineBegOffset = line.get(0).getStartIndex();
+		lineEndOffset = line.get(line.size() - 1).getStopIndex();
+		lineCharLength = lineEndOffset - lineBegOffset + 1;
 
-		leadLen = line.get(first).getStartIndex() - offset;
+		indentCharLength = line.get(first).getStartIndex() - lineBegOffset;
 	}
 
 	public boolean isBlank() {
@@ -55,18 +58,18 @@ public class LineInfo {
 	}
 
 	public int getOffset() {
-		return offset;
+		return lineBegOffset;
 	}
 
 	public int getEnd() {
-		return end;
+		return lineEndOffset;
 	}
 
 	public int getLen() {
-		return len;
+		return lineCharLength;
 	}
 
 	public int getLeadLen() {
-		return leadLen;
+		return indentCharLength;
 	}
 }

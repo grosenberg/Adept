@@ -38,21 +38,18 @@ import net.certiv.adept.util.Log;
 public class Tool extends ToolBase {
 
 	private static Options[] optionDefs = { //
-											new Options("backup", "-b", OptionType.BOOL, "create doc backup"),
-											new Options("check", "-c", OptionType.BOOL,
-													"check doc for suitability to format"),
-											new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
-											new Options("learn", "-l", OptionType.BOOL, "add doc to corpus training"),
-											new Options("rebuild", "-r", OptionType.BOOL,
-													"force rebuild of the corpus model"),
-											new Options("save", "-s", OptionType.BOOL, "save formatted doc to file"),
+			new Options("backup", "-b", OptionType.BOOL, "create doc backup"),
+			new Options("check", "-c", OptionType.BOOL, "check doc for suitability to format"),
+			new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
+			new Options("learn", "-l", OptionType.BOOL, "add doc to corpus training"),
+			new Options("rebuild", "-r", OptionType.BOOL, "force rebuild of the corpus model"),
+			new Options("save", "-s", OptionType.BOOL, "save formatted doc to file"),
 
-											new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
-											new Options("lang", "-g", OptionType.STRING, "language type"),
-											new Options("output", "-e", OptionType.STRING, "formatted output settings"),
-											new Options("tabWidth", "-t", OptionType.INT, "width of a tab"),
-											new Options("verbose", "-v", OptionType.STRING,
-													"verbosity (one of 'quiet', 'info', 'warn', 'error')") //
+			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
+			new Options("lang", "-g", OptionType.STRING, "language type"),
+			new Options("output", "-e", OptionType.STRING, "formatted output settings"),
+			new Options("tabWidth", "-t", OptionType.INT, "width of a tab"),
+			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')") //
 	};
 
 	// fields set by option manager

@@ -2,6 +2,7 @@ package net.certiv.adept.core;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.TreeMap;
 
 import net.certiv.adept.model.Feature;
@@ -45,6 +46,7 @@ public class PerfData {
 	public Duration rebuild;
 	public int corpusFeatureCnt;
 	public int corpusFeatureTypeCnt;
+	public Map<Integer, String> corpusDocIndex;
 
 	public PerfData() {}
 

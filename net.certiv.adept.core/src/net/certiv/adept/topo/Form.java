@@ -1,7 +1,8 @@
 package net.certiv.adept.topo;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -18,18 +19,38 @@ public class Form {
 	public static final int BEFORE = 1 << 2;
 	public static final int AFTER = 1 << 3;
 
-	/** Resolve formatting overlap between two real tokens in a line */
-	public static List<Facet> resolveOverlap(int formCurr, int formNext) {
-		List<Facet> result = new ArrayList<>();
-		List<Facet> curr = Facet.get(formCurr);
-		List<Facet> next = Facet.get(formNext);
-		if (curr.contains(Facet.WS_AFTER) || next.contains(Facet.WS_BEFORE)) {
-			result.add(Facet.WS_AFTER);
+	/**
+	 * Resolve the formatting overlap between two tokens in a line. The given lhs token will be a
+	 * real token. The rhs token will be real or -1, indicating that the lhs is the last real token
+	 * before the terminator.
+	 * <p>
+	 * Between any two tokens, the resolved result deterines whether there is zero, one, wide or
+	 * aligned spacing. For the last real token, the resolved result deterines how the next line is
+	 * joined.
+	 */
+	public static Set<Facet> resolveOverlap(int lhs, int rhs) {
+		Set<Facet> resolved = new LinkedHashSet<>();
+		Eval lhsEval = new Eval(lhs);
+		Eval rhsEval = new Eval(rhs);
+
+		// decide spacing
+		if (lhsEval.all(Facet.WS_AFTER).or(rhsEval.all(Facet.WS_BEFORE)).result()) {
+			if (lhsEval.all(Facet.WIDE_AFTER).or(rhsEval.all(Facet.WIDE_BEFORE)).result()) {
+				resolved.add(Facet.WIDE_AFTER);
+			} else {
+				resolved.add(Facet.WS_AFTER);
+			}
 		}
-		if (next.contains(Facet.ALIGNED_ABOVE)) {
-			result.add(Facet.ALIGNED_ABOVE);
+
+		if (rhsEval.all(Facet.ALIGNED).result()) {
+			resolved.add(Facet.ALIGNED);
 		}
-		return result;
+
+		// decide joining
+		if (lhsEval.all(Facet.AT_LINE_END).and(rhsEval.all(Facet.JOIN_NEVER)).result()) {
+			resolved.add(Facet.JOIN_NEVER);
+		}
+		return resolved;
 	}
 
 	/** Characterize a rule */
@@ -72,66 +93,62 @@ public class Form {
 			int idxStop, int col, int len) {
 
 		int format = 0;
-		if (col == startInfo.beg) format |= Facet.AT_LINE_BEG.value;
-		if (len == stopInfo.len) format |= Facet.AT_LINE_END.value;
-		if (followsWSToken(collector, idxStart)) format |= Facet.WS_BEFORE.value;
-		if (leadsWSToken(collector, idxStop)) format |= Facet.WS_AFTER.value;
-		if (startInfo.blankAbove) format |= Facet.BLANK_ABOVE.value;
-		if (stopInfo.blankBelow) format |= Facet.BLANK_BELOW.value;
-
-		if (startInfo.indents > 0) {
-			format |= Facet.INDENTED.value;
-			switch (startInfo.indents - startInfo.priorIndents) {
+		if (col == startInfo.beg) {
+			format |= Facet.AT_LINE_BEG.value;
+			if (startInfo.indents > 0) {
+				format |= Facet.INDENTED.value;
+				int dents = startInfo.indents - startInfo.priorIndents;
+				format |= (dents + Facet.ZERO);
+			}
+		} else {
+			switch (lefHtWS(collector, idxStop).length()) {
+				case 0:
+					break;
 				case 1:
-					format |= Facet.INDENT1.value;
-					break;
-				case 2:
-					format |= Facet.INDENT2.value;
-					break;
-				case 3:
-					format |= Facet.INDENT3.value;
-					break;
-				case -1:
-					format |= Facet.OUTDENT1.value;
-					break;
-				case -2:
-					format |= Facet.OUTDENT2.value;
-					break;
-				case -3:
-					format |= Facet.OUTDENT3.value;
+					format |= Facet.WS_BEFORE.value;
 					break;
 				default:
-					if (startInfo.indents > startInfo.priorIndents) {
-						format |= Facet.INDENT4.value;
-					} else {
-						format |= Facet.OUTDENT4.value;
-					}
+					format |= Facet.WIDE_BEFORE.value;
 			}
 		}
+		if (len == stopInfo.len) {
+			format |= Facet.AT_LINE_END.value;
+		} else {
+			switch (rightWS(collector, idxStop).length()) {
+				case 0:
+					break;
+				case 1:
+					format |= Facet.WS_AFTER.value;
+					break;
+				default:
+					format |= Facet.WIDE_AFTER.value;
+			}
+		}
+		if (startInfo.blankAbove) format |= Facet.BLANK_ABOVE.value;
+		if (stopInfo.blankBelow) format |= Facet.BLANK_BELOW.value;
 		return format;
 	}
 
-	private static boolean followsWSToken(Collector collector, int idx) {
+	private static String lefHtWS(Collector collector, int idx) {
 		List<Token> leftHidden = collector.stream.getHiddenTokensToLeft(idx);
 		if (leftHidden != null) {
 			for (Token left : leftHidden) {
 				if (left.getType() == collector.BLOCKCOMMENT) continue;
-				if (left.getType() == collector.LINECOMMENT) continue;
-				if (left.getType() == collector.HWS) return true;
+				if (left.getType() == collector.HWS) return left.getText();
 			}
 		}
-		return false;
+		return "";
 	}
 
-	private static boolean leadsWSToken(Collector collector, int idx) {
+	private static String rightWS(Collector collector, int idx) {
 		List<Token> rightHidden = collector.stream.getHiddenTokensToRight(idx);
 		if (rightHidden != null) {
 			for (Token right : rightHidden) {
 				if (right.getType() == collector.BLOCKCOMMENT) continue;
-				if (right.getType() == collector.LINECOMMENT) continue;
-				if (right.getType() == collector.HWS) return true;
+				if (right.getType() == collector.LINECOMMENT) return "";
+				if (right.getType() == collector.HWS) return right.getText();
 			}
 		}
-		return false;
+		return "";
 	}
 }

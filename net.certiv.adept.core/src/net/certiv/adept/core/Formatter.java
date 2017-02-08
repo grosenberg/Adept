@@ -1,6 +1,6 @@
 package net.certiv.adept.core;
 
-import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
 
@@ -12,11 +12,16 @@ import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Form;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
+/**
+ * Eclipse TextEdit alternative at
+ * https://github.com/eclipse/eclipse.platform.text/blob/master/org.eclipse.text/src/org/eclipse/text/edits/TextEdit.java
+ */
 public class Formatter {
 
-	private DocModel model;
+	private DocModel docModel;
 	private Document doc;
 	private ParseData data;
 	private Index index;
@@ -27,7 +32,7 @@ public class Formatter {
 	private int priorBlankCnt;
 
 	public Formatter(DocModel model) {
-		this.model = model;
+		this.docModel = model;
 		this.doc = model.getDocument();
 		this.data = doc.getParse();
 		this.buffer = new OutputBuilder();
@@ -36,8 +41,9 @@ public class Formatter {
 	public OutputBuilder process() {
 		if (!doc.getContent().isEmpty()) {
 
+			// doc features indexed by starting token offset
 			index = new Index(data.getTokenStream().size() - 1);
-			for (Feature feature : model.getFeatures()) {
+			for (Feature feature : docModel.getFeatures()) {
 				if (feature.isRule()) continue;
 				index.add(feature.getStart(), feature);
 			}
@@ -53,13 +59,17 @@ public class Formatter {
 			}
 			if (!line.isEmpty()) {
 				processLine(line);
+				line.clear();
+			}
+			if (Tool.settings.forceLastLineBlank) {
+				buffer.ensureLastLineTerminated();
 			}
 		}
-
 		return buffer;
 	}
 
 	private void processLine(TokenLine line) {
+		// Log.debug(this, String.format("Process line %s: %s", buffer.size(), line.content(true)));
 		buffer.add(line);
 		LineInfo info = line.getInfo();
 		if (info.isBlank()) {
@@ -78,18 +88,20 @@ public class Formatter {
 	}
 
 	private void processIndent(TokenLine line, LineInfo info) {
-		AdeptToken token = line.get(info.first);
-		int format = getFormat(token);
-		List<Facet> facets = Facet.get(format);
-		currIndent = 0;
-		if (facets.contains(Facet.INDENTED)) {
-			currIndent = priorIndent + Facet.getDentation(facets);
-			currIndent = currIndent > 0 ? currIndent : 0;
-		}
+		AdeptToken token = line.get(info.first); // first real token
+		int format = getMatchedFormat(token);
+		if (format != -1) {
+			currIndent = 0;
+			Set<Facet> facets = Facet.get(format);
+			if (facets.contains(Facet.INDENTED)) {
+				currIndent = priorIndent + Facet.getDentation(format);
+				currIndent = currIndent > 0 ? currIndent : 0;
+			}
 
-		if (currIndent > 0) {
-			String indent = Strings.createIndent(Tool.settings.tabWidth, Tool.settings.useTabs, currIndent);
-			buffer.add(indent);
+			if (currIndent > 0) {
+				String indent = Strings.createIndent(Tool.settings.tabWidth, Tool.settings.useTabs, currIndent);
+				buffer.add(indent);
+			}
 		}
 	}
 
@@ -98,17 +110,18 @@ public class Formatter {
 			AdeptToken tokenCurr = line.get(idx);
 			if (tokenCurr.getType() == data.HWS) continue;
 
-			int formCurr = getFormat(tokenCurr);
-
 			AdeptToken tokenNext = line.getNextReal(idx);
-			int formNext = getFormat(tokenNext);
-
-			List<Facet> facets = Form.resolveOverlap(formCurr, formNext);
+			int formCurr = getMatchedFormat(tokenCurr);
+			int formNext = getMatchedFormat(tokenNext);
+			Set<Facet> facets = Form.resolveOverlap(formCurr, formNext);
 
 			buffer.add(tokenCurr.getText());
-			if (facets.contains(Facet.ALIGNED_ABOVE)) {
-				// TODO: calc ws to provide alignment for next real
-				// look at prior line tokens to find new alignment position
+			if (facets.isEmpty()) {
+				buffer.add(" ");
+			} else if (facets.contains(Facet.ALIGNED)) {
+				// TODO: calc actual alignment for next real
+				buffer.add(line.getNextHws(idx).getText());
+			} else if (facets.contains(Facet.WIDE_AFTER)) {
 				buffer.add(line.getNextHws(idx).getText());
 			} else if (facets.contains(Facet.WS_AFTER)) {
 				buffer.add(" ");
@@ -125,14 +138,18 @@ public class Formatter {
 		}
 	}
 
-	private int getFormat(AdeptToken token) {
-		if (token != null) {
-			Feature feature = index.get(token.getTokenIndex());
-			if (feature != null) {
-				Feature matched = feature.getMatched();
-				if (matched != null) {
-					return matched.getFormat();
-				}
+	private int getMatchedFormat(AdeptToken token) {
+		if (token == null) return -1;
+		if (token.getType() == data.HWS || token.getType() == data.VWS) {
+			Log.error(this, "Invalid token to match: " + token.toString());
+			return -1;
+		}
+
+		Feature feature = index.get(token.getTokenIndex());
+		if (feature != null) {
+			Feature matched = feature.getMatched();
+			if (matched != null) {
+				return matched.getFormat();
 			}
 		}
 		return -1;

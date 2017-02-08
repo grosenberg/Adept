@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.Utils;
+
 import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.parser.ParseData;
 
@@ -12,17 +15,22 @@ public class TokenLine {
 
 	private List<AdeptToken> line = new ArrayList<>();
 	private ParseData data;
+	private LineInfo info;
 
 	public TokenLine(ParseData data) {
 		this.data = data;
 	}
 
 	public boolean add(AdeptToken token) {
+		info = null;
 		return line.add(token);
 	}
 
 	public LineInfo getInfo() {
-		return new LineInfo(data, line);
+		if (info == null) {
+			info = new LineInfo(data, line);
+		}
+		return info;
 	}
 
 	public List<AdeptToken> get() {
@@ -78,6 +86,10 @@ public class TokenLine {
 		return token.getType() == data.LINECOMMENT;
 	}
 
+	public boolean isBlank() {
+		return getInfo().isBlank();
+	}
+
 	public int indexOf(Object o) {
 		return line.indexOf(o);
 	}
@@ -100,5 +112,21 @@ public class TokenLine {
 
 	public int size() {
 		return line.size();
+	}
+
+	public String content(boolean escape) {
+		String content = "";
+		if (!line.isEmpty()) {
+			AdeptToken first = line.get(0);
+			AdeptToken last = line.get(line.size() - 1);
+			content = first.getInputStream().getText(new Interval(first.getStartIndex(), last.getStopIndex()));
+		}
+		if (escape) content = Utils.escapeWhitespace(content, true);
+		return content;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("TokenLine: %s", content(true));
 	}
 }

@@ -3,11 +3,10 @@ package net.certiv.adept.vis.components;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
 import javax.swing.JLabel;
@@ -15,8 +14,16 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.TabSet;
+import javax.swing.text.TabStop;
 
 import difflib.DiffUtils;
 import difflib.Patch;
@@ -32,21 +39,21 @@ public class DiffPanel extends JPanel {
 	private int height;
 	private Font font;
 
-	private String prevTitle;
-	private JTextPane prev;
+	private String lhsTitle;
+	private JTextPane lhs;
 
-	private String currTitle;
-	private JTextPane curr;
+	private String rhsTitle;
+	private JTextPane rhs;
 
 	public DiffPanel(int width, int height, Font font, //
-			String prevTitle, String currTitle) {
+			String lhsTitle, String rhsTitle) {
 
 		super();
 		this.width = width;
 		this.height = height;
 		this.font = font;
-		this.prevTitle = prevTitle;
-		this.currTitle = currTitle;
+		this.lhsTitle = lhsTitle;
+		this.rhsTitle = rhsTitle;
 
 		create();
 	}
@@ -55,89 +62,107 @@ public class DiffPanel extends JPanel {
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout(0, 2));
 
-		JPanel prevPanel = new JPanel();
-		JPanel currPanel = new JPanel();
-		prevPanel.setLayout(new BorderLayout());
-		currPanel.setLayout(new BorderLayout());
+		JPanel lhsPanel = new JPanel();
+		JPanel rhsPanel = new JPanel();
+		lhsPanel.setLayout(new BorderLayout());
+		rhsPanel.setLayout(new BorderLayout());
 
-		prev = new JTextPane();
-		prev.setSize(width, height);
-		prev.setEditable(false);
-		prev.setFont(font);
-		prev.addMouseListener(new MouseAdapter() {
+		lhs = new JTextPane();
+		lhs.setSize(width, height);
+		lhs.setEditable(false);
+		lhs.setFont(font);
+		lhs.addCaretListener(new CaretListener() {
 
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getButton() == MouseEvent.BUTTON1) {
-					try {
-						Document doc = prev.getDocument();
-						int offset = prev.getCaretPosition();
-						int line = TextUtils.getLineOfOffset(doc, offset);
-						int col = offset - TextUtils.getLineStartOffset(doc, line) + 1;
-						firePropertyChange(CLICK1_LEFT, null, new Point(col, line + 1));
-					} catch (BadLocationException e1) {}
-				}
+			public void caretUpdate(CaretEvent e) {
+				try {
+					Document doc = lhs.getDocument();
+					int line = TextUtils.getLineOfOffset(doc, e.getDot());
+					int col = e.getDot() - TextUtils.getLineStartOffset(doc, line);
+					firePropertyChange(CLICK1_LEFT, null, new Point(col, line + 1));
+				} catch (BadLocationException e1) {}
 			}
 		});
 
-		curr = new JTextPane();
-		curr.setSize(width, height);
-		curr.setEditable(false);
-		curr.setFont(font);
+		rhs = new JTextPane();
+		rhs.setSize(width, height);
+		rhs.setEditable(false);
+		rhs.setFont(font);
 
-		JScrollPane prevScroll = new JScrollPane(prev);
-		TextLineNumber prevNums = new TextLineNumber(prev);
-		prevScroll.setRowHeaderView(prevNums);
-		prevScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		prevScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		JScrollPane lhsScroll = new JScrollPane(lhs);
+		TextLineNumber lhsNums = new TextLineNumber(lhs);
+		lhsScroll.setRowHeaderView(lhsNums);
+		lhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		lhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		JScrollPane currScroll = new JScrollPane(curr);
-		TextLineNumber currNums = new TextLineNumber(curr);
-		currScroll.setRowHeaderView(currNums);
-		currScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		currScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		JScrollPane rhsScroll = new JScrollPane(rhs);
+		TextLineNumber rhsNums = new TextLineNumber(rhs);
+		rhsScroll.setRowHeaderView(rhsNums);
+		rhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		rhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		// currScroll.getVerticalScrollBar().setModel(prevScroll.getVerticalScrollBar().getModel());
-		new Synchronizer(prevScroll, currScroll);
+		new Synchronizer(lhsScroll, rhsScroll);
 
-		JLabel prevLabel = new JLabel(prevTitle, JLabel.CENTER);
-		prevLabel.setForeground(Color.black);
-		prevLabel.setFont(font);
+		JLabel lhsLabel = new JLabel(lhsTitle, JLabel.CENTER);
+		lhsLabel.setForeground(Color.black);
+		lhsLabel.setFont(font);
 
-		JLabel currLabel = new JLabel(currTitle, JLabel.CENTER);
-		currLabel.setForeground(Color.black);
-		currLabel.setFont(font);
+		JLabel rhsLabel = new JLabel(rhsTitle, JLabel.CENTER);
+		rhsLabel.setForeground(Color.black);
+		rhsLabel.setFont(font);
 
-		prevPanel.add(prevLabel, BorderLayout.NORTH);
-		prevPanel.add(prevScroll, BorderLayout.CENTER);
+		lhsPanel.add(lhsLabel, BorderLayout.NORTH);
+		lhsPanel.add(lhsScroll, BorderLayout.CENTER);
 
-		currPanel.add(currLabel, BorderLayout.NORTH);
-		currPanel.add(currScroll, BorderLayout.CENTER);
+		rhsPanel.add(rhsLabel, BorderLayout.NORTH);
+		rhsPanel.add(rhsScroll, BorderLayout.CENTER);
 
-		mainPanel.add(prevPanel);
-		mainPanel.add(currPanel);
+		mainPanel.add(lhsPanel);
+		mainPanel.add(rhsPanel);
 
 		setLayout(new BorderLayout());
 		add(mainPanel);
+	}
+
+	public void setTabStops(int lhsTabWidth, int rhsTabWidth) {
+		StyleContext sc = StyleContext.getDefaultStyleContext();
+		FontMetrics fm = lhs.getFontMetrics(font);
+
+		TabSet tabs = calcTabSet(fm, lhsTabWidth);
+		AttributeSet attrs = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.TabSet, tabs);
+		lhs.setParagraphAttributes(attrs, true);
+
+		tabs = calcTabSet(fm, rhsTabWidth);
+		attrs = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.TabSet, tabs);
+		rhs.setParagraphAttributes(attrs, true);
+	}
+
+	private TabSet calcTabSet(FontMetrics fm, int tabWidth) {
+		int px = fm.getMaxAdvance();
+		TabStop[] tabs = new TabStop[20];
+		for (int idx = 0; idx < 20; idx++) {
+			tabs[idx] = new TabStop((idx + 1) * tabWidth * px);
+		}
+		return new TabSet(tabs);
 	}
 
 	public void clear() {
 		load("", "");
 	}
 
-	public void load(String prevContent, String currContent) {
-		prev.setText(prevContent);
-		curr.setText(currContent);
-		// curr.setText(diff(prevContent, currContent));
+	public void load(String lhsContent, String rhsContent) {
+		lhs.setText(lhsContent);
+		rhs.setText(rhsContent);
+		// rhs.setText(diff(lhsContent, rhsContent));
 
-		prev.setCaretPosition(0);
+		lhs.setCaretPosition(0);
 	}
 
 	@SuppressWarnings("unused")
-	private String diff(String prevContent, String currContent) {
-		Patch<String> patch = DiffUtils.diff(Arrays.asList(prevContent), Arrays.asList(currContent));
+	private String diff(String lhsContent, String rhsContent) {
+		Patch<String> patch = DiffUtils.diff(Arrays.asList(lhsContent), Arrays.asList(rhsContent));
 		try {
-			return DiffUtils.patch(Arrays.asList(prevContent), patch).get(0);
+			return DiffUtils.patch(Arrays.asList(lhsContent), patch).get(0);
 		} catch (PatchFailedException e) {
 			return "";
 		}

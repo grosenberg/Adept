@@ -58,6 +58,7 @@ public class CoreMgr {
 		}
 		perfData.corpusFeatureCnt = corpus.getFeatures().size();
 		perfData.corpusFeatureTypeCnt = corpus.getFeatureIndex().size();
+		perfData.corpusDocIndex = corpus.getPathnames();
 		return true;
 	}
 

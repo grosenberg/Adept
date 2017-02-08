@@ -109,6 +109,132 @@ public class CorpusModel extends CorpusBase {
 		this.features.addAll(loader.getNonRuleFeatures());
 	}
 
+	/** Add new document to the corpus model */
+	public void add(Document doc) {
+		write(corpusDir, doc);
+	}
+
+	/** Add collected features to the corpus model */
+	public void add(Feature feature) {
+		features.add(feature);
+		consistent = true;
+	}
+
+	/** Returns all features in the Corpus model */
+	public List<Feature> getFeatures() {
+		return features;
+	}
+
+	/** Returns a map, keyed by feature type, of all features in the Corpus model */
+	public Map<Integer, List<Feature>> getFeatureIndex() {
+		if (index.isEmpty()) buildIndex();
+		return index;
+	}
+
+	@Override
+	public Map<Integer, List<Feature>> getDocFeatures() {
+		return docFeatures;
+	}
+
+	@Override
+	public String getPathname(int docId) {
+		return pathnames.get(docId);
+	}
+
+	public Map<Integer, String> getPathnames() {
+		return pathnames;
+	}
+
+	public Map<Factor, Double> getLabelBoosts() {
+		if (labelBoosts.isEmpty()) {
+			Factor.loadDefaults(labelBoosts);
+		}
+		return labelBoosts;
+	}
+
+	public void setLabelBoosts(Map<Factor, Double> labelBoosts) {
+		this.labelBoosts = labelBoosts;
+	}
+
+	public TreeMap<Double, Feature> match(Feature target) {
+		if (index.isEmpty()) buildIndex();
+
+		TreeMap<Double, Feature> matches = new TreeMap<>();
+		List<Feature> typedList = index.get(target.getType());
+		// int total = 0;
+		// int computed = 0;
+		if (typedList != null) {
+			// total += typedList.size();
+			for (Feature feature : typedList) {
+				if (feature.getKind() == Kind.RULE) {
+					Log.error(this, "Found rule in match set");
+					continue;
+				}
+
+				int tTypes = target.getEdgeSet().getTypeCount();
+				int fTypes = feature.getEdgeSet().getTypeCount();
+
+				if (fTypes >= tTypes - 1 && fTypes <= tTypes + 1) {
+					// compute and save relative distance between features
+					matches.put(target.distance(feature), feature);
+					// computed++;
+				}
+			}
+		}
+		// Log.debug(this, String.format("Computed distance for %s of %s features", computed,
+		// total));
+		return matches;
+	}
+
+	private void buildIndex() {
+		for (Feature f : features) {
+			List<Feature> fSet = index.get(f.getType());
+			if (fSet == null) {
+				fSet = new ArrayList<>();
+				index.put(f.getType(), fSet);
+			}
+			fSet.add(f);
+		}
+	}
+
+	public boolean isConsistent() {
+		return consistent;
+	}
+
+	public void setConsistent(boolean consistent) {
+		this.consistent = consistent;
+	}
+
+	public void clear() {
+		clearIndex();
+		clearFeatures();
+		pathnames.clear();
+		lastModified = 0;
+		consistent = false;
+	}
+
+	private void clearIndex() {
+		index.clear();
+	}
+
+	private void clearFeatures() {
+		features.clear();
+	}
+
+	@Override
+	public void save(Path corpusDir) throws Exception {
+		lastModified = Time.now();
+		super.save(corpusDir);
+		lastModified = Time.getLastModified(corpusDir);
+		consistent = true;
+	}
+
+	@Override
+	public void write(Path corpusDir, Document doc) {
+		super.write(corpusDir, doc);
+		consistent = true;
+	}
+
 	// /**
 	// * Reduce the feature set of the initially constructed corpus model (containing all features
 	// * from all documents). Equivalent features are collapsed to a single instance with
@@ -173,113 +299,4 @@ public class CorpusModel extends CorpusBase {
 	// fList.add(feature);
 	// }
 	// }
-
-	/** Add new document to the corpus model */
-	public void add(Document doc) {
-		write(corpusDir, doc);
-	}
-
-	/** Add collected features to the corpus model */
-	public void add(Feature feature) {
-		features.add(feature);
-		consistent = true;
-	}
-
-	/** Returns all features in the Corpus model */
-	public List<Feature> getFeatures() {
-		return features;
-	}
-
-	/** Returns a map, keyed by feature type, of all features in the Corpus model */
-	public Map<Integer, List<Feature>> getFeatureIndex() {
-		if (index.isEmpty()) buildIndex();
-		return index;
-	}
-
-	@Override
-	public Map<Integer, List<Feature>> getDocFeatures() {
-		return docFeatures;
-	}
-
-	@Override
-	public String getPathname(int docId) {
-		return pathnames.get(docId);
-	}
-
-	public Map<Factor, Double> getLabelBoosts() {
-		if (labelBoosts.isEmpty()) {
-			Factor.loadDefaults(labelBoosts);
-		}
-		return labelBoosts;
-	}
-
-	public void setLabelBoosts(Map<Factor, Double> labelBoosts) {
-		this.labelBoosts = labelBoosts;
-	}
-
-	private void buildIndex() {
-		for (Feature f : features) {
-			List<Feature> fSet = index.get(f.getType());
-			if (fSet == null) {
-				fSet = new ArrayList<>();
-				index.put(f.getType(), fSet);
-			}
-			fSet.add(f);
-		}
-	}
-
-	public boolean isConsistent() {
-		return consistent;
-	}
-
-	public void setConsistent(boolean consistent) {
-		this.consistent = consistent;
-	}
-
-	public void clear() {
-		clearIndex();
-		clearFeatures();
-		pathnames.clear();
-		lastModified = 0;
-		consistent = false;
-	}
-
-	private void clearIndex() {
-		index.clear();
-	}
-
-	private void clearFeatures() {
-		features.clear();
-	}
-
-	@Override
-	public void save(Path corpusDir) throws Exception {
-		lastModified = Time.now();
-		super.save(corpusDir);
-		lastModified = Time.getLastModified(corpusDir);
-		consistent = true;
-	}
-
-	@Override
-	public void write(Path corpusDir, Document doc) {
-		super.write(corpusDir, doc);
-		consistent = true;
-	}
-
-	public TreeMap<Double, Feature> match(Feature feature) {
-		if (index.isEmpty()) buildIndex();
-
-		TreeMap<Double, Feature> om = new TreeMap<>();
-		List<Feature> subList = index.get(feature.getType());
-		if (subList != null) {
-			for (Feature sub : subList) {
-				if (sub.getKind() == Kind.RULE) {
-					Log.error(this, "Found rule in match set");
-					continue;
-				}
-				om.put(feature.distance(sub), sub);
-			}
-		}
-		return om;
-	}
 }

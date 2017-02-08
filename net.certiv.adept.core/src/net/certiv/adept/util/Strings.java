@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -25,8 +26,8 @@ public class Strings {
 	private Strings() {}
 
 	/**
-	 * Returns a separator delimited string representation of the given list values. The returned
-	 * string will not include a trailing separator.
+	 * Returns a separator delimited string representation of the given values. The returned string
+	 * will not include a trailing separator.
 	 * 
 	 * @param values ordered list of string values
 	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix to each list
@@ -58,24 +59,13 @@ public class Strings {
 		return true;
 	}
 
-	public static String join(List<? extends Object> values, String sep) {
+	public static String join(Collection<? extends Object> values, String sep) {
 		StringBuilder sb = new StringBuilder();
 		for (Object value : values) {
 			sb.append(value.toString() + sep);
 		}
 		int dot = sb.length() - sep.length();
 		if (dot > -1) sb.delete(dot, sb.length());
-		return sb.toString();
-	}
-
-	public static String csvList(List<String> stringList) {
-		if (stringList == null) return "";
-		StringBuilder sb = new StringBuilder();
-		for (String str : stringList) {
-			sb.append(str + ", ");
-		}
-		int len = sb.length();
-		sb.delete(len - 2, len);
 		return sb.toString();
 	}
 
@@ -366,6 +356,13 @@ public class Strings {
 		return ch == '\n' || ch == '\r';
 	}
 
+	/**
+	 * Returns the visual length of a given given line subject to the given visual tab width.
+	 *
+	 * @param line the string to measure
+	 * @return the visual length of <code>line</code>
+	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
+	 */
 	public static int measureVisualWidth(CharSequence line, int tabWidth) {
 		if (tabWidth < 0 || line == null) throw new IllegalArgumentException();
 
@@ -373,8 +370,7 @@ public class Strings {
 		int max = line.length();
 		for (int idx = 0; idx < max; idx++) {
 			if (line.charAt(idx) == '\t') {
-				int remainder = length % tabWidth;
-				length += tabWidth - remainder;
+				length += tabWidth - length % tabWidth;
 			} else {
 				length++;
 			}

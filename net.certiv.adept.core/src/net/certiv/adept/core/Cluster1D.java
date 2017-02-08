@@ -11,6 +11,8 @@ import org.apache.commons.math3.stat.StatUtils;
 
 import com.google.common.primitives.Doubles;
 
+import net.certiv.adept.util.Strings;
+
 public class Cluster1D {
 
 	static class DoublePoint implements Clusterable {
@@ -25,6 +27,15 @@ public class Cluster1D {
 		public double[] getPoint() {
 			return point;
 		}
+
+		public double getValue() {
+			return point[0];
+		}
+
+		@Override
+		public String toString() {
+			return String.format("DoublePoint [point=%s]", String.valueOf(point[0]));
+		}
 	}
 
 	private double[] values;
@@ -38,6 +49,7 @@ public class Cluster1D {
 		for (Double value : this.values) {
 			points.add(new DoublePoint(value));
 		}
+		getClusters();
 	}
 
 	public double[] getValues() {
@@ -56,7 +68,45 @@ public class Cluster1D {
 		return getClusters().size();
 	}
 
+	public double[] getClusterValues(int idx) {
+		return valuesOf(getClusters().get(idx));
+	}
+
 	public double getVariance() {
 		return StatUtils.variance(values);
+	}
+
+	public double getMean() {
+		return StatUtils.mean(values);
+	}
+
+	public String clusterDescriptions() {
+		int num = numClusters();
+		List<String> descs = new ArrayList<>();
+		for (int idx = 0; idx < num; idx++) {
+			descs.add(clusterDescription(idx));
+		}
+		return Strings.EOL + "-- " + Strings.join(descs, Strings.EOL + "-- ") + Strings.EOL;
+	}
+
+	public String clusterDescription(int idx) {
+		double[] v = valuesOf(getClusters().get(idx));
+		return String.format("Cluster %s (%4s): min=%8.5f, max=%8.5f, mean=%8.5f, variance=%8.5f", //
+				String.valueOf(idx), //
+				String.valueOf(v.length), //
+				StatUtils.min(v), //
+				StatUtils.max(v), //
+				StatUtils.mean(v), //
+				StatUtils.variance(v) //
+		);
+	}
+
+	private double[] valuesOf(Cluster<DoublePoint> cluster) {
+		List<DoublePoint> cpts = cluster.getPoints();
+		double[] v = new double[cpts.size()];
+		for (int idx = 0; idx < cpts.size(); idx++) {
+			v[idx] = cpts.get(idx).getValue();
+		}
+		return v;
 	}
 }

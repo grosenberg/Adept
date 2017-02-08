@@ -3,6 +3,8 @@ package net.certiv.adept.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.certiv.adept.util.Strings;
+
 public class OutputBuilder {
 
 	class LineBuffer {
@@ -37,6 +39,13 @@ public class OutputBuilder {
 			return lines.get(lines.size() - 1);
 		}
 		return null;
+	}
+
+	public void ensureLastLineTerminated() {
+		LineBuffer lb = getLast();
+		String last = lb.sb.toString();
+		if (!last.contains(Strings.EOL)) lb.sb.append(Strings.EOL);
+		// if (last.trim().length() != 0) lb.sb.append(Strings.EOL);
 	}
 
 	public int size() {

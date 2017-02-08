@@ -75,7 +75,7 @@ public class FormatView extends AbstractBase {
 
 		// "Droid Sans Mono", "DejaVu Sans Mono", "Oxygen Mono", "NanumGothicCoding"
 		Font font = new Font("Droid Sans Mono", Font.PLAIN, 12);
-		diffPanel = new DiffPanel(400, 600, font, "Original", "Formatted");
+		diffPanel = new DiffPanel(400, 400, font, "Source", "Formatted");
 		diffPanel.addPropertyChangeListener(DiffPanel.CLICK1_LEFT, new PropertyChangeListener() {
 
 			@Override
@@ -95,21 +95,18 @@ public class FormatView extends AbstractBase {
 	}
 
 	protected void selectFeatureData(Point loc) {
-		perfPanel.clicked(String.format("line=%d col=%d", loc.getLine(), loc.getCol()));
-		TreeSet<Feature> lfs = index.get(loc.getLine());
-		if (lfs != null) {
-			boolean found = false;
-			for (Feature feature : lfs) {
-				if (feature.getX() == loc.getCol() - 1 || feature.getX() == loc.getCol()) {
-					perfPanel.loadData(feature);
-					found = true;
-					break;
+		if (index != null && loc != null) {
+			TreeSet<Feature> lfs = index.get(loc.getLine());
+			if (lfs != null) {
+				for (Feature feature : lfs.descendingSet()) {
+					if (loc.getCol() >= feature.getX()) {
+						perfPanel.loadData(loc.getLine(), loc.getCol(), feature);
+						return;
+					}
 				}
 			}
-			if (!found) perfPanel.clearData();
-		} else {
-			perfPanel.clearData();
 		}
+		perfPanel.clearData();
 	}
 
 	private void loadTool() {
@@ -170,6 +167,9 @@ public class FormatView extends AbstractBase {
 		@Override
 		protected void done() {
 			if (valid) {
+				int srcWidth = Tool.mgr.getDocModel().getDocument().getTabWidth();
+				int fmtWidth = Tool.settings.tabWidth;
+				diffPanel.setTabStops(srcWidth, fmtWidth);
 				diffPanel.load(original, formatted);
 				perfPanel.load(tool.getPerfData());
 
@@ -192,8 +192,8 @@ public class FormatView extends AbstractBase {
 		}
 	}
 
+	// sorted by col & kind; rules last
 	private TreeSet<Feature> sortedSet() {
-		// sort by col & kind; rules last
 		return new TreeSet<>(new Comparator<Feature>() {
 
 			@Override
