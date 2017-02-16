@@ -60,7 +60,7 @@ public class JavaSourceParser implements ISourceParser {
 		collector.BLOCKCOMMENT = JavaLexer.BLOCKCOMMENT;
 		collector.LINECOMMENT = JavaLexer.LINECOMMENT;
 		collector.ERR_TOKEN = JavaLexer.ERRCHAR;
-		// collector.ERR_RULE = JavaParser.RULE_other << 10;
+		// collector.ERR_RULE = JavaParser.RULE_other << 32;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new JavaParser(collector.stream);
 	}
@@ -84,7 +84,7 @@ public class JavaSourceParser implements ISourceParser {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
 		excludes.add(JavaParser.ERRCHAR);
-		// excludes.add(JavaParser.RULE_??? << 10);
+		// excludes.add(JavaParser.RULE_??? << 32);
 		return excludes;
 	}
 

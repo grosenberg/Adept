@@ -9,9 +9,10 @@ import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import com.google.common.primitives.Doubles;
 
 import net.certiv.adept.model.Edge;
-import net.certiv.adept.model.EdgeKey;
 import net.certiv.adept.model.EdgeSet;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.util.Strings;
 
 public class Stats {
 
@@ -39,6 +40,9 @@ public class Stats {
 	public double maxSd;		// feature's max edge metric stdDev
 	public double minSd;
 
+	private Set<Long> intersectKeys;
+	private Set<Long> disjointKeys;
+
 	public Stats(Feature feature) {
 		this.feature = feature;
 		edgeStats();
@@ -56,11 +60,41 @@ public class Stats {
 		this.disjointSim = feature.getEdgeSet().disjoint(matched.getEdgeSet());
 		this.intersectCount = feature.getEdgeSet().intersectCount(matched.getEdgeSet());
 		this.disjointCount = feature.getEdgeSet().disjointCount(matched.getEdgeSet());
-		
-		Set<EdgeKey> intersectKeys = feature.getEdgeSet().intersectKeys(matched.getEdgeSet());
-		Set<EdgeKey> disjointKeys = feature.getEdgeSet().disjointKeys(matched.getEdgeSet());
-		this.intersectTypes= intersectKeys.toString();
+
+		intersectKeys = feature.getEdgeSet().intersectKeys(matched.getEdgeSet());
+		disjointKeys = feature.getEdgeSet().disjointKeys(matched.getEdgeSet());
+		this.intersectTypes = intersectKeys.toString();
 		this.disjointTypes = disjointKeys.toString();
+	}
+
+	public void setLanguage(ISourceParser lang) {
+		List<String> v = new ArrayList<>();
+		for (Long key : intersectKeys) {
+			if (key.longValue() == 0) {
+				v.add("Adept");
+			} else {
+				int rule = (int) (key >>> 32);
+				int type = key.intValue();
+				if (rule > 0) {
+					v.add(lang.getRuleNames().get(rule));
+				} else {
+					v.add(lang.getTokenNames().get(type));
+				}
+			}
+		}
+		this.intersectTypes = Strings.join(v, ", ");
+
+		v.clear();
+		for (Long key : disjointKeys) {
+			int rule = (int) (key >>> 32);
+			int type = key.intValue();
+			if (rule > 0) {
+				v.add(lang.getRuleNames().get(rule));
+			} else {
+				v.add(lang.getTokenNames().get(type));
+			}
+		}
+		this.disjointTypes = Strings.join(v, ", ");
 	}
 
 	private void edgeStats() {

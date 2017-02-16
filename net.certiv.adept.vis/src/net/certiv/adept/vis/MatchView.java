@@ -10,7 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 import javax.swing.JComboBox;
@@ -25,8 +25,12 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.google.common.collect.TreeMultimap;
+
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.Confidence;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.FeaturePanel;
@@ -59,7 +63,7 @@ public class MatchView extends AbstractBase {
 	private JTable featTable;
 	private JTable matchTable;
 	private MatchPanel matchPanel;
-	private FeaturePanel targetPanel;
+	private FeaturePanel featurePanel;
 
 	public static void main(String[] args) {
 		try {
@@ -89,9 +93,9 @@ public class MatchView extends AbstractBase {
 		// ----
 
 		JPanel dataPanel = new JPanel(new GridLayout(1, 2));
-		targetPanel = new FeaturePanel(null);
+		featurePanel = new FeaturePanel(null);
 		matchPanel = new MatchPanel(null);
-		dataPanel.add(targetPanel);
+		dataPanel.add(featurePanel);
 		dataPanel.add(matchPanel);
 
 		// ----
@@ -171,12 +175,12 @@ public class MatchView extends AbstractBase {
 
 	// selected target source changed
 	private void process() {
-		new Formatter().execute();
-		targetPanel.clear();
+		new Matcher().execute();
+		featurePanel.clear();
 		matchPanel.clear();
 	}
 
-	private class Formatter extends SwingWorker<String, Object> {
+	private class Matcher extends SwingWorker<String, Object> {
 
 		@Override
 		protected String doInBackground() throws Exception {
@@ -215,8 +219,10 @@ public class MatchView extends AbstractBase {
 	protected void createMatchList(int row) {
 		DocTableModel m = (DocTableModel) featTable.getModel();
 		Feature feature = m.getFeature(row);
-		TreeMap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
-		MatchesTableModel model = new MatchesTableModel(matches);
+		TreeMultimap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
+		Confidence.eval(feature, matches);
+		Map<Double, Integer> indices = Confidence.partitionIndices();
+		MatchesTableModel model = new MatchesTableModel(matches, indices);
 		matchTable.setModel(model);
 
 		matchTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
@@ -225,15 +231,17 @@ public class MatchView extends AbstractBase {
 		matchTable.setRowSorter(sorter);
 		sorter.setComparator(0, intComparator);
 		sorter.setComparator(1, intComparator);
+		sorter.setComparator(2, intComparator);
 
 		TableColumnModel cols = matchTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(30);
-		cols.getColumn(2).setPreferredWidth(60);
-		cols.getColumn(3).setPreferredWidth(200);
+		cols.getColumn(2).setPreferredWidth(10);
+		cols.getColumn(3).setPreferredWidth(150);
+		cols.getColumn(4).setPreferredWidth(200);
 
 		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
-		targetPanel.load(feature);
+		featurePanel.load(feature);
 		matchPanel.clear();
 	}
 
@@ -242,6 +250,9 @@ public class MatchView extends AbstractBase {
 		Feature feature = f.getFeature(featureRow);
 		MatchesTableModel m = (MatchesTableModel) matchTable.getModel();
 		Feature matched = m.getFeature(matchRow);
-		matchPanel.load(feature, matched);
+		
+		ISourceParser lang = tool.getMgr().getLanguageParser();
+		
+		matchPanel.load(feature, lang, matched);
 	}
 }

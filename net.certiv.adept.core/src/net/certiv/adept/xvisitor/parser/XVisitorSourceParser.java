@@ -60,7 +60,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		collector.LINECOMMENT = XVisitorLexer.LINE_COMMENT;
 		collector.VARS = new int[] { XVisitorLexer.ID, XVisitorLexer.LITERAL };
 		collector.ERR_TOKEN = XVisitorLexer.ERRCHAR;
-		// collector.ERR_RULE = XVisitorParser.RULE_other << 10;
+		// collector.ERR_RULE = XVisitorParser.RULE_other << 32;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new XVisitorParser(collector.stream);
 	}
@@ -84,7 +84,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
 		excludes.add(XVisitorParser.ERRCHAR);
-		// excludes.add(XVisitorParser.RULE_??? << 10);
+		// excludes.add(XVisitorParser.RULE_??? << 32);
 		return excludes;
 	}
 

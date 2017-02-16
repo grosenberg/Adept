@@ -2,32 +2,26 @@ package net.certiv.adept.vis.models;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.table.AbstractTableModel;
 
+import com.google.common.collect.ArrayListMultimap;
+
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.ISourceParser;
-import net.certiv.adept.topo.Stats;
 
 public class CorpusFeatureTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "End Types", "EdgeSet per", "Delta StdDev" };
+	private final String[] columnNames = { "Line", "Leafs", "Edges" };
 	private Object[][] rowData;
 
-	public CorpusFeatureTableModel(Map<Integer, List<Feature>> index, ISourceParser lang, int key) {
+	public CorpusFeatureTableModel(ArrayListMultimap<Long, Feature> typeIndex, long type) {
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
-		for (Feature feature : index.get(key)) {
-			Stats stats = feature.getStats();
+		for (Feature feature : typeIndex.get(type)) {
+			int tc = feature.getEdgeSet().getTypeCount();
+			int ec = feature.getEdgeSet().getEdgeCount();
 
-			int tc = stats.typeCount;
-			int ec = stats.edgeCount;
-			int ep = tc > 0 ? ec / tc : ec;
-
-			int diff = (int) Math.round(stats.maxSd - stats.minSd);
-
-			Object[] row = { line, tc, ep, diff };
+			Object[] row = { line, tc, ec };
 			rows.add(row);
 			line++;
 		}

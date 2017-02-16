@@ -1,9 +1,8 @@
 package net.certiv.adept.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.parser.Collector;
 
@@ -13,7 +12,7 @@ public class DocModel {
 	private List<Feature> features;
 
 	// key = feature type; value = corresponding features
-	private Map<Integer, List<Feature>> index = new HashMap<>();
+	private ArrayListMultimap<Long, Feature> typeIndex = ArrayListMultimap.create();
 
 	/** Creates a nascent model for the given doc */
 	public DocModel(Collector collector) {
@@ -31,21 +30,15 @@ public class DocModel {
 		return features;
 	}
 
-
 	/** Returns a map, keyed by feature type, of all features in the document model */
-	public Map<Integer, List<Feature>> getFeatureIndex() {
-		if (index.isEmpty()) buildIndex();
-		return index;
+	public ArrayListMultimap<Long, Feature> getFeatureIndex() {
+		if (typeIndex.isEmpty()) buildIndex();
+		return typeIndex;
 	}
 
 	private void buildIndex() {
 		for (Feature f : features) {
-			List<Feature> fSet = index.get(f.getType());
-			if (fSet == null) {
-				fSet = new ArrayList<>();
-				index.put(f.getType(), fSet);
-			}
-			fSet.add(f);
+			typeIndex.put(f.getType(), f);
 		}
 	}
 }

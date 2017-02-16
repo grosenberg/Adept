@@ -6,8 +6,6 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.prefs.Preferences;
 
 import javax.swing.JScrollPane;
@@ -18,15 +16,17 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.google.common.collect.ArrayListMultimap;
+
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
-import net.certiv.adept.vis.models.EdgeTableModel;
 import net.certiv.adept.vis.models.CorpusFeatureTableModel;
 import net.certiv.adept.vis.models.CorpusTableModel;
+import net.certiv.adept.vis.models.EdgeTableModel;
 import net.certiv.adept.vis.renderers.EdgeCellRenderer;
 import net.certiv.adept.vis.renderers.FeatureCellRenderer;
 import net.certiv.adept.vis.renderers.FeaturesCellRenderer;
@@ -52,8 +52,8 @@ public class CorpusView extends AbstractBase {
 	private JTable egTable;
 
 	private ISourceParser lang;
-	private Map<Integer, List<Feature>> index;
-	private int typeKey;
+	private ArrayListMultimap<Long, Feature> typeIndex;
+	private long typeKey;
 
 	private Comparator<Integer> intComparator = new Comparator<Integer>() {
 
@@ -66,7 +66,7 @@ public class CorpusView extends AbstractBase {
 	};
 
 	public CorpusView() {
-		super("Features Analysis", "features.gif");
+		super("Corpus Features Analysis", "features.gif");
 
 		fsTable = new JTable();
 		fsTable.setFillsViewportHeight(true);
@@ -77,10 +77,10 @@ public class CorpusView extends AbstractBase {
 				int row = fsTable.getSelectedRow();
 				if (row >= 0) {
 					CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
-					typeKey = (int) m.getValueAt(row, 2);
+					typeKey = (long) m.getValueAt(row, 2);
 					String kind = (String) m.getValueAt(row, 1);
 					if (kind.equals(Kind.RULE.toString())) {
-						typeKey = typeKey << 10;
+						typeKey = typeKey << 32;
 					}
 					createDependentData(typeKey);
 					clearEdgeData();
@@ -163,10 +163,10 @@ public class CorpusView extends AbstractBase {
 		}
 
 		lang = Tool.mgr.getLanguageParser();
-		index = Tool.mgr.getCorpusModel().getFeatureIndex();
+		typeIndex = Tool.mgr.getCorpusModel().getFeatureIndex();
 
 		// feature type fsTable
-		CorpusTableModel model = new CorpusTableModel(index, lang.getRuleNames(), lang.getTokenNames());
+		CorpusTableModel model = new CorpusTableModel(typeIndex, lang.getRuleNames(), lang.getTokenNames());
 		fsTable.setModel(model);
 
 		fsTable.setDefaultRenderer(Object.class, new FeaturesCellRenderer(model));
@@ -176,7 +176,6 @@ public class CorpusView extends AbstractBase {
 		sorter.setComparator(0, intComparator);
 		sorter.setComparator(2, intComparator);
 		sorter.setComparator(4, intComparator);
-		sorter.setComparator(5, intComparator);
 
 		TableColumnModel cols = fsTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
@@ -184,11 +183,10 @@ public class CorpusView extends AbstractBase {
 		cols.getColumn(2).setPreferredWidth(10);
 		cols.getColumn(3).setPreferredWidth(60);
 		cols.getColumn(4).setPreferredWidth(10);
-		cols.getColumn(5).setPreferredWidth(10);
 	}
 
-	protected void createDependentData(int typeKey) {
-		CorpusFeatureTableModel model = new CorpusFeatureTableModel(index, lang, typeKey);
+	protected void createDependentData(long typeKey) {
+		CorpusFeatureTableModel model = new CorpusFeatureTableModel(typeIndex, typeKey);
 		fxTable.setModel(model);
 
 		fxTable.setDefaultRenderer(Object.class, new FeatureCellRenderer(model));
@@ -198,13 +196,11 @@ public class CorpusView extends AbstractBase {
 		sorter.setComparator(0, intComparator);
 		sorter.setComparator(1, intComparator);
 		sorter.setComparator(2, intComparator);
-		sorter.setComparator(3, intComparator);
 
 		TableColumnModel cols = fxTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(20);
 		cols.getColumn(2).setPreferredWidth(20);
-		cols.getColumn(3).setPreferredWidth(20);
 	}
 
 	protected void clearEdgeData() {
@@ -215,7 +211,7 @@ public class CorpusView extends AbstractBase {
 	}
 
 	protected void createEdgeData(int line) {
-		EdgeTableModel model = new EdgeTableModel(index, lang, typeKey, line);
+		EdgeTableModel model = new EdgeTableModel(typeIndex, lang, typeKey, line);
 		egTable.setModel(model);
 
 		egTable.setDefaultRenderer(Object.class, new EdgeCellRenderer(model));
@@ -224,7 +220,6 @@ public class CorpusView extends AbstractBase {
 		egTable.setRowSorter(sorter);
 		sorter.setComparator(0, intComparator);
 		sorter.setComparator(5, intComparator);
-		sorter.setComparator(6, intComparator);
 
 		TableColumnModel cols = egTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
@@ -233,6 +228,5 @@ public class CorpusView extends AbstractBase {
 		cols.getColumn(3).setPreferredWidth(50);
 		cols.getColumn(4).setPreferredWidth(50);
 		cols.getColumn(5).setPreferredWidth(10);
-		cols.getColumn(6).setPreferredWidth(10);
 	}
 }

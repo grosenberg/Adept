@@ -27,9 +27,9 @@ public class Document {
 
 	private List<FormInfo> formInfos;
 
-	public Document(String filename, int tabWidth, String content) {
-		this.pathname = filename;
-		this.docId = getDocId(filename);
+	public Document(String pathname, int tabWidth, String content) {
+		this.pathname = pathname;
+		this.docId = pathname.hashCode();
 		this.tabWidth = tabWidth;
 		this.content = content;
 
@@ -65,11 +65,6 @@ public class Document {
 
 	public String getPathname() {
 		return pathname;
-	}
-
-	/** Generates an id for the pathname. */
-	public static int getDocId(String pathname) {
-		return pathname.hashCode();
 	}
 
 	/** Returns the id of this document */

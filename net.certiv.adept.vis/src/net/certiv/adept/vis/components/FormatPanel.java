@@ -22,7 +22,9 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.util.Strings;
 
-public class PerfPanel extends JPanel {
+public class FormatPanel extends JPanel {
+
+	private PerfData perfData;
 
 	private JTextField txtTotal;
 	private JTextField txtLoad;
@@ -35,6 +37,7 @@ public class PerfPanel extends JPanel {
 	private JTextField txtDocName;
 	private JTextField txtDocFeatureCount;
 	private JTextField txtDocTerminalCount;
+
 	private JTextField txtDocCol;
 	private JTextField txtDocRow;
 	private JTextField txtDocAspect;
@@ -49,35 +52,37 @@ public class PerfPanel extends JPanel {
 	private JCheckBox chkMatVariable;
 	private JTextField txtMatText;
 	private JTextField txtMatFacets;
-	private PerfData perfData;
+	private JTextField txtMatDents;
+	private JTextField txtDocTypeCount;
+	private JTextField textMatMerged;
 
-	public PerfPanel(Font font) {
+	public FormatPanel(Font font) {
 		setFont(font);
 		setBorder(new MatteBorder(1, 1, 1, 1, (Color) new Color(0, 0, 0)));
 		setLayout(new FormLayout(new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"), FormSpecs.RELATED_GAP_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min):grow"), FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"),
 				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
 				ColumnSpec.decode("max(50dlu;min)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"), FormSpecs.UNRELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"),
 				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("50dlu:grow"), FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("50dlu:grow"), FormSpecs.RELATED_GAP_COLSPEC, },
+				ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("50dlu:grow"), FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("50dlu:grow"),
+				FormSpecs.RELATED_GAP_COLSPEC, },
 				new RowSpec[] { FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.PARAGRAPH_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, }));
 
 		JLabel lblPerformance = new JLabel("Performance");
 		add(lblPerformance, "2, 2, left, default");
-
-		JLabel lblCorpus = new JLabel("Corpus ");
-		add(lblCorpus, "18, 2, left, default");
 
 		JLabel lblTotalTime = new JLabel("Total Time");
 		add(lblTotalTime, "2, 4, right, default");
@@ -85,7 +90,6 @@ public class PerfPanel extends JPanel {
 		txtTotal = new JTextField();
 		txtTotal.setEditable(false);
 		add(txtTotal, "4, 4, fill, default");
-		txtTotal.setColumns(10);
 
 		JLabel lblLoad = new JLabel("Loading");
 		add(lblLoad, "6, 4, right, default");
@@ -109,139 +113,162 @@ public class PerfPanel extends JPanel {
 		add(txtFormating, "16, 4, fill, default");
 		txtFormating.setColumns(10);
 
+		JLabel lblCorpus = new JLabel("Corpus ");
+		add(lblCorpus, "2, 6, left, default");
+
 		JLabel lblCorpusFeatureCount = new JLabel("Features");
-		add(lblCorpusFeatureCount, "18, 4, right, default");
+		add(lblCorpusFeatureCount, "2, 8, right, default");
 
 		txtCorpusFeatureCount = new JTextField();
 		txtCorpusFeatureCount.setEditable(false);
-		add(txtCorpusFeatureCount, "20, 4, fill, default");
+		add(txtCorpusFeatureCount, "4, 8, fill, default");
 
 		JLabel lblCorpusTypeCount = new JLabel("Types");
-		add(lblCorpusTypeCount, "22, 4, right, default");
+		add(lblCorpusTypeCount, "6, 8, right, default");
 
 		txtCorpusTypeCount = new JTextField();
 		txtCorpusTypeCount.setEditable(false);
-		add(txtCorpusTypeCount, "24, 4, fill, default");
+		add(txtCorpusTypeCount, "8, 8, fill, default");
 
 		JLabel lblDocument = new JLabel("Document");
-		add(lblDocument, "2, 6, left, default");
+		add(lblDocument, "2, 10, left, default");
 
 		JLabel lblDocName = new JLabel("Name");
-		add(lblDocName, "2, 8, right, default");
+		add(lblDocName, "2, 12, right, default");
 
 		txtDocName = new JTextField();
 		txtDocName.setEditable(false);
-		add(txtDocName, "4, 8, 13, 1, fill, default");
+		add(txtDocName, "4, 12, 13, 1, fill, default");
 
 		JLabel lblDocFeatureCount = new JLabel("Features");
-		add(lblDocFeatureCount, "18, 8, right, default");
+		add(lblDocFeatureCount, "18, 12, right, default");
 
 		txtDocFeatureCount = new JTextField();
 		txtDocFeatureCount.setEditable(false);
-		add(txtDocFeatureCount, "20, 8, fill, default");
+		add(txtDocFeatureCount, "20, 12, fill, default");
 
-		JLabel lblDocTerminalCount = new JLabel("Terminals");
-		add(lblDocTerminalCount, "22, 8, right, default");
+		JLabel lblDocTypes = new JLabel("Types");
+		add(lblDocTypes, "22, 12, right, default");
 
-		txtDocTerminalCount = new JTextField();
-		txtDocTerminalCount.setColumns(10);
-		txtDocTerminalCount.setEditable(false);
-		add(txtDocTerminalCount, "24, 8, fill, default");
+		txtDocTypeCount = new JTextField();
+		txtDocTypeCount.setEditable(false);
+		add(txtDocTypeCount, "24, 12, fill, default");
 
-		JLabel lblLine = new JLabel("Line");
-		add(lblLine, "2, 10, right, default");
+		JLabel lblDocLine = new JLabel("Line");
+		add(lblDocLine, "2, 14, right, default");
 
 		txtDocRow = new JTextField();
 		txtDocRow.setEditable(false);
-		add(txtDocRow, "4, 10, fill, default");
-		txtDocRow.setColumns(10);
+		add(txtDocRow, "4, 14, fill, default");
 
-		JLabel lblCol = new JLabel("Col");
-		add(lblCol, "6, 10, right, default");
+		JLabel lblDocCol = new JLabel("Col");
+		add(lblDocCol, "6, 14, right, default");
 
 		txtDocCol = new JTextField();
 		txtDocCol.setEditable(false);
-		add(txtDocCol, "8, 10, fill, default");
-		txtDocCol.setColumns(10);
+		add(txtDocCol, "8, 14, fill, default");
 
 		// --
 
 		JLabel lblAspect = new JLabel("Aspect");
-		add(lblAspect, "10, 10, right, default");
+		add(lblAspect, "10, 14, right, default");
 
 		txtDocAspect = new JTextField();
 		txtDocAspect.setEditable(false);
-		add(txtDocAspect, "12, 10, 3, 1, fill, default");
+		add(txtDocAspect, "12, 14, 3, 1, fill, default");
 
 		chkDocVariable = new JCheckBox("Variable");
-		add(chkDocVariable, "16, 10, left, default");
+		add(chkDocVariable, "16, 14, left, default");
 
 		JLabel lblText = new JLabel("Text");
-		add(lblText, "18, 10, right, default");
+		add(lblText, "18, 14, right, default");
 
 		txtDocText = new JTextField();
 		txtDocText.setEditable(false);
-		add(txtDocText, "20, 10, 5, 1, fill, default");
+		add(txtDocText, "20, 14, fill, default");
+
+		JLabel lblDocTerminalCount = new JLabel("Reals");
+		add(lblDocTerminalCount, "22, 14, right, default");
+
+		txtDocTerminalCount = new JTextField();
+		txtDocTerminalCount.setColumns(5);
+		txtDocTerminalCount.setEditable(false);
+		add(txtDocTerminalCount, "24, 14, fill, default");
 
 		JLabel lblFacets = new JLabel("Facets");
-		add(lblFacets, "2, 12, right, default");
+		add(lblFacets, "2, 16, right, default");
 
 		txtDocFacets = new JTextField();
 		txtDocFacets.setEditable(false);
-		add(txtDocFacets, "4, 12, 21, 1, fill, default");
+		add(txtDocFacets, "4, 16, 17, 1, fill, default");
 
 		// --
 
 		JLabel lblMatched = new JLabel("Matched");
-		add(lblMatched, "2, 14");
+		add(lblMatched, "2, 18");
 
 		JLabel lblMatName = new JLabel("Name");
-		add(lblMatName, "2, 16, right, default");
+		add(lblMatName, "2, 20, right, default");
 
 		txtMatName = new JTextField();
 		txtMatName.setEditable(false);
-		add(txtMatName, "4, 16, 13, 1, fill, default");
+		add(txtMatName, "4, 20, 13, 1, fill, default");
 		txtMatName.setColumns(10);
 
 		JLabel lblMatLine = new JLabel("Line");
-		add(lblMatLine, "2, 18, right, default");
+		add(lblMatLine, "2, 22, right, default");
 
 		txtMatLine = new JTextField();
 		txtMatLine.setEditable(false);
-		add(txtMatLine, "4, 18, fill, default");
+		add(txtMatLine, "4, 22, fill, default");
 		txtMatLine.setColumns(10);
 
 		JLabel lblMatCol = new JLabel("Col");
-		add(lblMatCol, "6, 18, right, default");
+		add(lblMatCol, "6, 22, right, default");
 
 		txtMatCol = new JTextField();
 		txtMatCol.setEditable(false);
-		add(txtMatCol, "8, 18, fill, default");
+		add(txtMatCol, "8, 22, fill, default");
 		txtMatCol.setColumns(10);
 
 		JLabel lblMatAspect = new JLabel("Aspect");
-		add(lblMatAspect, "10, 18, right, default");
+		add(lblMatAspect, "10, 22, right, default");
 
 		txtMatAspect = new JTextField();
 		txtMatAspect.setEditable(false);
-		add(txtMatAspect, "12, 18, 3, 1, fill, default");
+		add(txtMatAspect, "12, 22, 3, 1, fill, default");
 
 		chkMatVariable = new JCheckBox("Variable");
-		add(chkMatVariable, "16, 18, left, default");
+		add(chkMatVariable, "16, 22, left, default");
 
 		JLabel lblMatText = new JLabel("Text");
-		add(lblMatText, "18, 18, right, default");
+		add(lblMatText, "18, 22, right, default");
 
 		txtMatText = new JTextField();
 		txtMatText.setEditable(false);
-		add(txtMatText, "20, 18, fill, default");
+		add(txtMatText, "20, 22, fill, default");
 
 		JLabel lblMatFacets = new JLabel("Facets");
-		add(lblMatFacets, "2, 20, right, default");
+		add(lblMatFacets, "2, 24, right, default");
 
 		txtMatFacets = new JTextField();
 		txtMatFacets.setEditable(false);
-		add(txtMatFacets, "4, 20, 21, 1, fill, top");
+		add(txtMatFacets, "4, 24, 17, 1, fill, top");
+
+		JLabel lblMatDents = new JLabel("Dents");
+		add(lblMatDents, "22, 24, right, default");
+
+		txtMatDents = new JTextField();
+		txtMatDents.setEditable(false);
+		add(txtMatDents, "24, 24, fill, default");
+
+		JLabel lblMerged = new JLabel("Merged");
+		add(lblMerged, "2, 26, right, default");
+
+		textMatMerged = new JTextField();
+		textMatMerged.setEditable(false);
+		add(textMatMerged, "4, 26, 17, 1, fill, default");
+		textMatMerged.setColumns(10);
 	}
 
 	public void load(PerfData perfData) {
@@ -258,19 +285,20 @@ public class PerfPanel extends JPanel {
 		txtRebuild.setText(String.valueOf(rebuild) + " ms");
 		txtFormating.setText(String.valueOf(formatting) + " ms");
 
-		txtCorpusFeatureCount.setText(String.valueOf(dp.docFeatureCnt));
+		txtCorpusFeatureCount.setText(String.valueOf(perfData.corpusFeatureCnt));
 		txtCorpusTypeCount.setText(String.valueOf(perfData.corpusFeatureTypeCnt));
 
 		txtDocName.setText(dp.docName);
 		txtDocFeatureCount.setText(String.valueOf(dp.docFeatureCnt));
+		txtDocTypeCount.setText(String.valueOf(dp.docTypeCnt));
 		txtDocTerminalCount.setText(String.valueOf(dp.docTerminalCnt));
 	}
 
 	public void loadData(int line, int col, Feature feature) {
 		Kind kind = feature.getKind();
-		int type = feature.getType();
+		long type = feature.getType();
 		if (kind == Kind.RULE) {
-			type = type >> 10;
+			type = type >>> 32;
 		}
 		Set<Facet> facets = Facet.get(feature.getFormat());
 		txtDocFacets.setText(Strings.join(facets, ", "));
@@ -285,17 +313,20 @@ public class PerfPanel extends JPanel {
 			String corpusDocName = perfData.corpusDocIndex.get(matched.getDocId());
 			txtMatName.setText(corpusDocName);
 			Kind mkind = matched.getKind();
-			int mtype = matched.getType();
+			long mtype = matched.getType();
 			if (mkind == Kind.RULE) {
-				mtype = mtype >> 10;
+				mtype = mtype >>> 32;
 			}
-			facets = Facet.get(matched.getFormat());
-			txtMatFacets.setText(Strings.join(facets, ", "));
-			txtMatLine.setText(String.valueOf(matched.getY()));
-			txtMatCol.setText(String.valueOf(matched.getX()));
+
+			txtMatLine.setText(String.valueOf(matched.getLine()));
+			txtMatCol.setText(String.valueOf(matched.getCol()));
 			txtMatAspect.setText(matched.getAspect());
 			chkMatVariable.setSelected(matched.isVar());
 			txtMatText.setText(matched.getText());
+
+			int format = matched.getFormat();
+			txtMatFacets.setText(Strings.join(Facet.get(format), ", "));
+			txtMatDents.setText(String.valueOf(Facet.getDentation(format)));
 
 		} else {
 			clearMatched();

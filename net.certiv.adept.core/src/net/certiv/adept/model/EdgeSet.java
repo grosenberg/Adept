@@ -14,9 +14,9 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.topo.Factor;
 
 /**
- * The collection of edges, typed by EdgeKey, that defines the connections between a root feature
- * and leaf features in the local group. The EdgeSet can contain multiple edges to equivalent leaf
- * features.
+ * The collection of edges, typed by leaf type, that defines the connections between a root feature
+ * and its leaf features in the local group. The EdgeSet can contain multiple edges to equivalent
+ * leaf features.
  */
 public class EdgeSet {
 
@@ -28,8 +28,8 @@ public class EdgeSet {
 		}
 	};
 
-	// key=edge key; value=edges
-	@Expose private ArrayListMultimap<EdgeKey, Edge> edgeSet;
+	// key=leaf type; value=equivalent edges
+	@Expose private ArrayListMultimap<Long, Edge> edgeSet;
 	// total count of edges
 	@Expose private int edgeCnt;
 
@@ -41,8 +41,7 @@ public class EdgeSet {
 	}
 
 	public boolean addEdge(Edge edge) {
-		EdgeKey key = edge.edgeKey;
-		List<Edge> edges = edgeSet.get(key);
+		List<Edge> edges = edgeSet.get(edge.leaf.getType());
 		if (edges.contains(edge)) return false; // uses Edge#equals
 		edges.add(edge);
 		Collections.sort(edges, edgeComp);
@@ -50,7 +49,7 @@ public class EdgeSet {
 		return true;
 	}
 
-	public ArrayListMultimap<EdgeKey, Edge> getEdgeSet() {
+	public ArrayListMultimap<Long, Edge> getEdgeSet() {
 		return edgeSet;
 	}
 
@@ -58,17 +57,17 @@ public class EdgeSet {
 		return edgeSet.values();
 	}
 
-	/** Returns the edges that are of the given EdgeKey type. */
-	public List<Edge> getEdges(EdgeKey key) {
-		List<Edge> edges = edgeSet.get(key);
+	/** Returns the edges that are of the given leaf type. */
+	public List<Edge> getEdges(long leafType) {
+		List<Edge> edges = edgeSet.get(leafType);
 		return edges;
 	}
 
-	public Set<EdgeKey> getEdgeTypes() {
+	public Set<Long> getEdgeTypes() {
 		return edgeSet.keySet();
 	}
 
-	/** Returns the total number of EdgeKey types. */
+	/** Returns the total number of unique leaf types. */
 	public int getTypeCount() {
 		return edgeSet.size();
 	}
@@ -78,28 +77,14 @@ public class EdgeSet {
 		return edgeCnt;
 	}
 
-	/**
-	 * Determines whether an edge equivalent to the given edge is present in the edgeSet. An edge is
-	 * equivalent if their roots and leafs, respectively, have the same type and text. Except for
-	 * variable types; then the text attribute is ingored.
-	 */
-	public boolean containsEquiv(Edge edge) {
-		EdgeKey key = edge.edgeKey;
-		List<Edge> edges = edgeSet.get(key);
-		for (Edge e : edges) {
-			if (e.equiv().equals(edge.equiv())) return true;
-		}
-		return false;
-	}
-
 	/** Returns the total similarity of this and the given edge set. */
 	public double similarity(EdgeSet o) {
-		double factor = Tool.mgr.getFactors().get(Factor.DISIM);
+		double factor = Tool.mgr.getFactors().get(Factor.EDGE_SET);
 		double sim = intersect(o);
-		double dis = factor * disjoint(o);
+		double dis = disjoint(o);
 		// Log.debug(this, " - Intersection Sim: " + String.valueOf(sim));
 		// Log.debug(this, " - Disjoint Sim : " + String.valueOf(dis));
-		return sim - dis;
+		return sim - (factor * dis);
 	}
 
 	/** Returns the precise intersection similarity between this and the given edge set. */
@@ -141,7 +126,7 @@ public class EdgeSet {
 		int totIntersectEdges = 0;
 		int totDisjointEdges = 0;
 
-		for (EdgeKey key : intersectKeys(o)) {
+		for (Long key : intersectKeys(o)) {
 			List<Edge> eedges = getEdges(key);
 			List<Edge> oedges = o.getEdges(key);
 
@@ -158,7 +143,7 @@ public class EdgeSet {
 			}
 		}
 
-		for (EdgeKey key : disjointKeys(o)) {
+		for (Long key : disjointKeys(o)) {
 			List<Edge> eedges = getEdges(key);
 			if (!eedges.isEmpty()) totDisjointEdges += eedges.size();
 			List<Edge> oedges = o.getEdges(key);
@@ -176,17 +161,17 @@ public class EdgeSet {
 		return cache.get(o);
 	}
 
-	public Set<EdgeKey> intersectKeys(EdgeSet other) {
-		Set<EdgeKey> ikeys = new HashSet<>(edgeSet.keySet());
+	public Set<Long> intersectKeys(EdgeSet other) {
+		Set<Long> ikeys = new HashSet<>(edgeSet.keySet());
 		ikeys.retainAll(other.edgeSet.keySet());
 		return ikeys;
 	}
 
-	public Set<EdgeKey> disjointKeys(EdgeSet other) {
-		Set<EdgeKey> ekeys = new HashSet<>(edgeSet.keySet());
+	public Set<Long> disjointKeys(EdgeSet other) {
+		Set<Long> ekeys = new HashSet<>(edgeSet.keySet());
 		ekeys.removeAll(other.edgeSet.keySet());
 
-		Set<EdgeKey> okeys = new HashSet<>(other.edgeSet.keySet());
+		Set<Long> okeys = new HashSet<>(other.edgeSet.keySet());
 		okeys.removeAll(edgeSet.keySet());
 
 		ekeys.addAll(okeys);

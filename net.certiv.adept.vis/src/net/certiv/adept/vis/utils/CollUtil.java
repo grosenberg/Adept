@@ -13,10 +13,10 @@ public class CollUtil {
 
 			@Override
 			public int compare(Feature o1, Feature o2) {
-				if (o1.getY() < o2.getY()) return -1;
-				if (o1.getY() > o2.getY()) return 1;
-				if (o1.getX() < o2.getX()) return -1;
-				if (o1.getX() < o2.getX()) return 1;
+				if (o1.getLine() < o2.getLine()) return -1;
+				if (o1.getLine() > o2.getLine()) return 1;
+				if (o1.getCol() < o2.getCol()) return -1;
+				if (o1.getCol() < o2.getCol()) return 1;
 				return 0;
 			}
 		});

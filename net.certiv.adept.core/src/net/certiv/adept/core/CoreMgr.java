@@ -4,9 +4,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.antlr.v4.runtime.RecognitionException;
+
+import com.google.common.collect.TreeMultimap;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.antlr.parser.AntlrSourceParser;
@@ -64,9 +65,9 @@ public class CoreMgr {
 
 	private void doRebuild() {
 		Log.info(this, "Rebuilding...");
-		Instant start = Time.start();
 
 		corpus.clear();
+		Instant start = Time.start();
 		for (Document doc : corpusDocs) {
 			ISourceParser parser = getLanguageParser();
 			Collector collector = new Collector(doc);
@@ -93,8 +94,8 @@ public class CoreMgr {
 			collector.annotateComments();
 			collector.genLocalEdges(tabWidth);
 			corpus.merge(collector);
-			perfData.rebuild = Time.end(start);
 		}
+		perfData.rebuild = Time.end(start);
 
 		try {
 			corpus.save(corpusDir);
@@ -143,7 +144,7 @@ public class CoreMgr {
 		for (Feature feature : model.getFeatures()) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			TreeMap<Double, Feature> selected = getMatchSet(feature);
+			TreeMultimap<Double, Feature> selected = getMatchSet(feature);
 			Confidence.eval(feature, selected);
 			if (Confidence.inRange()) {
 				Feature best = Confidence.best();
@@ -153,7 +154,7 @@ public class CoreMgr {
 		perfData.addFormatTime(Time.end(start));
 	}
 
-	public TreeMap<Double, Feature> getMatchSet(Feature node) {
+	public TreeMultimap<Double, Feature> getMatchSet(Feature node) {
 		return corpus.match(node);
 	}
 

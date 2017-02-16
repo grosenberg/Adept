@@ -16,7 +16,7 @@ import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /**
- * Eclipse TextEdit alternative at
+ * Eclipse TextEdit at
  * https://github.com/eclipse/eclipse.platform.text/blob/master/org.eclipse.text/src/org/eclipse/text/edits/TextEdit.java
  */
 public class Formatter {
@@ -116,9 +116,10 @@ public class Formatter {
 			Set<Facet> facets = Form.resolveOverlap(formCurr, formNext);
 
 			buffer.add(tokenCurr.getText());
-			if (facets.isEmpty()) {
-				buffer.add(" ");
-			} else if (facets.contains(Facet.ALIGNED)) {
+			// if (facets.isEmpty()) {
+			// buffer.add(" ");
+			// } else
+			if (facets.contains(Facet.ALIGNED_ABOVE) || facets.contains(Facet.ALIGNED_BELOW)) {
 				// TODO: calc actual alignment for next real
 				buffer.add(line.getNextHws(idx).getText());
 			} else if (facets.contains(Facet.WIDE_AFTER)) {

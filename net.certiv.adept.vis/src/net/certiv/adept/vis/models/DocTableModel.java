@@ -28,13 +28,13 @@ public class DocTableModel extends AbstractTableModel {
 		for (Feature feature : features) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			int line = feature.getY();
-			int col = feature.getX();
+			int line = feature.getLine();
+			int col = feature.getCol();
 			String aspect = feature.getAspect();
 			String text = feature.getText();
 			String facets = Strings.join(Facet.get(feature.getFormat()), ", ");
 
-			Object[] row = { num + 1, line, col, aspect, text, facets };
+			Object[] row = { num + 1, line, col + 1, aspect, text, facets };
 			rows.add(row);
 			index.put(num, feature);
 			num++;

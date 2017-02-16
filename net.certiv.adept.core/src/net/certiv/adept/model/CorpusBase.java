@@ -49,10 +49,6 @@ public abstract class CorpusBase {
 	private static final String DOT = ".";
 	private static final String EXT = "json.gz";
 
-	// private static final Type mmapType = new TypeToken<Multimap<EdgeKey, Edge>>() {}.getType();
-
-	public CorpusBase() {}
-
 	public List<Document> read(Path corpusDir, String ext, int tabWidth) {
 		List<Document> documents = new ArrayList<>();
 		List<File> files;
@@ -208,7 +204,7 @@ public abstract class CorpusBase {
 				.disableHtmlEscaping() //
 				.enableComplexMapKeySerialization() //
 				.excludeFieldsWithoutExposeAnnotation() //
-				.registerTypeAdapter(ArrayListMultimap.class, new MultiMapAdapter<EdgeKey, Edge>()) //
+				.registerTypeAdapter(ArrayListMultimap.class, new MultiMapAdapter<Integer, Edge>()) //
 				.serializeNulls() //
 				.setDateFormat(DateFormat.LONG) //
 				.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY) //

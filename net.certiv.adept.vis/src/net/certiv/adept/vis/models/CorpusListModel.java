@@ -1,9 +1,10 @@
 package net.certiv.adept.vis.models;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.DefaultComboBoxModel;
+
+import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
@@ -14,27 +15,27 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 	public static class FeatureListItem {
 
 		public int line;
-		public int index;
-		public String type;
+		public long type;
+		public String name;
 		public int featureCnt;
 
-		public FeatureListItem(int line, int index, String type, int featureCnt) {
+		public FeatureListItem(int line, long type, String name, int featureCnt) {
 			super();
 			this.line = line;
-			this.index = index;
 			this.type = type;
+			this.name = name;
 			this.featureCnt = featureCnt;
 		}
 
 		@Override
 		public String toString() {
-			return String.format("%s: %s", line, type);
+			return String.format("%s: %s", line, name);
 		}
 	}
 
 	private List<String> ruleNames;
 	private List<String> tokenNames;
-	private Map<Integer, List<Feature>> index;
+	private ArrayListMultimap<Long, Feature> typeIndex;
 
 	public CorpusListModel(List<String> ruleNames, List<String> tokenNames) {
 		super();
@@ -42,25 +43,24 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 		this.tokenNames = tokenNames;
 	}
 
-	public void addElements(Map<Integer, List<Feature>> index) {
-		this.index = index;
+	public void addElements(ArrayListMultimap<Long, Feature> typeIndex) {
+		this.typeIndex = typeIndex;
 
 		int line = 1;
-		for (Integer key : index.keySet()) {
-			List<Feature> features = index.get(key);
+		for (Long key : typeIndex.keySet()) {
+			List<Feature> features = typeIndex.get(key);
 
-			int tIdx = key;
-			String type;
+			long type = key;
+			String name;
 			if (features.get(0).getKind() == Kind.RULE) {
-				tIdx = tIdx >> 10;
-				if (tIdx == 0) continue; // do not include "adept"
-				type = ruleNames.get(tIdx);
+				type = type >>> 32;
+				if (type == 0) continue; // do not include "adept"
+				name = ruleNames.get((int) type);
 			} else {
-				type = tIdx != -1 ? tokenNames.get(tIdx) : "EOF";
+				name = type != -1 ? tokenNames.get((int) type) : "EOF";
 			}
-			int fCnt = features.size();
 
-			FeatureListItem item = new FeatureListItem(line, key, type, fCnt);
+			FeatureListItem item = new FeatureListItem(line, type, name, features.size());
 			addElement(item);
 			line++;
 		}
@@ -70,6 +70,6 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 
 	public List<Feature> getSelectedFeatures() {
 		FeatureListItem item = (FeatureListItem) super.getSelectedItem();
-		return index.get(item.index);
+		return typeIndex.get(item.type);
 	}
 }

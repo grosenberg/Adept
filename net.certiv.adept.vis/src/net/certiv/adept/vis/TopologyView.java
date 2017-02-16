@@ -28,6 +28,7 @@ import javax.swing.event.ChangeListener;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.collect.ArrayListMultimap;
 
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.KKLayout;
@@ -53,12 +54,14 @@ import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.Counter;
 import net.certiv.adept.vis.components.PopupGraphMousePlugin;
+import net.certiv.adept.vis.components.TopoDialog;
+import net.certiv.adept.vis.components.TopoPanel;
 import net.certiv.adept.vis.layout.EdgeData;
 import net.certiv.adept.vis.layout.TopoLayout;
 import net.certiv.adept.vis.models.CorpusListModel;
 import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
-public class FeatureTopology extends AbstractBase {
+public class TopologyView extends AbstractBase {
 
 	private static final String KEY_START = "vertex_start";
 	private static final String KEY_LIMIT = "vertex_limit";
@@ -78,23 +81,25 @@ public class FeatureTopology extends AbstractBase {
 	private Counter idxCounter;
 	private JSlider numSlider;	// count of features to display together
 	private Counter numCounter;
+	private JButton detailOpen;
 
 	private DirectedSparseGraph<Feature, Edge> graph;
 	private VisualizationViewer<Feature, Edge> viewer;
 
 	private CorpusListModel model;
 	private ISourceParser lang;
-	private Map<Integer, List<Feature>> index;
+	private ArrayListMultimap<Long, Feature> typeIndex;
+	private TopoPanel topoDetail;
 
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {}
-		FeatureTopology ft = new FeatureTopology();
+		TopologyView ft = new TopologyView();
 		ft.createBoxModel();
 	}
 
-	public FeatureTopology() {
+	public TopologyView() {
 		super("Feature Topology", "vis.gif");
 
 		GraphZoomScrollPane graphPanel = createGraphPanel();
@@ -255,6 +260,20 @@ public class FeatureTopology extends AbstractBase {
 			}
 		});
 
+		detailOpen = new JButton();
+		detailOpen.setText("Vertex Details");
+		detailOpen.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TopoDialog dialog = new TopoDialog(frame, "Topology Details", TopologyView.this);
+				dialog.setMinimumSize(new Dimension(800, 400));
+				dialog.pack();
+				dialog.setLocationRelativeTo(frame);
+				dialog.setVisible(true);
+			}
+		});
+
 		JPanel featurePanel = new JPanel();
 		featurePanel.add(layoutBox);
 		featurePanel.add(typeBox);
@@ -262,6 +281,7 @@ public class FeatureTopology extends AbstractBase {
 		featurePanel.add(idxCounter);
 		featurePanel.add(numSlider);
 		featurePanel.add(numCounter);
+		featurePanel.add(detailOpen);
 		return featurePanel;
 	}
 
@@ -307,7 +327,7 @@ public class FeatureTopology extends AbstractBase {
 
 	@Override
 	protected String getBaseName() {
-		return "FeatureTopology";
+		return "TopologyView";
 	}
 
 	protected JToolBar createToolBar() {
@@ -335,10 +355,10 @@ public class FeatureTopology extends AbstractBase {
 		}
 
 		lang = Tool.mgr.getLanguageParser();
-		index = Tool.mgr.getCorpusModel().getFeatureIndex();
+		typeIndex = Tool.mgr.getCorpusModel().getFeatureIndex();
 		model = new CorpusListModel(lang.getRuleNames(), lang.getTokenNames());
 		typeBox.setModel(model);
-		model.addElements(index);
+		model.addElements(typeIndex);
 	}
 
 	protected void updateGraph() {
@@ -390,6 +410,7 @@ public class FeatureTopology extends AbstractBase {
 			}
 			graph.removeVertex(feature);
 		}
+		if (topoDetail != null) topoDetail.clear();
 	}
 
 	private Layout<Feature, Edge> getLayout() {
@@ -402,7 +423,7 @@ public class FeatureTopology extends AbstractBase {
 		Layout<Feature, Edge> layout = null;
 		switch (sel) {
 			case TOPO:
-				layout = new TopoLayout(graph, createTransformMap());
+				layout = new TopoLayout(graph, createTransformMap(), topoDetail);
 				break;
 			case KK:
 				layout = new KKLayout<Feature, Edge>(graph);
@@ -415,7 +436,7 @@ public class FeatureTopology extends AbstractBase {
 				break;
 		}
 
-		layout.setSize(new Dimension(800, 800));
+		layout.setSize(new Dimension(600, 600));
 		return layout;
 	}
 
@@ -427,5 +448,9 @@ public class FeatureTopology extends AbstractBase {
 			}
 		}
 		return new MapSettableTransformer<Edge, EdgeData>(map);
+	}
+
+	public void setTopoDialog(TopoPanel topoDetail) {
+		this.topoDetail = topoDetail;
 	}
 }

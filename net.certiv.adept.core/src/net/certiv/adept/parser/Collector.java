@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -56,7 +57,7 @@ public class Collector extends ParseData {
 
 	public void annotateRule(ParserRuleContext ctx) {
 		int rule = ctx.getRuleIndex();
-		int type = rule << 10;
+		int type = rule << 32;
 		if (exTypes.contains(type)) {
 			if (type == ERR_RULE) {
 				Log.debug(this, String.format("Skipping %s", Utils.escapeWhitespace(ctx.getText(), false)));
@@ -72,11 +73,11 @@ public class Collector extends ParseData {
 
 		String aspect = parser.getRuleNames()[rule];
 		int format = Form.characterize(this, ctx);
-		Feature feature = Feature.create(Kind.RULE, aspect, doc.getDocId(), features.size(), type, start, stop, format,
-				false);
+		Feature feature = Feature.create(Kind.RULE, aspect, doc.getDocId(), type, start, stop, format, false);
 		features.add(feature);
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
+		typeSet.add(type);
 	}
 
 	public void annotateNode(ParserRuleContext ctx, TerminalNode node) {
@@ -91,11 +92,11 @@ public class Collector extends ParseData {
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
 		int format = Form.characterize(this, node);
-		Feature feature = Feature.create(Kind.NODE, aspect, doc.getDocId(), features.size(), type, token, format,
-				isVar(type));
+		Feature feature = Feature.create(Kind.NODE, aspect, doc.getDocId(), type, token, format, isVar(type));
 		features.add(feature);
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
+		typeSet.add(type);
 	}
 
 	public void annotateComments() {
@@ -105,11 +106,12 @@ public class Collector extends ParseData {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
 				int format = Form.characterize(this, token);
 				Kind kind = type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT;
-				Feature feature = Feature.create(kind, aspect, doc.getDocId(), features.size(), type, token, format);
+				Feature feature = Feature.create(kind, aspect, doc.getDocId(), type, token, format);
 				TerminalNode node = new TerminalNodeImpl(token);
 				features.add(feature);
 				nodeIndex.put(token, node);
 				terminalIndex.put(node, feature);
+				typeSet.add(type);
 			}
 		}
 	}
@@ -124,11 +126,11 @@ public class Collector extends ParseData {
 	/** Generate edge connections for all non-RULE root features. */
 	public void genLocalEdges(int tabWidth) {
 		createLineTokenIndex();
-			for (Feature feature : features) {
+		for (Feature feature : features) {
 			if (feature.getKind() == Kind.RULE) continue;
-	
+
 			group.setLocus(feature, tabWidth);
-			List<Feature> locals = group.getLocalFeatures();
+			Set<Feature> locals = group.getLocalFeatures();
 			for (Feature local : locals) {
 				feature.addEdge(local);
 			}

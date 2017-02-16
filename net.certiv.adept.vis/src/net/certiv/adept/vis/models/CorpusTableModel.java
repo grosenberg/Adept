@@ -2,46 +2,41 @@ package net.certiv.adept.vis.models;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.table.AbstractTableModel;
 
+import com.google.common.collect.ArrayListMultimap;
+
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.topo.Stats;
 
 public class CorpusTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Kind", "Index", "Type", "Features", "EdgeSet per" };
+	private final String[] columnNames = { "Line", "Kind", "Type", "Name", "Features" };
 	private Object[][] rowData;
 
-	public CorpusTableModel(Map<Integer, List<Feature>> index, List<String> ruleNames, List<String> tokenNames) {
+	public CorpusTableModel(ArrayListMultimap<Long, Feature> typeIndex, List<String> ruleNames,
+			List<String> tokenNames) {
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
-		for (Integer key : index.keySet()) {
-			List<Feature> features = index.get(key);
+		for (Long key : typeIndex.keySet()) {
+			List<Feature> features = typeIndex.get(key);
 			Feature feature = features.get(0);
 
 			String kind = feature.getKind().toString();
 
-			int tIdx = key;
-			String type;
+			long type = feature.getType();
+			String name;
 			if (feature.getKind() == Kind.RULE) {
-				tIdx = tIdx >> 10;
-				type = tIdx != 0 ? ruleNames.get(tIdx) : "adept";
+				type = type >>> 32;
+				name = type != 0 ? ruleNames.get((int) type) : "adept";
 			} else {
-				type = tIdx != -1 ? tokenNames.get(tIdx) : "EOF";
+				name = type != -1 ? tokenNames.get((int) type) : "EOF";
 			}
-
 			int fCnt = features.size();
-			int eCnt = 0;
-			for (Feature f : features) {
-				Stats stats = f.getStats();
-				eCnt += stats.edgeCount;
-			}
 
-			Object[] row = { line, kind, tIdx, type, fCnt, eCnt / fCnt };
+			Object[] row = { line, kind, type, name, fCnt };
 			rows.add(row);
 			line++;
 		}

@@ -7,8 +7,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.parser.Collector;
@@ -20,11 +21,12 @@ public class CorpusModel extends CorpusBase {
 
 	private static final long GAP = 500000;
 
+	@Expose private String corpusDirname;
+	@Expose private long lastModified;
+
 	// list of document names that represented in the corpus
 	// key=docId; value=document pathname
 	@Expose private Map<Integer, String> pathnames;
-	@Expose private String corpusDirname;
-	@Expose private long lastModified;
 	// key=label; value=boost
 	@Expose private Map<Factor, Double> labelBoosts;
 
@@ -35,7 +37,7 @@ public class CorpusModel extends CorpusBase {
 	// key = docId; value = contained features
 	private Map<Integer, List<Feature>> docFeatures;
 	// key = feature type; value = corresponding features
-	private Map<Integer, List<Feature>> index;
+	private ArrayListMultimap<Long, Feature> index;
 
 	private boolean consistent; // current state of model
 
@@ -45,7 +47,7 @@ public class CorpusModel extends CorpusBase {
 		labelBoosts = new HashMap<>();
 		features = new ArrayList<>();
 		docFeatures = new LinkedHashMap<>();
-		index = new LinkedHashMap<>();
+		index = ArrayListMultimap.create();
 	}
 
 	public CorpusModel(Path corpusDir) {
@@ -79,34 +81,12 @@ public class CorpusModel extends CorpusBase {
 			Log.info(this, "Model invalid: difference in sets of documents " + pn);
 			return false;
 		}
-
 		return true;
 	}
 
 	public void setCorpusDir(Path corpusDir) {
 		this.corpusDir = corpusDir;
 		this.corpusDirname = corpusDir.toString();
-	}
-
-	/** Merge features collected during a build into the corpus model. */
-	public void merge(Collector collector) {
-		Document doc = collector.getDocument();
-		pathnames.put(doc.getDocId(), doc.getPathname());
-
-		docFeatures.put(doc.getDocId(), collector.getFeatures());
-		List<Feature> f = collector.getNonRuleFeatures();
-		features.addAll(f);
-		Log.debug(this, String.format("Processed %s [root features=%s]", doc.getPathname(), f.size()));
-	}
-
-	/** Merge features retrieved from persistant store into the corpus model. */
-	public void merge(Features loader) {
-		if (this.features == null) {
-			this.features = new ArrayList<>();
-			this.docFeatures = new LinkedHashMap<>();
-		}
-		this.docFeatures.put(loader.getDocId(), loader.getFeatures());
-		this.features.addAll(loader.getNonRuleFeatures());
 	}
 
 	/** Add new document to the corpus model */
@@ -120,13 +100,29 @@ public class CorpusModel extends CorpusBase {
 		consistent = true;
 	}
 
+	/** Merge features collected during a build into the corpus model. */
+	public void merge(Collector collector) {
+		Document doc = collector.getDocument();
+		pathnames.put(doc.getDocId(), doc.getPathname());
+		docFeatures.put(doc.getDocId(), collector.getFeatures());
+		List<Feature> weighted = weighFeatures(collector.getNonRuleFeatures());
+		features.addAll(weighted);
+		Log.debug(this, String.format("Processed %s (%s)", doc.getPathname(), weighted.size()));
+	}
+
+	/** Merge features retrieved from persistant store into the corpus model. */
+	public void merge(Features loader) {
+		docFeatures.put(loader.getDocId(), loader.getFeatures());
+		features.addAll(loader.getReducedFeatures());
+	}
+
 	/** Returns all features in the Corpus model */
 	public List<Feature> getFeatures() {
 		return features;
 	}
 
 	/** Returns a map, keyed by feature type, of all features in the Corpus model */
-	public Map<Integer, List<Feature>> getFeatureIndex() {
+	public ArrayListMultimap<Long, Feature> getFeatureIndex() {
 		if (index.isEmpty()) buildIndex();
 		return index;
 	}
@@ -156,15 +152,12 @@ public class CorpusModel extends CorpusBase {
 		this.labelBoosts = labelBoosts;
 	}
 
-	public TreeMap<Double, Feature> match(Feature target) {
+	public TreeMultimap<Double, Feature> match(Feature target) {
 		if (index.isEmpty()) buildIndex();
 
-		TreeMap<Double, Feature> matches = new TreeMap<>();
+		TreeMultimap<Double, Feature> matches = TreeMultimap.create();
 		List<Feature> typedList = index.get(target.getType());
-		// int total = 0;
-		// int computed = 0;
 		if (typedList != null) {
-			// total += typedList.size();
 			for (Feature feature : typedList) {
 				if (feature.getKind() == Kind.RULE) {
 					Log.error(this, "Found rule in match set");
@@ -176,24 +169,18 @@ public class CorpusModel extends CorpusBase {
 
 				if (fTypes >= tTypes - 1 && fTypes <= tTypes + 1) {
 					// compute and save relative distance between features
-					matches.put(target.distance(feature), feature);
-					// computed++;
+					double dist = target.distance(feature);
+					matches.put(dist, feature);
 				}
 			}
 		}
-		// Log.debug(this, String.format("Computed distance for %s of %s features", computed,
-		// total));
 		return matches;
 	}
 
+	// index the corpus features by feature type
 	private void buildIndex() {
 		for (Feature f : features) {
-			List<Feature> fSet = index.get(f.getType());
-			if (fSet == null) {
-				fSet = new ArrayList<>();
-				index.put(f.getType(), fSet);
-			}
-			fSet.add(f);
+			index.put(f.getType(), f);
 		}
 	}
 
@@ -235,68 +222,52 @@ public class CorpusModel extends CorpusBase {
 		consistent = true;
 	}
 
-	// /**
-	// * Reduce the feature set of the initially constructed corpus model (containing all features
-	// * from all documents). Equivalent features are collapsed to a single instance with
-	// * correspondingly increased rarity. Equivalency is defined by identity of feature type,
-	// * equality of edge sets, identity of edge leaf node text, and identity of format.
-	// */
-	// public void reduceConstraints() {
-	// clearIndex();
-	// getFeatureIndex();
-	// clearFeatures();
-	// addUniqueFeatures();
-	// updateDocFeatures();
-	// clearIndex();
-	// }
-	//
-	// private void addUniqueFeatures() {
-	// int tot = 0;
-	// int unq = 0;
-	// Map<Feature, Feature> equivMap = new HashMap<>();
-	// for (Integer type : index.keySet()) {
-	// List<Feature> set = index.get(type);
-	// tot += set.size();
-	// String aspect = set.get(0).getAspect();
-	// List<Feature> sub = new ArrayList<>();
-	// for (Feature feature : set) {
-	// Feature equiv = getEquivalent(sub, feature);
-	// if (equiv == null) {
-	// sub.add(feature);
-	// } else {
-	// equivMap.put(feature, equiv);
-	// equiv.mergeEquivalent(feature);
-	// }
-	// }
-	// features.addAll(sub);
-	// unq += sub.size();
-	//
-	// if (sub.size() < set.size()) {
-	// Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect, type,
-	// set.size(),
-	// sub.size()));
-	// }
-	// }
-	// int reduction = 100 - (unq * 100 / tot);
-	// Log.debug(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
-	// }
-	//
-	// private Feature getEquivalent(List<Feature> sub, Feature feature) {
-	// for (Feature f : sub) {
-	// if (f.equivalentTo(feature)) {
-	// return f;
-	// }
-	// }
-	// return null;
-	// }
-	//
-	// private void updateDocFeatures() {
-	// for (List<Feature> fList : docFeatures.values()) {
-	// fList.clear();
-	// }
-	// for (Feature feature : features) {
-	// List<Feature> fList = docFeatures.get(feature.getDocId());
-	// fList.add(feature);
-	// }
-	// }
+	/**
+	 * FIX: Reduce the feature set of the initially constructed corpus model (containing all
+	 * features from all documents). Equivalent features are collapsed to a single instance with
+	 * correspondingly increased rarity. Equivalency is defined by identity of feature type,
+	 * equality of edge sets, identity of edge leaf node text, and identity of format.
+	 */
+	private List<Feature> weighFeatures(List<Feature> nonRules) {
+		ArrayListMultimap<Long, Feature> index = ArrayListMultimap.create();
+		for (Feature f : nonRules) {
+			index.put(f.getType(), f);
+		}
+		List<Feature> weighted = new ArrayList<>();
+
+		int tot = 0;
+		int unq = 0;
+		for (Long type : index.keySet()) {
+			List<Feature> features = index.get(type);
+			tot += features.size();
+			String aspect = features.get(0).getAspect();
+			List<Feature> uniques = new ArrayList<>();
+			for (Feature feature : features) {
+				Feature equiv = getEquivalent(uniques, feature);
+				if (equiv == null) {
+					uniques.add(feature);
+				} else {
+					equiv.mergeEquivalent(feature);
+				}
+			}
+			weighted.addAll(uniques);
+			unq += uniques.size();
+
+			if (uniques.size() < features.size()) {
+				Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect, type,
+						features.size(), uniques.size()));
+			}
+		}
+		int reduction = 100 - (unq * 100 / tot);
+		Log.debug(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
+
+		return weighted;
+	}
+
+	private Feature getEquivalent(List<Feature> uniques, Feature feature) {
+		for (Feature unique : uniques) {
+			if (unique.equivalentTo(feature)) return unique;
+		}
+		return null;
+	}
 }

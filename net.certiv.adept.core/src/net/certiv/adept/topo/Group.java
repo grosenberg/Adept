@@ -1,7 +1,8 @@
 package net.certiv.adept.topo;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -20,9 +21,9 @@ import net.certiv.adept.util.Strings;
  */
 public class Group {
 
-	private static final int NODE2COMMENT = 4;
-	private static final int NODE2RULE = 6;
+	private static final int NODE2RULE = 4;
 	private static final int NODE2NODE = 4;
+	private static final int NODE2COMMENT = 4;
 
 	private Feature locus;
 	private ParseData data;
@@ -37,50 +38,44 @@ public class Group {
 		this.tabWidth = tabWidth;
 	}
 
-	public List<Feature> getLocalFeatures() {
-		List<Feature> locals = new ArrayList<>();
+	public Set<Feature> getLocalFeatures() {
+		Set<Feature> locals = new LinkedHashSet<>();
 		Token token = data.getTokens().get(locus.getStart());
-		switch (locus.getKind()) {
-			case RULE:
-				ParserRuleContext ctx = data.contextIndex.get(token);
-				if (ctx != null) {
-					addChildren(locals, ctx);
-				}
-				break;
-			default:
-				TerminalNode node = data.nodeIndex.get(token);
-				if (node == null) {
-					Log.error(this, "Node not found for token " + token);
-					break;
-				}
-				ParserRuleContext parent = (ParserRuleContext) node.getParent();
-				if (parent != null) {
-					int line = token.getLine() - 1;
-					addEnclosing(locals, parent);
-					addAdjacent(locals, token, line);
-					addFromPrior(locals, token, line);
-				}
+		TerminalNode node = data.nodeIndex.get(token);
+		if (node == null) {
+			Log.error(this, "Node not found for token " + token);
+			return locals;
 		}
 
+		ParserRuleContext parent = (ParserRuleContext) node.getParent();
+		if (parent != null) {
+			int line = token.getLine() - 1;
+			addEnclosing(locals, parent);
+			addAdjacent(locals, token, line);
+			addFromPrior(locals, token, line);
+		}
 		return locals;
 	}
 
-	private void addChildren(List<Feature> locals, ParserRuleContext parent) {
+	private void addChildren(Set<Feature> locals, ParserRuleContext parent, boolean inclVars) {
 		if (parent.getChildCount() > 0) {
 			for (ParseTree child : parent.children) {
 				if (child instanceof TerminalNode) {
 					Feature feature = data.terminalIndex.get(child);
 					if (feature != null) {
-						locals.add(feature);
+						if (inclVars | !feature.isVar()) {
+							locals.add(feature);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	private void addEnclosing(List<Feature> locals, ParserRuleContext parent) {
+	private void addEnclosing(Set<Feature> locals, ParserRuleContext parent) {
 		int idx = 0;
 		while (parent != null && idx < NODE2RULE) {
+			addChildren(locals, parent, false);
 			Feature feature = data.ruleIndex.get(parent);
 			locals.add(feature);
 			parent = parent.getParent();
@@ -88,7 +83,7 @@ public class Group {
 		}
 	}
 
-	private void addAdjacent(List<Feature> locals, Token token, int line) {
+	private void addAdjacent(Set<Feature> locals, Token token, int line) {
 		int idx = token.getTokenIndex();
 		List<Token> tokens = data.lineIndex.get(line);
 		for (Token t : tokens) {
@@ -103,14 +98,14 @@ public class Group {
 			} else {
 				ParserRuleContext ctx = data.contextIndex.get(t);
 				if (ctx != null) {
-					addChildren(locals, ctx);
+					addChildren(locals, ctx, false);
 				}
 			}
 		}
 	}
 
 	// add same token type from prior line; also assess alignment
-	private void addFromPrior(List<Feature> locals, Token token, int line) {
+	private void addFromPrior(Set<Feature> locals, Token token, int line) {
 		if (!isBlank(line)) {
 			int type = token.getType();
 			List<Token> currTokens = data.lineIndex.get(line);
@@ -123,8 +118,8 @@ public class Group {
 					locals.add(feature);
 
 					if (currPos == getVisualColumn(prevTokens.get(0), t)) {
-						locus.setAligned(Form.ABOVE);
-						feature.setAligned(Form.BELOW);
+						locus.setAligned(Facet.ALIGNED_ABOVE);
+						feature.setAligned(Facet.ALIGNED_BELOW);
 					}
 				}
 			}

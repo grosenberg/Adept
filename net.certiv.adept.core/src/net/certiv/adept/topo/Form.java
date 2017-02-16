@@ -14,11 +14,6 @@ import net.certiv.adept.parser.Collector;
 
 public class Form {
 
-	public static final int ABOVE = 1 << 0;
-	public static final int BELOW = 1 << 1;
-	public static final int BEFORE = 1 << 2;
-	public static final int AFTER = 1 << 3;
-
 	/**
 	 * Resolve the formatting overlap between two tokens in a line. The given lhs token will be a
 	 * real token. The rhs token will be real or -1, indicating that the lhs is the last real token
@@ -42,8 +37,11 @@ public class Form {
 			}
 		}
 
-		if (rhsEval.all(Facet.ALIGNED).result()) {
-			resolved.add(Facet.ALIGNED);
+		if (rhsEval.all(Facet.ALIGNED_ABOVE).result()) {
+			resolved.add(Facet.ALIGNED_ABOVE);
+		}
+		if (rhsEval.all(Facet.ALIGNED_BELOW).result()) {
+			resolved.add(Facet.ALIGNED_BELOW);
 		}
 
 		// decide joining

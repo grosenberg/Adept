@@ -6,13 +6,13 @@ import com.google.gson.annotations.Expose;
 public class Location {
 
 	@Expose public int docId;
-	@Expose public int featureId;
+	@Expose public long id;
 	@Expose public int line;
 	@Expose public int col;
 
-	public Location(int docId, int id, int line, int col) {
+	public Location(int docId, long id, int line, int col) {
 		this.docId = docId;
-		this.featureId = id;
+		this.id = id;
 		this.line = line;
 		this.col = col;
 	}

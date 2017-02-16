@@ -2,60 +2,59 @@ package net.certiv.adept.model;
 
 import java.util.Map;
 
+import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.MathArrays;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.model.equiv.EEdge;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Norm;
 
 public class Edge implements Comparable<Edge> {
 
-	public Feature root; // root of this edge
-	public Feature leaf; // leaf connected by this edge
+	private static final Table<Long, Long, Edge> cache = HashBasedTable.create();
 
-	@Expose public EdgeKey edgeKey;
-
-	@Expose public int rootId;
-	@Expose public int leafId;
+	@Expose public long leafId;
+	@Expose public long rootId;
 
 	@Expose public double metric;
-	@Expose public double rarity;
+
+	public Feature leaf; // connected leaf
+	public Feature root; // edge root
 
 	private EEdge equiv;
 
-	public Edge(Feature root, Feature leaf) {
-		this.root = root;
-		this.leaf = leaf;
-
-		rootId = root.getId();
-		leafId = leaf.getId();
-		edgeKey = EdgeKey.create(root, leaf);
-
-		// euclidean distance
-		metric = Math.sqrt(Math.pow(root.getX() - leaf.getX(), 2) + Math.pow(root.getY() - leaf.getY(), 2));
-		rarity = 1;
+	public static Edge create(Feature leaf, Feature root) {
+		Edge edge = cache.get(leaf.getId(), root.getId());
+		if (edge == null) {
+			edge = new Edge(leaf, root);
+			cache.put(leaf.getId(), root.getId(), edge);
+		}
+		return edge;
 	}
 
-	public EdgeKey getEdgeKey() {
-		return edgeKey;
+	private Edge(Feature leaf, Feature root) {
+		this.leaf = leaf;
+		this.root = root;
+
+		leafId = leaf.getId();
+		rootId = root.getId();
+
+		// euclidean distance
+		double[] p1 = new double[] { leaf.getCol(), leaf.getLine() };
+		double[] p2 = new double[] { root.getCol(), root.getLine() };
+		metric = FastMath.abs(MathArrays.distance(p1, p2));
 	}
 
 	public double similarity(Edge o) {
-		double sim = 0;
+		double[] vals = new double[1];
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
-		sim += boosts.get(Factor.RARITY) * Feature.norm(rarity, o.rarity);
-		sim += boosts.get(Factor.METRIC) * Feature.norm(metric, o.metric);
-		return sim;
-	}
-
-	public boolean equivalentTo(Edge other) {
-		if (root == null || leaf == null) return false;
-		if (root.getType() != other.root.getType()) return false;
-		if (leaf.getType() != other.leaf.getType()) return false;
-		if (!root.getText().equals(other.root.getText())) return false;
-		if (!leaf.getText().equals(other.leaf.getText())) return false;
-		return true;
+		vals[0] = boosts.get(Factor.METRIC) * Norm.delta(metric, o.metric);
+		return Norm.sum(vals);
 	}
 
 	public EEdge equiv() {
@@ -79,8 +78,7 @@ public class Edge implements Comparable<Edge> {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		Edge o = (Edge) obj;
-		if (edgeKey == null) return false;
-		if (!edgeKey.equals(o.edgeKey)) return false;
+		if (leafId != o.leafId) return false;
 		if (rootId != o.rootId) return false;
 		return true;
 	}
@@ -89,14 +87,15 @@ public class Edge implements Comparable<Edge> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((edgeKey == null) ? 0 : edgeKey.hashCode());
-		result = prime * result + leafId;
-		result = prime * result + rootId;
+		result = prime * result + (int) leafId;
+		result = prime * result + (int) (leafId >>> 32);
+		result = prime * result + (int) rootId;
+		result = prime * result + (int) (rootId >>> 32);
 		return result;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("{%s -> %s}", root.getAspect(), leaf.getAspect());
+		return String.format("%s {%s -> %s}", metric, root.getAspect(), leaf.getAspect());
 	}
 }

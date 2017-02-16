@@ -21,68 +21,68 @@ package co.codebeat.analyser.antlr;
 translationUnit : externalDeclaration+ EOF ;
 
 externalDeclaration
-  : COMMENT
-  | LINE_COMMENT
-  | preprocessorDeclaration
-  | topLevelFunctionDefinition
-  | declaration
-  | classInterface
-  | classImplementation
-  | categoryInterface
-  | categoryImplementation
-  | protocolDeclaration
-  | protocolDeclarationList
-  | classDeclarationList
-  ;
+	: COMMENT
+	| LINE_COMMENT
+	| preprocessorDeclaration
+	| topLevelFunctionDefinition
+	| declaration
+	| classInterface
+	| classImplementation
+	| categoryInterface
+	| categoryImplementation
+	| protocolDeclaration
+	| protocolDeclarationList
+	| classDeclarationList
+	;
 
 topLevelFunctionDefinition : functionDefinition ;
 
 preprocessorDeclaration
-  : IMPORT
-  | INCLUDE
-  ;
+	: IMPORT
+	| INCLUDE
+	;
 
 classInterface :
-  '@interface'
-  className (':' superclassName)?
-  protocolReferenceList?
-  instanceVariables?
-  interfaceDeclarationList?
-  '@end'
-  ;
+	'@interface'
+	className (':' superclassName)?
+	protocolReferenceList?
+	instanceVariables?
+	interfaceDeclarationList?
+	'@end'
+	;
 
 categoryInterface :
-  '@interface'
-  className '(' categoryName? ')'
-  protocolReferenceList?
-  instanceVariables?
-  interfaceDeclarationList?
-  '@end'
-  ;
+	'@interface'
+	className '(' categoryName? ')'
+	protocolReferenceList?
+	instanceVariables?
+	interfaceDeclarationList?
+	'@end'
+	;
 
 classImplementation :
-  '@implementation'
-  (
-  className (':' superclassName )?
-  instanceVariables?
-  ( implementationDefinitionList )?
-  )
-  '@end'
-  ;
+	'@implementation'
+	(
+	className (':' superclassName )?
+	instanceVariables?
+	( implementationDefinitionList )?
+	)
+	'@end'
+	;
 
 categoryImplementation :
-  '@implementation'(
-  className '(' categoryName ')'
-  ( implementationDefinitionList )?
-  )'@end'
-  ;
+	'@implementation'(
+	className '(' categoryName ')'
+	( implementationDefinitionList )?
+	)'@end'
+	;
 
 protocolDeclaration :
-  '@protocol'(
-  protocolName ( protocolReferenceList )?
-  '@required'? interfaceDeclarationList? '@optional'? interfaceDeclarationList?
-  )'@end'
-  ;
+	'@protocol'(
+	protocolName ( protocolReferenceList )?
+	'@required'? interfaceDeclarationList? '@optional'? interfaceDeclarationList?
+	)'@end'
+	;
 
 protocolDeclarationList : '@protocol' protocolList ';' ;
 
@@ -101,11 +101,11 @@ propertyAttributesDeclaration : '(' propertyAttributesList ')' ;
 propertyAttributesList : propertyAttribute (',' propertyAttribute)* ;
 
 propertyAttribute
-  : 'nonatomic' | 'assign' | 'weak' | 'strong' | 'retain' | 'readonly' | 'readwrite'
-  | 'getter' '=' IDENTIFIER //  getter
-  | 'setter' '=' IDENTIFIER ':' // setter
-  | IDENTIFIER
-  ;
+	: 'nonatomic' | 'assign' | 'weak' | 'strong' | 'retain' | 'readonly' | 'readwrite'
+	| 'getter' '=' IDENTIFIER //  getter
+	| 'setter' '=' IDENTIFIER ':' // setter
+	| IDENTIFIER
+	;
 
 className : IDENTIFIER ;
 
@@ -116,27 +116,27 @@ categoryName : IDENTIFIER ;
 protocolName : protocolReferenceList | IDENTIFIER ;
 
 instanceVariables
-  : '{' structDeclaration* '}'
-  | '{' visibilitySpecification structDeclaration+ '}'
-  | '{' structDeclaration+ instanceVariables '}'
-  | '{' visibilitySpecification structDeclaration+ instanceVariables '}'
-  ;
+	: '{' structDeclaration* '}'
+	| '{' visibilitySpecification structDeclaration+ '}'
+	| '{' structDeclaration+ instanceVariables '}'
+	| '{' visibilitySpecification structDeclaration+ instanceVariables '}'
+	;
 
 visibilitySpecification
-  : '@private'
-  | '@protected'
-  | '@package'
-  | '@public'
-  ;
+	: '@private'
+	| '@protected'
+	| '@package'
+	| '@public'
+	;
 
 interfaceDeclarationList : interfaceDeclarationListItem+ ;
 
 interfaceDeclarationListItem
-  : declaration
-  | classMethodDeclaration
-  | instanceMethodDeclaration
-  | propertyDeclaration
-  ;
+	: declaration
+	| classMethodDeclaration
+	| instanceMethodDeclaration
+	| propertyDeclaration
+	;
 
 classMethodDeclaration : '+' methodDeclaration ;
 
@@ -147,12 +147,12 @@ methodDeclaration : ( methodType )? methodSelector ';' ;
 implementationDefinitionList : implementationDefinitionListItem+ ;
 
 implementationDefinitionListItem
-  : functionDefinition
-  | declaration
-  | classMethodDefinition
-  | instanceMethodDefinition
-  | propertyImplementation
-  ;
+	: functionDefinition
+	| declaration
+	| classMethodDefinition
+	| instanceMethodDefinition
+	| propertyImplementation
+	;
 
 classMethodDefinition : '+' methodDefinition ;
 
@@ -161,9 +161,9 @@ instanceMethodDefinition : '-' methodDefinition ;
 methodDefinition : methodType? methodSelector initDeclaratorList? ';'? compoundStatement ;
 
 methodSelector
-  : selector
-  | keywordDeclarator+ (parameterList)?
-  ;
+	: selector
+	| keywordDeclarator+ (parameterList)?
+	;
 
 keywordDeclarator : selector? ':' methodType* IDENTIFIER ;
 
@@ -172,9 +172,9 @@ selector : IDENTIFIER;
 methodType : '(' typeName ')' ;
 
 propertyImplementation
-  : '@synthesize' propertySynthesizeList ';'
-  | '@dynamic' propertySynthesizeList ';'
-  ;
+	: '@synthesize' propertySynthesizeList ';'
+	| '@dynamic' propertySynthesizeList ';'
+	;
 
 propertySynthesizeList : propertySynthesizeItem (',' propertySynthesizeItem)* ;
 
@@ -185,38 +185,38 @@ blockType : typeSpecifier '(''^' typeSpecifier? ')' blockParameters? ;
 genericsSpecifier : '<' typeSpecifier? (',' typeSpecifier)* '>' ;
 
 typeSpecifier
-  : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed'
-  | 'unsigned' | 'instancetype'
-  | 'id' protocolReferenceList?
-  | className (protocolReferenceList | genericsSpecifier)? '*'?
-  | structOrUnionSpecifier
-  | enumSpecifier
-  | IDENTIFIER
-  | IDENTIFIER pointer
-  ;
+	: 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed'
+	| 'unsigned' | 'instancetype'
+	| 'id' protocolReferenceList?
+	| className (protocolReferenceList | genericsSpecifier)? '*'?
+	| structOrUnionSpecifier
+	| enumSpecifier
+	| IDENTIFIER
+	| IDENTIFIER pointer
+	;
 
 typeQualifier : 'const' | 'volatile' | protocolQualifier ;
 
 protocolQualifier : 'in' | 'out' | 'inout' | 'bycopy' | 'byref' | 'oneway' ;
 
 primaryExpression
-  : IDENTIFIER
-  | vaArgExpression
-  | constant
-  | stringLiteral
-  | '(' expression ')'
-  | 'self'
-  | 'super'
-  | messageExpression
-  | selectorExpression
-  | protocolExpression
-  | encodeExpression
-  | dictionaryExpression
-  | arrayExpression
-  | boxExpression
-  | blockExpression
-  | structExpression
-  ;
+	: IDENTIFIER
+	| vaArgExpression
+	| constant
+	| stringLiteral
+	| '(' expression ')'
+	| 'self'
+	| 'super'
+	| messageExpression
+	| selectorExpression
+	| protocolExpression
+	| encodeExpression
+	| dictionaryExpression
+	| arrayExpression
+	| boxExpression
+	| blockExpression
+	| structExpression
+	;
 
 structExpression : '{' (structPair ','?)+ '}' ;
 structPair : '.' identifier '=' postfixExpression ;
@@ -236,24 +236,24 @@ blockExpression :'^' typeSpecifier? blockParameters? compoundStatement ;
 messageExpression : '[' receiver messageSelector ']' ;
 
 receiver
-  : expression
-  | className
-  | 'super'
-  ;
+	: expression
+	| className
+	| 'super'
+	;
 
 messageSelector
-  : selector
-  | keywordArgument+
-  ;
+	: selector
+	| keywordArgument+
+	;
 
 keywordArgument : selector? ':' expression (',' expression)*;
 
 selectorExpression : '@selector' '(' selectorName ')' ;
 
 selectorName
-  : selector
-  | (selector? ':')+
-  ;
+	: selector
+	| (selector? ':')+
+	;
 
 protocolExpression : '@protocol' '(' protocolName ')' ;
 
@@ -268,9 +268,9 @@ catchStatement : '@catch' '(' typeVariableDeclarator ')' compoundStatement ;
 finallyStatement : '@finally' compoundStatement ;
 
 throwStatement
-  : '@throw' '(' IDENTIFIER ')'
-  | '@throw' expression
-  ;
+	: '@throw' '(' IDENTIFIER ')'
+	| '@throw' expression
+	;
 
 tryBlock : tryStatement catchStatement* finallyStatement? ;
 
@@ -285,11 +285,11 @@ functionSignature : declarator ;
 declaration : declarationSpecifier* initDeclaratorList? ';' ;
 
 declarationSpecifier
-  : arcBehaviourSpecifier
-  | storageClassSpecifier
-  | typeSpecifier
-  | typeQualifier
-  ;
+	: arcBehaviourSpecifier
+	| storageClassSpecifier
+	| typeSpecifier
+	| typeQualifier
+	;
 
 arcBehaviourSpecifier : '__unsafe_unretained' | '__weak' ;
 storageClassSpecifier : 'auto' | 'register' | 'static' | 'extern' | 'typedef' ;
@@ -298,7 +298,7 @@ initDeclaratorList :  initDeclarator (',' initDeclarator)* ;
 initDeclarator : declarator ('=' initializer)? ;
 
 structOrUnionSpecifier: ('struct' | 'union')
-  ( IDENTIFIER | IDENTIFIER? '{' structDeclaration+ '}') ;
+	( IDENTIFIER | IDENTIFIER? '{' structDeclaration+ '}') ;
 
 structDeclaration : specifierQualifierList structDeclaratorList ';' ;
 
@@ -309,89 +309,89 @@ structDeclaratorList : structDeclarator (',' structDeclarator)* ;
 structDeclarator : declarator | declarator? ':' constant ;
 
 enumSpecifier
-  : 'enum' (':' typeName)? ( identifier ('{' enumeratorList '}')? | '{' enumeratorList '}')
-  | 'NS_OPTIONS' '(' typeName ',' identifier ')' '{' enumeratorList '}'
-  | 'NS_ENUM' '(' typeName ',' identifier ')' '{' enumeratorList '}'
-  ;
+	: 'enum' (':' typeName)? ( identifier ('{' enumeratorList '}')? | '{' enumeratorList '}')
+	| 'NS_OPTIONS' '(' typeName ',' identifier ')' '{' enumeratorList '}'
+	| 'NS_ENUM' '(' typeName ',' identifier ')' '{' enumeratorList '}'
+	;
 
 
 enumeratorList : enumerator (',' enumerator)* ','? ;
 enumerator : identifier ('=' constantExpression)? ;
 
 pointer
-  :   '*' declarationSpecifier*
-  |   '*' declarationSpecifier* pointer
-  ;
+	:   '*' declarationSpecifier*
+	|   '*' declarationSpecifier* pointer
+	;
 
 
 
 declarator : pointer ? directDeclarator ;
 
 directDeclarator
-  : identifier declaratorSuffix*
-  | '(' declarator ')' declaratorSuffix*
-  | '(''^' identifier? ')' blockParameters
-  ;
+	: identifier declaratorSuffix*
+	| '(' declarator ')' declaratorSuffix*
+	| '(''^' identifier? ')' blockParameters
+	;
 
 
 declaratorSuffix
-  : '[' constantExpression? ']'
-  | '(' parameterList? ')'
-  ;
+	: '[' constantExpression? ']'
+	| '(' parameterList? ')'
+	;
 
 parameterList : parameterDeclarationList ( ',' '...' )? ;
 
 parameterDeclaration
-  : declarationSpecifier+ (declarator? | abstractDeclarator) ;
+	: declarationSpecifier+ (declarator? | abstractDeclarator) ;
 
 initializer
-  : expression
-  | '{' initializer (',' initializer)* ','? '}'
-  ;
+	: expression
+	| '{' initializer (',' initializer)* ','? '}'
+	;
 
 typeName
-  : specifierQualifierList abstractDeclarator?
-  | blockType
-  ;
+	: specifierQualifierList abstractDeclarator?
+	| blockType
+	;
 
 abstractDeclarator
-  : pointer abstractDeclarator
-  | '(' abstractDeclarator ')' abstractDeclaratorSuffix+
-  | ('[' constantExpression? ']')+
-  ;
+	: pointer abstractDeclarator
+	| '(' abstractDeclarator ')' abstractDeclaratorSuffix+
+	| ('[' constantExpression? ']')+
+	;
 
 abstractDeclaratorSuffix
-  : '[' constantExpression? ']'
-  | '('  parameterDeclarationList? ')'
-  ;
+	: '[' constantExpression? ']'
+	| '('  parameterDeclarationList? ')'
+	;
 
 parameterDeclarationList : parameterDeclaration ( ',' parameterDeclaration )* ;
 
 statementList : statement+ ;
 
 statement
-  : labeledStatement ';'?
-  | compoundStatement ';'?
-  | selectionStatement ';'?
-  | iterationStatement ';'?
-  | jumpStatement ';'?
-  | synchronizedStatement ';'?
-  | autoreleaseStatement ';'?
-  | throwStatement ';'?
-  | tryBlock ';'?
-  | expression ';'?
-  ;
+	: labeledStatement ';'?
+	| compoundStatement ';'?
+	| selectionStatement ';'?
+	| iterationStatement ';'?
+	| jumpStatement ';'?
+	| synchronizedStatement ';'?
+	| autoreleaseStatement ';'?
+	| throwStatement ';'?
+	| tryBlock ';'?
+	| expression ';'?
+	;
 
 labeledStatement
-  : identifier ':' statement
-  | 'case' constantExpression ':' statement
-  | 'default' ':' statement ;
+	: identifier ':' statement
+	| 'case' constantExpression ':' statement
+	| 'default' ':' statement ;
 
 compoundStatement : '{' (declaration|statementList)* '}' ;
 
 selectionStatement
-  : 'if' '(' expression ')' statement ('else' statement)?
-  | 'switch' '(' expression ')' statement ;
+	: 'if' '(' expression ')' statement ('else' statement)?
+	| 'switch' '(' expression ')' statement ;
 
 forInStatement : 'for' '(' typeVariableDeclarator 'in' expression? ')' statement;
 forStatement: 'for' '(' ((declarationSpecifier+ initDeclaratorList) | expression)? ';' expression? ';' expression? ')' statement;
@@ -399,66 +399,66 @@ whileStatement: 'while' '(' expression ')' statement;
 doStatement: 'do' statement 'while' '(' expression ')' ';';
 
 iterationStatement
-  : whileStatement
-  | doStatement
-  | forStatement
-  | forInStatement ;
+	: whileStatement
+	| doStatement
+	| forStatement
+	| forInStatement ;
 
 jumpStatement
-  : 'goto' identifier ';'
-  | 'continue' ';'
-  | 'break' ';'
-  | 'return' expression? ';'
-  ;
+	: 'goto' identifier ';'
+	| 'continue' ';'
+	| 'break' ';'
+	| 'return' expression? ';'
+	;
 
 expression
-  : primaryExpression ';'?
-  | postfixExpression ';'?
-  | unaryExpression binaryExpression* ';'?
-  | binaryExpression ';'?
-  ;
+	: primaryExpression ';'?
+	| postfixExpression ';'?
+	| unaryExpression binaryExpression* ';'?
+	| binaryExpression ';'?
+	;
 
 binaryExpression
-  : binaryOperator unaryExpression
-  | assignmentExpression
-  | conditionalExpression
-  | castExpression
-  ;
+	: binaryOperator unaryExpression
+	| assignmentExpression
+	| conditionalExpression
+	| castExpression
+	;
 
 assignmentExpression : assignmentOperator unaryExpression ;
 
 conditionalExpression : conditionalOperator unaryExpression ;
 
 assignmentOperator :
-  '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|=';
+	'=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|=';
 
 conditionalOperator : '?' expression ':' ;
 
 binaryOperator : '>' | '<' | '!' | '~' | '?' | ':' | '==' | '<=' | '>='
-               | '!=' | '&&' | '||' | '+' | '-' | '*' | '/' | '&' | '|' | '^'
-               | '%' | '>>' | '<<' ;
+							 | '!=' | '&&' | '||' | '+' | '-' | '*' | '/' | '&' | '|' | '^'
+							 | '%' | '>>' | '<<' ;
 
 constantExpression : identifier ;
 
 castExpression : '(' typeName ')' castExpression | unaryExpression ;
 
 unaryExpression
-  : postfixExpression
-  | '++' unaryExpression
-  | '--' unaryExpression
-  | unaryOperator castExpression
-  | 'sizeof' ('(' typeName ')' | unaryExpression) ;
+	: postfixExpression
+	| '++' unaryExpression
+	| '--' unaryExpression
+	| unaryOperator castExpression
+	| 'sizeof' ('(' typeName ')' | unaryExpression) ;
 
 unaryOperator : '&' | '*' | '-' | '~' | '!' ;
 
 postfixExpression : primaryExpression
-  ('[' expression ']'
-  | '(' argumentExpressionList? ')'
-  | dataMemberAccess
-  | '++'
-  | '--'
-  | '*'
-  )* ;
+	('[' expression ']'
+	| '(' argumentExpressionList? ')'
+	| dataMemberAccess
+	| '++'
+	| '--'
+	| '*'
+	)* ;
 
 dataMemberAccess : ('.' | '->') identifier ;
 
@@ -467,12 +467,12 @@ argumentExpressionList : expression (',' expression)* ; // Support variadic func
 identifier : IDENTIFIER ;
 
 constant
-  : DECIMAL_LITERAL
-  | HEX_LITERAL
-  | OCTAL_LITERAL
-  | CHARACTER_LITERAL
-  | FLOATING_POINT_LITERAL
-  ;
+	: DECIMAL_LITERAL
+	| HEX_LITERAL
+	| OCTAL_LITERAL
+	| CHARACTER_LITERAL
+	| FLOATING_POINT_LITERAL
+	;
 
 stringLiteral : ('L' | '@') stringPiece+ ;
 stringPiece : STRING ;
@@ -624,20 +624,20 @@ READWRITE       : 'readwrite';
 WEAK            : 'weak';
 
 IDENTIFIER
-  : LETTER (LETTER|'0'..'9')*
-  ;
+	: LETTER (LETTER|'0'..'9')*
+	;
 
 fragment
 LETTER
-  : '$'
-  | 'A'..'Z'
-  | 'a'..'z'
-  | '_'
-  ;
+	: '$'
+	| 'A'..'Z'
+	| 'a'..'z'
+	| '_'
+	;
 
 CHARACTER_LITERAL
-    :   '\'' ( EscapeSequence | ~('\''|'\\') ) '\''
-    ;
+		:   '\'' ( EscapeSequence | ~('\''|'\\') ) '\''
+		;
 
 STRING : '"' ( EscapeSequence | ~('\\'|'"') )* '"' ;
 
@@ -652,12 +652,12 @@ HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 fragment
 IntegerTypeSuffix
-  : ('u'|'U'|'l'|'L')
-  ;
+	: ('u'|'U'|'l'|'L')
+	;
 
 FLOATING_POINT_LITERAL
-  : ('0'..'9')+ ('.' ('0'..'9')*)? Exponent? FloatTypeSuffix?
-  ;
+	: ('0'..'9')+ ('.' ('0'..'9')*)? Exponent? FloatTypeSuffix?
+	;
 
 fragment
 Exponent : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
@@ -667,22 +667,22 @@ FloatTypeSuffix : ('f'|'F'|'d'|'D') ;
 
 fragment
 EscapeSequence
-    : '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
-    | OctalEscape
-    | UnicodeEscape
-    ;
+		: '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+		| OctalEscape
+		| UnicodeEscape
+		;
 
 fragment
 OctalEscape
-    :   '\\' ('0'..'3') ('0'..'7') ('0'..'7')
-    |   '\\' ('0'..'7') ('0'..'7')
-    |   '\\' ('0'..'7')
-    ;
+		:   '\\' ('0'..'3') ('0'..'7') ('0'..'7')
+		|   '\\' ('0'..'7') ('0'..'7')
+		|   '\\' ('0'..'7')
+		;
 
 fragment
 UnicodeEscape
-    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
-    ;
+		:   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+		;
 
 IMPORT : '#import' [ \t]* (STRING|ANGLE_STRING) WS -> skip ;
 INCLUDE: '#include'[ \t]* (STRING|ANGLE_STRING) WS -> skip ;
@@ -690,18 +690,18 @@ PRAGMA : '#pragma' ~[\r\n]* -> skip ;
 
 fragment
 ANGLE_STRING
-    :   '<' .*? '>'
-    ;
+		:   '<' .*? '>'
+		;
 
 WS  :  [ \r\n\t\u000C] -> skip ;
 
 COMMENT
-    :   '/*' .*? '*/'  -> skip
-    ;
+		:   '/*' .*? '*/'  -> skip
+		;
 
 LINE_COMMENT
-    : '//' ~[\r\n]*  -> skip
-    ;
+		: '//' ~[\r\n]*  -> skip
+		;
 
 // ignore preprocessor defines for now
 

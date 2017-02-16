@@ -3,9 +3,10 @@ package net.certiv.adept.vis.models;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.table.AbstractTableModel;
+
+import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
@@ -13,12 +14,12 @@ import net.certiv.adept.parser.ISourceParser;
 
 public class EdgeTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Root", "Root text", "Leaf", "Leaf text", "Metric", "Weight" };
+	private final String[] columnNames = { "Line", "Root", "Root text", "Leaf", "Leaf text", "Metric"};
 	private Object[][] rowData;
 
-	public EdgeTableModel(Map<Integer, List<Feature>> index, ISourceParser lang, int key, int idx) {
+	public EdgeTableModel(ArrayListMultimap<Long, Feature> typeIndex, ISourceParser lang, long key, int idx) {
 
-		List<Feature> features = index.get(key);
+		List<Feature> features = typeIndex.get(key);
 		Feature feature = features.get(idx);
 		Collection<Edge> edges = feature.getEdgeSet().getEdges();
 
@@ -30,9 +31,8 @@ public class EdgeTableModel extends AbstractTableModel {
 			String leaf = edge.leaf.getAspect();
 			String lTxt = edge.leaf.getText();
 			double metric = edge.metric;
-			double weight = edge.rarity;
 
-			Object[] row = { line, root, rTxt, leaf, lTxt, metric, weight };
+			Object[] row = { line, root, rTxt, leaf, lTxt, metric};
 			rows.add(row);
 			line++;
 		}

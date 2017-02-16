@@ -2,6 +2,7 @@ package net.certiv.adept.parser;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +47,9 @@ public class ParseData {
 
 	// key=line number; value=tokens of line
 	public Map<Integer, List<Token>> lineIndex;
+	
+	// key=feature type
+	public HashSet<Integer> typeSet;
 
 	public ParseData() {
 		super();
@@ -54,6 +58,7 @@ public class ParseData {
 		ruleIndex = new HashMap<>();
 		terminalIndex = new HashMap<>();
 		lineIndex = new HashMap<>();
+		typeSet = new HashSet<>();
 	}
 
 	public CommonTokenStream getTokenStream() {

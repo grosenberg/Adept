@@ -1,6 +1,8 @@
 package net.certiv.adept.vis.layout;
 
 import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -16,36 +18,37 @@ import edu.uci.ics.jung.algorithms.util.MapSettableTransformer;
 import edu.uci.ics.jung.graph.Graph;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Log.LogLevel;
+import net.certiv.adept.vis.components.TopoPanel;
 
 public class TopoLayout extends AbstractLayout<Feature, Edge> implements IterativeContext {
 
-	private static final double UNIT = 0.8;
+	private static final double UNIT = 0.9;
 	private static final int MAX = 5;
 
 	private String status = "Topo Layout";
 	private int currentIteration;
 	private int vertexCnt;
-	private int L; // the ideal length of an edge
+	private double L; // the ideal length of an edge
 
 	// key=feature; value=vertex index
 	private BiMap<Feature, Integer> vertices;
 	private Point2D[] xydata;
-	private MapSettableTransformer<Edge, EdgeData> edt;
-
-	// /** Graph distances between vertices of the visible graph */
-	// protected Distance<Feature> distance;
-	// /** The diameter of the visible graph. */
-	// protected double diameter;
+	private MapSettableTransformer<Edge, EdgeData> transform;
 
 	private List<Edge> edges;
 	private List<Feature> roots;
 	private double oX; // X origin for root 0
 	private double oY; // Y origin
 
-	public TopoLayout(Graph<Feature, Edge> graph, MapSettableTransformer<Edge, EdgeData> edt) {
+	private TopoPanel detail;
+
+	public TopoLayout(Graph<Feature, Edge> graph, MapSettableTransformer<Edge, EdgeData> transform, TopoPanel detail) {
 		super(graph);
-		this.edt = edt;
-		// this.distance = new UnweightedShortestPath<Feature, Edge>(graph);
+		this.transform = transform;
+		this.detail = detail;
+		Log.defLevel(LogLevel.Debug);
 	}
 
 	@Override
@@ -79,6 +82,10 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 					index++;
 				}
 
+				if (detail != null && !roots.isEmpty()) {
+					detail.load(vertices, roots.get(0));
+				}
+
 				break;
 			} catch (ConcurrentModificationException cme) {}
 		}
@@ -89,7 +96,8 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 			try {
 				int range = getRange(edges);
 				double L0 = Math.min(size.getHeight(), size.getWidth());
-				L = (int) Math.round((L0 / range) * UNIT);
+				L = Math.round((L0 / range) * UNIT);
+				Log.debug(this, String.format("Unit length: %s (%s) %s", range, L0, L));
 				break;
 			} catch (ConcurrentModificationException cme) {}
 		}
@@ -100,30 +108,30 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		while (true) {
 			try {
 				for (Edge edge : edges) {
-					Feature f1 = edge.root;
-					Feature f2 = edge.leaf;
+					EdgeData data = transform.apply(edge);
 
-					EdgeData data = edt.apply(edge);
-					int v1 = vertices.get(f1);
-					int v2 = vertices.get(f2);
-					Point2D xy1 = xydata[v1];
-					Point2D xy2 = xydata[v2];
-					if (xy1 == null && xy2 == null) {
-						xydata[v1] = new Point2D.Double(0, 0);
-						xydata[v2] = data.getRelative(xydata[v1]);
-					} else if (xy1 == null) {
-						xydata[v1] = data.getRelativeInv(xydata[v2]);
-					} else if (xy2 == null) {
-						xydata[v2] = data.getRelative(xydata[v1]);
+					Feature root = edge.root;
+					Feature leaf = edge.leaf;
+
+					int vroot = vertices.get(root);
+					int vleaf = vertices.get(leaf);
+					Point2D proot = xydata[vroot];
+					Point2D pleaf = xydata[vleaf];
+					if (proot == null) {
+						xydata[vroot] = new Point2D.Double(root.getCol(), root.getLine());
+					}
+					if (pleaf == null) {
+						xydata[vleaf] = data.getRelative(xydata[vroot]);
 					}
 				}
 				for (int i = 0; i < vertexCnt; i++) {
 					Feature feature = vertices.inverse().get(i);
 					int m = roots.indexOf(feature) + 1;
-					double x = xydata[i].getX() * L + m * oX;
-					double y = xydata[i].getY() * L + oY;
+					double x = (xydata[i].getX() * L) + (m * oX);
+					double y = (xydata[i].getY() * L) + oY;
 					xydata[i].setLocation(x, y);
 				}
+				if (detail != null) detail.setInitLocations(xydata);
 				break;
 			} catch (ConcurrentModificationException cme) {}
 		}
@@ -144,11 +152,16 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		double maxY = Double.NEGATIVE_INFINITY;
 		double minY = Double.POSITIVE_INFINITY;
 		for (Edge edge : edges) {
-			Point2D xy = edt.apply(edge).deltaXY;
-			maxX = Math.max(maxX, xy.getX());
-			minX = Math.min(minX, xy.getX());
-			maxY = Math.max(maxY, xy.getY());
-			minY = Math.min(minY, xy.getY());
+			EdgeData ed = transform.apply(edge);
+			maxX = Math.max(maxX, ed.rootX);
+			minX = Math.min(minX, ed.rootX);
+			maxY = Math.max(maxY, ed.rootY);
+			minY = Math.min(minY, ed.rootY);
+
+			maxX = Math.max(maxX, ed.leafX);
+			minX = Math.min(minX, ed.leafX);
+			maxY = Math.max(maxY, ed.leafY);
+			minY = Math.min(minY, ed.leafY);
 		}
 		return (int) Math.round(Math.max(maxX - minX, maxY - minY));
 	}
@@ -158,16 +171,18 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		currentIteration++;
 		if (vertexCnt > 1) {
 			adjustSpacing();
-			center();
+//			center();
 			for (int i = 0; i < vertexCnt; i++) {
 				Feature feature = vertices.inverse().get(i);
 				setLocation(feature, xydata[i]);
 			}
+			
+			if (detail != null) detail.setStepLocations(xydata);
 		}
 	}
 
 	private void adjustSpacing() {
-		int offset = L * 2;
+		double offset = L;
 		int n = graph.getVertexCount();
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < i; j++) {
@@ -195,8 +210,8 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		}
 	}
 
-	private boolean within(double p1, double p2, int range) {
-		int diff = (int) Math.abs(Math.round(p1) - Math.round(p2));
+	private boolean within(double p1, double p2, double range) {
+		double diff = Math.abs(p1 - p2);
 		return diff < range;
 	}
 
@@ -239,5 +254,14 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 	public boolean done() {
 		if (currentIteration >= MAX) return true;
 		return false;
+	}
+
+	/** Used for changing the size of the layout in response to a component's size. */
+	public class ResizeListener extends ComponentAdapter {
+
+		@Override
+		public void componentResized(ComponentEvent e) {
+			setSize(e.getComponent().getSize());
+		}
 	}
 }

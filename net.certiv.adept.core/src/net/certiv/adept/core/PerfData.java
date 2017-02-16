@@ -17,6 +17,7 @@ public class PerfData {
 
 		public String docName;
 		public int docFeatureCnt;
+		public int docTypeCnt;
 		public int docTerminalCnt;
 		public Duration docFormat;
 
@@ -25,6 +26,7 @@ public class PerfData {
 		public DocPerf(Collector collector) {
 			docName = collector.getDocument().getPathname();
 			docFeatureCnt = collector.getFeatures().size();
+			docTypeCnt = collector.typeSet.size();
 			docTerminalCnt = collector.terminalIndex.size();
 		}
 	}

@@ -28,7 +28,7 @@ import net.certiv.adept.topo.Point;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.DiffPanel;
-import net.certiv.adept.vis.components.PerfPanel;
+import net.certiv.adept.vis.components.FormatPanel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.SrcItem;
 
@@ -42,7 +42,7 @@ public class FormatView extends AbstractBase {
 	private Tool tool;
 	private JComboBox<SrcItem> srcBox;
 	private DiffPanel diffPanel;
-	private PerfPanel perfPanel;
+	private FormatPanel formatPanel;
 
 	// key=source line; value=col ordered set of features
 	private Map<Integer, TreeSet<Feature>> index;
@@ -84,11 +84,11 @@ public class FormatView extends AbstractBase {
 			}
 		});
 
-		perfPanel = new PerfPanel(font);
+		formatPanel = new FormatPanel(font);
 
 		content.add(cntlPanel, BorderLayout.NORTH);
 		content.add(diffPanel, BorderLayout.CENTER);
-		content.add(perfPanel, BorderLayout.SOUTH);
+		content.add(formatPanel, BorderLayout.SOUTH);
 
 		setLocation();
 		frame.setVisible(true);
@@ -99,14 +99,14 @@ public class FormatView extends AbstractBase {
 			TreeSet<Feature> lfs = index.get(loc.getLine());
 			if (lfs != null) {
 				for (Feature feature : lfs.descendingSet()) {
-					if (loc.getCol() >= feature.getX()) {
-						perfPanel.loadData(loc.getLine(), loc.getCol(), feature);
+					if (loc.getCol() >= feature.getCol()) {
+						formatPanel.loadData(loc.getLine(), loc.getCol(), feature);
 						return;
 					}
 				}
 			}
 		}
-		perfPanel.clearData();
+		formatPanel.clearData();
 	}
 
 	private void loadTool() {
@@ -171,13 +171,13 @@ public class FormatView extends AbstractBase {
 				int fmtWidth = Tool.settings.tabWidth;
 				diffPanel.setTabStops(srcWidth, fmtWidth);
 				diffPanel.load(original, formatted);
-				perfPanel.load(tool.getPerfData());
+				formatPanel.load(tool.getPerfData());
 
 				// create line/features index
 				index = new HashMap<>();
 				List<Feature> features = tool.getMgr().getDocModel().getFeatures();
 				for (Feature feature : features) {
-					Integer line = feature.getY();
+					Integer line = feature.getLine();
 					TreeSet<Feature> lfs = index.get(line);
 					if (lfs == null) {
 						lfs = sortedSet();
@@ -187,7 +187,7 @@ public class FormatView extends AbstractBase {
 				}
 			} else {
 				diffPanel.clear();
-				perfPanel.clearAll();
+				formatPanel.clearAll();
 			}
 		}
 	}
@@ -198,8 +198,8 @@ public class FormatView extends AbstractBase {
 
 			@Override
 			public int compare(Feature o1, Feature o2) {
-				if (o1.getX() < o2.getX()) return -1;
-				if (o1.getX() > o2.getX()) return 1;
+				if (o1.getCol() < o2.getCol()) return -1;
+				if (o1.getCol() > o2.getCol()) return 1;
 				if (o1.getKind() != Kind.RULE && o2.getKind() == Kind.RULE) return -1;
 				if (o1.getKind() == Kind.RULE && o2.getKind() != Kind.RULE) return 1;
 				return 0;

@@ -53,7 +53,7 @@ public abstract class AbstractBase {
 		frame.setIconImage(imgicon.getImage());
 
 		content = frame.getContentPane();
-		prefs = Preferences.userNodeForPackage(this.getClass());
+		prefs = Preferences.userRoot().node(nodeName(this.getClass()));
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.addWindowListener(new WindowAdapter() {
 
@@ -66,6 +66,13 @@ public abstract class AbstractBase {
 				saveWindowClosingPrefs(prefs);
 			}
 		});
+	}
+
+	private String nodeName(Class<? extends AbstractBase> c) {
+		if (c.isArray()) throw new IllegalArgumentException("Arrays have no associated preferences node.");
+		String className = c.getName();
+		if (className.lastIndexOf('.') < 0) return "/<unnamed>";
+		return "/" + className.replace('.', '/');
 	}
 
 	protected void saveWindowClosingPrefs(Preferences prefs) {}

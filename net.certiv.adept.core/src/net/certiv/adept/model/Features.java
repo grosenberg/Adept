@@ -33,18 +33,19 @@ public class Features {
 		return features;
 	}
 
-	public List<Feature> getNonRuleFeatures() {
-		List<Feature> nonRules = new ArrayList<>();
+	public List<Feature> getReducedFeatures() {
+		List<Feature> result = new ArrayList<>();
 		for (Feature feature : features) {
 			if (feature.getKind() == Kind.RULE) continue;
-			nonRules.add(feature);
+			if (feature.isEquivalent()) continue;
+			result.add(feature);
 		}
-		return nonRules;
+		return result;
 	}
 
 	/** Restore feature objects to edgeSet using the persisted indicies */
 	public void fixEdgeRefs() {
-		Map<Integer, Feature> cache = new HashMap<>();
+		Map<Long, Feature> cache = new HashMap<>();
 		for (Feature feature : features) {
 			cache.put(feature.getId(), feature);
 		}
