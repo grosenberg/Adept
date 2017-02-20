@@ -43,9 +43,9 @@ public class EdgeData {
 	 * root.
 	 */
 	public Point2D getRelative(Point2D root) {
-		double x = leafX + root.getX();
-		double y = leafY + root.getY();
-		return new Position(x, y);
+		double x = leafX - root.getX();
+		double y = leafY - root.getY();
+		return new Point2D.Double(x, y);
 	}
 
 	// /**

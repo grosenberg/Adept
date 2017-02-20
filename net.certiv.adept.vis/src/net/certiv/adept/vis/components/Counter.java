@@ -10,18 +10,44 @@ import javax.swing.JTextField;
 
 public class Counter extends JPanel {
 
+	// event require strings
 	public static final String ADD = "ADD";
 	public static final String SUB = "SUB";
+	public static final String SET = "SET";
 
 	private JTextField text;
 	private JButton sub;
 	private JButton add;
+
+	private int max = 100;
+	private int min = 0;
+	private int inc = 1;
 	private int value;
+
 	private boolean disable;
 
 	public Counter() {
 		super(new FlowLayout());
 		build();
+	}
+
+	public Counter(int max, int min, int inc) {
+		this();
+		this.max = max;
+		this.min = min;
+		this.inc = inc;
+	}
+
+	public void setMaximum(int max) {
+		this.max = max;
+	}
+
+	public void setMinimum(int min) {
+		this.min = min;
+	}
+
+	public void setIncrement(int inc) {
+		this.inc = inc;
 	}
 
 	private void build() {
@@ -31,9 +57,10 @@ public class Counter extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int oldValue = value;
-				value--;
-				setValue(value);
-				firePropertyChange(SUB, oldValue, value);
+				if (value - inc >= min) {
+					setValue(value - inc);
+					firePropertyChange(SUB, oldValue, value);
+				}
 			}
 		});
 		add(sub);
@@ -49,9 +76,10 @@ public class Counter extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int oldValue = value;
-				value++;
-				setValue(value);
-				firePropertyChange(ADD, oldValue, value);
+				if (value + inc <= max) {
+					setValue(value + inc);
+					firePropertyChange(ADD, oldValue, value);
+				}
 			}
 		});
 		add(add);
@@ -70,14 +98,17 @@ public class Counter extends JPanel {
 	}
 
 	public void setValue(int value) {
-		disable = true;
-		this.value = value;
-		text.setText(String.valueOf(value));
-		disable = false;
+		if (value >= min && value <= max) {
+			disable = true;
+			this.value = value;
+			text.setText(String.valueOf(value));
+			disable = false;
+		}
 	}
 
 	public void reset() {
-		setValue(0);
+		setValue(min);
+		firePropertyChange(SET, min - 1, min);
 	}
 
 	public void firePropertyChange(String propertyName, int oldValue, int newValue) {

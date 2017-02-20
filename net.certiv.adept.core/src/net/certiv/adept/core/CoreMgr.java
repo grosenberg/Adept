@@ -92,7 +92,7 @@ public class CoreMgr {
 			}
 
 			collector.annotateComments();
-			collector.genLocalEdges(tabWidth);
+			collector.genLocalEdges();
 			corpus.merge(collector);
 		}
 		perfData.rebuild = Time.end(start);

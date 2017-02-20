@@ -1,4 +1,4 @@
-grammar Lucene;
+grammar Lucene ;
 
 query   : expr+ EOF ;
 expr	: LPAREN orExpr RPAREN	/* grouping */

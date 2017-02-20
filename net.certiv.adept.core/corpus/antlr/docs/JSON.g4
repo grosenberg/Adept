@@ -1,5 +1,5 @@
 /** Taken from "The Definitive ANTLR 4 Reference" by Terence Parr */
-grammar JSON; // Derived from http://json.org
+grammar JSON ; // Derived from http://json.org
 
 json
 	:	object
@@ -36,17 +36,20 @@ STRING
     ;
 
 
-fragment ESC
+fragment
+ESC
     :   '\\' (["\\/bfnrt] | UNICODE)
     ;
 
 
-fragment UNICODE
+fragment
+UNICODE
     :   'u' HEX HEX HEX HEX
     ;
 
 
-fragment HEX
+fragment
+HEX
     :   [0-9a-fA-F]
     ;
 
@@ -58,13 +61,15 @@ NUMBER
     ;
 
 
-fragment INT
+fragment
+INT
     :   '0' | [1-9] [0-9]*
     ;
 
 // no leading zeros
 
-fragment EXP
+fragment
+EXP
     :   [Ee] [+\-]? INT
     ;
 

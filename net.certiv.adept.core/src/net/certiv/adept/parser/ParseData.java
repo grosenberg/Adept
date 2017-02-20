@@ -47,7 +47,10 @@ public class ParseData {
 
 	// key=line number; value=tokens of line
 	public Map<Integer, List<Token>> lineIndex;
-	
+
+	// key=token; value=vis offset
+	public HashMap<Token, Integer> visIndex;
+
 	// key=feature type
 	public HashSet<Integer> typeSet;
 
@@ -58,6 +61,7 @@ public class ParseData {
 		ruleIndex = new HashMap<>();
 		terminalIndex = new HashMap<>();
 		lineIndex = new HashMap<>();
+		visIndex = new HashMap<>();
 		typeSet = new HashSet<>();
 	}
 

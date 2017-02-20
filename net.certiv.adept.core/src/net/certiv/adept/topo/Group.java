@@ -6,14 +6,12 @@ import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Strings;
 
 /**
  * Identifies features that exist within a well-defined local group. The 'local' scope is defined
@@ -22,20 +20,17 @@ import net.certiv.adept.util.Strings;
 public class Group {
 
 	private static final int NODE2RULE = 4;
-	private static final int NODE2NODE = 4;
-	private static final int NODE2COMMENT = 4;
+	private static final int NODE2NODE = 2;
 
 	private Feature locus;
 	private ParseData data;
-	private int tabWidth;
 
 	public Group(ParseData data) {
 		this.data = data;
 	}
 
-	public void setLocus(Feature locus, int tabWidth) {
+	public void setLocus(Feature locus) {
 		this.locus = locus;
-		this.tabWidth = tabWidth;
 	}
 
 	public Set<Feature> getLocalFeatures() {
@@ -47,17 +42,121 @@ public class Group {
 			return locals;
 		}
 
+		int line = token.getLine() - 1;
 		ParserRuleContext parent = (ParserRuleContext) node.getParent();
 		if (parent != null) {
-			int line = token.getLine() - 1;
 			addEnclosing(locals, parent);
-			addAdjacent(locals, token, line);
-			addFromPrior(locals, token, line);
 		}
+		addAdjacent(locals, token, line);
+		addSame(locals, token, line);
+
 		return locals;
 	}
 
-	private void addChildren(Set<Feature> locals, ParserRuleContext parent, boolean inclVars) {
+	private void addEnclosing(Set<Feature> locals, ParserRuleContext parent) {
+		int idx = 0;
+		while (parent != null && idx < NODE2RULE) {
+			addChildren(locals, parent, false);
+			if (parent.getParent() != null) { // no root feature
+				Feature feature = data.ruleIndex.get(parent);
+				locals.add(feature);
+			}
+			parent = parent.getParent();
+			idx++;
+		}
+	}
+
+	private void addAdjacent(Set<Feature> locals, Token token, int line) {
+		List<Token> tokens = data.lineIndex.get(line);
+		int ofs = tokens.indexOf(token);
+
+		// prior
+		int cnt = 0;
+		for (int i = ofs - 1; i >= 0; i--) {
+			Token t = tokens.get(i);
+			TerminalNode n = data.nodeIndex.get(t);
+			if (n != null) {
+				Feature feature = data.terminalIndex.get(n);
+				if (feature != null) {
+					locals.add(feature);
+					cnt++;
+				} else {
+					Log.error(this, "Null adjacent node");
+				}
+			} else {
+				ParserRuleContext ctx = data.contextIndex.get(t);
+				if (ctx != null) {
+					cnt += addChildren(locals, ctx, false);
+				}
+			}
+			if (cnt > NODE2NODE) break;
+		}
+
+		// following
+		cnt = 0;
+		for (int i = ofs + 1; i < tokens.size(); i++) {
+			Token t = tokens.get(i);
+			TerminalNode n = data.nodeIndex.get(t);
+			if (n != null) {
+				Feature feature = data.terminalIndex.get(n);
+				if (feature != null) {
+					locals.add(feature);
+					cnt++;
+				} else {
+					Log.error(this, "Null adjacent node");
+				}
+			} else {
+				ParserRuleContext ctx = data.contextIndex.get(t);
+				if (ctx != null) {
+					cnt += addChildren(locals, ctx, false);
+				}
+			}
+			if (cnt > NODE2NODE) break;
+		}
+	}
+
+	// add same token type from prior line
+	private void addSame(Set<Feature> locals, Token token, int line) {
+		int type = token.getType();
+		int vPos = data.visIndex.get(token);
+
+		int priorLine = nonBlankLine(line, -1);
+		if (priorLine > -1) {
+			List<Token> tokens = data.lineIndex.get(priorLine);
+			for (Token t : tokens) {
+				TerminalNode n = data.nodeIndex.get(t);
+				if (n != null && type == t.getType()) {
+					Feature feature = data.terminalIndex.get(n);
+					locals.add(feature);
+
+					if (vPos == data.visIndex.get(t)) {
+						locus.setAligned(Facet.ALIGNED_ABOVE);
+						feature.setAligned(Facet.ALIGNED_BELOW);
+					}
+				}
+			}
+		}
+
+		int nextLine = nonBlankLine(line, 1);
+		if (nextLine > -1) {
+			List<Token> tokens = data.lineIndex.get(nextLine);
+			for (Token t : tokens) {
+				TerminalNode n = data.nodeIndex.get(t);
+				if (n != null && type == t.getType()) {
+					Feature feature = data.terminalIndex.get(n);
+					locals.add(feature);
+
+					if (vPos == data.visIndex.get(t)) {
+						locus.setAligned(Facet.ALIGNED_BELOW);
+						feature.setAligned(Facet.ALIGNED_ABOVE);
+					}
+				}
+			}
+		}
+	}
+
+	private int addChildren(Set<Feature> locals, ParserRuleContext parent, boolean inclVars) {
+		int cnt = 0;
 		if (parent.getChildCount() > 0) {
 			for (ParseTree child : parent.children) {
 				if (child instanceof TerminalNode) {
@@ -65,95 +164,33 @@ public class Group {
 					if (feature != null) {
 						if (inclVars | !feature.isVar()) {
 							locals.add(feature);
+							cnt++;
 						}
 					}
 				}
 			}
 		}
+		return cnt;
 	}
 
-	private void addEnclosing(Set<Feature> locals, ParserRuleContext parent) {
-		int idx = 0;
-		while (parent != null && idx < NODE2RULE) {
-			addChildren(locals, parent, false);
-			Feature feature = data.ruleIndex.get(parent);
-			locals.add(feature);
-			parent = parent.getParent();
-			idx++;
+	private int nonBlankLine(int line, int dir) {
+		while (line + dir >= 0 && line + dir < data.lineIndex.size()) {
+			line += dir;
+			if (!isBlank(line)) return line;
 		}
-	}
-
-	private void addAdjacent(Set<Feature> locals, Token token, int line) {
-		int idx = token.getTokenIndex();
-		List<Token> tokens = data.lineIndex.get(line);
-		for (Token t : tokens) {
-			TerminalNode n = data.nodeIndex.get(t);
-			if (n != null) {
-				int dist = Math.abs(t.getTokenIndex() - idx);
-				if (dist != 0 && (isComment(t) && dist < NODE2COMMENT || dist < NODE2NODE)) {
-					Feature feature = data.terminalIndex.get(n);
-					if (feature == null) Log.error(this, "Null adjacent node");
-					locals.add(feature);
-				}
-			} else {
-				ParserRuleContext ctx = data.contextIndex.get(t);
-				if (ctx != null) {
-					addChildren(locals, ctx, false);
-				}
-			}
-		}
-	}
-
-	// add same token type from prior line; also assess alignment
-	private void addFromPrior(Set<Feature> locals, Token token, int line) {
-		if (!isBlank(line)) {
-			int type = token.getType();
-			List<Token> currTokens = data.lineIndex.get(line);
-			int currPos = getVisualColumn(currTokens.get(0), token);
-			List<Token> prevTokens = prevLine(line);
-			for (Token t : prevTokens) {
-				TerminalNode n = data.nodeIndex.get(t);
-				if (n != null && type == t.getType()) {
-					Feature feature = data.terminalIndex.get(n);
-					locals.add(feature);
-
-					if (currPos == getVisualColumn(prevTokens.get(0), t)) {
-						locus.setAligned(Facet.ALIGNED_ABOVE);
-						feature.setAligned(Facet.ALIGNED_BELOW);
-					}
-				}
-			}
-		}
-	}
-
-	private int getVisualColumn(Token start, Token mark) {
-		int beg = start.getStartIndex();
-		int end = mark.getStartIndex() - 1;
-		String text = mark.getInputStream().getText(new Interval(beg, end));
-		return Strings.measureVisualWidth(text, tabWidth);
-	}
-
-	private boolean isComment(Token token) {
-		return token.getType() == data.LINECOMMENT || token.getType() == data.BLOCKCOMMENT;
-	}
-
-	private boolean isWhitespace(Token token) {
-		return token.getType() == data.HWS || token.getType() == data.VWS;
+		return -1;
 	}
 
 	private boolean isBlank(int line) {
 		List<Token> tokens = data.lineIndex.get(line);
+		if (tokens == null) return true;
 		for (Token token : tokens) {
 			if (!isWhitespace(token)) return true;
 		}
 		return false;
 	}
 
-	private List<Token> prevLine(int line) {
-		while (line - 1 >= 0) {
-			line--;
-			if (!isBlank(line)) return data.lineIndex.get(line);
-		}
-		return null;
+	private boolean isWhitespace(Token token) {
+		return token.getType() == data.HWS || token.getType() == data.VWS;
 	}
 }

@@ -5,7 +5,7 @@ import java.util.Set;
 
 public enum Facet {
 
-	// intrinsic facets
+	// intrinsic facets - considered for similarity
 
 	// INDENTS(0-5)
 	// - bits 0-5 encode number of indents
@@ -36,9 +36,9 @@ public enum Facet {
 	;
 
 	private static final double DNTS = 6;			// num significant dent bits
-	private static final double SIGF = 20 - DNTS;	// num significant facet bits
+	private static final double SIGF = 14 - DNTS;	// num significant facet bits
 
-	static final int FMASK = 0x1FFFC0;	// bits 6-20
+	static final int FMASK = 0x3FC0;	// bits 6-14
 	static final int DMASK = 0x3F; 		// bits 0-5 (64bit values)
 	static final int ZERO = 32;			// defines zero
 

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
@@ -19,6 +20,7 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.topo.Form;
 import net.certiv.adept.topo.Group;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Strings;
 
 public class Collector extends ParseData {
 
@@ -124,12 +126,12 @@ public class Collector extends ParseData {
 	}
 
 	/** Generate edge connections for all non-RULE root features. */
-	public void genLocalEdges(int tabWidth) {
-		createLineTokenIndex();
+	public void genLocalEdges() {
+		createTokenIndex();
 		for (Feature feature : features) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			group.setLocus(feature, tabWidth);
+			group.setLocus(feature);
 			Set<Feature> locals = group.getLocalFeatures();
 			for (Feature local : locals) {
 				feature.addEdge(local);
@@ -137,16 +139,36 @@ public class Collector extends ParseData {
 		}
 	}
 
-	/** Builds a source line->tokens indexing map */
-	private void createLineTokenIndex() {
+	/** Builds a source line->visual offset->token index */
+	private void createTokenIndex() {
+		Token begToken = null;
+		int line = -1;
+
 		for (Token token : getTokens()) {
 			int num = token.getLine() - 1;
-			List<Token> line = lineIndex.get(num);
-			if (line == null) {
-				line = new ArrayList<>();
-				lineIndex.put(num, line);
+			if (num > line) {
+				line = num;
+				begToken = token;
 			}
-			line.add(token);
+
+			List<Token> tokenList = lineIndex.get(line);
+			if (tokenList == null) {
+				tokenList = new ArrayList<>();
+				lineIndex.put(line, tokenList);
+			}
+			tokenList.add(token);
+
+			int pos = getVisualColumn(begToken, token);
+			visIndex.put(token, pos);
 		}
+	}
+
+	private int getVisualColumn(Token start, Token mark) {
+		if (start == null || start == mark) return 0;
+
+		int beg = start.getStartIndex();
+		int end = mark.getStartIndex() - 1;
+		String text = mark.getInputStream().getText(new Interval(beg, end));
+		return Strings.measureVisualWidth(text, doc.getTabWidth());
 	}
 }

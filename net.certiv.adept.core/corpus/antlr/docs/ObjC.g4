@@ -12,10 +12,10 @@
 * Updated June 2014, Carlos Mejia.  Fix try-catch, add support for @( @{ @[ and blocks
 **/
 
-grammar ObjC;
+grammar ObjC ;
 
 @header {
-package co.codebeat.analyser.antlr;
+	package co.codebeat.analyser.antlr;
 }
 
 translationUnit : externalDeclaration+ EOF ;
@@ -63,9 +63,9 @@ categoryInterface :
 classImplementation :
 	'@implementation'
 	(
-	className (':' superclassName )?
-	instanceVariables?
-	( implementationDefinitionList )?
+		className (':' superclassName )?
+		instanceVariables?
+		( implementationDefinitionList )?
 	)
 	'@end'
 	;
@@ -78,10 +78,12 @@ categoryImplementation :
 	;
 
 protocolDeclaration :
-	'@protocol'(
-	protocolName ( protocolReferenceList )?
-	'@required'? interfaceDeclarationList? '@optional'? interfaceDeclarationList?
-	)'@end'
+	'@protocol'
+	(
+		protocolName ( protocolReferenceList )?
+		'@required'? interfaceDeclarationList? '@optional'? interfaceDeclarationList?
+	)
+	'@end'
 	;
 
 protocolDeclarationList : '@protocol' protocolList ';' ;
@@ -385,13 +387,15 @@ statement
 labeledStatement
 	: identifier ':' statement
 	| 'case' constantExpression ':' statement
-	| 'default' ':' statement ;
+	| 'default' ':' statement
+	;
 
 compoundStatement : '{' (declaration|statementList)* '}' ;
 
 selectionStatement
 	: 'if' '(' expression ')' statement ('else' statement)?
-	| 'switch' '(' expression ')' statement ;
+	| 'switch' '(' expression ')' statement
+	;
 
 forInStatement : 'for' '(' typeVariableDeclarator 'in' expression? ')' statement;
 forStatement: 'for' '(' ((declarationSpecifier+ initDeclaratorList) | expression)? ';' expression? ';' expression? ')' statement;
@@ -402,7 +406,8 @@ iterationStatement
 	: whileStatement
 	| doStatement
 	| forStatement
-	| forInStatement ;
+	| forInStatement
+	;
 
 jumpStatement
 	: 'goto' identifier ';'
@@ -429,14 +434,15 @@ assignmentExpression : assignmentOperator unaryExpression ;
 
 conditionalExpression : conditionalOperator unaryExpression ;
 
-assignmentOperator :
-	'=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|=';
+assignmentOperator	: '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|=';
 
 conditionalOperator : '?' expression ':' ;
 
-binaryOperator : '>' | '<' | '!' | '~' | '?' | ':' | '==' | '<=' | '>='
-							 | '!=' | '&&' | '||' | '+' | '-' | '*' | '/' | '&' | '|' | '^'
-							 | '%' | '>>' | '<<' ;
+binaryOperator
+	: '>' | '<' | '!' | '~' | '?' | ':' | '==' | '<=' | '>='
+	| '!=' | '&&' | '||' | '+' | '-' | '*' | '/' | '&' | '|' | '^'
+	| '%' | '>>' | '<<'
+	;
 
 constantExpression : identifier ;
 
@@ -447,7 +453,8 @@ unaryExpression
 	| '++' unaryExpression
 	| '--' unaryExpression
 	| unaryOperator castExpression
-	| 'sizeof' ('(' typeName ')' | unaryExpression) ;
+	| 'sizeof' ('(' typeName ')' | unaryExpression)
+	;
 
 unaryOperator : '&' | '*' | '-' | '~' | '!' ;
 
@@ -458,7 +465,8 @@ postfixExpression : primaryExpression
 	| '++'
 	| '--'
 	| '*'
-	)* ;
+	)*
+	;
 
 dataMemberAccess : ('.' | '->') identifier ;
 

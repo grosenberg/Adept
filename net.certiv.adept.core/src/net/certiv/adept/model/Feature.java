@@ -51,7 +51,7 @@ public class Feature implements Comparable<Feature> {
 	@Expose private int lines;		// feature vertical span
 	@Expose private int size;		// feature size
 
-	@Expose private double weight;
+	@Expose private int weight;		// number of equivalents
 	@Expose private boolean equiv;	// is weighted to another corpus feature
 
 	// defines connections between this feature and others in a local group
@@ -205,10 +205,11 @@ public class Feature implements Comparable<Feature> {
 	// type and text (if applicable) have to be identical
 	public double featLabelSimilarity(Feature other) {
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
-		double[] vals = new double[3];
+		double[] vals = new double[4];
 		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, other.format);
-		vals[1] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(edgeSet.getTypeCount(), other.edgeSet.getTypeCount());
-		vals[2] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), other.edgeSet.getEdgeCount());
+		vals[1] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, other.weight);
+		vals[2] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), other.dimensionality());
+		vals[3] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), other.edgeSet.getEdgeCount());
 		double sum = Norm.sum(vals);
 		return sum;
 	}

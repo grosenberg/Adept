@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -30,10 +29,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.ArrayListMultimap;
 
-import edu.uci.ics.jung.algorithms.layout.FRLayout;
-import edu.uci.ics.jung.algorithms.layout.KKLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
-import edu.uci.ics.jung.algorithms.layout.SpringLayout;
 import edu.uci.ics.jung.algorithms.util.MapSettableTransformer;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
@@ -43,7 +39,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
-import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer.InsidePositioner;
+import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer.OutsidePositioner;
 import edu.uci.ics.jung.visualization.renderers.GradientVertexRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import net.certiv.adept.Tool;
@@ -63,24 +59,11 @@ import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
 public class TopologyView extends AbstractBase {
 
-	private static final String KEY_START = "vertex_start";
-	private static final String KEY_LIMIT = "vertex_limit";
-
-	private static final String TOPO = "Topo";
-	private static final String KK = "KK";
-	private static final String SPRING = "Spring";
-	private static final String FR = "FR";
-
-	private static final String[] LAYOUTS = { TOPO, KK, SPRING, FR };
-
 	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
 
-	private JComboBox<String> layoutBox;
 	private JComboBox<FeatureListItem> typeBox;
 	private JSlider idxSlider;	// offset into the list of features to display
 	private Counter idxCounter;
-	private JSlider numSlider;	// count of features to display together
-	private Counter numCounter;
 	private JButton detailOpen;
 
 	private DirectedSparseGraph<Feature, Edge> graph;
@@ -114,16 +97,14 @@ public class TopologyView extends AbstractBase {
 
 		content.add(mainPanel, BorderLayout.CENTER);
 
-		idxSlider.setValue(prefs.getInt(KEY_START, 0));
-		numSlider.setValue(prefs.getInt(KEY_LIMIT, 1));
-
+		idxSlider.setValue(0);
 		setLocation();
 		frame.setVisible(true);
 	}
 
 	private GraphZoomScrollPane createGraphPanel() {
 		graph = new DirectedSparseGraph<>();
-		viewer = new VisualizationViewer<Feature, Edge>(getLayout());
+		viewer = new VisualizationViewer<Feature, Edge>(createLayout());
 
 		viewer.getRenderer().setVertexRenderer(new GradientVertexRenderer<Feature, Edge>(Color.white, Color.red,
 				Color.white, Color.blue, viewer.getPickedVertexState(), false));
@@ -133,8 +114,8 @@ public class TopologyView extends AbstractBase {
 		viewer.getRenderContext().setEdgeDrawPaintTransformer(Functions.<Paint>constant(Color.lightGray));
 		viewer.getRenderContext().setArrowFillPaintTransformer(Functions.<Paint>constant(Color.lightGray));
 		viewer.getRenderContext().setArrowDrawPaintTransformer(Functions.<Paint>constant(Color.lightGray));
-		viewer.getRenderer().getVertexLabelRenderer().setPositioner(new InsidePositioner());
-		viewer.getRenderer().getVertexLabelRenderer().setPosition(Renderer.VertexLabel.Position.AUTO);
+		viewer.getRenderer().getVertexLabelRenderer().setPositioner(new OutsidePositioner());
+		viewer.getRenderer().getVertexLabelRenderer().setPosition(Renderer.VertexLabel.Position.SE);
 		viewer.getRenderContext().setVertexLabelTransformer(new Function<Feature, String>() {
 
 			@Override
@@ -174,22 +155,13 @@ public class TopologyView extends AbstractBase {
 	}
 
 	private JPanel createFeatureControls() {
-		layoutBox = new JComboBox<>(LAYOUTS);
-		layoutBox.setSize(150, 32);
-		layoutBox.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				reDrawGraph();
-			}
-		});
-
 		typeBox = new JComboBox<>();
 		typeBox.setSize(250, 32);
 		typeBox.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				idxCounter.reset();
 				updateGraph();
 			}
 		});
@@ -202,6 +174,8 @@ public class TopologyView extends AbstractBase {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
+				int val = idxSlider.getValue();
+				idxCounter.setValue(val);
 				updateGraph();
 			}
 		});
@@ -211,52 +185,14 @@ public class TopologyView extends AbstractBase {
 
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
-				int v = idxSlider.getValue();
 				switch (evt.getPropertyName()) {
 					case Counter.ADD:
-						int m = idxSlider.getMaximum();
-						if (v < m) v++;
-						break;
 					case Counter.SUB:
-						m = idxSlider.getMinimum();
-						if (v > m) v--;
+					case Counter.SET:
+						int val = (int) evt.getNewValue();
+						idxSlider.setValue(val);
 						break;
 				}
-				idxCounter.setValue(v);
-				idxSlider.setValue(v);
-			}
-		});
-
-		numSlider = new JSlider(1, 50);
-		numSlider.setToolTipText("Number of features to display together.");
-		numSlider.setPaintTicks(true);
-		numSlider.setMajorTickSpacing(5);
-		numSlider.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				updateGraph();
-			}
-		});
-
-		numCounter = new Counter();
-		numCounter.addPropertyChangeListener(new PropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				int v = numSlider.getValue();
-				switch (evt.getPropertyName()) {
-					case Counter.ADD:
-						int m = numSlider.getMaximum();
-						if (v < m) v++;
-						break;
-					case Counter.SUB:
-						m = numSlider.getMinimum();
-						if (v > m) v--;
-						break;
-				}
-				numCounter.setValue(v);
-				numSlider.setValue(v);
 			}
 		});
 
@@ -275,12 +211,9 @@ public class TopologyView extends AbstractBase {
 		});
 
 		JPanel featurePanel = new JPanel();
-		featurePanel.add(layoutBox);
 		featurePanel.add(typeBox);
 		featurePanel.add(idxSlider);
 		featurePanel.add(idxCounter);
-		featurePanel.add(numSlider);
-		featurePanel.add(numCounter);
 		featurePanel.add(detailOpen);
 		return featurePanel;
 	}
@@ -317,12 +250,6 @@ public class TopologyView extends AbstractBase {
 		controls.add(minus);
 		controls.add(reset);
 		return controls;
-	}
-
-	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
-		prefs.putInt(KEY_START, idxSlider.getValue());
-		prefs.putInt(KEY_LIMIT, numSlider.getValue());
 	}
 
 	@Override
@@ -370,23 +297,18 @@ public class TopologyView extends AbstractBase {
 	}
 
 	protected void createGraph(List<Feature> features) {
-		int start = idxSlider.getValue();
-		int count = numSlider.getValue();
-		int limit = start + count;
-
-		for (int idx = start; idx < limit && idx < features.size(); idx++) {
-			Feature feature = features.get(idx);
-			graph.addVertex(feature);
-			Collection<Edge> edges = feature.getEdgeSet().getEdges();
-			for (Edge edge : edges) {
-				graph.addEdge(edge, feature, edge.leaf, EdgeType.DIRECTED);
-			}
+		int idx = idxCounter.getValue();
+		Feature feature = features.get(idx);
+		graph.addVertex(feature);
+		Collection<Edge> edges = feature.getEdgeSet().getEdges();
+		for (Edge edge : edges) {
+			graph.addEdge(edge, feature, edge.leaf, EdgeType.DIRECTED);
 		}
 
 		int max = features.size();
 		idxSlider.setMaximum(max - 1);
-		idxCounter.setValue(start);
-		numCounter.setValue(count);
+		idxCounter.setMaximum(max - 1);
+		idxCounter.setValue(idx);
 
 		int tck = 1;
 		if (max > 2) tck = 2;
@@ -397,8 +319,9 @@ public class TopologyView extends AbstractBase {
 	}
 
 	protected void reDrawGraph() {
-		Layout<Feature, Edge> layout = getLayout();
+		Layout<Feature, Edge> layout = createLayout();
 		viewer.getModel().setGraphLayout(layout);
+		viewer.getModel().getRelaxer().setSleepTime(2000);
 	}
 
 	private void clearGraph() {
@@ -413,29 +336,8 @@ public class TopologyView extends AbstractBase {
 		if (topoDetail != null) topoDetail.clear();
 	}
 
-	private Layout<Feature, Edge> getLayout() {
-		String sel = TOPO;
-		if (layoutBox != null) {
-			sel = (String) layoutBox.getSelectedItem();
-			if (sel == null) sel = layoutBox.getItemAt(0);
-		}
-
-		Layout<Feature, Edge> layout = null;
-		switch (sel) {
-			case TOPO:
-				layout = new TopoLayout(graph, createTransformMap(), topoDetail);
-				break;
-			case KK:
-				layout = new KKLayout<Feature, Edge>(graph);
-				break;
-			case SPRING:
-				layout = new SpringLayout<Feature, Edge>(graph);
-				break;
-			case FR:
-				layout = new FRLayout<Feature, Edge>(graph);
-				break;
-		}
-
+	private Layout<Feature, Edge> createLayout() {
+		Layout<Feature, Edge> layout = new TopoLayout(graph, createTransformMap(), topoDetail);
 		layout.setSize(new Dimension(600, 600));
 		return layout;
 	}

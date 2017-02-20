@@ -1,4 +1,4 @@
-lexer grammar AntlrLexer;
+lexer grammar AntlrLexer ;
 
 options {
 	superClass = LexerErrorStrategy ;

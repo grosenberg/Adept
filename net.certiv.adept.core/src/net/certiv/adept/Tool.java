@@ -264,7 +264,7 @@ public class Tool extends ToolBase {
 			}
 
 			collector.annotateComments();
-			collector.genLocalEdges(tabWidth);
+			collector.genLocalEdges();
 			mgr.createDocModel(collector);
 			if (check) continue;
 
