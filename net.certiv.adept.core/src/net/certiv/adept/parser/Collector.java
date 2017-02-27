@@ -24,7 +24,6 @@ import net.certiv.adept.util.Strings;
 
 public class Collector extends ParseData {
 
-	private Document doc;
 	private List<Integer> exTypes;
 
 	// unique list of features that represent the parsed document
@@ -32,16 +31,11 @@ public class Collector extends ParseData {
 	private Group group;
 
 	public Collector(Document doc) {
-		super();
-		this.doc = doc;
+		super(doc);
 		if (doc != null) doc.setParse(this);
 		features = new LinkedHashSet<>();
 		exTypes = Tool.mgr.excludedLangTypes();
 		group = new Group(this);
-	}
-
-	public Document getDocument() {
-		return doc;
 	}
 
 	public List<Feature> getFeatures() {
@@ -98,6 +92,7 @@ public class Collector extends ParseData {
 		features.add(feature);
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
+		tokenIndex.put(token.getTokenIndex(), feature);
 		typeSet.add(type);
 	}
 
@@ -113,16 +108,10 @@ public class Collector extends ParseData {
 				features.add(feature);
 				nodeIndex.put(token, node);
 				terminalIndex.put(node, feature);
+				tokenIndex.put(token.getTokenIndex(), feature);
 				typeSet.add(type);
 			}
 		}
-	}
-
-	private boolean isVar(int type) {
-		for (int v : VARS) {
-			if (v == type) return true;
-		}
-		return false;
 	}
 
 	/** Generate edge connections for all non-RULE root features. */
@@ -137,6 +126,13 @@ public class Collector extends ParseData {
 				feature.addEdge(local);
 			}
 		}
+	}
+
+	private boolean isVar(int type) {
+		for (int v : VARS) {
+			if (v == type) return true;
+		}
+		return false;
 	}
 
 	/** Builds a source line->visual offset->token index */

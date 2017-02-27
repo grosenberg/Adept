@@ -48,35 +48,38 @@ public class Tool extends ToolBase {
 			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
 			new Options("lang", "-g", OptionType.STRING, "language type"),
 			new Options("output", "-e", OptionType.STRING, "formatted output settings"),
-			new Options("tabWidth", "-t", OptionType.INT, "width of a tab"),
-			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')") //
+			new Options("trust", "-t", OptionType.INT, "formatter confidence threshold (1-6; min=1; default=3"),
+			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')"),
+			new Options("tabWidth", "-w", OptionType.INT, "width of a tab"),
+			//
 	};
 
 	// fields set by option manager
-	public boolean backup = true;
-	public boolean check;
-	public boolean format = true;
-	public boolean learn;
-	public boolean rebuild;
-	public boolean save;
+	private Boolean backup;
+	private Boolean check;
+	private Boolean format;
+	private Boolean learn;
+	private Boolean rebuild;
+	private Boolean save;
 
-	public String corpusRoot;
-	public String lang;
-	public String output;
-	public int tabWidth; 		// in the source document
-	public int corpusTabWidth;	// in the corpus documents
-	public String verbose;
+	private String corpusRoot;
+	private String lang;
+	private String output;
+	private Integer trust;
+	private String verbose;
+	private Integer tabWidth;
 
-	public static CoreMgr mgr; 	// holds the corpus model and doc models
-	public Path corpusDir;		// root dir + lang
-	public String corpusExt;	// lang extention type
-
-	// fields set by init
+	// fields set by init/validate
 	public static Settings settings;
+	public static CoreMgr mgr; 	// holds the corpus model and doc models
+
 	private String version;
 	private List<String> sourceFiles;
 	private List<LangDescriptor> languages;
 	private List<Document> documents;
+	private int corpusTabWidth;
+	private Path corpusDir;		// root dir + lang
+	private String corpusExt;	// lang extention type
 
 	public static void main(String[] args) {
 		Tool adept = new Tool();
@@ -160,32 +163,45 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean validateOptions() {
-		if (lang == null) {
+		// ---- settings & output ----
+
+		if (!chkSettings()) return false;
+
+		// ---- lang & corpusRoot ----
+
+		if (corpusRoot != null) {
+			settings.corpusRoot = corpusRoot;
+		}
+
+		if (lang == null && settings.lang == null) {
 			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Must specify the language type");
 			return false;
+		} else if (lang != null) {
+			settings.lang = lang;
 		}
 
 		boolean found = false;
 		for (LangDescriptor language : languages) {
-			if (language.name.equals(lang)) {
+			if (language.name.equals(settings.lang)) {
 				found = true;
 				corpusExt = language.ext;
-				if (corpusRoot == null) corpusRoot = language.corpusRoot;
+				if (settings.corpusRoot == null) settings.corpusRoot = language.corpusRoot;
 				corpusTabWidth = language.tabWidth;
-				if (tabWidth == 0) tabWidth = corpusTabWidth;
 				break;
 			}
 		}
 
 		if (!found) {
-			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Unrecognized language type: " + lang);
+			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Unrecognized language type: " + settings.lang);
 			return false;
 		}
 
-		if (tabWidth < 1) tabWidth = 4;
-		if (tabWidth > 10) tabWidth = 4;
+		if (settings.corpusRoot == null) {
+			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Must specify a corpus root directory.");
+			return false;
+		}
 
-		corpusDir = Paths.get(corpusRoot, lang);
+		corpusDir = Paths.get(settings.corpusRoot, settings.lang);
 		File corpusFile = corpusDir.toFile();
 		if (!corpusFile.exists()) {
 			corpusFile.mkdirs();
@@ -195,25 +211,91 @@ public class Tool extends ToolBase {
 			return false;
 		}
 
-		if (settings == null) {
-			if (output != null && !output.endsWith(".json")) {
-				output += ".json";
-			}
+		// ---- backup ----
 
-			ClassLoader cl = this.getClass().getClassLoader();
-			try (Reader reader = output != null ? Files.newBufferedReader(Paths.get(output))
-					: new InputStreamReader(cl.getResourceAsStream("settings.json"), "UTF-8")) {
-				GsonBuilder builder = new GsonBuilder();
-				Gson gson = builder.create();
-				settings = gson.fromJson(reader, Settings.class);
-			} catch (Exception e) {
-				errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading output settings (" + e.getMessage() + ")");
-				return false;
-			}
+		if (backup == null && settings.backup == null) {
+			settings.backup = true;
+		} else if (backup != null) {
+			settings.backup = backup;
+		}
+
+		// ---- check ----
+
+		if (check == null && settings.check == null) {
+			settings.check = false;
+		} else if (check != null) {
+			settings.check = check;
+		}
+
+		// ---- format ----
+
+		if (format == null && settings.format == null) {
+			settings.format = true;
+		} else if (format != null) {
+			settings.format = format;
+		}
+
+		// ---- learn ----
+
+		if (learn == null && settings.learn == null) {
+			settings.learn = false;
+		} else if (learn != null) {
+			settings.learn = learn;
+		}
+
+		// ---- rebuild ----
+
+		if (rebuild == null && settings.rebuild == null) {
+			settings.rebuild = false;
+		} else if (rebuild != null) {
+			settings.rebuild = rebuild;
+		}
+
+		// ---- save ----
+
+		if (save == null && settings.save == null) {
+			settings.save = false;
+		} else if (save != null) {
+			settings.save = save;
+		}
+
+		// ---- trust ----
+
+		if (trust == null && settings.trust == null) {
+			settings.trust = 3;
+		} else if (trust != null) {
+			settings.trust = trust;
+		}
+		if (settings.trust < 1 || settings.trust > 10) settings.trust = 3;
+
+		// ---- tabWidth ----
+
+		if (tabWidth == null && settings.tabWidth == null) {
+			settings.tabWidth = 4;
+		} else if (tabWidth != null) {
+			settings.tabWidth = tabWidth;
+		}
+		if (settings.tabWidth < 1 || settings.tabWidth > 10) settings.tabWidth = 4;
+
+		// ---- verbose ----
+
+		if (verbose == null && settings.verbose == null) {
+			settings.verbose = "warn";
+		} else if (verbose != null) {
+			settings.verbose = verbose;
 		}
 
 		try {
-			boolean ok = mgr.initialize(lang, corpusDir, corpusExt, corpusTabWidth, rebuild);
+			getDefaultListener().setLevel(Level.valueOf(settings.verbose.trim().toUpperCase()));
+		} catch (IllegalArgumentException e) {
+			Log.error(this, ErrorType.INVALID_VERBOSE_LEVEL.msg + ": " + settings.verbose);
+			errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, settings.verbose);
+		}
+
+		// ---- init core manager ----
+
+		try {
+			boolean ok = mgr.initialize(settings.lang, corpusDir, corpusExt, corpusTabWidth, settings.rebuild);
 			if (!ok) return false;
 		} catch (Exception e) {
 			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg, e);
@@ -221,14 +303,6 @@ public class Tool extends ToolBase {
 			return false;
 		}
 
-		if (verbose != null) {
-			try {
-				getDefaultListener().setLevel(Level.valueOf(verbose.trim().toUpperCase()));
-			} catch (IllegalArgumentException e) {
-				Log.error(this, ErrorType.INVALID_VERBOSE_LEVEL.msg + ": " + verbose);
-				errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, verbose);
-			}
-		}
 		return true;
 	}
 
@@ -236,7 +310,7 @@ public class Tool extends ToolBase {
 		documents = loadDocuments(sourceFiles);
 		Log.info(this, documents.size() + " source documents to process.");
 		for (Document doc : documents) {
-			if (learn) {	// add document model to corpus model
+			if (settings.learn) {	// add document model to corpus model
 				mgr.update(corpusDir, doc);
 				continue;
 			}
@@ -266,7 +340,7 @@ public class Tool extends ToolBase {
 			collector.annotateComments();
 			collector.genLocalEdges();
 			mgr.createDocModel(collector);
-			if (check) continue;
+			if (settings.check) continue;
 
 			try {			// compare document model to corpus model
 				mgr.evaluate();
@@ -276,9 +350,9 @@ public class Tool extends ToolBase {
 				continue;
 			}
 
-			if (format) {
+			if (settings.format) {
 				mgr.apply();
-				if (save) doc.saveModified(backup);
+				if (settings.save) doc.saveModified(settings.backup);
 			}
 		}
 	}
@@ -309,7 +383,7 @@ public class Tool extends ToolBase {
 		}
 
 		byte[] bytes = Files.readAllBytes(file.toPath());
-		return new Document(filename, tabWidth, new String(bytes, StandardCharsets.UTF_8));
+		return new Document(filename, settings.tabWidth, new String(bytes, StandardCharsets.UTF_8));
 	}
 
 	public CoreMgr getMgr() {
@@ -325,51 +399,59 @@ public class Tool extends ToolBase {
 		return mgr.getDocModel().getDocument().getModified();
 	}
 
-	public Path getCorpusDir() {
-		return corpusDir;
-	}
-
 	/** Returns the currently collected performance data */
 	public PerfData getPerfData() {
 		return mgr.perfData;
 	}
 
+	public Path getCorpusDir() {
+		return corpusDir;
+	}
+
 	/** Sets whether to create a backup file of a doc being saved */
 	public void setBackup(boolean backup) {
-		this.backup = backup;
+		chkSettings();
+		settings.backup = backup;
 	}
 
 	/** Sets whether to only perform a parse evaluation of the documents */
 	public void setCheck(boolean check) {
-		this.check = check;
+		chkSettings();
+		settings.check = check;
 	}
 
 	/** Sets the pathname of the directory containing the corpus root */
 	public void setCorpusRoot(String corpusRoot) {
-		this.corpusRoot = corpusRoot;
+		chkSettings();
+		settings.corpusRoot = corpusRoot;
 	}
 
 	/** Sets whether to apply the model to the doc to create a format modified document */
 	public void setFormat(boolean format) {
-		this.format = format;
+		chkSettings();
+		settings.format = format;
 	}
 
 	public void setLang(String lang) {
-		this.lang = lang;
+		chkSettings();
+		settings.lang = lang;
 	}
 
 	/** Sets whether to add the current model to the training, and doc document to the corpus */
 	public void setLearn(boolean learn) {
-		this.learn = learn;
+		chkSettings();
+		settings.learn = learn;
 	}
 
 	public void setRebuild(boolean rebuild) {
-		this.rebuild = rebuild;
+		chkSettings();
+		settings.rebuild = rebuild;
 	}
 
 	/** Sets whether to save a formated document */
 	public void setSave(boolean save) {
-		this.save = save;
+		chkSettings();
+		settings.save = save;
 	}
 
 	/** Sets the settings value object defining the formatted output settings. */
@@ -385,25 +467,57 @@ public class Tool extends ToolBase {
 
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(String... pathnames) {
-		this.sourceFiles = Arrays.asList(pathnames);
+		sourceFiles = Arrays.asList(pathnames);
 	}
 
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(List<String> pathnames) {
-		this.sourceFiles = pathnames;
+		sourceFiles = pathnames;
 	}
 
 	public void setTabWidth(int tabWidth) {
-		this.tabWidth = tabWidth;
+		chkSettings();
+		settings.tabWidth = tabWidth;
+	}
+
+	public void setTrust(int level) {
+		chkSettings();
+		settings.trust = level;
 	}
 
 	public void setVerbose(Level level) {
-		this.verbose = level.toString();
+		chkSettings();
+		settings.verbose = level.toString();
 	}
 
 	/** Sets the verbosity level of the tool */
 	public void setVerbose(String verbose) {
-		this.verbose = verbose;
+		chkSettings();
+		settings.verbose = verbose;
+	}
+
+	private boolean chkSettings() {
+		if (settings == null) {
+			if (output != null && !output.endsWith(".json")) {
+				output += ".json";
+			}
+
+			ClassLoader cl = this.getClass().getClassLoader();
+			try (Reader reader = output != null ? Files.newBufferedReader(Paths.get(output))
+					: new InputStreamReader(cl.getResourceAsStream("settings.json"), "UTF-8")) {
+				GsonBuilder builder = new GsonBuilder();
+				Gson gson = builder.create();
+				settings = gson.fromJson(reader, Settings.class);
+				if (output != null) {
+					settings.output = output;
+				}
+			} catch (Exception e) {
+				errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading output settings (" + e.getMessage() + ")");
+				settings = new Settings();
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public void help() {

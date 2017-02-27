@@ -11,6 +11,7 @@ import org.apache.commons.math3.stat.StatUtils;
 
 import com.google.common.primitives.Doubles;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.util.Strings;
 
 public class Partitioner {
@@ -73,7 +74,7 @@ public class Partitioner {
 
 	public List<Cluster<DoublePoint>> getPartitions() {
 		if (results == null) {
-			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(2, 2);
+			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(2, Tool.settings.trust);
 			results = op.cluster(points);
 		}
 		return results;

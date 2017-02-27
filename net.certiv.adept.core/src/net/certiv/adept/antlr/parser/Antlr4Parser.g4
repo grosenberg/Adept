@@ -47,9 +47,11 @@ atBlock
 	;
 
 ruleSpec
-	: prefix* id argsBlock* prequel?
-		COLON altList action? function?
-		SEMI
+	: prefix* id argsBlock* prequel? ruleBlock
+	;
+
+ruleBlock
+	: COLON altList action? function? SEMI
 	;
 
 argsBlock // parameters, return, throws

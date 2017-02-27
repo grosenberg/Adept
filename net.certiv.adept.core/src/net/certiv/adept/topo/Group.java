@@ -67,6 +67,8 @@ public class Group {
 	}
 
 	private void addAdjacent(Set<Feature> locals, Token token, int line) {
+		if (!isComment(token)) return;
+
 		List<Token> tokens = data.lineIndex.get(line);
 		int ofs = tokens.indexOf(token);
 
@@ -192,5 +194,9 @@ public class Group {
 
 	private boolean isWhitespace(Token token) {
 		return token.getType() == data.HWS || token.getType() == data.VWS;
+	}
+
+	private boolean isComment(Token token) {
+		return token.getType() == data.BLOCKCOMMENT || token.getType() == data.LINECOMMENT;
 	}
 }

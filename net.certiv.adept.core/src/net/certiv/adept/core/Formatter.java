@@ -2,17 +2,11 @@ package net.certiv.adept.core;
 
 import java.util.Set;
 
-import org.antlr.v4.runtime.Token;
-
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.topo.Facet;
-import net.certiv.adept.topo.Form;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -21,18 +15,14 @@ import net.certiv.adept.util.Strings;
  */
 public class Formatter {
 
-	private DocModel docModel;
 	private Document doc;
 	private ParseData data;
-	private Index index;
 	private OutputBuilder buffer;
 
 	private int currIndent;
 	private int priorIndent;
-	private int priorBlankCnt;
 
 	public Formatter(DocModel model) {
-		this.docModel = model;
 		this.doc = model.getDocument();
 		this.data = doc.getParse();
 		this.buffer = new OutputBuilder();
@@ -40,26 +30,10 @@ public class Formatter {
 
 	public OutputBuilder process() {
 		if (!doc.getContent().isEmpty()) {
-
-			// doc features indexed by starting token offset
-			index = new Index(data.getTokenStream().size() - 1);
-			for (Feature feature : docModel.getFeatures()) {
-				if (feature.isRule()) continue;
-				index.add(feature.getStart(), feature);
-			}
-
-			TokenLine line = new TokenLine(data);
-			for (Token tok : data.getTokens()) {
-				AdeptToken token = (AdeptToken) tok;
-				line.add(token);
-				if (token.getType() == data.VWS) {
-					processLine(line);
-					line.clear();
-				}
-			}
-			if (!line.isEmpty()) {
-				processLine(line);
-				line.clear();
+			Span span = new Span(data);
+			for (int idx = 0; !span.done(); idx = span.getEnd()) {
+				span = span.next(idx);
+				process(span);
 			}
 			if (Tool.settings.forceLastLineBlank) {
 				buffer.ensureLastLineTerminated();
@@ -68,91 +42,62 @@ public class Formatter {
 		return buffer;
 	}
 
-	private void processLine(TokenLine line) {
-		// Log.debug(this, String.format("Process line %s: %s", buffer.size(), line.content(true)));
-		buffer.add(line);
-		LineInfo info = line.getInfo();
-		if (info.isBlank()) {
-			if (Tool.settings.removeBlankLines) {
-				if (priorBlankCnt >= Tool.settings.keepBlankLines) return;
-			}
-			buffer.add(Strings.EOL);
-			priorBlankCnt++;
-			return;
+	private void process(Span span) {
+		buffer.add(span.getLhs().getText());
+		if (insertsTerminal(span)) {
+			buffer.add(span.getTrail());
+			buffer.add(span.getTerminals());
+			processIndent(span);
+		} else {
+			processGap(span);
 		}
-		priorBlankCnt = 0;
-		processIndent(line, info);
-		processTokens(line, info);
-		processTerminal(line, info);
-		priorIndent = currIndent;
 	}
 
-	private void processIndent(TokenLine line, LineInfo info) {
-		AdeptToken token = line.get(info.first); // first real token
-		int format = getMatchedFormat(token);
-		if (format != -1) {
+	private boolean insertsTerminal(Span span) {
+		Set<Facet> facets = span.getFacets();
+		if (facets.contains(Facet.AT_LINE_BEG)) {
+			return true;
+		} else if (facets.contains(Facet.JOIN_ALWAYS)) {
+			return false;
+		}
+		return span.insertsTerminal();
+	}
+
+	private void processIndent(Span span) {
+		Set<Facet> facets = span.getFacets();
+		if (facets.contains(Facet.NO_FORMAT)) {
+			buffer.add(span.getLead());
+		} else {
+			insertIndent(facets, span.getDentation());
+		}
+	}
+
+	private void processGap(Span span) {
+		Set<Facet> facets = span.getFacets();
+		if (facets.contains(Facet.NO_FORMAT)) {
+			buffer.add(span.getLead());
+		} else if (facets.contains(Facet.ALIGNED_ABOVE) || facets.contains(Facet.ALIGNED_BELOW)) {
+			// TODO: calc actual alignment for next real
+			buffer.add(span.getLead());
+		} else if (facets.contains(Facet.WIDE_AFTER)) {
+			buffer.add(span.getLead());
+		} else if (facets.contains(Facet.WS_AFTER)) {
+			buffer.add(" ");
+		}
+	}
+
+	private void insertIndent(Set<Facet> facets, int dents) {
+		if (facets.contains(Facet.INDENTED)) {
+			currIndent = priorIndent + dents;
+			currIndent = currIndent > 0 ? currIndent : 0;
+		} else if (facets.contains(Facet.AT_LINE_BEG)) { // <-
 			currIndent = 0;
-			Set<Facet> facets = Facet.get(format);
-			if (facets.contains(Facet.INDENTED)) {
-				currIndent = priorIndent + Facet.getDentation(format);
-				currIndent = currIndent > 0 ? currIndent : 0;
-			}
-
-			if (currIndent > 0) {
-				String indent = Strings.createIndent(Tool.settings.tabWidth, Tool.settings.useTabs, currIndent);
-				buffer.add(indent);
-			}
-		}
-	}
-
-	private void processTokens(TokenLine line, LineInfo info) {
-		for (int idx = info.first; idx < info.terminator; idx++) {
-			AdeptToken tokenCurr = line.get(idx);
-			if (tokenCurr.getType() == data.HWS) continue;
-
-			AdeptToken tokenNext = line.getNextReal(idx);
-			int formCurr = getMatchedFormat(tokenCurr);
-			int formNext = getMatchedFormat(tokenNext);
-			Set<Facet> facets = Form.resolveOverlap(formCurr, formNext);
-
-			buffer.add(tokenCurr.getText());
-			// if (facets.isEmpty()) {
-			// buffer.add(" ");
-			// } else
-			if (facets.contains(Facet.ALIGNED_ABOVE) || facets.contains(Facet.ALIGNED_BELOW)) {
-				// TODO: calc actual alignment for next real
-				buffer.add(line.getNextHws(idx).getText());
-			} else if (facets.contains(Facet.WIDE_AFTER)) {
-				buffer.add(line.getNextHws(idx).getText());
-			} else if (facets.contains(Facet.WS_AFTER)) {
-				buffer.add(" ");
-			}
-		}
-	}
-
-	private void processTerminal(TokenLine line, LineInfo info) {
-		if (info.terminator > -1) {
-			// TODO: contitional join
-			// TODO: line width split
-			AdeptToken terminal = line.get(info.terminator);
-			buffer.add(terminal.getText());
-		}
-	}
-
-	private int getMatchedFormat(AdeptToken token) {
-		if (token == null) return -1;
-		if (token.getType() == data.HWS || token.getType() == data.VWS) {
-			Log.error(this, "Invalid token to match: " + token.toString());
-			return -1;
 		}
 
-		Feature feature = index.get(token.getTokenIndex());
-		if (feature != null) {
-			Feature matched = feature.getMatched();
-			if (matched != null) {
-				return matched.getFormat();
-			}
+		if (currIndent > 0) {
+			String indent = Strings.createIndent(Tool.settings.tabWidth, Tool.settings.useTabs, currIndent);
+			buffer.add(indent);
 		}
-		return -1;
+		priorIndent = currIndent;
 	}
 }

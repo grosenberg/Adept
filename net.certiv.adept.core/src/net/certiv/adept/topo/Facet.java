@@ -11,7 +11,7 @@ public enum Facet {
 	// - bits 0-5 encode number of indents
 	// - value is symmetric around 1<<5 : 32 - value = # of indents
 
-	INDENTED(6),		// a line is indented if it does not start at col zero + one tab
+	INDENTED(6),		// a line is indented if it does not start within col zero + one tab
 
 	AT_LINE_BEG(7),		// occurs at line begin, ignoring hws and comments
 	AT_LINE_END(8),		// occurs at line end, ignoring hws and comments
@@ -32,6 +32,10 @@ public enum Facet {
 	JOIN_SHOULD(18),	// majority follows
 	JOIN_ALLOW(19),		// can follow
 	JOIN_NEVER(20),		// always occurs at line begin
+
+	// nil facets - signal to preserve existing
+
+	NO_FORMAT(21),
 
 	;
 
@@ -76,6 +80,8 @@ public enum Facet {
 			for (Facet facet : Facet.values()) {
 				if ((facet.value & format) > 0) facets.add(facet);
 			}
+		} else {
+			facets.add(NO_FORMAT);
 		}
 		return facets;
 	}

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,12 +33,15 @@ public class EdgeSet {
 	@Expose private ArrayListMultimap<Long, Edge> edgeSet;
 	// total count of edges
 	@Expose private int edgeCnt;
+	// edges that are rules ordered by ascending parentage distance
+	private LinkedHashSet<Edge> ruleEdges;
 
 	// cache for calculated values between this and other edge sets
 	private final ArrayListMultimap<EdgeSet, Double> cache = ArrayListMultimap.create();
 
 	public EdgeSet() {
 		edgeSet = ArrayListMultimap.create();
+		ruleEdges = new LinkedHashSet<>();
 	}
 
 	public boolean addEdge(Edge edge) {
@@ -46,6 +50,9 @@ public class EdgeSet {
 		edges.add(edge);
 		Collections.sort(edges, edgeComp);
 		edgeCnt++;
+		if (edge.leaf.isRule()) {
+			ruleEdges.add(edge);
+		}
 		return true;
 	}
 
@@ -55,6 +62,10 @@ public class EdgeSet {
 
 	public Collection<Edge> getEdges() {
 		return edgeSet.values();
+	}
+
+	public Collection<Edge> getRuleEdges() {
+		return ruleEdges;
 	}
 
 	/** Returns the edges that are of the given leaf type. */

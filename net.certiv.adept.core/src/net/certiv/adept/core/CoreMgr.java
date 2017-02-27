@@ -95,6 +95,8 @@ public class CoreMgr {
 			collector.genLocalEdges();
 			corpus.merge(collector);
 		}
+
+		corpus.finalizeBuild();	// post-build operations
 		perfData.rebuild = Time.end(start);
 
 		try {

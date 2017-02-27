@@ -151,6 +151,7 @@ public class CorpusView extends AbstractBase {
 		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
+		tool.setTrust(1);
 
 		tool.setRebuild(true);
 

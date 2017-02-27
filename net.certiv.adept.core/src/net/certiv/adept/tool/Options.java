@@ -58,7 +58,8 @@ public class Options {
 							Reflect.set(tool, o.fieldName, argValue);
 							break;
 						case BOOL:
-							boolean value = (boolean) Reflect.get(tool, o.fieldName);
+							Boolean value = (Boolean) Reflect.get(tool, o.fieldName);
+							if (value == null) value = false;
 							Reflect.set(tool, o.fieldName, !value);
 							break;
 						case INT:

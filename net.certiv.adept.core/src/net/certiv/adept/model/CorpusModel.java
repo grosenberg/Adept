@@ -13,6 +13,7 @@ import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.parser.Collector;
+import net.certiv.adept.topo.Accumulator;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -94,12 +95,6 @@ public class CorpusModel extends CorpusBase {
 		write(corpusDir, doc);
 	}
 
-	/** Add collected features to the corpus model */
-	public void add(Feature feature) {
-		features.add(feature);
-		consistent = true;
-	}
-
 	/** Merge features collected during a build into the corpus model. */
 	public void merge(Collector collector) {
 		Document doc = collector.getDocument();
@@ -114,6 +109,22 @@ public class CorpusModel extends CorpusBase {
 	public void merge(Features loader) {
 		docFeatures.put(loader.getDocId(), loader.getFeatures());
 		features.addAll(loader.getReducedFeatures());
+	}
+
+	/** Perform operations to finalize the rebuilt corpus. */
+	public void finalizeBuild() {
+		getFeatureIndex();
+		for (Long type : index.keySet()) {
+			List<Feature> tfs = index.get(type);
+			Accumulator accum = new Accumulator();
+			for (Feature tf : tfs) {
+				accum.gather(tf);
+			}
+			for (Feature tf : tfs) {
+				accum.apply(tf);
+			}
+		}
+		consistent = true;
 	}
 
 	/** Returns all features in the Corpus model */

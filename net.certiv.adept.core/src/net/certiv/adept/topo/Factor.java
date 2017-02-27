@@ -6,8 +6,9 @@ public enum Factor {
 
 	// feature labels
 	FORMAT("format", 1.0),
-	EDGE_CNT("edgeCount", 1.0),
+	WEIGHT("weight", 1.0),
 	EDGE_TYPES("edgeTypes", 1.0),
+	EDGE_CNT("edgeCount", 1.0),
 
 	// edge labels
 	METRIC("metric", 1.0),
@@ -20,7 +21,6 @@ public enum Factor {
 	TYPE("type", 1.0),
 	TEXT("text", 1.0),
 	SIZE("size", 1.0),
-	WEIGHT("weight", 1.0),
 
 	;
 

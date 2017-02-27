@@ -19,7 +19,6 @@ import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.topo.Location;
 import net.certiv.adept.topo.Point;
-import net.certiv.adept.topo.Span;
 import net.certiv.adept.topo.Stats;
 import net.certiv.adept.util.Norm;
 
@@ -48,8 +47,8 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int begLine;	// feature start token line
 	@Expose private int endLine;	// feature stop token line
-	@Expose private int lines;		// feature vertical span
-	@Expose private int size;		// feature size
+	// @Expose private int lines; // feature vertical span
+	// @Expose private int size; // feature size
 
 	@Expose private int weight;		// number of equivalents
 	@Expose private boolean equiv;	// is weighted to another corpus feature
@@ -117,9 +116,9 @@ public class Feature implements Comparable<Feature> {
 		col = coords.getCol();
 		line = coords.getLine();
 
-		Span span = getSize(start, stop);
-		size = span.getWidth();
-		lines = span.getHeight();
+		// Span span = getSize(start, stop);
+		// size = span.getWidth();
+		// lines = span.getHeight();
 
 		weight = 1;
 		reCalc = true;
@@ -136,13 +135,13 @@ public class Feature implements Comparable<Feature> {
 		return ((AdeptToken) start).coords();
 	}
 
-	private Span getSize(Token start, Token stop) {
-		if (start == stop) return new Span(start.getText().length(), 1);
-
-		int height = stop.getLine() - start.getLine() + 1;
-		int width = stop.getStopIndex() - start.getStartIndex() + 1;
-		return new Span(width, height);
-	}
+	// private Span getSize(Token start, Token stop) {
+	// if (start == stop) return new Span(start.getText().length(), 1);
+	//
+	// int height = stop.getLine() - start.getLine() + 1;
+	// int width = stop.getStopIndex() - start.getStartIndex() + 1;
+	// return new Span(width, height);
+	// }
 
 	/** Adds an edge from the receiver, as root, to the given feature. Does not add duplicates. */
 	public void addEdge(Feature leaf) {
@@ -330,6 +329,10 @@ public class Feature implements Comparable<Feature> {
 		return new Stats(this, matched);
 	}
 
+	public void setFormat(int format) {
+		this.format = format;
+	}
+
 	/**
 	 * Returns whether this feature is equivalent to the given feature. Equivalency is defined by
 	 * identity of feature type, equality of edge sets (including identity of edge leaf node text),
@@ -398,8 +401,8 @@ public class Feature implements Comparable<Feature> {
 			if (endLine != o.endLine) sb.append("endLine [" + endLine + ":" + o.endLine + "] ");
 			if (col != o.col) sb.append("col [" + col + ":" + o.col + "] ");
 			if (line != o.line) sb.append("line [" + line + ":" + o.line + "] ");
-			if (size != o.size) sb.append("size [" + size + ":" + o.size + "] ");
-			if (lines != o.lines) sb.append("lines [" + lines + ":" + o.lines + "] ");
+			// if (size != o.size) sb.append("size [" + size + ":" + o.size + "] ");
+			// if (lines != o.lines) sb.append("lines [" + lines + ":" + o.lines + "] ");
 			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");
 			if (selfSim != o.selfSim) sb.append("selfSim [" + selfSim + ":" + o.selfSim + "] ");
 		}
