@@ -3,6 +3,8 @@ package net.certiv.adept.topo;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import net.certiv.adept.util.Norm;
+
 public enum Facet {
 
 	// intrinsic facets - considered for similarity
@@ -55,22 +57,24 @@ public enum Facet {
 	/**
 	 * Returns a value reflecting the similarity of the two given formats. Base similarity
 	 * calculated as the Kendall's rank correlation coefficient (or normalized tau distance) between
-	 * the significant enum bits of the given formats; limited to positive values. A normalized
-	 * difference of dentation is added if both of the given formats have INDENTED set.
+	 * the significant enum bits of the given formats; limited to positive values.
 	 */
 	public static double similarity(int f1, int f2) {
 		double nc = Long.bitCount(~(f1 ^ f2) & FMASK);	// concordant pairs
 		double nd = SIGF - nc;							// discordant pairs
 		double tau = (nc - nd) / SIGF;
-		tau = tau > 0 ? tau : 0;
+		return Math.max(tau, 0);
+	}
 
-		if (INDENTED.isSet(f1) && INDENTED.isSet(f2)) {
-			double dc = Long.bitCount(~f1 & ~f2 & DMASK);
-			double dd = DNTS - dc;
-			double delta = (dc - dd) / DNTS;
-			tau += delta > 0 ? delta : 0;
+	/**
+	 * Returns a normalized inverse difference of dentation is added if both of the given formats have
+	 * INDENTED set.
+	 */
+	public static double simDentation(int f1, int f2) {
+		if (INDENTED.isSet(f1)&& INDENTED.isSet(f2)) {
+			return Norm.dist(DNTS, getDentation(f1), getDentation(f2));
 		}
-		return tau;
+		return 0.5;
 	}
 
 	/** Returns the set of facets that compose the given format. */

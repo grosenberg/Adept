@@ -207,6 +207,7 @@ public class TopologyView extends AbstractBase {
 				dialog.pack();
 				dialog.setLocationRelativeTo(frame);
 				dialog.setVisible(true);
+				updateGraph();
 			}
 		});
 

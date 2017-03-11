@@ -14,9 +14,9 @@ public class TopoDialog extends JDialog {
 		super(frame, false);
 		setTitle(title);
 
-		TopoPanel topo = new TopoPanel(getFont());
-		setContentPane(topo);
-		view.setTopoDialog(topo);
+		TopoPanel detail = new TopoPanel(getFont());
+		setContentPane(detail);
+		view.setTopoDialog(detail);
 
 		addWindowListener(new WindowAdapter() {
 

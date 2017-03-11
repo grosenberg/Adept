@@ -4,7 +4,7 @@ import org.apache.commons.math3.stat.StatUtils;
 
 public class Norm {
 
-	/** Returns the normalized sum of the given values. */
+	/** Returns the sum of the given values. */
 	public static double sum(double[] vals) {
 		double sum = 0;
 		for (int idx = 0; idx < vals.length; idx++) {
@@ -33,5 +33,18 @@ public class Norm {
 	 */
 	public static double delta(double a, double b) {
 		return 1 / (1 + Math.abs(a - b));
+	}
+
+	/**
+	 * Returns the inverse value distance of the given values normalized to the given range limit.
+	 */
+	public static double dist(double limit, double a, double b) {
+		double dist = Math.min(limit, Math.abs(a - b));
+		return (limit - dist) / limit;
+	}
+
+	/** Returns the delta as an int */
+	public static int idist(double limit, double a, double b) {
+		return (int) dist(limit, a, b);
 	}
 }

@@ -441,11 +441,17 @@ public class TopoPanel extends JPanel {
 	}
 
 	public void clear() {
-		for (Component child : getComponents()) {
+		clear(this);
+	}
+
+	private void clear(JPanel panel) {
+		for (Component child : panel.getComponents()) {
 			if (child instanceof JTextField) {
 				((JTextField) child).setText("");
 			} else if (child instanceof JCheckBox) {
 				((JCheckBox) child).setSelected(false);
+			} else if (child instanceof JPanel) {
+				clear((JPanel) child);
 			}
 		}
 	}

@@ -176,7 +176,7 @@ public class ParseTreeView extends AbstractBase {
 		tool.setSourceFiles(file.getAbsolutePath());
 		tool.setTrust(1);
 
-		tool.setRebuild(true);
+		tool.setRebuild(false);
 
 		boolean ok = tool.loadResources();
 		ok = ok && tool.validateOptions();
@@ -188,7 +188,7 @@ public class ParseTreeView extends AbstractBase {
 
 		tool.execute();
 		Document doc = tool.getDocuments().get(0);
-		ParseData data = doc.getParse();
+		ParseData data = doc.getParseData();
 
 		// graphical rep of tree
 		viewer.inspect(data.getTree(), data.getRuleNames());

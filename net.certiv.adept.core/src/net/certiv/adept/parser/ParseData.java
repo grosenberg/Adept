@@ -66,7 +66,7 @@ public class ParseData {
 	public Map<Token, Integer> visIndex;
 
 	// key=feature type
-	public HashSet<Integer> typeSet;
+	public HashSet<Long> typeSet;
 
 	public ParseData(Document doc) {
 		super();
@@ -103,6 +103,11 @@ public class ParseData {
 
 	public List<String> getRuleNames() {
 		return Arrays.asList(parser.getRuleNames());
+	}
+
+	@SuppressWarnings("deprecation")
+	public List<String> getTokenNames() {
+		return Arrays.asList(parser.getTokenNames());
 	}
 
 	// public List<Long> getAsym() {

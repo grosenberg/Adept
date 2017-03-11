@@ -335,18 +335,21 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 				Element child = line.getElement(i);
 				AttributeSet as = child.getAttributes();
 				String fontFamily = (String) as.getAttribute(StyleConstants.FontFamily);
-				Integer fontSize = (Integer) as.getAttribute(StyleConstants.FontSize);
-				String key = fontFamily + fontSize;
+				if (fontFamily != null) {
+					Integer fontSize = (Integer) as.getAttribute(StyleConstants.FontSize);
+					String key = fontFamily + fontSize;
 
-				FontMetrics fm = fonts.get(key);
+					FontMetrics fm = fonts.get(key);
 
-				if (fm == null) {
-					Font font = new Font(fontFamily, Font.PLAIN, fontSize);
-					fm = component.getFontMetrics(font);
-					fonts.put(key, fm);
+					if (fm == null) {
+						Font font = new Font(fontFamily, Font.PLAIN, fontSize);
+						fm = component.getFontMetrics(font);
+						fonts.put(key, fm);
+					}
+					descent = Math.max(descent, fm.getDescent());
+				} else {
+					descent = Math.max(descent, fontMetrics.getDescent());
 				}
-
-				descent = Math.max(descent, fm.getDescent());
 			}
 		}
 

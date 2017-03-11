@@ -95,7 +95,7 @@ public class CorpusModel extends CorpusBase {
 		write(corpusDir, doc);
 	}
 
-	/** Merge features collected during a build into the corpus model. */
+	/** Merge features collected during an ab initio build into the corpus model. */
 	public void merge(Collector collector) {
 		Document doc = collector.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
@@ -105,7 +105,7 @@ public class CorpusModel extends CorpusBase {
 		Log.debug(this, String.format("Processed %s (%s)", doc.getPathname(), weighted.size()));
 	}
 
-	/** Merge features retrieved from persistant store into the corpus model. */
+	/** Merge features as retrieved from persistant store into the corpus model. */
 	public void merge(Features loader) {
 		docFeatures.put(loader.getDocId(), loader.getFeatures());
 		features.addAll(loader.getReducedFeatures());
@@ -233,15 +233,15 @@ public class CorpusModel extends CorpusBase {
 		consistent = true;
 	}
 
-	/**
-	 * FIX: Reduce the feature set of the initially constructed corpus model (containing all
-	 * features from all documents). Equivalent features are collapsed to a single instance with
-	 * correspondingly increased rarity. Equivalency is defined by identity of feature type,
-	 * equality of edge sets, identity of edge leaf node text, and identity of format.
+	/*
+	 * Reduces the feature set initially constructed from a corpus document by collapsing equivalent
+	 * root features to single instances with correspondingly increased weight. Equivalency is
+	 * defined by identity of root feature type, equality of edge sets, including leaf node text,
+	 * and identity of format.
 	 */
-	private List<Feature> weighFeatures(List<Feature> nonRules) {
+	private List<Feature> weighFeatures(List<Feature> roots) {
 		ArrayListMultimap<Long, Feature> index = ArrayListMultimap.create();
-		for (Feature f : nonRules) {
+		for (Feature f : roots) {
 			index.put(f.getType(), f);
 		}
 		List<Feature> weighted = new ArrayList<>();
@@ -251,20 +251,20 @@ public class CorpusModel extends CorpusBase {
 		for (Long type : index.keySet()) {
 			List<Feature> features = index.get(type);
 			tot += features.size();
-			String aspect = features.get(0).getAspect();
 			List<Feature> uniques = new ArrayList<>();
 			for (Feature feature : features) {
-				Feature equiv = getEquivalent(uniques, feature);
-				if (equiv == null) {
+				Feature unique = getEquivalent(uniques, feature);
+				if (unique == null) {
 					uniques.add(feature);
 				} else {
-					equiv.mergeEquivalent(feature);
+					unique.mergeEquivalent(feature);
 				}
 			}
 			weighted.addAll(uniques);
 			unq += uniques.size();
 
 			if (uniques.size() < features.size()) {
+				String aspect = features.get(0).getAspect();
 				Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect, type,
 						features.size(), uniques.size()));
 			}

@@ -76,6 +76,7 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 			}
 
 			if (detail != null) {
+				detail.clear();
 				detail.load(vertices, roots.get(0));
 			}
 
@@ -161,8 +162,8 @@ public class TopoLayout extends AbstractLayout<Feature, Edge> implements Iterati
 		Dimension d = getSize();
 		double cx = d.getWidth() / 2;
 		double cy = d.getHeight() / 2;
-		double guard = 50;
-		double delta = 0.5;
+		double guard = 150;
+		double delta = 0.75;
 
 		// rescale
 		for (int i = 0; i < n; i++) {

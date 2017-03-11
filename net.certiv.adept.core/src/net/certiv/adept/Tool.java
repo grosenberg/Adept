@@ -329,6 +329,8 @@ public class Tool extends ToolBase {
 				continue;
 			}
 
+			if (settings.check) continue;
+
 			try {
 				parser.annotateFeatures(collector);
 			} catch (Exception e) {
@@ -340,7 +342,6 @@ public class Tool extends ToolBase {
 			collector.annotateComments();
 			collector.genLocalEdges();
 			mgr.createDocModel(collector);
-			if (settings.check) continue;
 
 			try {			// compare document model to corpus model
 				mgr.evaluate();

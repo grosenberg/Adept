@@ -100,7 +100,7 @@ public class Stats {
 	private void edgeStats() {
 		EdgeSet edgeSet = feature.getEdgeSet();
 		typeCount = edgeSet.getTypeCount();
-		edgeCount = edgeSet.getEdges().size();
+		edgeCount = edgeSet.getEdgeCount();
 
 		List<Double> metrics = new ArrayList<>();
 		for (Edge edge : edgeSet.getEdges()) {

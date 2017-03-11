@@ -2,6 +2,7 @@ parser grammar Antlr4Parser;
 
 options {
 	tokenVocab = Antlr4Lexer;
+	TokenLabelType = AdeptToken ;
 }
 
 @header {
@@ -137,7 +138,7 @@ prefix
 
 attribute
 	: CHANNEL | LSKIP | LMORE
-	| PUSHMODE | POPMODE | TYPE
+	| PUSHMODE | POPMODE | MODE | TYPE
 	;
 
 op

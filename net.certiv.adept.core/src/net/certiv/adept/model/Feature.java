@@ -47,8 +47,6 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int begLine;	// feature start token line
 	@Expose private int endLine;	// feature stop token line
-	// @Expose private int lines; // feature vertical span
-	// @Expose private int size; // feature size
 
 	@Expose private int weight;		// number of equivalents
 	@Expose private boolean equiv;	// is weighted to another corpus feature
@@ -116,10 +114,6 @@ public class Feature implements Comparable<Feature> {
 		col = coords.getCol();
 		line = coords.getLine();
 
-		// Span span = getSize(start, stop);
-		// size = span.getWidth();
-		// lines = span.getHeight();
-
 		weight = 1;
 		reCalc = true;
 	}
@@ -135,18 +129,13 @@ public class Feature implements Comparable<Feature> {
 		return ((AdeptToken) start).coords();
 	}
 
-	// private Span getSize(Token start, Token stop) {
-	// if (start == stop) return new Span(start.getText().length(), 1);
-	//
-	// int height = stop.getLine() - start.getLine() + 1;
-	// int width = stop.getStopIndex() - start.getStartIndex() + 1;
-	// return new Span(width, height);
-	// }
-
-	/** Adds an edge from the receiver, as root, to the given feature. Does not add duplicates. */
+	/**
+	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as
+	 * defined by root id and leaf id pairs.
+	 */
 	public void addEdge(Feature leaf) {
 		if (leaf != this) {
-			Edge edge = Edge.create(leaf, this);
+			Edge edge = Edge.create(this, leaf);
 			if (edgeSet.addEdge(edge)) {
 				reCalc = true;
 			}
@@ -159,6 +148,24 @@ public class Feature implements Comparable<Feature> {
 
 	public List<Edge> getEdges(int leafType) {
 		return edgeSet.getEdges(leafType);
+	}
+
+	/** Functionally merge an equivalent feature with this unique root feature. */
+	public void mergeEquivalent(Feature other) {
+		other.setEquivalent(true);
+		equivalents.put(other.getDocId(), other.getLocation());
+		weight++;
+	}
+
+	public boolean isBefore(Feature root) {
+		if (getLine() < root.getLine()) return true;
+		if (getLine() > root.getLine()) return false;
+		if (getCol() < root.getCol()) return true;
+		return false;
+	}
+
+	public Location getLocation() {
+		return new Location(getDocId(), getId(), getLine(), getCol());
 	}
 
 	/**
@@ -175,13 +182,6 @@ public class Feature implements Comparable<Feature> {
 			throw new ComputationException(new Throwable(msg));
 		}
 		return dist;
-	}
-
-	public void mergeEquivalent(Feature feature) {
-		equivalents.put(feature.getDocId(),
-				new Location(feature.getDocId(), feature.getId(), feature.getLine(), feature.getCol()));
-		weight++;
-		feature.setEquivalent(true);
 	}
 
 	public double selfSimularity() {
@@ -204,11 +204,13 @@ public class Feature implements Comparable<Feature> {
 	// type and text (if applicable) have to be identical
 	public double featLabelSimilarity(Feature other) {
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
-		double[] vals = new double[4];
+		double[] vals = new double[6];
 		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, other.format);
-		vals[1] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, other.weight);
-		vals[2] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), other.dimensionality());
-		vals[3] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), other.edgeSet.getEdgeCount());
+		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, other.format);
+		vals[2] = boosts.get(Factor.TEXT) * (text.equals(other.text) ? 1 : 0);
+		vals[3] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, other.weight);
+		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), other.dimensionality());
+		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), other.edgeSet.getEdgeCount());
 		double sum = Norm.sum(vals);
 		return sum;
 	}
@@ -281,6 +283,7 @@ public class Feature implements Comparable<Feature> {
 		return equiv;
 	}
 
+	/** Sets this feature as being not a unique root feature. */
 	public void setEquivalent(boolean equiv) {
 		this.equiv = equiv;
 	}
@@ -341,7 +344,7 @@ public class Feature implements Comparable<Feature> {
 	public boolean equivalentTo(Feature o) {
 		if (type != o.type) return false;
 		if (format != o.format) return false;
-		if (edgeSet.disjointCount(o.getEdgeSet()) > 0) return false;
+		if (edgeSet.disjointCount(o.getEdgeSet()) != 0) return false;
 		return true;
 	}
 
@@ -401,8 +404,6 @@ public class Feature implements Comparable<Feature> {
 			if (endLine != o.endLine) sb.append("endLine [" + endLine + ":" + o.endLine + "] ");
 			if (col != o.col) sb.append("col [" + col + ":" + o.col + "] ");
 			if (line != o.line) sb.append("line [" + line + ":" + o.line + "] ");
-			// if (size != o.size) sb.append("size [" + size + ":" + o.size + "] ");
-			// if (lines != o.lines) sb.append("lines [" + lines + ":" + o.lines + "] ");
 			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");
 			if (selfSim != o.selfSim) sb.append("selfSim [" + selfSim + ":" + o.selfSim + "] ");
 		}

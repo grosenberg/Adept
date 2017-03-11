@@ -6,20 +6,22 @@ public enum Factor {
 
 	// feature labels
 	FORMAT("format", 1.0),
-	WEIGHT("weight", 1.0),
-	EDGE_TYPES("edgeTypes", 1.0),
-	EDGE_CNT("edgeCount", 1.0),
+	DENTATION("dentation", 1.0),
+	TEXT("text", 1.0),
+	WEIGHT("weight", 0.5),
+	EDGE_TYPES("edgeTypes", 0.1),
+	EDGE_CNT("edgeCount", 0.1),
 
 	// edge labels
-	METRIC("metric", 1.0),
-	RARITY("rarity", 1.0),
+	METRIC("metric", 0.8),
 
 	// edge sets
-	EDGE_SET("disim", 0.8),
+	ORDER("order", 0.6),		// fraction of 1.0 allocated to order significance
+	DISCOUNT("discount", 1.0),	// of disjoint relative to intersect
 
 	// not used
+	RARITY("rarity", 1.0),
 	TYPE("type", 1.0),
-	TEXT("text", 1.0),
 	SIZE("size", 1.0),
 
 	;

@@ -24,7 +24,7 @@ public class Formatter {
 
 	public Formatter(DocModel model) {
 		this.doc = model.getDocument();
-		this.data = doc.getParse();
+		this.data = doc.getParseData();
 		this.buffer = new OutputBuilder();
 	}
 

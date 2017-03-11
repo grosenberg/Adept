@@ -23,26 +23,26 @@ public class Edge implements Comparable<Edge> {
 
 	@Expose public double metric;
 
-	public Feature leaf; // connected leaf
 	public Feature root; // edge root
+	public Feature leaf; // connected leaf
 
 	private EEdge equiv;
 
-	public static Edge create(Feature leaf, Feature root) {
+	public static Edge create(Feature root, Feature leaf) {
 		Edge edge = cache.get(leaf.getId(), root.getId());
 		if (edge == null) {
-			edge = new Edge(leaf, root);
+			edge = new Edge(root, leaf);
 			cache.put(leaf.getId(), root.getId(), edge);
 		}
 		return edge;
 	}
 
-	private Edge(Feature leaf, Feature root) {
-		this.leaf = leaf;
+	private Edge(Feature root, Feature leaf) {
 		this.root = root;
+		this.leaf = leaf;
 
-		leafId = leaf.getId();
 		rootId = root.getId();
+		leafId = leaf.getId();
 
 		// euclidean distance
 		double[] p1 = new double[] { leaf.getCol(), leaf.getLine() };
@@ -51,9 +51,10 @@ public class Edge implements Comparable<Edge> {
 	}
 
 	public double similarity(Edge o) {
-		double[] vals = new double[1];
+		double[] vals = new double[2];
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
 		vals[0] = boosts.get(Factor.METRIC) * Norm.delta(metric, o.metric);
+		vals[1] = boosts.get(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
 		return Norm.sum(vals);
 	}
 

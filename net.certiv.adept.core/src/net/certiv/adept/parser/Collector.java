@@ -53,7 +53,7 @@ public class Collector extends ParseData {
 
 	public void annotateRule(ParserRuleContext ctx) {
 		int rule = ctx.getRuleIndex();
-		int type = rule << 32;
+		long type = ((long) rule) << 32;
 		if (exTypes.contains(type)) {
 			if (type == ERR_RULE) {
 				Log.debug(this, String.format("Skipping %s", Utils.escapeWhitespace(ctx.getText(), false)));
@@ -93,7 +93,7 @@ public class Collector extends ParseData {
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
 		tokenIndex.put(token.getTokenIndex(), feature);
-		typeSet.add(type);
+		typeSet.add((long) type);
 	}
 
 	public void annotateComments() {
@@ -109,21 +109,21 @@ public class Collector extends ParseData {
 				nodeIndex.put(token, node);
 				terminalIndex.put(node, feature);
 				tokenIndex.put(token.getTokenIndex(), feature);
-				typeSet.add(type);
+				typeSet.add((long) type);
 			}
 		}
 	}
 
-	/** Generate edge connections for all non-RULE root features. */
+	/** Generate local edge connections for all non-RULE root features. */
 	public void genLocalEdges() {
 		createTokenIndex();
-		for (Feature feature : features) {
-			if (feature.getKind() == Kind.RULE) continue;
+		for (Feature root : features) {
+			if (root.getKind() == Kind.RULE) continue;
 
-			group.setLocus(feature);
-			Set<Feature> locals = group.getLocalFeatures();
-			for (Feature local : locals) {
-				feature.addEdge(local);
+			group.setLocus(root);
+			Set<Feature> leafs = group.getLocalFeatures(); // ordered by line, col
+			for (Feature leaf : leafs) {
+				root.addEdge(leaf);
 			}
 		}
 	}

@@ -55,7 +55,7 @@ public class Document {
 		this.model = model;
 	}
 
-	public ParseData getParse() {
+	public ParseData getParseData() {
 		return data;
 	}
 

@@ -1,28 +1,13 @@
 lexer grammar Antlr4Lexer;
 
 options {
-	superClass = LexerErrorStrategy ;
+	superClass = AntlrLexerAdaptor ;
+	TokenLabelType = AdeptToken ;
 }
 
 @header {
 	package net.certiv.adept.antlr.parser.gen;
-	import net.certiv.adept.parser.LexerErrorStrategy;
-}
-
-@members {
-	protected void handleEndAction() {
-		popMode();
-		if (_modeStack.size() > 0) {
-			setType(ACT_CONTENT);
-		}
-	}
-
-	protected void handleEndArgs() {
-		popMode();
-		if (_modeStack.size() > 0) {
-			setType(ARG_CONTENT);
-		}
-	}
+	import net.certiv.adept.antlr.parser.AntlrLexerAdaptor;
 }
 
 BLOCKCOMMENT

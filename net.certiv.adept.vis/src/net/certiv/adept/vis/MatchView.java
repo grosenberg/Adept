@@ -29,6 +29,7 @@ import com.google.common.collect.TreeMultimap;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.Confidence;
+import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.util.Log;
@@ -242,7 +243,9 @@ public class MatchView extends AbstractBase {
 		cols.getColumn(4).setPreferredWidth(200);
 
 		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
-		featurePanel.load(feature);
+
+		Document doc = tool.getMgr().getDocModel().getDocument();
+		featurePanel.load(doc, feature);
 		matchPanel.clear();
 	}
 
@@ -251,9 +254,9 @@ public class MatchView extends AbstractBase {
 		Feature feature = f.getFeature(featureRow);
 		MatchesTableModel m = (MatchesTableModel) matchTable.getModel();
 		Feature matched = m.getFeature(matchRow);
-		
+
 		ISourceParser lang = tool.getMgr().getLanguageParser();
-		
+
 		matchPanel.load(feature, lang, matched);
 	}
 }

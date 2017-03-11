@@ -3,6 +3,8 @@ package net.certiv.adept.vis.components;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -15,7 +17,7 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.util.Strings;
@@ -28,8 +30,13 @@ public class FeaturePanel extends JPanel {
 	private JTextField textType;
 	private JTextField textDocName;
 	private JTextField textCol;
-	private JTextField textFacets;
 	private JTextField textFormat;
+	private JTextField textDents;
+	private JTextField textFacets;
+
+	private JTextField textTotEdges;
+	private JTextField textEdges;
+	private JTextField textTypeCnt;
 
 	private JCheckBox chkVariable;
 	private JCheckBox chkAlignAbove;
@@ -39,9 +46,9 @@ public class FeaturePanel extends JPanel {
 		setFont(font);
 		setBorder(new MatteBorder(1, 1, 1, 1, (Color) new Color(0, 0, 0)));
 		setLayout(new FormLayout(new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
+				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
 				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC,
 				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC, },
@@ -86,10 +93,10 @@ public class FeaturePanel extends JPanel {
 
 		textAspect = new JTextField();
 		textAspect.setEditable(false);
-		add(textAspect, "5, 8, 5, 1, fill, default");
+		add(textAspect, "5, 8, 7, 1, fill, default");
 
 		chkVariable = new JCheckBox("Variable");
-		add(chkVariable, "11, 8, left, default");
+		add(chkVariable, "13, 8, left, default");
 
 		JLabel lblType = new JLabel("Type");
 		add(lblType, "3, 10, right, default");
@@ -114,14 +121,22 @@ public class FeaturePanel extends JPanel {
 		add(textFormat, "5, 12, fill, default");
 		textFormat.setColumns(10);
 
+		JLabel lblDents = new JLabel("Dents");
+		add(lblDents, "7, 12, right, default");
+
+		textDents = new JTextField();
+		textDents.setEditable(false);
+		add(textDents, "9, 12, fill, default");
+		textDents.setColumns(10);
+
 		JLabel lblAligned = new JLabel("Aligned");
-		add(lblAligned, "7, 12, right, default");
+		add(lblAligned, "11, 12, right, default");
 
 		chkAlignAbove = new JCheckBox("Above");
-		add(chkAlignAbove, "9, 12, left, default");
+		add(chkAlignAbove, "13, 12, left, default");
 
 		chkAlignBelow = new JCheckBox("Below");
-		add(chkAlignBelow, "11, 12, left, default");
+		add(chkAlignBelow, "15, 12, left, default");
 
 		JLabel lblFacets = new JLabel("Facets");
 		add(lblFacets, "3, 14, right, default");
@@ -130,10 +145,34 @@ public class FeaturePanel extends JPanel {
 		textFacets.setEditable(false);
 		add(textFacets, "5, 14, 15, 1, fill, default");
 		textFacets.setColumns(10);
+
+		JLabel lblTotalEdges = new JLabel("Total Edges");
+		add(lblTotalEdges, "3, 16, right, default");
+
+		textTotEdges = new JTextField();
+		textTotEdges.setEditable(false);
+		add(textTotEdges, "5, 16, fill, default");
+		textTotEdges.setColumns(10);
+
+		JLabel lblTypeCnt = new JLabel("Type Cnt");
+		add(lblTypeCnt, "7, 16, right, default");
+
+		textTypeCnt = new JTextField();
+		textTypeCnt.setEditable(false);
+		add(textTypeCnt, "9, 16, fill, default");
+		textTypeCnt.setColumns(10);
+
+		JLabel lblEdges = new JLabel("Edges");
+		add(lblEdges, "3, 18, right, default");
+
+		textEdges = new JTextField();
+		textEdges.setEditable(false);
+		add(textEdges, "5, 18, 15, 1, fill, default");
+		textEdges.setColumns(10);
 	}
 
-	public void load(Feature feature) {
-		String docName = Tool.mgr.getDocModel().getDocument().getPathname();
+	public void load(Document doc, Feature feature) {
+		String docName = doc.getPathname();
 		textDocName.setText(docName);
 		textLine.setText(String.valueOf(feature.getLine()));
 		textCol.setText(String.valueOf(feature.getCol()));
@@ -142,10 +181,32 @@ public class FeaturePanel extends JPanel {
 		textType.setText(String.valueOf(feature.getType()));
 		textText.setText(feature.getText());
 		textFormat.setText(String.valueOf(feature.getFormat()));
+		textDents.setText(String.valueOf(Facet.getDentation(feature.getFormat())));
 		chkAlignAbove.setSelected(feature.isAlignedAbove());
 		chkAlignBelow.setSelected(feature.isAlignedBelow());
 
 		textFacets.setText(Strings.join(Facet.get(feature.getFormat()), ", "));
+		textTotEdges.setText(String.valueOf(feature.getEdgeSet().getEdgeCount()));
+		textTypeCnt.setText(String.valueOf(feature.getEdgeSet().getTypeCount()));
+
+		List<String> ruleNames = doc.getParseData().getRuleNames();
+		List<String> tokenNames = doc.getParseData().getTokenNames();
+		List<String> v = new ArrayList<>();
+		for (Long key : feature.getEdgeSet().getEdgeTypes()) {
+			if (key.longValue() == 0) {
+				v.add("Adept");
+			} else {
+				int rule = (int) (key >>> 32);
+				int type = key.intValue();
+				if (rule > 0) {
+					v.add(ruleNames.get(rule));
+				} else {
+					v.add(tokenNames.get(type));
+				}
+			}
+		}
+		textEdges.setText(Strings.join(v, ", "));
+
 	}
 
 	public void clear() {
