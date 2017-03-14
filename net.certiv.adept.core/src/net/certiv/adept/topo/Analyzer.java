@@ -4,7 +4,7 @@ import java.util.Set;
 
 import net.certiv.adept.model.Feature;
 
-public class Accumulator {
+public class Analyzer {
 
 	private int total;
 
@@ -13,12 +13,12 @@ public class Accumulator {
 	private int blankAbove;
 	private int blankBelow;
 
-	public Accumulator() {
+	public Analyzer() {
 		super();
 	}
 
 	// analyze based on type to adjust format
-	public void gather(Feature tf) {
+	public void accum(Feature tf) {
 		Set<Facet> facets = Facet.get(tf.getFormat());
 		if (facets.contains(Facet.AT_LINE_BEG)) atLineBeg++;
 		// if (facets.contains(Facet.AT_LINE_END)) atLineEnd++;

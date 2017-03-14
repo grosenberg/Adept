@@ -87,7 +87,8 @@ public class Span {
 	}
 
 	private boolean isReal(AdeptToken token) {
-		return token.getType() != data.HWS && token.getType() != data.VWS;
+		int type = token.getType();
+		return type != data.HWS && type != data.VWS && type != Token.EOF;
 	}
 
 	private int getMatchedFormat(AdeptToken token) {

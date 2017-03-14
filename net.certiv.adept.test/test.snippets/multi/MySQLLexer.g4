@@ -4,380 +4,380 @@ lexer grammar MySQLLexer;
 }
 
 SELECT
-   : 'select'
-   ;
+	: 'select'
+	;
 
 
 FROM
-   : 'from'
-   ;
+	: 'from'
+	;
 
 
 WHERE
-   : 'where'
-   ;
+	: 'where'
+	;
 
 
 AND
-   : 'and' | '&&'
-   ;
+	: 'and' | '&&'
+	;
 
 
 OR
-   : 'or' | '||'
-   ;
+	: 'or' | '||'
+	;
 
 
 XOR
-   : 'xor'
-   ;
+	: 'xor'
+	;
 
 
 IS
-   : 'is'
-   ;
+	: 'is'
+	;
 
 
 NULL
-   : 'null'
-   ;
+	: 'null'
+	;
 
 
 LIKE
-   : 'like'
-   ;
+	: 'like'
+	;
 
 
 IN
-   : 'in'
-   ;
+	: 'in'
+	;
 
 
 EXISTS
-   : 'exists'
-   ;
+	: 'exists'
+	;
 
 
 ALL
-   : 'all'
-   ;
+	: 'all'
+	;
 
 
 ANY
-   : 'any'
-   ;
+	: 'any'
+	;
 
 
 TRUE
-   : 'true'
-   ;
+	: 'true'
+	;
 
 
 FALSE
-   : 'false'
-   ;
+	: 'false'
+	;
 
 
 DIVIDE
-   : 'div' | '/'
-   ;
+	: 'div' | '/'
+	;
 
 
 MOD
-   : 'mod' | '%'
-   ;
+	: 'mod' | '%'
+	;
 
 
 BETWEEN
-   : 'between'
-   ;
+	: 'between'
+	;
 
 
 REGEXP
-   : 'regexp'
-   ;
+	: 'regexp'
+	;
 
 
 PLUS
-   : '+'
-   ;
+	: '+'
+	;
 
 
 MINUS
-   : '-'
-   ;
+	: '-'
+	;
 
 
 NEGATION
-   : '~'
-   ;
+	: '~'
+	;
 
 
 VERTBAR
-   : '|'
-   ;
+	: '|'
+	;
 
 
 BITAND
-   : '&'
-   ;
+	: '&'
+	;
 
 
 POWER_OP
-   : '^'
-   ;
+	: '^'
+	;
 
 
 BINARY
-   : 'binary'
-   ;
+	: 'binary'
+	;
 
 
 SHIFT_LEFT
-   : '<<'
-   ;
+	: '<<'
+	;
 
 
 SHIFT_RIGHT
-   : '>>'
-   ;
+	: '>>'
+	;
 
 
 ESCAPE
-   : 'escape'
-   ;
+	: 'escape'
+	;
 
 
 ASTERISK
-   : '*'
-   ;
+	: '*'
+	;
 
 
 RPAREN
-   : ')'
-   ;
+	: ')'
+	;
 
 
 LPAREN
-   : '('
-   ;
+	: '('
+	;
 
 
 RBRACK
-   : ']'
-   ;
+	: ']'
+	;
 
 
 LBRACK
-   : '['
-   ;
+	: '['
+	;
 
 
 COLON
-   : ':'
-   ;
+	: ':'
+	;
 
 
 ALL_FIELDS
-   : '.*'
-   ;
+	: '.*'
+	;
 
 
 EQ
-   : '='
-   ;
+	: '='
+	;
 
 
 LTH
-   : '<'
-   ;
+	: '<'
+	;
 
 
 GTH
-   : '>'
-   ;
+	: '>'
+	;
 
 
 NOT_EQ
-   : '!='
-   ;
+	: '!='
+	;
 
 
 NOT
-   : 'not'
-   ;
+	: 'not'
+	;
 
 
 LET
-   : '<='
-   ;
+	: '<='
+	;
 
 
 GET
-   : '>='
-   ;
+	: '>='
+	;
 
 
 SEMI
-   : ';'
-   ;
+	: ';'
+	;
 
 
 COMMA
-   : ','
-   ;
+	: ','
+	;
 
 
 DOT
-   : '.'
-   ;
+	: '.'
+	;
 
 
 COLLATE
-   : 'collate'
-   ;
+	: 'collate'
+	;
 
 
 INNER
-   : 'inner'
-   ;
+	: 'inner'
+	;
 
 
 OUTER
-   : 'outer'
-   ;
+	: 'outer'
+	;
 
 
 JOIN
-   : 'join'
-   ;
+	: 'join'
+	;
 
 
 CROSS
-   : 'cross'
-   ;
+	: 'cross'
+	;
 
 
 USING
-   : 'using'
-   ;
+	: 'using'
+	;
 
 
 INDEX
-   : 'index'
-   ;
+	: 'index'
+	;
 
 
 KEY
-   : 'key'
-   ;
+	: 'key'
+	;
 
 
 ORDER
-   : 'order'
-   ;
+	: 'order'
+	;
 
 
 GROUP
-   : 'group'
-   ;
+	: 'group'
+	;
 
 
 BY
-   : 'by'
-   ;
+	: 'by'
+	;
 
 
 FOR
-   : 'for'
-   ;
+	: 'for'
+	;
 
 
 USE
-   : 'use'
-   ;
+	: 'use'
+	;
 
 
 IGNORE
-   : 'ignore'
-   ;
+	: 'ignore'
+	;
 
 
 PARTITION
-   : 'partition'
-   ;
+	: 'partition'
+	;
 
 
 STRAIGHT_JOIN
-   : 'straight_join'
-   ;
+	: 'straight_join'
+	;
 
 
 NATURAL
-   : 'natural'
-   ;
+	: 'natural'
+	;
 
 
 LEFT
-   : 'left'
-   ;
+	: 'left'
+	;
 
 
 RIGHT
-   : 'right'
-   ;
+	: 'right'
+	;
 
 
 OJ
-   : 'oj'
-   ;
+	: 'oj'
+	;
 
 
 ON
-   : 'on'
-   ;
+	: 'on'
+	;
 
 
 ID
-   : ( 'a' .. 'z' | 'A' .. 'Z' | '_' )+
-   ;
+	: ( 'a' .. 'z' | 'A' .. 'Z' | '_' )+
+	;
 
 
 INT
-   : '0' .. '9'+
-   ;
+	: '0' .. '9'+
+	;
 
 
 NEWLINE
-   : '\r'? '\n' -> skip
-   ;
+	: '\r'? '\n' -> skip
+	;
 
 
 WS
-   : ( ' ' | '\t' | '\n' | '\r' )+ -> skip
-   ;
+	: ( ' ' | '\t' | '\n' | '\r' )+ -> skip
+	;
 
 
 USER_VAR
-   : '@' ( USER_VAR_SUBFIX1 | USER_VAR_SUBFIX2 | USER_VAR_SUBFIX3 | USER_VAR_SUBFIX4 )
-   ;
+	: '@' ( USER_VAR_SUBFIX1 | USER_VAR_SUBFIX2 | USER_VAR_SUBFIX3 | USER_VAR_SUBFIX4 )
+	;
 
 
 fragment USER_VAR_SUBFIX1
-   : ( '`' ( ~ '`' )+ '`' )
-   ;
+	: ( '`' ( ~ '`' )+ '`' )
+	;
 
 
 fragment USER_VAR_SUBFIX2
-   : ( '\'' ( ~ '\'' )+ '\'' )
-   ;
+	: ( '\'' ( ~ '\'' )+ '\'' )
+	;
 
 
 fragment USER_VAR_SUBFIX3
-   : ( '\"' ( ~ '\"' )+ '\"' )
-   ;
+	: ( '\"' ( ~ '\"' )+ '\"' )
+	;
 
 
 fragment USER_VAR_SUBFIX4
-   : ( 'A' .. 'Z' | 'a' .. 'z' | '_' | '$' | '0' .. '9' | DOT )+
-   ;
+	: ( 'A' .. 'Z' | 'a' .. 'z' | '_' | '$' | '0' .. '9' | DOT )+
+	;

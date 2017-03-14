@@ -48,9 +48,11 @@ public class Tool extends ToolBase {
 			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
 			new Options("lang", "-g", OptionType.STRING, "language type"),
 			new Options("output", "-e", OptionType.STRING, "formatted output settings"),
-			new Options("trust", "-t", OptionType.INT, "formatter confidence threshold (1-6; min=1; default=3"),
 			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')"),
 			new Options("tabWidth", "-w", OptionType.INT, "width of a tab"),
+			//
+			// new Options("trust", "-t", OptionType.INT, "formatter confidence threshold (1-6;
+			// min=1; default=3"),
 			//
 	};
 
@@ -65,7 +67,6 @@ public class Tool extends ToolBase {
 	private String corpusRoot;
 	private String lang;
 	private String output;
-	private Integer trust;
 	private String verbose;
 	private Integer tabWidth;
 
@@ -258,15 +259,6 @@ public class Tool extends ToolBase {
 		} else if (save != null) {
 			settings.save = save;
 		}
-
-		// ---- trust ----
-
-		if (trust == null && settings.trust == null) {
-			settings.trust = 3;
-		} else if (trust != null) {
-			settings.trust = trust;
-		}
-		if (settings.trust < 1 || settings.trust > 10) settings.trust = 3;
 
 		// ---- tabWidth ----
 
@@ -479,11 +471,6 @@ public class Tool extends ToolBase {
 	public void setTabWidth(int tabWidth) {
 		chkSettings();
 		settings.tabWidth = tabWidth;
-	}
-
-	public void setTrust(int level) {
-		chkSettings();
-		settings.trust = level;
 	}
 
 	public void setVerbose(Level level) {

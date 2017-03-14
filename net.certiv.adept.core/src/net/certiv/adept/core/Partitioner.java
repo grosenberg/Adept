@@ -11,7 +11,6 @@ import org.apache.commons.math3.stat.StatUtils;
 
 import com.google.common.primitives.Doubles;
 
-import net.certiv.adept.Tool;
 import net.certiv.adept.util.Strings;
 
 public class Partitioner {
@@ -21,7 +20,7 @@ public class Partitioner {
 		private double[] point;
 
 		public DoublePoint(double value) {
-			this.point = new double[] { value, 1 };
+			this.point = new double[] { value, value };
 		}
 
 		@Override
@@ -35,7 +34,7 @@ public class Partitioner {
 
 		@Override
 		public String toString() {
-			return String.format("DoublePoint [point=%s]", String.valueOf(point[0]));
+			return String.format("DoublePoint %s", String.valueOf(getValue()));
 		}
 	}
 
@@ -74,7 +73,7 @@ public class Partitioner {
 
 	public List<Cluster<DoublePoint>> getPartitions() {
 		if (results == null) {
-			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(2, Tool.settings.trust);
+			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(3, 1);
 			results = op.cluster(points);
 		}
 		return results;

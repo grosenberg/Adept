@@ -170,15 +170,16 @@ public class Feature implements Comparable<Feature> {
 
 	/**
 	 * Returns a positive value representing a kernel-based distance between this and the given
-	 * feature. A distance value of <code>zero</code> indicates that the two features are identical.
+	 * corpus feature. A distance value of <code>zero</code> indicates that the two features are
+	 * identical.
 	 */
-	public double distance(Feature other) {
+	public double distance(Feature corp) {
 		// Log.debug(this, "Type " + aspect);
-		double dist = selfSimularity() + other.selfSimularity() - (2 * similarity(other));
+		double dist = selfSimularity() + corp.selfSimularity() - (2 * similarity(corp));
 		// Log.debug(this, "Distance: " + String.valueOf(dist));
 		// Log.debug(this, "----------------");
 		if (dist < 0) {
-			String msg = String.format(ErrInvalidDist, dist, this.toString(), other.toString());
+			String msg = String.format(ErrInvalidDist, dist, this.toString(), corp.toString());
 			throw new ComputationException(new Throwable(msg));
 		}
 		return dist;
@@ -193,24 +194,24 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	// sum of feature label similarities and the edge set similarity
-	public double similarity(Feature o) {
-		double featSim = featLabelSimilarity(o);
-		double edgeSim = getEdgeSet().similarity(o.getEdgeSet());
+	public double similarity(Feature corp) {
+		double featSim = featLabelSimilarity(corp);
+		double edgeSim = getEdgeSet().similarity(corp.getEdgeSet());
 		// Log.debug(this, "Feature label sim: " + String.valueOf(featSim));
 		// Log.debug(this, "Edge set sim : " + String.valueOf(edgeSim));
 		return featSim + edgeSim;
 	}
 
 	// type and text (if applicable) have to be identical
-	public double featLabelSimilarity(Feature other) {
+	public double featLabelSimilarity(Feature corp) {
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
 		double[] vals = new double[6];
-		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, other.format);
-		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, other.format);
-		vals[2] = boosts.get(Factor.TEXT) * (text.equals(other.text) ? 1 : 0);
-		vals[3] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, other.weight);
-		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), other.dimensionality());
-		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), other.edgeSet.getEdgeCount());
+		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, corp.format);
+		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, corp.format);
+		vals[2] = boosts.get(Factor.TEXT) * (text.equals(corp.text) ? 1 : 0);
+		vals[3] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, corp.weight);
+		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), corp.dimensionality());
+		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), corp.edgeSet.getEdgeCount());
 		double sum = Norm.sum(vals);
 		return sum;
 	}
@@ -298,6 +299,14 @@ public class Feature implements Comparable<Feature> {
 
 	public boolean isAlignedBelow() {
 		return (format & Facet.ALIGNED_BELOW.value()) > 0;
+	}
+
+	public void setAligned(boolean asc) {
+		if (asc) {
+			setAligned(Facet.ALIGNED_BELOW);
+		} else {
+			setAligned(Facet.ALIGNED_ABOVE);
+		}
 	}
 
 	public void setAligned(Facet aligned) {

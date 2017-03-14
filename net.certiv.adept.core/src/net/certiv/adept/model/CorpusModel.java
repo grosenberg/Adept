@@ -13,7 +13,7 @@ import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.parser.Collector;
-import net.certiv.adept.topo.Accumulator;
+import net.certiv.adept.topo.Analyzer;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -116,12 +116,12 @@ public class CorpusModel extends CorpusBase {
 		getFeatureIndex();
 		for (Long type : index.keySet()) {
 			List<Feature> tfs = index.get(type);
-			Accumulator accum = new Accumulator();
+			Analyzer ana = new Analyzer();
 			for (Feature tf : tfs) {
-				accum.gather(tf);
+				ana.accum(tf);
 			}
 			for (Feature tf : tfs) {
-				accum.apply(tf);
+				ana.apply(tf);
 			}
 		}
 		consistent = true;
@@ -163,26 +163,22 @@ public class CorpusModel extends CorpusBase {
 		this.labelBoosts = labelBoosts;
 	}
 
-	public TreeMultimap<Double, Feature> match(Feature target) {
+	/** Returns the corpus features matching the given source feature. */
+	public TreeMultimap<Double, Feature> match(Feature source) {
 		if (index.isEmpty()) buildIndex();
 
 		TreeMultimap<Double, Feature> matches = TreeMultimap.create();
-		List<Feature> typedList = index.get(target.getType());
-		if (typedList != null) {
-			for (Feature feature : typedList) {
-				if (feature.getKind() == Kind.RULE) {
+		List<Feature> corpus = index.get(source.getType());
+		if (corpus != null) {
+			for (Feature member : corpus) {
+				if (member.getKind() == Kind.RULE) {
 					Log.error(this, "Found rule in match set");
 					continue;
 				}
 
-				int tTypes = target.getEdgeSet().getTypeCount();
-				int fTypes = feature.getEdgeSet().getTypeCount();
-
-				if (fTypes >= tTypes - 1 && fTypes <= tTypes + 1) {
-					// compute and save relative distance between features
-					double dist = target.distance(feature);
-					matches.put(dist, feature);
-				}
+				// compute and save relative distance between features
+				double dist = source.distance(member);
+				matches.put(dist, member);
 			}
 		}
 		return matches;

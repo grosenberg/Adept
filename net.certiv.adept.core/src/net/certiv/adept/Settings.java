@@ -17,7 +17,6 @@ public class Settings {
 	@Expose public String corpusRoot;
 	@Expose public String lang;
 	@Expose public String output;
-	@Expose public Integer trust = 3;
 	@Expose public String verbose;
 	@Expose public Integer tabWidth = 4;
 

@@ -174,7 +174,6 @@ public class ParseTreeView extends AbstractBase {
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 		tool.setSourceFiles(file.getAbsolutePath());
-		tool.setTrust(1);
 
 		tool.setRebuild(false);
 

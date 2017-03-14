@@ -83,127 +83,130 @@ public class EdgeSet {
 		return edgeCnt;
 	}
 
-	/** Returns the total similarity of this and the given edge set. */
-	public double similarity(EdgeSet o) {
-		double factor = Tool.mgr.getFactors().get(Factor.DISCOUNT);
-		double ins = intersect(o);
-		double dsj = disjoint(o);
+	/**
+	 * Returns the total similarity of this source edge set and the given edge set from the corpus.
+	 */
+	public double similarity(EdgeSet corp) {
+		double ins = intersect(corp);
+		double dsj = disjoint(corp);
 		// Log.debug(this, " - Intersection Sim: " + String.valueOf(sim));
 		// Log.debug(this, " - Disjoint Sim : " + String.valueOf(dis));
+		double factor = Tool.mgr.getFactors().get(Factor.DISCOUNT);
 		double joint = ins - (factor * dsj);
 
 		double ofactor = Tool.mgr.getFactors().get(Factor.ORDER);
-		double ord = editDistance(o);
+		double ord = orderDistance(corp);
 		return ofactor * ord + (1.0 - ofactor) * joint;
 	}
 
 	/** Returns the precise intersection similarity between this and the given edge set. */
-	public double intersect(EdgeSet o) {
-		List<Double> hit = cache.get(o);
+	public double intersect(EdgeSet corp) {
+		List<Double> hit = cache.get(corp);
 		if (hit.isEmpty()) {
-			hit = compute(o);
+			hit = compute(corp);
 		}
 		return hit.get(0);
 	}
 
 	/** Returns the estimated dissimilarity for the disjoint set of this and the given edge set. */
-	public double disjoint(EdgeSet o) {
-		List<Double> hit = cache.get(o);
+	public double disjoint(EdgeSet corp) {
+		List<Double> hit = cache.get(corp);
 		if (hit.isEmpty()) {
-			hit = compute(o);
+			hit = compute(corp);
 		}
 		return hit.get(1);
 	}
 
-	public int intersectCount(EdgeSet o) {
-		List<Double> hit = cache.get(o);
+	public int intersectCount(EdgeSet corp) {
+		List<Double> hit = cache.get(corp);
 		if (hit.isEmpty()) {
-			hit = compute(o);
+			hit = compute(corp);
 		}
 		return hit.get(2).intValue();
 	}
 
-	public int disjointCount(EdgeSet o) {
-		List<Double> hit = cache.get(o);
+	public int disjointCount(EdgeSet corp) {
+		List<Double> hit = cache.get(corp);
 		if (hit.isEmpty()) {
-			hit = compute(o);
+			hit = compute(corp);
 		}
 		return hit.get(3).intValue();
 	}
 
 	// similarity based on edit distance between two sets of edges
-	public double editDistance(EdgeSet o) {
-		List<Double> hit = cache.get(o);
+	public double orderDistance(EdgeSet corp) {
+		List<Double> hit = cache.get(corp);
 		if (hit.isEmpty()) {
-			hit = compute(o);
+			hit = compute(corp);
 		}
 		return hit.get(4);
 	}
 
-	private List<Double> compute(EdgeSet o) {
+	private List<Double> compute(EdgeSet corp) {
 		double intersectSim = 0;
 		int totIntersectEdges = 0;
 		int totDisjointEdges = 0;
 		double orderSim = 0;
 
 		// intersect: leaf types that exist in both edge sets
-		for (Long key : intersectKeys(o)) {
-			List<Edge> eedges = getEdges(key);
-			List<Edge> oedges = o.getEdges(key);
+		for (Long key : intersectKeys(corp)) {
+			List<Edge> srcEdges = getEdges(key);
+			List<Edge> corpEdges = corp.getEdges(key);
 
-			int max = Math.max(eedges.size(), oedges.size());
-			int min = Math.min(eedges.size(), oedges.size());
-			totIntersectEdges += min;
-			totDisjointEdges += max - min;
+			/*
+			 * Max product of similarity: for edges of the same type, similarity is based on a best
+			 * match of the edges. Approximated by selecting edges as matched based on highest
+			 * similarity. Referenced to the source set of edges.
+			 */
+			int srcCnt = srcEdges.size();
+			int corpCnt = corpEdges.size();
 
-			// max product of similarity
-			for (Edge edge : eedges) {
+			for (Edge srcEdge : srcEdges) {
 				double sim = 0;
-				for (Edge odge : oedges) {
-					sim = Math.max(sim, edge.similarity(odge));
+				for (Edge corpEdge : corpEdges) {
+					sim = Math.max(sim, srcEdge.similarity(corpEdge));
 				}
-				intersectSim += sim;
+				intersectSim += sim / srcCnt;
 			}
+			totIntersectEdges += Math.min(srcCnt, corpCnt);
 		}
 
-		for (Long key : disjointKeys(o)) {
-			List<Edge> eedges = getEdges(key);
-			if (!eedges.isEmpty()) totDisjointEdges += eedges.size();
-			List<Edge> oedges = o.getEdges(key);
-			if (!oedges.isEmpty()) totDisjointEdges += oedges.size();
+		// disjoint: leaf types that exist in only one edge set
+		for (Long key : disjointKeys(corp)) {
+			totDisjointEdges += getEdges(key).size() + corp.getEdges(key).size();
 		}
 
 		// estimate disjoint edge similarity
-		double perIntersectEdge = totIntersectEdges != 0 ? intersectSim / totIntersectEdges : 0;
-		double disjointSim = perIntersectEdge * totDisjointEdges;
+		double perEdge = totIntersectEdges > 0 ? intersectSim / totIntersectEdges : 0;
+		double disjointSim = perEdge * totDisjointEdges;
 
 		// determine edge alignment similarity
-		int hlen = Math.max(headEdgeOrder.size(), o.headEdgeOrder.size());
-		int tlen = Math.max(tailEdgeOrder.size(), o.tailEdgeOrder.size());
+		int hlen = Math.max(headEdgeOrder.size(), corp.headEdgeOrder.size());
+		int tlen = Math.max(tailEdgeOrder.size(), corp.tailEdgeOrder.size());
 		int clen = Math.max(hlen + tlen, 1);
 
-		orderSim = EdgeSeq.similarity(headEdgeOrder, o.headEdgeOrder) * hlen / clen;
-		orderSim += EdgeSeq.similarity(tailEdgeOrder, o.tailEdgeOrder) * tlen / clen;
+		orderSim = EdgeSeq.similarity(headEdgeOrder, corp.headEdgeOrder) * hlen / clen;
+		orderSim += EdgeSeq.similarity(tailEdgeOrder, corp.tailEdgeOrder) * tlen / clen;
 
-		cache.put(o, intersectSim);
-		cache.put(o, disjointSim);
-		cache.put(o, (double) totIntersectEdges);
-		cache.put(o, (double) totDisjointEdges);
-		cache.put(o, orderSim);
-		return cache.get(o);
+		cache.put(corp, intersectSim);
+		cache.put(corp, disjointSim);
+		cache.put(corp, (double) totIntersectEdges);
+		cache.put(corp, (double) totDisjointEdges);
+		cache.put(corp, orderSim);
+		return cache.get(corp);
 	}
 
-	public Set<Long> intersectKeys(EdgeSet other) {
+	public Set<Long> intersectKeys(EdgeSet corp) {
 		Set<Long> ikeys = new HashSet<>(edgeSet.keySet());
-		ikeys.retainAll(other.edgeSet.keySet());
+		ikeys.retainAll(corp.edgeSet.keySet());
 		return ikeys;
 	}
 
-	public Set<Long> disjointKeys(EdgeSet other) {
+	public Set<Long> disjointKeys(EdgeSet corp) {
 		Set<Long> ekeys = new HashSet<>(edgeSet.keySet());
-		ekeys.removeAll(other.edgeSet.keySet());
+		ekeys.removeAll(corp.edgeSet.keySet());
 
-		Set<Long> okeys = new HashSet<>(other.edgeSet.keySet());
+		Set<Long> okeys = new HashSet<>(corp.edgeSet.keySet());
 		okeys.removeAll(edgeSet.keySet());
 
 		ekeys.addAll(okeys);

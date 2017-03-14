@@ -20,6 +20,7 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.topo.Confidence;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -146,12 +147,8 @@ public class CoreMgr {
 		for (Feature feature : model.getFeatures()) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			TreeMultimap<Double, Feature> selected = getMatchSet(feature);
-			Confidence.eval(feature, selected);
-			if (Confidence.inRange()) {
-				Feature best = Confidence.best();
-				feature.setMatched(best);
-			}
+			Confidence.eval(feature, getMatchSet(feature));
+			feature.setMatched(Confidence.best());
 		}
 		perfData.addFormatTime(Time.end(start));
 	}

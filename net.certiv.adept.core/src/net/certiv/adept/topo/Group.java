@@ -37,6 +37,7 @@ public class Group {
 
 	private static final int ENCLOSURES = 4;
 	private static final int ADJACENTS = 2;
+	private static final int ALIGNED = 6;
 
 	private static Comparator<Feature> COMP = new Comparator<Feature>() {
 
@@ -46,17 +47,17 @@ public class Group {
 			if (f1.getLine() > f2.getLine()) return 1;
 			if (f1.getCol() < f2.getCol()) return -1;
 			if (f1.getCol() > f2.getCol()) return 1;
+			if (f1.getType() < f2.getType()) return -1;
+			if (f1.getType() > f2.getType()) return 1;
 			return 0;
 		}
 	};
 
 	private ParseData data;
 	private Feature locus;
-	private TreeSet<Feature> locals;
 
 	public Group(ParseData data) {
 		this.data = data;
-		locals = new TreeSet<>(COMP);
 	}
 
 	/**
@@ -65,10 +66,10 @@ public class Group {
 	 */
 	public void setLocus(Feature locus) {
 		this.locus = locus;
-		locals.clear();
 	}
 
 	public Set<Feature> getLocalFeatures() {
+		TreeSet<Feature> locals = new TreeSet<>(COMP);
 		Token token = data.getTokens().get(locus.getStart());
 		TerminalNode node = data.nodeIndex.get(token);
 		if (node == null) {
@@ -77,16 +78,17 @@ public class Group {
 		}
 		int line = token.getLine() - 1;
 
-		addEnclosing((ParserRuleContext) node.getParent());
-		addAdjacent(token, line);
-		addSame(token, line);
+		addEnclosing(locals, (ParserRuleContext) node.getParent());
+		addAligned(locals, token, line);
+		addAdjacent(locals, token, line);
+		addSame(locals, token, line);
 
 		return locals;
 	}
 
 	// adds the features that are direct ancestors of the locus, excluding the root
 	// also adds the direct children of the ancestor features
-	private void addEnclosing(ParserRuleContext ctx) {
+	private void addEnclosing(TreeSet<Feature> locals, ParserRuleContext ctx) {
 		int idx = 0;
 		while (ctx != null && idx < ENCLOSURES) {
 			if (ctx.getParent() != null) { // no root feature
@@ -119,7 +121,7 @@ public class Group {
 		return cnt;
 	}
 
-	private void addAdjacent(Token token, int line) {
+	private void addAdjacent(TreeSet<Feature> locals, Token token, int line) {
 		List<Token> tokens = data.lineIndex.get(line);
 		int mid = tokens.indexOf(token);
 
@@ -150,41 +152,61 @@ public class Group {
 		}
 	}
 
-	// add same token type from prior line
-	private void addSame(Token token, int line) {
-		int type = token.getType();
-		int vPos = data.visIndex.get(token);
+	// add aligned token features on the non-blank lines before anad after the current line
+	// stops in each direction at the limit of ALIGNED or first real line without an aligned token
+	private void addAligned(TreeSet<Feature> locals, Token token, int line) {
+		int visCol = data.visIndex.get(token);
+		int cnt = 0;
+		int next = line;
+		while (next != -1 && cnt < ALIGNED) {
+			next = addAligned(locals, next, visCol, true);
+			cnt++;
+		}
+		cnt = 0;
+		next = line;
+		while (next != -1 && cnt < ALIGNED) {
+			next = addAligned(locals, next, visCol, false);
+			cnt++;
+		}
+	}
 
-		int priorLine = nonBlankLine(line, -1);
-		if (priorLine > -1) {
-			List<Token> tokens = data.lineIndex.get(priorLine);
-			for (Token t : tokens) {
-				TerminalNode n = data.nodeIndex.get(t);
-				if (n != null && type == t.getType()) {
-					Feature feature = data.terminalIndex.get(n);
+	private int addAligned(TreeSet<Feature> locals, int line, int visCol, boolean asc) {
+		int next = nonBlankLine(line, asc ? 1 : -1);
+		if (next != -1) {
+			List<Token> tokens = data.lineIndex.get(next);
+			for (Token token : tokens) {
+				int tokCol = data.visIndex.get(token);
+				if (tokCol < visCol) continue;
+				if (tokCol > visCol) return -1; // end on no-align found
+
+				TerminalNode node = data.nodeIndex.get(token);
+				if (node != null) {
+					Feature feature = data.terminalIndex.get(node);
+					feature.setAligned(asc);
+					locus.setAligned(!asc);
 					locals.add(feature);
-
-					if (vPos == data.visIndex.get(t)) {
-						locus.setAligned(Facet.ALIGNED_ABOVE);
-						feature.setAligned(Facet.ALIGNED_BELOW);
-					}
+					break;
 				}
 			}
 		}
+		return next;
+	}
 
-		int nextLine = nonBlankLine(line, 1);
-		if (nextLine > -1) {
-			List<Token> tokens = data.lineIndex.get(nextLine);
-			for (Token t : tokens) {
-				TerminalNode n = data.nodeIndex.get(t);
-				if (n != null && type == t.getType()) {
-					Feature feature = data.terminalIndex.get(n);
+	// add features of same token type found on surrounding lines
+	private void addSame(TreeSet<Feature> locals, Token token, int line) {
+		int type = token.getType();
+		int beg = Math.max(nonBlankLine(line, -1), line);
+		int end = Math.max(nonBlankLine(line, 1), line);
+
+		for (int idx = beg; idx <= end; idx++) {
+			List<Token> tokens = data.lineIndex.get(idx);
+			if (tokens == null) continue;
+
+			for (Token tok : tokens) {
+				TerminalNode node = data.nodeIndex.get(tok);
+				if (node != null && type == tok.getType()) {
+					Feature feature = data.terminalIndex.get(node);
 					locals.add(feature);
-
-					if (vPos == data.visIndex.get(t)) {
-						locus.setAligned(Facet.ALIGNED_BELOW);
-						feature.setAligned(Facet.ALIGNED_ABOVE);
-					}
 				}
 			}
 		}
