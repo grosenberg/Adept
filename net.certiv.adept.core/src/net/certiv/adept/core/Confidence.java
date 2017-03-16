@@ -1,4 +1,4 @@
-package net.certiv.adept.topo;
+package net.certiv.adept.core;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -8,7 +8,6 @@ import java.util.TreeSet;
 
 import com.google.common.collect.TreeMultimap;
 
-import net.certiv.adept.core.Partitioner;
 import net.certiv.adept.model.Feature;
 
 public class Confidence {

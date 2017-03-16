@@ -73,7 +73,7 @@ public class Partitioner {
 
 	public List<Cluster<DoublePoint>> getPartitions() {
 		if (results == null) {
-			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(3, 1);
+			DBSCANClusterer<DoublePoint> op = new DBSCANClusterer<>(3, 2);
 			results = op.cluster(points);
 		}
 		return results;

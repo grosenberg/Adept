@@ -32,7 +32,7 @@ public class Collector extends ParseData {
 
 	public Collector(Document doc) {
 		super(doc);
-		if (doc != null) doc.setParse(this);
+		if (doc != null) doc.setParseData(this);
 		features = new LinkedHashSet<>();
 		exTypes = Tool.mgr.excludedLangTypes();
 		group = new Group(this);
@@ -116,7 +116,6 @@ public class Collector extends ParseData {
 
 	/** Generate local edge connections for all non-RULE root features. */
 	public void genLocalEdges() {
-		createTokenIndex();
 		for (Feature root : features) {
 			if (root.getKind() == Kind.RULE) continue;
 
@@ -136,7 +135,7 @@ public class Collector extends ParseData {
 	}
 
 	/** Builds a source line->visual offset->token index */
-	private void createTokenIndex() {
+	public void index() {
 		Token begToken = null;
 		int line = -1;
 

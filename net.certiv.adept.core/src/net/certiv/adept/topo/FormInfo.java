@@ -18,18 +18,18 @@ public class FormInfo {
 	public boolean blankAbove;
 	public boolean blankBelow;
 
-	public FormInfo(String line, int tabWidth) {
-		init(line, tabWidth);
+	public FormInfo(String text, int tabWidth) {
+		init(text, tabWidth);
 	}
 
-	private void init(String line, int tabWidth) {
-		blank = line == null || line.isEmpty();
+	private void init(String text, int tabWidth) {
+		blank = text == null || text.isEmpty();
 		if (blank) return;
 
-		beg = Strings.firstNonWS(line);
-		len = line.length();
+		beg = Strings.firstNonWS(text);
+		len = text.length();
 		end = len - 1;
 
-		indents = Strings.measureIndentUnits(line, tabWidth, tabWidth);
+		indents = Strings.measureIndentUnits(text, tabWidth, tabWidth);
 	}
 }

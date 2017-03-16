@@ -161,7 +161,7 @@ SPACE                  : WS -> popMode, skip;
 DOLLAR_ID              : DOLLAR -> type(DOLLAR);
 
 
-InterpolationStartAfter: InterpolationStart;
+InterpolationStartAfter	: InterpolationStart;
 InterpolationEnd_ID    : BlockEnd -> type(BlockEnd);
 
 IdentifierAfter        : Identifier;

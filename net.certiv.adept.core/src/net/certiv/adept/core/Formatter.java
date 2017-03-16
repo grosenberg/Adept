@@ -76,7 +76,7 @@ public class Formatter {
 		Set<Facet> facets = span.getFacets();
 		if (facets.contains(Facet.NO_FORMAT)) {
 			buffer.add(span.getLead());
-		} else if (facets.contains(Facet.ALIGNED_ABOVE) || facets.contains(Facet.ALIGNED_BELOW)) {
+		} else if (facets.contains(Facet.ALIGNED)) {
 			// TODO: calc actual alignment for next real
 			buffer.add(span.getLead());
 		} else if (facets.contains(Facet.WIDE_AFTER)) {

@@ -323,6 +323,7 @@ public class Tool extends ToolBase {
 
 			if (settings.check) continue;
 
+			collector.index();
 			try {
 				parser.annotateFeatures(collector);
 			} catch (Exception e) {

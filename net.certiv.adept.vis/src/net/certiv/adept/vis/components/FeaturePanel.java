@@ -39,8 +39,8 @@ public class FeaturePanel extends JPanel {
 	private JTextField textTypeCnt;
 
 	private JCheckBox chkVariable;
-	private JCheckBox chkAlignAbove;
-	private JCheckBox chkAlignBelow;
+	private JCheckBox chkAlign;
+	private JCheckBox chkAlignSame;
 
 	public FeaturePanel(Font font) {
 		setFont(font);
@@ -132,11 +132,11 @@ public class FeaturePanel extends JPanel {
 		JLabel lblAligned = new JLabel("Aligned");
 		add(lblAligned, "11, 12, right, default");
 
-		chkAlignAbove = new JCheckBox("Above");
-		add(chkAlignAbove, "13, 12, left, default");
+		chkAlign = new JCheckBox("Around");
+		add(chkAlign, "13, 12, left, default");
 
-		chkAlignBelow = new JCheckBox("Below");
-		add(chkAlignBelow, "15, 12, left, default");
+		chkAlignSame = new JCheckBox("Same");
+		add(chkAlignSame, "15, 12, left, default");
 
 		JLabel lblFacets = new JLabel("Facets");
 		add(lblFacets, "3, 14, right, default");
@@ -182,8 +182,8 @@ public class FeaturePanel extends JPanel {
 		textText.setText(feature.getText());
 		textFormat.setText(String.valueOf(feature.getFormat()));
 		textDents.setText(String.valueOf(Facet.getDentation(feature.getFormat())));
-		chkAlignAbove.setSelected(feature.isAlignedAbove());
-		chkAlignBelow.setSelected(feature.isAlignedBelow());
+		chkAlign.setSelected(feature.isAligned());
+		chkAlignSame.setSelected(feature.isAlignedSame());
 
 		textFacets.setText(Strings.join(Facet.get(feature.getFormat()), ", "));
 		textTotEdges.setText(String.valueOf(feature.getEdgeSet().getEdgeCount()));

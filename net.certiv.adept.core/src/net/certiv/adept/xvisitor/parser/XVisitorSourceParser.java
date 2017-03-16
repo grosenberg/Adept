@@ -1,5 +1,7 @@
 package net.certiv.adept.xvisitor.parser;
 
+import static net.certiv.adept.xvisitor.parser.gen.XVisitorLexer.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,12 +56,14 @@ public class XVisitorSourceParser implements ISourceParser {
 		}
 		collector.input = new ANTLRInputStream(content);
 		collector.lexer = new XVisitorLexer(collector.input);
-		collector.VWS = XVisitorLexer.VERT_WS;
-		collector.HWS = XVisitorLexer.HORZ_WS;
-		collector.BLOCKCOMMENT = XVisitorLexer.BLOCK_COMMENT;
-		collector.LINECOMMENT = XVisitorLexer.LINE_COMMENT;
-		collector.VARS = new int[] { XVisitorLexer.ID, XVisitorLexer.LITERAL };
-		collector.ERR_TOKEN = XVisitorLexer.ERRCHAR;
+		collector.VWS = VERT_WS;
+		collector.HWS = HORZ_WS;
+		collector.BLOCKCOMMENT = BLOCK_COMMENT;
+		collector.LINECOMMENT = LINE_COMMENT;
+		collector.VARS = new int[] { ID, LITERAL };
+		collector.ALIGN_SAME = new int[] { ID, LITERAL };
+		collector.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
+		collector.ERR_TOKEN = ERRCHAR;
 		// collector.ERR_RULE = XVisitorParser.RULE_other << 32;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new XVisitorParser(collector.stream);
@@ -76,7 +80,6 @@ public class XVisitorSourceParser implements ISourceParser {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		XVisitorVisitor visitor = new XVisitorVisitor(collector);
 		walker.walk(visitor, collector.tree);
-
 	}
 
 	@Override

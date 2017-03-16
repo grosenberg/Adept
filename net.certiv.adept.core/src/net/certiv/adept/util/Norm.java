@@ -36,7 +36,8 @@ public class Norm {
 	}
 
 	/**
-	 * Returns the inverse value distance of the given values normalized to the given range limit.
+	 * Returns the inverse value distance of the given values normalized to the given range limit
+	 * (max = 1.0).
 	 */
 	public static double dist(double limit, double a, double b) {
 		double dist = Math.min(limit, Math.abs(a - b));

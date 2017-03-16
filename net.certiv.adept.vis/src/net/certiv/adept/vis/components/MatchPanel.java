@@ -50,8 +50,8 @@ public class MatchPanel extends JPanel {
 	private JTextField txtDisjointTypes;
 
 	private JCheckBox chkVariable;
-	private JCheckBox chkAlignAbove;
-	private JCheckBox chkAlignBelow;
+	private JCheckBox chkAlign;
+	private JCheckBox chkAlignSame;
 
 	public MatchPanel(Font font) {
 		setFont(font);
@@ -145,11 +145,11 @@ public class MatchPanel extends JPanel {
 		JLabel lblAligned = new JLabel("Aligned");
 		add(lblAligned, "11, 12, right, default");
 
-		chkAlignAbove = new JCheckBox("Above");
-		add(chkAlignAbove, "13, 12, left, default");
+		chkAlign = new JCheckBox("Above");
+		add(chkAlign, "13, 12, left, default");
 
-		chkAlignBelow = new JCheckBox("Below");
-		add(chkAlignBelow, "15, 12, left, default");
+		chkAlignSame = new JCheckBox("Below");
+		add(chkAlignSame, "15, 12, left, default");
 
 		JLabel lblFacets = new JLabel("Facets");
 		add(lblFacets, "3, 14, right, default");
@@ -282,8 +282,8 @@ public class MatchPanel extends JPanel {
 		chkVariable.setSelected(matched.isVar());
 		txtType.setText(String.valueOf(matched.getType()));
 		txtText.setText(matched.getText());
-		chkAlignAbove.setSelected(matched.isAlignedAbove());
-		chkAlignBelow.setSelected(matched.isAlignedBelow());
+		chkAlign.setSelected(matched.isAligned());
+		chkAlignSame.setSelected(matched.isAlignedSame());
 
 		int format = matched.getFormat();
 		int dents = Facet.getDentation(format);

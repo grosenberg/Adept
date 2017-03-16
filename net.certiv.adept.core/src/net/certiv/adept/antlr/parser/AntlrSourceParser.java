@@ -1,5 +1,7 @@
 package net.certiv.adept.antlr.parser;
 
+import static net.certiv.adept.antlr.parser.gen.Antlr4Lexer.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,12 +56,15 @@ public class AntlrSourceParser implements ISourceParser {
 		}
 		collector.input = new ANTLRInputStream(content);
 		collector.lexer = new Antlr4Lexer(collector.input);
-		collector.VWS = Antlr4Lexer.VWS;
-		collector.HWS = Antlr4Lexer.HWS;
-		collector.BLOCKCOMMENT = Antlr4Lexer.BLOCKCOMMENT;
-		collector.LINECOMMENT = Antlr4Lexer.LINECOMMENT;
-		collector.VARS = new int[] { Antlr4Lexer.ID, Antlr4Lexer.INT, Antlr4Lexer.SET, Antlr4Lexer.STRING };
-		collector.ERR_TOKEN = Antlr4Lexer.ERRCHAR;
+		collector.VWS = VWS;
+		collector.HWS = HWS;
+		collector.BLOCKCOMMENT = BLOCKCOMMENT;
+		collector.LINECOMMENT = LINECOMMENT;
+		collector.VARS = new int[] { ID, INT, SET, STRING };
+		collector.ALIGN_SAME = new int[] { ID, INT, SET, STRING, RANGE };
+		collector.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LPAREN, RPAREN, LBRACE, RBRACE, LBRACK, RBRACK,
+				RARROW, EQ, PLUSEQ, LSKIP, LMORE, LEOF, MODE, PUSHMODE, POPMODE, TYPE, };
+		collector.ERR_TOKEN = ERRCHAR;
 		collector.ERR_RULE = Antlr4Parser.RULE_other << 32;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new Antlr4Parser(collector.stream);

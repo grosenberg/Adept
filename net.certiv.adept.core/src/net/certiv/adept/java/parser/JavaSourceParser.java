@@ -1,5 +1,7 @@
 package net.certiv.adept.java.parser;
 
+import static net.certiv.adept.java.parser.gen.JavaLexer.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,12 +56,16 @@ public class JavaSourceParser implements ISourceParser {
 		}
 		collector.input = new ANTLRInputStream(content);
 		collector.lexer = new JavaLexer(collector.input);
-		collector.VWS = JavaLexer.VWS;
-		collector.HWS = JavaLexer.HWS;
-		collector.VARS = new int[] { JavaLexer.ID, JavaLexer.NUM, JavaLexer.STRING, JavaLexer.QID };
-		collector.BLOCKCOMMENT = JavaLexer.BLOCKCOMMENT;
-		collector.LINECOMMENT = JavaLexer.LINECOMMENT;
-		collector.ERR_TOKEN = JavaLexer.ERRCHAR;
+		collector.VWS = VWS;
+		collector.HWS = HWS;
+		collector.VARS = new int[] { ID, NUM, STRING, QID };
+		collector.BLOCKCOMMENT = BLOCKCOMMENT;
+		collector.LINECOMMENT = LINECOMMENT;
+		collector.ALIGN_SAME = new int[] { ID, QID, NUM, STRING };
+		collector.ALIGN_ANY = new int[] { COLON, SEMI, COMMA, LT, GT, EQ, LE, GE, NEQ, L_AND, L_OR, LPAREN, RPAREN,
+				LBRACE, RBRACE, LBRACK, RBRACK, RARROW, PLUS_ASSIGN, MINUS_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, AND_ASSIGN,
+				OR_ASSIGN, XOR_ASSIGN, MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
+		collector.ERR_TOKEN = ERRCHAR;
 		// collector.ERR_RULE = JavaParser.RULE_other << 32;
 		collector.stream = new CommonTokenStream(collector.lexer);
 		collector.parser = new JavaParser(collector.stream);

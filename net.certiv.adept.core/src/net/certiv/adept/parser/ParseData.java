@@ -33,11 +33,8 @@ public class ParseData {
 	public int BLOCKCOMMENT = -2;
 	public int LINECOMMENT = -2;
 	public int[] VARS = { -2 }; // token types whose underlying values can be ignored
-
-	// public long[] SYMMRULES = { -2 };
-	// public long[] ASYMRULES = { -2 };
-	// private List<Long> asym;
-	// private List<Long> symm;
+	public int[] ALIGN_ANY = { -2 }; // token types that may be recogized as aligned
+	public int[] ALIGN_SAME = { -2 }; // token types that may be mutually recogized as aligned
 
 	public int ERR_RULE = -2;
 	public int ERR_TOKEN = -2;
@@ -109,24 +106,4 @@ public class ParseData {
 	public List<String> getTokenNames() {
 		return Arrays.asList(parser.getTokenNames());
 	}
-
-	// public List<Long> getAsym() {
-	// if (asym == null) {
-	// asym = new ArrayList<>();
-	// for (long rule : ASYMRULES) {
-	// asym.add(rule);
-	// }
-	// }
-	// return asym;
-	// }
-	//
-	// public List<Long> getSymm() {
-	// if (symm == null) {
-	// symm = new ArrayList<>();
-	// for (long rule : ASYMRULES) {
-	// symm.add(rule);
-	// }
-	// }
-	// return symm;
-	// }
 }

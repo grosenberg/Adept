@@ -22,8 +22,8 @@ public enum Facet {
 	WIDE_BEFORE(11),	// non-minimal leading hws, ignoring any in-line block comment
 	WIDE_AFTER(12),		// non-minimal trailing hws, ignoring any in-line block comment
 
-	ALIGNED_ABOVE(13),	// aligned to a similar feature in a prior real line
-	ALIGNED_BELOW(14),	// following
+	ALIGNED(13),		// aligned to a node feature in a surrounding real line
+	ALIGNED_SAME(14),	// to same feature type (adds to alignment weight)
 
 	// extrinsic facets - determinable from the corpus as a whole
 
@@ -67,14 +67,18 @@ public enum Facet {
 	}
 
 	/**
-	 * Returns a normalized inverse difference of dentation is added if both of the given formats have
-	 * INDENTED set.
+	 * Returns a normalized inverse difference of dentation.
 	 */
-	public static double simDentation(int f1, int f2) {
-		if (INDENTED.isSet(f1)&& INDENTED.isSet(f2)) {
-			return Norm.dist(DNTS, getDentation(f1), getDentation(f2));
+	public static double simDentation(int srcFormat, int corpFormat) {
+		boolean sd = INDENTED.isSet(srcFormat);
+		boolean cd = INDENTED.isSet(corpFormat);
+		if (sd && cd) {
+			return Norm.dist(DNTS, getDentation(srcFormat), getDentation(corpFormat));
+		} else if (!sd && !cd) {
+			return 1.0;
+		} else {
+			return 0.5;
 		}
-		return 0.5;
 	}
 
 	/** Returns the set of facets that compose the given format. */

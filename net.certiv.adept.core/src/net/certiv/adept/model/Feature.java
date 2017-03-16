@@ -290,23 +290,11 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public boolean isAligned() {
-		return isAlignedAbove() || isAlignedBelow();
+		return (format & Facet.ALIGNED.value()) > 0;
 	}
 
-	public boolean isAlignedAbove() {
-		return (format & Facet.ALIGNED_ABOVE.value()) > 0;
-	}
-
-	public boolean isAlignedBelow() {
-		return (format & Facet.ALIGNED_BELOW.value()) > 0;
-	}
-
-	public void setAligned(boolean asc) {
-		if (asc) {
-			setAligned(Facet.ALIGNED_BELOW);
-		} else {
-			setAligned(Facet.ALIGNED_ABOVE);
-		}
+	public boolean isAlignedSame() {
+		return (format & Facet.ALIGNED_SAME.value()) > 0;
 	}
 
 	public void setAligned(Facet aligned) {

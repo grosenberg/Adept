@@ -20,7 +20,6 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
-import net.certiv.adept.topo.Confidence;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -84,6 +83,7 @@ public class CoreMgr {
 				continue;
 			}
 
+			collector.index();
 			try {
 				parser.annotateFeatures(collector);
 			} catch (Exception e) {

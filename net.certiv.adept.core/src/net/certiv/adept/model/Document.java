@@ -35,8 +35,8 @@ public class Document {
 
 		formInfos = new ArrayList<>();
 		FormInfo prior = null;
-		for (String line : content.split("\\r?\\n", -1)) {
-			FormInfo curr = new FormInfo(line, tabWidth);
+		for (String text : content.split("\\r?\\n", -1)) {
+			FormInfo curr = new FormInfo(text, tabWidth);
 			if (prior != null) {
 				curr.priorIndents = prior.indents;
 				curr.blankAbove = prior.blank;
@@ -59,7 +59,7 @@ public class Document {
 		return data;
 	}
 
-	public void setParse(ParseData data) {
+	public void setParseData(ParseData data) {
 		this.data = data;
 	}
 
@@ -80,6 +80,7 @@ public class Document {
 		return content;
 	}
 
+	/** Returns the FormInfo at the given index representing the document line number (0..n) */
 	public FormInfo getInfo(int idx) {
 		return formInfos.get(idx);
 	}
