@@ -31,7 +31,11 @@ public class Norm {
 	 * <p>
 	 * Calculated as n = 1/(1+abs(a-b))
 	 */
-	public static double delta(double a, double b) {
+	public static int invDelta(int a, int b) {
+		return 1 / (1 + Math.abs(a - b));
+	}
+
+	public static double invDelta(double a, double b) {
 		return 1 / (1 + Math.abs(a - b));
 	}
 

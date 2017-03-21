@@ -2,9 +2,6 @@ package net.certiv.adept.model;
 
 import java.util.Map;
 
-import org.apache.commons.math3.util.FastMath;
-import org.apache.commons.math3.util.MathArrays;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
@@ -21,7 +18,7 @@ public class Edge implements Comparable<Edge> {
 	@Expose public long leafId;
 	@Expose public long rootId;
 
-	@Expose public double metric;
+	@Expose public int metric;
 
 	public Feature root; // edge root
 	public Feature leaf; // connected leaf
@@ -44,18 +41,17 @@ public class Edge implements Comparable<Edge> {
 		rootId = root.getId();
 		leafId = leaf.getId();
 
-		// euclidean distance
-		double[] p1 = new double[] { leaf.getCol(), leaf.getLine() };
-		double[] p2 = new double[] { root.getCol(), root.getLine() };
-		metric = FastMath.abs(MathArrays.distance(p1, p2));
+		// linear distance
+		metric = root.offsetDistance(leaf);
 	}
 
+	/** Returns a value representing the similarity of two edges of the same type. */
 	public double similarity(Edge o) {
 		double[] vals = new double[2];
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
-		vals[0] = boosts.get(Factor.METRIC) * Norm.delta(metric, o.metric);
+		vals[0] = boosts.get(Factor.METRIC) * Norm.invDelta(metric, o.metric);
 		vals[1] = boosts.get(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
-		return Norm.sum(vals);
+		return Norm.sum(vals) / vals.length;
 	}
 
 	public EEdge equiv() {
@@ -70,6 +66,7 @@ public class Edge implements Comparable<Edge> {
 		if (rootId != o.rootId) Log.error(this, "Wrong orientation for " + toString());
 		if (leaf.getType() < o.leaf.getType()) return -1;
 		if (leaf.getType() > o.leaf.getType()) return 1;
+		if (leaf.isVar()) return 0;
 		return leaf.getText().compareTo(o.leaf.getText());
 	}
 

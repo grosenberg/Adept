@@ -12,7 +12,7 @@ import java.util.List;
 import net.certiv.adept.Tool;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.tool.ErrorType;
-import net.certiv.adept.topo.FormInfo;
+import net.certiv.adept.topo.Info;
 
 public class Document {
 
@@ -25,7 +25,7 @@ public class Document {
 	private String content;
 	private String modified;
 
-	private List<FormInfo> formInfos;
+	private List<Info> infos;
 
 	public Document(String pathname, int tabWidth, String content) {
 		this.pathname = pathname;
@@ -33,17 +33,17 @@ public class Document {
 		this.tabWidth = tabWidth;
 		this.content = content;
 
-		formInfos = new ArrayList<>();
-		FormInfo prior = null;
+		infos = new ArrayList<>();
+		Info prior = null;
 		for (String text : content.split("\\r?\\n", -1)) {
-			FormInfo curr = new FormInfo(text, tabWidth);
+			Info curr = new Info(text, tabWidth);
 			if (prior != null) {
 				curr.priorIndents = prior.indents;
 				curr.blankAbove = prior.blank;
 				prior.blankBelow = curr.blank;
 			}
 			prior = curr;
-			formInfos.add(curr);
+			infos.add(curr);
 		}
 	}
 
@@ -80,9 +80,9 @@ public class Document {
 		return content;
 	}
 
-	/** Returns the FormInfo at the given index representing the document line number (0..n) */
-	public FormInfo getInfo(int idx) {
-		return formInfos.get(idx);
+	/** Returns the Info at the given index representing the document line number (0..n) */
+	public Info getInfo(int idx) {
+		return infos.get(idx);
 	}
 
 	public String getModified() {

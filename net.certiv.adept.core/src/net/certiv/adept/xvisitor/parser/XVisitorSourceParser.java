@@ -61,7 +61,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		collector.BLOCKCOMMENT = BLOCK_COMMENT;
 		collector.LINECOMMENT = LINE_COMMENT;
 		collector.VARS = new int[] { ID, LITERAL };
-		collector.ALIGN_SAME = new int[] { ID, LITERAL };
+		collector.ALIGN_SAME = new int[] { ID, LITERAL, BLOCK_COMMENT, LINE_COMMENT };
 		collector.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
 		collector.ERR_TOKEN = ERRCHAR;
 		// collector.ERR_RULE = XVisitorParser.RULE_other << 32;

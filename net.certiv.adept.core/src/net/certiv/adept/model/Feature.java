@@ -10,7 +10,6 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.Utils;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ComputationException;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Tool;
@@ -20,6 +19,7 @@ import net.certiv.adept.topo.Factor;
 import net.certiv.adept.topo.Location;
 import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Stats;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Norm;
 
 public class Feature implements Comparable<Feature> {
@@ -33,8 +33,6 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int docId;		// unique id of the document containing this feature
 	@Expose private long type;		// encoded token type or rule id (ids are << 32)
-	@Expose private int start;		// feature token start index
-	@Expose private int stop;		// feature token stop index
 
 	@Expose private Kind kind;		// feature category
 	@Expose private String aspect;	// rule or token name
@@ -45,8 +43,12 @@ public class Feature implements Comparable<Feature> {
 	@Expose private int col;		// feature locus
 	@Expose private int line;
 
-	@Expose private int begLine;	// feature start token line
-	@Expose private int endLine;	// feature stop token line
+	@Expose private int begIdx;		// feature token begIdx index
+	@Expose private int endIdx;		// feature token endIdx index
+	@Expose private int begLine;	// feature beg token line
+	@Expose private int endLine;	// feature end token line
+	@Expose private int begOffset;	// feature beg character offset
+	@Expose private int endOffset;	// feature end character offset
 
 	@Expose private int weight;		// number of equivalents
 	@Expose private boolean equiv;	// is weighted to another corpus feature
@@ -96,8 +98,8 @@ public class Feature implements Comparable<Feature> {
 		this();
 		this.docId = docId;
 		this.type = type;
-		this.start = start.getTokenIndex();
-		this.stop = stop.getTokenIndex();
+		this.begIdx = start.getTokenIndex();
+		this.endIdx = stop.getTokenIndex();
 	}
 
 	void update(int id, Kind kind, String aspect, int format, boolean isVar, Token start, Token stop) {
@@ -106,9 +108,13 @@ public class Feature implements Comparable<Feature> {
 		this.aspect = aspect;
 		this.format = format;
 		this.isVar = isVar;
-		this.text = genText(start.getInputStream(), start.getStartIndex(), stop.getStopIndex());
+
 		this.begLine = start.getLine() - 1;
 		this.endLine = stop.getLine() - 1;
+		this.begOffset = start.getStartIndex();
+		this.endOffset = stop.getStopIndex();
+
+		this.text = genText(start.getInputStream(), begOffset, endOffset);
 
 		Point coords = getCoords(start);
 		col = coords.getCol();
@@ -120,7 +126,7 @@ public class Feature implements Comparable<Feature> {
 
 	private String genText(CharStream is, int startIndex, int stopIndex) {
 		int end = stopIndex < (startIndex + TXTLEN) ? stopIndex : startIndex + TXTLEN - 3;
-		String text = is.getText(new Interval(startIndex, end));
+		String text = is.getText(new Interval(startIndex, end)).trim();
 		if (end != stopIndex) text += "...";
 		return Utils.escapeWhitespace(text, true);
 	}
@@ -157,11 +163,11 @@ public class Feature implements Comparable<Feature> {
 		weight++;
 	}
 
-	public boolean isBefore(Feature root) {
-		if (getLine() < root.getLine()) return true;
-		if (getLine() > root.getLine()) return false;
-		if (getCol() < root.getCol()) return true;
-		return false;
+	public boolean isAfter(Feature root) {
+		if (getLine() < root.getLine()) return false;
+		if (getLine() > root.getLine()) return true;
+		if (getCol() < root.getCol()) return false;
+		return true;
 	}
 
 	public Location getLocation() {
@@ -173,14 +179,13 @@ public class Feature implements Comparable<Feature> {
 	 * corpus feature. A distance value of <code>zero</code> indicates that the two features are
 	 * identical.
 	 */
-	public double distance(Feature corp) {
-		// Log.debug(this, "Type " + aspect);
-		double dist = selfSimularity() + corp.selfSimularity() - (2 * similarity(corp));
-		// Log.debug(this, "Distance: " + String.valueOf(dist));
-		// Log.debug(this, "----------------");
+	public double distance(Feature cps) {
+		double dist = selfSimularity() + cps.selfSimularity() - (2 * similarity(cps));
 		if (dist < 0) {
-			String msg = String.format(ErrInvalidDist, dist, this.toString(), corp.toString());
-			throw new ComputationException(new Throwable(msg));
+			String msg = String.format(ErrInvalidDist, dist, this.toString(), cps.toString());
+			// throw new ComputationException(new Throwable(msg));
+			Log.error(this, msg);
+			dist = Double.POSITIVE_INFINITY;
 		}
 		return dist;
 	}
@@ -194,24 +199,22 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	// sum of feature label similarities and the edge set similarity
-	public double similarity(Feature corp) {
-		double featSim = featLabelSimilarity(corp);
-		double edgeSim = getEdgeSet().similarity(corp.getEdgeSet());
-		// Log.debug(this, "Feature label sim: " + String.valueOf(featSim));
-		// Log.debug(this, "Edge set sim : " + String.valueOf(edgeSim));
+	public double similarity(Feature cps) {
+		double featSim = featLabelSimilarity(cps);
+		double edgeSim = getEdgeSet().similarity(cps.getEdgeSet());
 		return featSim + edgeSim;
 	}
 
 	// type and text (if applicable) have to be identical
-	public double featLabelSimilarity(Feature corp) {
+	public double featLabelSimilarity(Feature cps) {
 		Map<Factor, Double> boosts = Tool.mgr.getFactors();
 		double[] vals = new double[6];
-		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, corp.format);
-		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, corp.format);
-		vals[2] = boosts.get(Factor.TEXT) * (text.equals(corp.text) ? 1 : 0);
-		vals[3] = boosts.get(Factor.WEIGHT) * Norm.delta(weight, corp.weight);
-		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.delta(dimensionality(), corp.dimensionality());
-		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.delta(edgeSet.getEdgeCount(), corp.edgeSet.getEdgeCount());
+		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, cps.format);
+		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, cps.format);
+		vals[2] = boosts.get(Factor.TEXT) * (text.equals(cps.text) ? 1 : 0);
+		vals[3] = boosts.get(Factor.WEIGHT) * Norm.invDelta(weight, cps.weight);
+		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.invDelta(dimensionality(), cps.dimensionality());
+		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
 		double sum = Norm.sum(vals);
 		return sum;
 	}
@@ -219,6 +222,11 @@ public class Feature implements Comparable<Feature> {
 	/** Returns the number of unique types of feature type edgeSet */
 	public int dimensionality() {
 		return edgeSet.getTypeCount();
+	}
+
+	/** Returns the character stream distance between the this and the given feature. */
+	public int offsetDistance(Feature o) {
+		return Math.abs(begOffset - o.begOffset);
 	}
 
 	public long getId() {
@@ -250,14 +258,14 @@ public class Feature implements Comparable<Feature> {
 		return type;
 	}
 
-	/** Returns the start token index */
+	/** Returns the begIdx token index */
 	public int getStart() {
-		return start;
+		return begIdx;
 	}
 
-	/** Returns the stop token index */
+	/** Returns the endIdx token index */
 	public int getStop() {
-		return stop;
+		return endIdx;
 	}
 
 	public int getCol() {
@@ -341,7 +349,6 @@ public class Feature implements Comparable<Feature> {
 	public boolean equivalentTo(Feature o) {
 		if (type != o.type) return false;
 		if (format != o.format) return false;
-		if (edgeSet.disjointCount(o.getEdgeSet()) != 0) return false;
 		return true;
 	}
 
@@ -351,10 +358,10 @@ public class Feature implements Comparable<Feature> {
 		if (docId > o.docId) return 1;
 		if (type < o.type) return -1;
 		if (type > o.type) return 1;
-		if (start < o.start) return -1;
-		if (start > o.start) return 1;
-		if (stop < o.stop) return -1;
-		if (stop > o.stop) return 1;
+		if (begIdx < o.begIdx) return -1;
+		if (begIdx > o.begIdx) return 1;
+		if (endIdx < o.endIdx) return -1;
+		if (endIdx > o.endIdx) return 1;
 		if (weight < o.weight) return -1;
 		if (weight > o.weight) return 1;
 		return 0;
@@ -369,8 +376,8 @@ public class Feature implements Comparable<Feature> {
 		Feature o = (Feature) obj;
 		if (docId != o.docId) return false;
 		if (type != o.type) return false;
-		if (start != o.start) return false;
-		if (stop != o.stop) return false;
+		if (begIdx != o.begIdx) return false;
+		if (endIdx != o.endIdx) return false;
 		return true;
 	}
 
@@ -381,8 +388,8 @@ public class Feature implements Comparable<Feature> {
 		result = prime * result + docId;
 		result = prime * result + (int) (type >>> 32);
 		result = prime * result + (int) type;
-		result = prime * result + start;
-		result = prime * result + stop;
+		result = prime * result + begIdx;
+		result = prime * result + endIdx;
 		return result;
 	}
 
@@ -394,8 +401,8 @@ public class Feature implements Comparable<Feature> {
 			if (id != o.id) sb.append("id [" + id + ":" + o.id + "] ");
 			if (docId != o.docId) sb.append("docId [" + docId + ":" + o.docId + "] ");
 			if (type != o.type) sb.append("type [" + type + ":" + o.type + "] ");
-			if (start != o.start) sb.append("start [" + start + ":" + o.start + "] ");
-			if (stop != o.stop) sb.append("stop [" + stop + ":" + o.stop + "] ");
+			if (begIdx != o.begIdx) sb.append("begIdx [" + begIdx + ":" + o.begIdx + "] ");
+			if (endIdx != o.endIdx) sb.append("endIdx [" + endIdx + ":" + o.endIdx + "] ");
 			if (format != o.format) sb.append("format [" + format + ":" + o.format + "] ");
 			if (begLine != o.begLine) sb.append("begLine [" + begLine + ":" + o.begLine + "] ");
 			if (endLine != o.endLine) sb.append("endLine [" + endLine + ":" + o.endLine + "] ");

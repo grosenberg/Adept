@@ -1,0 +1,75 @@
+package net.certiv.adept.topo;
+
+import java.util.List;
+
+import com.google.common.primitives.Longs;
+
+/**
+ * Calculates the optimal alignment similarity between two arrays of values using the
+ * Smith-Waterman-Gotoh algorithm and a linear gap penalty.
+ * 
+ * @see <a href="https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm">Wikipedia -
+ *      Smith-Waterman algorithm</a>
+ */
+public final class Align {
+
+	private static final double match = 1.0f;
+	private static final double miss = -2.0f;
+	private static final double gap = -0.5f;
+
+	private Align() {}
+
+	/**
+	 * Returns the effective degree of similary, in the range [0-1], between the two given sequences
+	 * of values.
+	 */
+	public static double similarity(List<Long> a, List<Long> b) {
+		if (a.isEmpty() && b.isEmpty()) return 1.0;
+		if (a.isEmpty() || b.isEmpty()) return 0.0;
+
+		double maxDistance = Math.min(a.size(), b.size()) * max(match, gap);
+		return alignment(Longs.toArray(a), Longs.toArray(b)) / maxDistance;
+	}
+
+	private static double alignment(long[] s, long[] t) {
+		double[] m0 = new double[t.length]; // matrix scoring rows
+		double[] m1 = new double[t.length];
+
+		m0[0] = max(0, gap, eval(s[0], t[0]));
+		double sim = m0[0];
+		for (int j = 1; j < m0.length; j++) {
+			m0[j] = max(0, m0[j - 1] + gap, eval(s[0], t[j]));
+			sim = max(sim, m0[j]);
+		}
+
+		// determine scored alignment similarity
+		for (int i = 1; i < s.length; i++) {
+			m1[0] = max(0, m0[0] + gap, eval(s[i], t[0]));
+			sim = max(sim, m1[0]);
+			for (int j = 1; j < m0.length; j++) {
+				m1[j] = max(0, m0[j] + gap, m1[j - 1] + gap, m0[j - 1] + eval(s[i], t[j]));
+				sim = max(sim, m1[j]);
+			}
+			for (int j = 0; j < m0.length; j++) {
+				m0[j] = m1[j];
+			}
+		}
+		return sim;
+	}
+
+	private static double eval(long a, long b) {
+		return a == b ? match : miss;
+	}
+
+	private static double max(double a, double b) {
+		return Math.max(a, b);
+	}
+
+	private static double max(double a, double b, double c) {
+		return Math.max(Math.max(a, b), c);
+	}
+
+	private static double max(double a, double b, double c, double d) {
+		return Math.max(Math.max(Math.max(a, b), c), d);
+	}
+}

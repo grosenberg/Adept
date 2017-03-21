@@ -37,9 +37,9 @@ public class Group {
 
 	private static final int ENCLOSURES = 4;
 	private static final int ADJACENTS = 2;
-	private static final int ALIGNS = 6;
+	private static final int ALIGNS = 4;
 
-	// sort local features by line, col, and feature type
+	// sort features by line, col, and feature type
 	private static Comparator<Feature> COMP = new Comparator<Feature>() {
 
 		@Override
@@ -156,35 +156,41 @@ public class Group {
 	// add aligned token features on the non-blank lines before anad after the current line
 	// stops in each direction at the limit of ALIGN_ANY or first real line without an aligned token
 	private void addAligned(TreeSet<Feature> locals, Token token, int line) {
-		int visCol = data.visIndex.get(token);
 		int cnt = 0;
 		int next = line;
 		while (next != -1 && cnt < ALIGNS) {
-			next = addAligned(locals, next, visCol, true);
+			next = addAligned(locals, next, token, true);
 			cnt++;
 		}
 		cnt = 0;
 		next = line;
 		while (next != -1 && cnt < ALIGNS) {
-			next = addAligned(locals, next, visCol, false);
+			next = addAligned(locals, next, token, false);
 			cnt++;
 		}
 	}
 
-	private int addAligned(TreeSet<Feature> locals, int line, int visCol, boolean asc) {
+	private int addAligned(TreeSet<Feature> locals, int line, Token start, boolean asc) {
 		int next = nonBlankLine(line, asc ? 1 : -1);
 		if (next != -1) {
-			List<Token> tokens = data.lineIndex.get(next);
-			for (Token token : tokens) {
-				int tokCol = data.visIndex.get(token);
-				if (tokCol < visCol) continue;
-				if (tokCol > visCol) return -1; // end on no-align found
+			int visCol = data.visIndex.get(start);
+			Info info = data.doc.getInfo(line);
+			if (visCol > info.beg) {
+				List<Token> tokens = data.lineIndex.get(next);
+				for (Token token : tokens) {
+					int tokCol = data.visIndex.get(token);
+					if (tokCol < visCol) continue;
+					if (tokCol > visCol) return -1; // end on no-align found
 
-				TerminalNode node = data.nodeIndex.get(token);
-				if (node != null) {
-					Feature feature = data.terminalIndex.get(node);
-					locals.add(feature);
-					break;
+					if (Form.alignSame(data, start.getType(), token.getType())
+							|| Form.aligned(data, start.getType(), token.getType())) {
+						TerminalNode node = data.nodeIndex.get(token);
+						if (node != null) {
+							Feature feature = data.terminalIndex.get(node);
+							locals.add(feature);
+							break;
+						}
+					}
 				}
 			}
 		}

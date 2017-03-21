@@ -259,11 +259,12 @@ public class CorpusModel extends CorpusBase {
 			weighted.addAll(uniques);
 			unq += uniques.size();
 
-			if (uniques.size() < features.size()) {
-				String aspect = features.get(0).getAspect();
-				Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect, type,
-						features.size(), uniques.size()));
-			}
+			// if (uniques.size() < features.size()) {
+			// String aspect = features.get(0).getAspect();
+			// Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect,
+			// type,
+			// features.size(), uniques.size()));
+			// }
 		}
 		int reduction = 100 - (unq * 100 / tot);
 		Log.debug(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));

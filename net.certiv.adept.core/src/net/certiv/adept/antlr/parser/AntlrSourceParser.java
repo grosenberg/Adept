@@ -61,7 +61,7 @@ public class AntlrSourceParser implements ISourceParser {
 		collector.BLOCKCOMMENT = BLOCKCOMMENT;
 		collector.LINECOMMENT = LINECOMMENT;
 		collector.VARS = new int[] { ID, INT, SET, STRING };
-		collector.ALIGN_SAME = new int[] { ID, INT, SET, STRING, RANGE };
+		collector.ALIGN_SAME = new int[] { ID, INT, SET, STRING, RANGE, BLOCKCOMMENT, LINECOMMENT };
 		collector.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LPAREN, RPAREN, LBRACE, RBRACE, LBRACK, RBRACK,
 				RARROW, EQ, PLUSEQ, LSKIP, LMORE, LEOF, MODE, PUSHMODE, POPMODE, TYPE, };
 		collector.ERR_TOKEN = ERRCHAR;

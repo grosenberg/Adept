@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
-
-import com.google.common.primitives.Doubles;
-
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.EdgeSet;
 import net.certiv.adept.model.Feature;
@@ -25,20 +21,15 @@ public class Stats {
 	public double featLabelSim;
 	public double edgeSetSim;
 	public double intersectSim;
-	public double disjointSim;
 
 	public int typeCount; 		// # of unique feature types connected to this feature
 	public int edgeCount; 		// total # of edgeSet connected to this feature
 	public int edgeSetIntersect;
 	public int edgeSetDisjoint;
 	public int intersectCount;
-	public int disjointCount;
 
 	public String intersectTypes;
 	public String disjointTypes;
-
-	public double maxSd;		// feature's max edge metric stdDev
-	public double minSd;
 
 	private Set<Long> intersectKeys;
 	private Set<Long> disjointKeys;
@@ -57,9 +48,7 @@ public class Stats {
 		this.featLabelSim = feature.featLabelSimilarity(matched);
 		this.edgeSetSim = feature.getEdgeSet().similarity(matched.getEdgeSet());
 		this.intersectSim = feature.getEdgeSet().intersect(matched.getEdgeSet());
-		this.disjointSim = feature.getEdgeSet().disjoint(matched.getEdgeSet());
 		this.intersectCount = feature.getEdgeSet().intersectCount(matched.getEdgeSet());
-		this.disjointCount = feature.getEdgeSet().disjointCount(matched.getEdgeSet());
 
 		intersectKeys = feature.getEdgeSet().intersectKeys(matched.getEdgeSet());
 		disjointKeys = feature.getEdgeSet().disjointKeys(matched.getEdgeSet());
@@ -102,13 +91,9 @@ public class Stats {
 		typeCount = edgeSet.getTypeCount();
 		edgeCount = edgeSet.getEdgeCount();
 
-		List<Double> metrics = new ArrayList<>();
+		List<Integer> metrics = new ArrayList<>();
 		for (Edge edge : edgeSet.getEdges()) {
 			metrics.add(edge.metric);
 		}
-		StandardDeviation sd = new StandardDeviation();
-		double val = sd.evaluate(Doubles.toArray(metrics));
-		maxSd = Math.max(maxSd, val);
-		minSd = minSd != 0 ? Math.min(maxSd, val) : val;
 	}
 }

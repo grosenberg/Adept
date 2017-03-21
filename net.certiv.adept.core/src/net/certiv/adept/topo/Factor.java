@@ -17,7 +17,7 @@ public enum Factor {
 
 	// edge sets
 	ORDER("order", 0.6),		// fraction of 1.0 allocated to order significance
-	DISCOUNT("discount", 1.0),	// of disjoint relative to intersect
+	DISCOUNT("discount", 0.4),	// for expected disjoints
 
 	// not used
 	RARITY("rarity", 1.0),

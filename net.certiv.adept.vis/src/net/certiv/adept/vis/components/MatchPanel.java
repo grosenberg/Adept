@@ -41,11 +41,9 @@ public class MatchPanel extends JPanel {
 	private JTextField txtSelfSimM;
 	private JTextField txtMutualSim;
 	private JTextField txtIntersectSim;
-	private JTextField txtDisjointSim;
 	private JTextField txtTotTypes;
 	private JTextField txtTotEdges;
 	private JTextField txtIntersect;
-	private JTextField txtDisjoint;
 	private JTextField txtIntersectTypes;
 	private JTextField txtDisjointTypes;
 
@@ -235,11 +233,6 @@ public class MatchPanel extends JPanel {
 		JLabel lblEdgeDis = new JLabel("Disjoint Sim");
 		add(lblEdgeDis, "17, 22, right, default");
 
-		txtDisjointSim = new JTextField();
-		txtDisjointSim.setEditable(false);
-		add(txtDisjointSim, "19, 22, fill, default");
-		txtDisjointSim.setColumns(10);
-
 		JLabel lblOverlap = new JLabel("Intersects");
 		add(lblOverlap, "3, 24, right, default");
 
@@ -258,11 +251,6 @@ public class MatchPanel extends JPanel {
 
 		JLabel lblDisjoint = new JLabel("Disjoints");
 		add(lblDisjoint, "3, 26, right, default");
-
-		txtDisjoint = new JTextField();
-		txtDisjoint.setEditable(false);
-		add(txtDisjoint, "5, 26, fill, default");
-		txtDisjoint.setColumns(10);
 
 		JLabel lblDisjointTypes = new JLabel("Types");
 		add(lblDisjointTypes, "7, 26, right, default");
@@ -301,12 +289,10 @@ public class MatchPanel extends JPanel {
 		txtFeatSim.setText(String.valueOf(stats.featLabelSim));
 		txtEdgeSim.setText(String.valueOf(stats.edgeSetSim));
 		txtIntersectSim.setText(String.valueOf(stats.intersectSim));
-		txtDisjointSim.setText(String.valueOf(stats.disjointSim));
 
 		txtTotTypes.setText(String.valueOf(stats.typeCount));
 		txtTotEdges.setText(String.valueOf(stats.edgeCount));
 		txtIntersect.setText(String.valueOf(stats.intersectCount));
-		txtDisjoint.setText(String.valueOf(stats.disjointCount));
 
 		txtIntersectTypes.setText(stats.intersectTypes);
 		txtDisjointTypes.setText(stats.disjointTypes);

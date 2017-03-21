@@ -3,6 +3,8 @@ package net.certiv.adept.topo;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.google.common.collect.HashBasedTable;
+
 import net.certiv.adept.util.Norm;
 
 public enum Facet {
@@ -35,14 +37,37 @@ public enum Facet {
 	JOIN_ALLOW(19),		// can follow
 	JOIN_NEVER(20),		// always occurs at line begin
 
-	// nil facets - signal to preserve existing
+	// nil facets
 
 	NO_FORMAT(21),
+	UNALIGNED(22),
 
 	;
 
+	private static final HashBasedTable<Facet, Facet, Double> scoreTable = HashBasedTable.create();
+	static {
+		// source facet, corpus facet, value
+		scoreTable.put(INDENTED, INDENTED, 1.0);
+		scoreTable.put(AT_LINE_BEG, AT_LINE_BEG, 1.0);
+		scoreTable.put(AT_LINE_END, AT_LINE_END, 1.0);
+		scoreTable.put(WS_BEFORE, WS_BEFORE, 1.0);
+		scoreTable.put(WS_AFTER, WS_AFTER, 1.0);
+		scoreTable.put(WIDE_BEFORE, WIDE_BEFORE, 1.0);
+		scoreTable.put(WIDE_AFTER, WIDE_AFTER, 1.0);
+		scoreTable.put(ALIGNED, ALIGNED, 1.0);
+		scoreTable.put(ALIGNED_SAME, ALIGNED_SAME, 1.0);
+
+		scoreTable.put(AT_LINE_BEG, INDENTED, 0.5);
+		scoreTable.put(WS_BEFORE, WIDE_BEFORE, 0.5);
+		scoreTable.put(WS_AFTER, WIDE_AFTER, 0.5);
+		scoreTable.put(ALIGNED, ALIGNED_SAME, 0.5);
+		scoreTable.put(ALIGNED, UNALIGNED, 0.3);
+		scoreTable.put(UNALIGNED, ALIGNED, 0.5);
+		scoreTable.put(UNALIGNED, ALIGNED_SAME, 0.2);
+	}
+
 	private static final double DNTS = 6;			// num significant dent bits
-	private static final double SIGF = 14 - DNTS;	// num significant facet bits
+	// private static final double SIGF = 14 - DNTS; // num significant facet bits
 
 	static final int FMASK = 0x3FC0;	// bits 6-14
 	static final int DMASK = 0x3F; 		// bits 0-5 (64bit values)
@@ -54,16 +79,41 @@ public enum Facet {
 		value = 1 << shift;
 	}
 
+	// /**
+	// * Returns a value reflecting the similarity of the two given formats. Base similarity
+	// * calculated as the Kendall's rank correlation coefficient (or normalized tau distance)
+	// between
+	// * the significant enum bits of the given formats; limited to positive values.
+	// */
+	// public static double similarity(int src, int cps) {
+	// double nc = Long.bitCount(~(src ^ cps) & FMASK);// concordant pairs
+	// double nd = SIGF - nc; // discordant pairs
+	// double tau = (nc - nd) / SIGF;
+	// return Math.max(tau, 0);
+	// }
+
 	/**
-	 * Returns a value reflecting the similarity of the two given formats. Base similarity
-	 * calculated as the Kendall's rank correlation coefficient (or normalized tau distance) between
-	 * the significant enum bits of the given formats; limited to positive values.
+	 * Returns a value reflecting the similarity of the two given formats. Similarity calculated
+	 * using a scoring matrix that defines weighted relationships between facet pairs.
 	 */
-	public static double similarity(int f1, int f2) {
-		double nc = Long.bitCount(~(f1 ^ f2) & FMASK);	// concordant pairs
-		double nd = SIGF - nc;							// discordant pairs
-		double tau = (nc - nd) / SIGF;
-		return Math.max(tau, 0);
+	public static double similarity(int src, int cps) {
+		Set<Facet> a = get(src);
+		Set<Facet> b = get(cps);
+		Set<Facet> c = get(src | cps);
+
+		double basis = score(c, c);
+		return score(a, b) / basis;
+	}
+
+	private static double score(Set<Facet> a, Set<Facet> b) {
+		double s = 0;
+		for (Facet fa : a) {
+			for (Facet fb : b) {
+				Double result = scoreTable.get(fa, fb);
+				s += result != null ? result : 0;
+			}
+		}
+		return s;
 	}
 
 	/**

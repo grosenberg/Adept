@@ -48,6 +48,9 @@ public class Form {
 		if (lhsEval.all(Facet.ALIGNED).result()) {
 			resolved.add(Facet.ALIGNED);
 		}
+		if (lhsEval.all(Facet.ALIGNED_SAME).result()) {
+			resolved.add(Facet.ALIGNED_SAME);
+		}
 
 		// decide splitting
 		if (lhsEval.all(Facet.AT_LINE_END).or(rhsEval.all(Facet.AT_LINE_BEG)).result()) {
@@ -66,8 +69,8 @@ public class Form {
 		CommonToken start = (CommonToken) ctx.getStart();
 		CommonToken stop = (CommonToken) ctx.getStop();
 		Document doc = data.getDocument();
-		FormInfo begInfo = doc.getInfo(start.getLine() - 1);
-		FormInfo endInfo = doc.getInfo(stop.getLine() - 1);
+		Info begInfo = doc.getInfo(start.getLine() - 1);
+		Info endInfo = doc.getInfo(stop.getLine() - 1);
 		int len = stop.getStopIndex() - start.getStartIndex() + 1;
 
 		return characterize(data, start, stop, begInfo, endInfo, len);
@@ -76,22 +79,20 @@ public class Form {
 	/** Characterize a node */
 	public static int characterize(ParseData data, TerminalNode node) {
 		CommonToken token = (CommonToken) node.getSymbol();
-		FormInfo info = data.getDocument().getInfo(token.getLine() - 1);
+		Info info = data.getDocument().getInfo(token.getLine() - 1);
 		return characterize(data, token, token, info, info, token.getText().length());
 	}
 
 	/** Characterize a comment */
 	public static int characterize(ParseData data, Token token) {
-		FormInfo info = data.getDocument().getInfo(token.getLine() - 1);
+		Info info = data.getDocument().getInfo(token.getLine() - 1);
 		return characterize(data, token, token, info, info, token.getText().length());
 	}
 
-	private static int characterize(ParseData data, Token start, Token stop, FormInfo begInfo, FormInfo endInfo,
-			int len) {
+	private static int characterize(ParseData data, Token start, Token stop, Info begInfo, Info endInfo, int len) {
 
 		int idxStart = start.getTokenIndex();
 		int idxStop = stop.getTokenIndex();
-		int line = start.getLine() - 1;
 		int col = start.getCharPositionInLine();
 
 		int format = 0;
@@ -130,10 +131,16 @@ public class Form {
 		if (begInfo.blankAbove) format |= Facet.BLANK_ABOVE.value;
 		if (endInfo.blankBelow) format |= Facet.BLANK_BELOW.value;
 
-		format |= aligned(data, start, nonBlankLine(data, line, -1));
-		format |= aligned(data, start, nonBlankLine(data, line, 1));
+		format |= aligned(data, start);
 
 		return format;
+	}
+
+	private static int aligned(ParseData data, Token start) {
+		int line = start.getLine() - 1;
+		int format = aligned(data, start, nonBlankLine(data, line, -1));
+		format |= aligned(data, start, nonBlankLine(data, line, 1));
+		return format != 0 ? format : Facet.UNALIGNED.value;
 	}
 
 	// check for alignment on any column after the first non-blank; consider alignment of (1) token
@@ -142,7 +149,7 @@ public class Form {
 	private static int aligned(ParseData data, Token start, int line) {
 		if (line != -1) {
 			int visCol = data.visIndex.get(start);
-			FormInfo info = data.doc.getInfo(line);
+			Info info = data.doc.getInfo(line);
 			if (visCol > info.beg) {
 				List<Token> tokens = data.lineIndex.get(line);
 				for (Token token : tokens) {
@@ -152,7 +159,7 @@ public class Form {
 					if (tokCol == visCol) {
 						if (alignSame(data, start.getType(), token.getType())) {
 							return Facet.ALIGNED.value | Facet.ALIGNED_SAME.value;
-						} else if (alignable(data, start.getType(), token.getType())) {
+						} else if (aligned(data, start.getType(), token.getType())) {
 							return Facet.ALIGNED.value;
 						}
 					}
@@ -162,7 +169,7 @@ public class Form {
 		return 0;
 	}
 
-	private static boolean alignSame(ParseData data, int type1, int type2) {
+	public static boolean alignSame(ParseData data, int type1, int type2) {
 		if (type1 == type2) {
 			for (int i : data.ALIGN_SAME) {
 				if (i == type1) return true;
@@ -171,7 +178,7 @@ public class Form {
 		return false;
 	}
 
-	private static boolean alignable(ParseData data, int type1, int type2) {
+	public static boolean aligned(ParseData data, int type1, int type2) {
 		return alignable(data, type1) && alignable(data, type2);
 	}
 

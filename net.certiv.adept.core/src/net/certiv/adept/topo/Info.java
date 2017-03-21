@@ -2,7 +2,7 @@ package net.certiv.adept.topo;
 
 import net.certiv.adept.util.Strings;
 
-public class FormInfo {
+public class Info {
 
 	/** The line is blank */
 	public boolean blank;
@@ -18,7 +18,7 @@ public class FormInfo {
 	public boolean blankAbove;
 	public boolean blankBelow;
 
-	public FormInfo(String text, int tabWidth) {
+	public Info(String text, int tabWidth) {
 		init(text, tabWidth);
 	}
 
