@@ -1,7 +1,7 @@
 package net.certiv.adept.model;
 
 /** Wrapper class to provide an 'equivalent' equals function */
-public class EEdge implements Comparable<EEdge> {
+public class EqEdge implements Comparable<EqEdge> {
 
 	private Edge edge;
 
@@ -10,7 +10,7 @@ public class EEdge implements Comparable<EEdge> {
 	private String leafText;
 	private String rootText;
 
-	public EEdge(Edge edge) {
+	public EqEdge(Edge edge) {
 		this.edge = edge;
 
 		leafType = edge.leaf.getType();
@@ -24,7 +24,7 @@ public class EEdge implements Comparable<EEdge> {
 	}
 
 	@Override
-	public int compareTo(EEdge o) {
+	public int compareTo(EqEdge o) {
 		if (leafType < o.leafType) return -1;
 		if (leafType > o.leafType) return 1;
 		return leafText.compareTo(o.leafText);
@@ -35,7 +35,7 @@ public class EEdge implements Comparable<EEdge> {
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		EEdge o = (EEdge) obj;
+		EqEdge o = (EqEdge) obj;
 		if (edge == null || o.edge == null) return false;
 		if (leafType != o.leafType) return false;
 		if (rootType != o.rootType) return false;

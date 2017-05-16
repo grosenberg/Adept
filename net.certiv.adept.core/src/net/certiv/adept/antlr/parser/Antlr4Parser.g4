@@ -110,7 +110,7 @@ function
 	;
 
 attrValue
-	: LPAREN ID RPAREN
+	: LPAREN ( LHIDDEN | ID ) RPAREN
 	;
 
 dottedID
@@ -148,13 +148,6 @@ op
 mod
 	: STAR QMARK? | PLUS QMARK? | QMARK
 	;
-
-//punct
-//	: AT | COLON | COMMA
-//	| LPAREN | RPAREN | LBRACE | RBRACE | LBRACK | RBRACK
-//	| RARROW | EQ | QMARK | STAR | PLUS | PLUSEQ
-//	| NOT | ALT | DOT | RANGE | DOLLAR | POUND
-//	;
 
 other
 	: .

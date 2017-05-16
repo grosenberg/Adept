@@ -19,7 +19,7 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Feature;
 
 public class TopoPanel extends JPanel {
@@ -398,13 +398,14 @@ public class TopoPanel extends JPanel {
 
 	public void load(BiMap<Feature, Integer> vertices, Feature feature) {
 		this.vertices = vertices;
+		CorpusModel model = feature.getMgr().getCorpusModel();
 
 		txtType.setText(String.valueOf(feature.getType()));
 		txtLine.setText(String.valueOf(feature.getLine()));
 		txtCol.setText(String.valueOf(feature.getCol()));
 		txtAspect.setText(feature.getAspect());
 		chkVariable.setSelected(feature.isVar());
-		txtDocName.setText(Tool.mgr.getCorpusModel().getPathname(feature.getDocId()));
+		txtDocName.setText(model.getPathname(feature.getDocId()));
 	}
 
 	public void setInitLocations(Point2D[] xydata) {

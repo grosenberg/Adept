@@ -2,7 +2,7 @@ package net.certiv.adept;
 
 import com.google.gson.annotations.Expose;
 
-/** Settings to use globally. */
+/** Settings to use globally (per instance). */
 public class Settings {
 
 	// settings to use when analyzing a source document

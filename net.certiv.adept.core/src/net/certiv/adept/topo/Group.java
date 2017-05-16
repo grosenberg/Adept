@@ -1,15 +1,13 @@
 package net.certiv.adept.topo;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.certiv.adept.model.EKind;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.util.Log;
@@ -39,21 +37,6 @@ public class Group {
 	private static final int ADJACENTS = 2;
 	private static final int ALIGNS = 4;
 
-	// sort features by line, col, and feature type
-	private static Comparator<Feature> COMP = new Comparator<Feature>() {
-
-		@Override
-		public int compare(Feature a, Feature b) {
-			if (a.getLine() < b.getLine()) return -1;
-			if (a.getLine() > b.getLine()) return 1;
-			if (a.getCol() < b.getCol()) return -1;
-			if (a.getCol() > b.getCol()) return 1;
-			if (a.getType() < b.getType()) return -1;
-			if (a.getType() > b.getType()) return 1;
-			return 0;
-		}
-	};
-
 	private ParseData data;
 	private Feature locus;
 
@@ -62,40 +45,39 @@ public class Group {
 	}
 
 	/**
-	 * Sets the locus feature for the local space to search. The locus is, by definition, a node:
-	 * termnial node or comment.
+	 * Adds edges to the locus feature for those leaf features within the local space. The locus is,
+	 * by definition, a node: termnial or comment.
 	 */
-	public void setLocus(Feature locus) {
+	public void addLocalEdges(Feature locus) {
 		this.locus = locus;
-	}
 
-	public Set<Feature> getLocalFeatures() {
-		TreeSet<Feature> locals = new TreeSet<>(COMP);
 		Token token = data.getTokens().get(locus.getStart());
 		TerminalNode node = data.nodeIndex.get(token);
 		if (node == null) {
 			Log.error(this, "Locus node not found for feature start token: " + token);
-			return locals;
+			return;
 		}
-		int line = token.getLine() - 1;
 
-		addEnclosing(locals, (ParserRuleContext) node.getParent());
-		addAligned(locals, token, line);
-		addAdjacent(locals, token, line);
-		addSame(locals, token, line);
+		addEnclosing((ParserRuleContext) node.getParent());
+		addAligned(token, locus.getLine());
+		addAdjacent(token, locus.getLine());
+		addSame(token, locus.getLine());
 
-		return locals;
+		if (locus.getEdgeSet().isEmpty()) {
+			Feature rootCtx = data.ruleIndex.get(data.tree);
+			locus.addEdge(rootCtx, EKind.ADJACENT);
+		}
 	}
 
 	// adds the features that are direct ancestors of the locus, excluding the root
 	// also adds the direct children of the ancestor features
-	private void addEnclosing(TreeSet<Feature> locals, ParserRuleContext ctx) {
+	private void addEnclosing(ParserRuleContext ctx) {
 		int idx = 0;
 		while (ctx != null && idx < ENCLOSURES) {
 			if (ctx.getParent() != null) { // no root feature
 				Feature feature = data.ruleIndex.get(ctx);
-				locals.add(feature);
-				addChildren(locals, ctx);
+				locus.addEdge(feature, EKind.RELATED);
+				addChildren(ctx);
 			}
 			ctx = ctx.getParent();
 			idx++;
@@ -103,7 +85,7 @@ public class Group {
 	}
 
 	// adds those features that represent the direct children of the current context
-	private int addChildren(Set<Feature> locals, ParserRuleContext ctx) {
+	private int addChildren(ParserRuleContext ctx) {
 		int cnt = 0;
 		if (ctx.getChildCount() > 0) {
 			for (ParseTree child : ctx.children) {
@@ -114,7 +96,7 @@ public class Group {
 					feature = data.ruleIndex.get(child);
 				}
 				if (feature != null) {
-					locals.add(feature);
+					locus.addEdge(feature, EKind.RELATED);
 					cnt++;
 				}
 			}
@@ -122,7 +104,7 @@ public class Group {
 		return cnt;
 	}
 
-	private void addAdjacent(TreeSet<Feature> locals, Token token, int line) {
+	private void addAdjacent(Token token, int line) {
 		List<Token> tokens = data.lineIndex.get(line);
 		int mid = tokens.indexOf(token);
 
@@ -133,7 +115,7 @@ public class Group {
 			if (n != null) {
 				Feature feature = data.terminalIndex.get(n);
 				if (feature != null) {
-					locals.add(feature);
+					locus.addEdge(feature, EKind.ADJACENT);
 					cnt++;
 				}
 			}
@@ -146,7 +128,7 @@ public class Group {
 			if (n != null) {
 				Feature feature = data.terminalIndex.get(n);
 				if (feature != null) {
-					locals.add(feature);
+					locus.addEdge(feature, EKind.ADJACENT);
 					cnt++;
 				}
 			}
@@ -155,22 +137,22 @@ public class Group {
 
 	// add aligned token features on the non-blank lines before anad after the current line
 	// stops in each direction at the limit of ALIGN_ANY or first real line without an aligned token
-	private void addAligned(TreeSet<Feature> locals, Token token, int line) {
+	private void addAligned(Token token, int line) {
 		int cnt = 0;
 		int next = line;
 		while (next != -1 && cnt < ALIGNS) {
-			next = addAligned(locals, next, token, true);
+			next = addAligned(next, token, true);
 			cnt++;
 		}
 		cnt = 0;
 		next = line;
 		while (next != -1 && cnt < ALIGNS) {
-			next = addAligned(locals, next, token, false);
+			next = addAligned(next, token, false);
 			cnt++;
 		}
 	}
 
-	private int addAligned(TreeSet<Feature> locals, int line, Token start, boolean asc) {
+	private int addAligned(int line, Token start, boolean asc) {
 		int next = nonBlankLine(line, asc ? 1 : -1);
 		if (next != -1) {
 			int visCol = data.visIndex.get(start);
@@ -187,7 +169,7 @@ public class Group {
 						TerminalNode node = data.nodeIndex.get(token);
 						if (node != null) {
 							Feature feature = data.terminalIndex.get(node);
-							locals.add(feature);
+							locus.addEdge(feature, EKind.ALIGNED);
 							break;
 						}
 					}
@@ -198,7 +180,7 @@ public class Group {
 	}
 
 	// add features of same token type found on surrounding lines
-	private void addSame(TreeSet<Feature> locals, Token token, int line) {
+	private void addSame(Token token, int line) {
 		int type = token.getType();
 		int beg = Math.max(nonBlankLine(line, -1), line);
 		int end = Math.max(nonBlankLine(line, 1), line);
@@ -211,7 +193,7 @@ public class Group {
 				TerminalNode node = data.nodeIndex.get(tok);
 				if (node != null && type == tok.getType()) {
 					Feature feature = data.terminalIndex.get(node);
-					locals.add(feature);
+					locus.addEdge(feature, EKind.SAME);
 				}
 			}
 		}

@@ -12,12 +12,10 @@ import org.antlr.v4.runtime.misc.Utils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.Tool;
-import net.certiv.adept.parser.AdeptToken;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.topo.Location;
-import net.certiv.adept.topo.Point;
 import net.certiv.adept.topo.Stats;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Norm;
@@ -45,8 +43,6 @@ public class Feature implements Comparable<Feature> {
 
 	@Expose private int begIdx;		// feature token begIdx index
 	@Expose private int endIdx;		// feature token endIdx index
-	@Expose private int begLine;	// feature beg token line
-	@Expose private int endLine;	// feature end token line
 	@Expose private int begOffset;	// feature beg character offset
 	@Expose private int endOffset;	// feature end character offset
 
@@ -59,26 +55,28 @@ public class Feature implements Comparable<Feature> {
 	// key = docId; value = locations of equivalent features
 	@Expose ArrayListMultimap<Integer, Location> equivalents;
 
+	private CoreMgr mgr;
+
 	private boolean reCalc;
 	private double selfSim;
 	private Feature matched;
 
 	// comments
-	public static Feature create(Kind kind, String aspect, int docId, long type, Token token, int format) {
-		return create(kind, aspect, docId, type, token, format, false);
+	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token token, int format) {
+		return create(mgr, kind, aspect, docId, type, token, format, false);
 	}
 
 	// nodes
-	public static Feature create(Kind kind, String aspect, int docId, long type, Token token, int format,
+	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token token, int format,
 			boolean isVar) {
-		return create(kind, aspect, docId, type, token, token, format, isVar);
+		return create(mgr, kind, aspect, docId, type, token, token, format, isVar);
 	}
 
 	// rules
-	public static Feature create(Kind kind, String aspect, int docId, long type, Token start, Token stop, int format,
-			boolean isVar) {
+	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token start, Token stop,
+			int format, boolean isVar) {
 
-		Feature feature = new Feature(docId, type, start, stop);
+		Feature feature = new Feature(mgr, docId, type, start, stop);
 		Feature existing = pool.get(feature);
 		if (existing != null) return existing;
 
@@ -94,8 +92,9 @@ public class Feature implements Comparable<Feature> {
 		equivalents = ArrayListMultimap.create();
 	}
 
-	Feature(int docId, long type, Token start, Token stop) {
+	Feature(CoreMgr mgr, int docId, long type, Token start, Token stop) {
 		this();
+		this.mgr = mgr;
 		this.docId = docId;
 		this.type = type;
 		this.begIdx = start.getTokenIndex();
@@ -109,16 +108,12 @@ public class Feature implements Comparable<Feature> {
 		this.format = format;
 		this.isVar = isVar;
 
-		this.begLine = start.getLine() - 1;
-		this.endLine = stop.getLine() - 1;
+		this.col = start.getCharPositionInLine();
+		this.line = start.getLine() - 1;
 		this.begOffset = start.getStartIndex();
 		this.endOffset = stop.getStopIndex();
 
 		this.text = genText(start.getInputStream(), begOffset, endOffset);
-
-		Point coords = getCoords(start);
-		col = coords.getCol();
-		line = coords.getLine();
 
 		weight = 1;
 		reCalc = true;
@@ -131,21 +126,21 @@ public class Feature implements Comparable<Feature> {
 		return Utils.escapeWhitespace(text, true);
 	}
 
-	private Point getCoords(Token start) {
-		return ((AdeptToken) start).coords();
-	}
-
 	/**
 	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as
 	 * defined by root id and leaf id pairs.
 	 */
-	public void addEdge(Feature leaf) {
+	public void addEdge(Feature leaf, EKind kind) {
 		if (leaf != this) {
-			Edge edge = Edge.create(this, leaf);
+			Edge edge = Edge.create(this, leaf, kind);
 			if (edgeSet.addEdge(edge)) {
 				reCalc = true;
 			}
 		}
+	}
+
+	public CoreMgr getMgr() {
+		return mgr;
 	}
 
 	public EdgeSet getEdgeSet() {
@@ -207,14 +202,13 @@ public class Feature implements Comparable<Feature> {
 
 	// type and text (if applicable) have to be identical
 	public double featLabelSimilarity(Feature cps) {
-		Map<Factor, Double> boosts = Tool.mgr.getFactors();
 		double[] vals = new double[6];
-		vals[0] = boosts.get(Factor.FORMAT) * Facet.similarity(format, cps.format);
-		vals[1] = boosts.get(Factor.DENTATION) * Facet.simDentation(format, cps.format);
-		vals[2] = boosts.get(Factor.TEXT) * (text.equals(cps.text) ? 1 : 0);
-		vals[3] = boosts.get(Factor.WEIGHT) * Norm.invDelta(weight, cps.weight);
-		vals[4] = boosts.get(Factor.EDGE_TYPES) * Norm.invDelta(dimensionality(), cps.dimensionality());
-		vals[5] = boosts.get(Factor.EDGE_CNT) * Norm.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
+		vals[0] = mgr.getBoost(Factor.FORMAT) * Facet.similarity(format, cps.format);
+		vals[1] = mgr.getBoost(Factor.DENTATION) * Facet.dentSimilarity(format, cps.format);
+		vals[2] = mgr.getBoost(Factor.TEXT) * (text.equals(cps.text) ? 1 : 0);
+		vals[3] = mgr.getBoost(Factor.WEIGHT) * Norm.invDelta(weight, cps.weight);
+		vals[4] = mgr.getBoost(Factor.EDGE_TYPES) * Norm.invDelta(dimensionality(), cps.dimensionality());
+		vals[5] = mgr.getBoost(Factor.EDGE_CNT) * Norm.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
 		double sum = Norm.sum(vals);
 		return sum;
 	}
@@ -401,11 +395,11 @@ public class Feature implements Comparable<Feature> {
 			if (id != o.id) sb.append("id [" + id + ":" + o.id + "] ");
 			if (docId != o.docId) sb.append("docId [" + docId + ":" + o.docId + "] ");
 			if (type != o.type) sb.append("type [" + type + ":" + o.type + "] ");
+			if (format != o.format) sb.append("format [" + format + ":" + o.format + "] ");
 			if (begIdx != o.begIdx) sb.append("begIdx [" + begIdx + ":" + o.begIdx + "] ");
 			if (endIdx != o.endIdx) sb.append("endIdx [" + endIdx + ":" + o.endIdx + "] ");
-			if (format != o.format) sb.append("format [" + format + ":" + o.format + "] ");
-			if (begLine != o.begLine) sb.append("begLine [" + begLine + ":" + o.begLine + "] ");
-			if (endLine != o.endLine) sb.append("endLine [" + endLine + ":" + o.endLine + "] ");
+			if (begOffset != o.begOffset) sb.append("begOffset [" + begOffset + ":" + o.begOffset + "] ");
+			if (endOffset != o.endOffset) sb.append("endOffset [" + endOffset + ":" + o.endOffset + "] ");
 			if (col != o.col) sb.append("col [" + col + ":" + o.col + "] ");
 			if (line != o.line) sb.append("line [" + line + ":" + o.line + "] ");
 			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");

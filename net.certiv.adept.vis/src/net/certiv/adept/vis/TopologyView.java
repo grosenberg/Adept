@@ -43,6 +43,7 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer.Outside
 import edu.uci.ics.jung.visualization.renderers.GradientVertexRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
@@ -282,8 +283,9 @@ public class TopologyView extends AbstractBase {
 			return;
 		}
 
-		lang = Tool.mgr.getLanguageParser();
-		typeIndex = Tool.mgr.getCorpusModel().getFeatureIndex();
+		CoreMgr mgr = tool.getMgr();
+		lang = mgr.getLanguageParser();
+		typeIndex = mgr.getCorpusModel().getFeatureIndex();
 		model = new CorpusListModel(lang.getRuleNames(), lang.getTokenNames());
 		typeBox.setModel(model);
 		model.addElements(typeIndex);

@@ -28,7 +28,7 @@ import javax.swing.text.TabStop;
 import difflib.DiffUtils;
 import difflib.Patch;
 import difflib.PatchFailedException;
-import net.certiv.adept.topo.Point;
+import net.certiv.adept.vis.utils.Point;
 import net.certiv.adept.vis.utils.TextUtils;
 
 public class DiffPanel extends JPanel {
@@ -77,9 +77,9 @@ public class DiffPanel extends JPanel {
 			public void caretUpdate(CaretEvent e) {
 				try {
 					Document doc = lhs.getDocument();
-					int line = TextUtils.getLineOfOffset(doc, e.getDot());
-					int col = e.getDot() - TextUtils.getLineStartOffset(doc, line);
-					firePropertyChange(CLICK1_LEFT, null, new Point(col, line + 1));
+					int line = TextUtils.getLineOfOffset(doc, e.getDot()); 			// 0..n
+					int col = e.getDot() - TextUtils.getLineStartOffset(doc, line); // 0..n
+					firePropertyChange(CLICK1_LEFT, null, new Point(col, line));
 				} catch (BadLocationException e1) {}
 			}
 		});

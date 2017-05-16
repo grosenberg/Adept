@@ -3,7 +3,6 @@ package net.certiv.adept.model;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,13 +11,15 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.parser.Collector;
 import net.certiv.adept.topo.Analyzer;
 import net.certiv.adept.topo.Factor;
+import net.certiv.adept.tune.Boosts;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
-public class CorpusModel extends CorpusBase {
+public class CorpusModel implements IModel {
 
 	private static final long GAP = 500000;
 
@@ -28,9 +29,11 @@ public class CorpusModel extends CorpusBase {
 	// list of document names that represented in the corpus
 	// key=docId; value=document pathname
 	@Expose private Map<Integer, String> pathnames;
-	// key=label; value=boost
-	@Expose private Map<Factor, Double> labelBoosts;
+	// boost values set
+	@Expose private Boosts boosts;
 
+	// corpus manager
+	private CoreMgr mgr;
 	// corpus path (interface, so cannot be serialized)
 	private Path corpusDir;
 	// list of features that represent the corpus as a whole
@@ -45,15 +48,24 @@ public class CorpusModel extends CorpusBase {
 	public CorpusModel() {
 		super();
 		pathnames = new LinkedHashMap<>();
-		labelBoosts = new HashMap<>();
+		boosts = new Boosts();
 		features = new ArrayList<>();
 		docFeatures = new LinkedHashMap<>();
 		index = ArrayListMultimap.create();
 	}
 
+	/** Constructor for creating a scratch corpus model. */
 	public CorpusModel(Path corpusDir) {
 		this();
 		setCorpusDir(corpusDir);
+		initBoosts();
+	}
+
+	public void dispose() {
+		pathnames.clear();
+		features.clear();
+		docFeatures.clear();
+		index.clear();
 	}
 
 	/**
@@ -90,9 +102,19 @@ public class CorpusModel extends CorpusBase {
 		this.corpusDirname = corpusDir.toString();
 	}
 
+	@Override
+	public CoreMgr getMgr() {
+		return mgr;
+	}
+
+	@Override
+	public void setMgr(CoreMgr mgr) {
+		this.mgr = mgr;
+	}
+
 	/** Add new document to the corpus model */
 	public void add(Document doc) {
-		write(corpusDir, doc);
+		writeDocument(corpusDir, doc);
 	}
 
 	/** Merge features collected during an ab initio build into the corpus model. */
@@ -138,12 +160,10 @@ public class CorpusModel extends CorpusBase {
 		return index;
 	}
 
-	@Override
 	public Map<Integer, List<Feature>> getDocFeatures() {
 		return docFeatures;
 	}
 
-	@Override
 	public String getPathname(int docId) {
 		return pathnames.get(docId);
 	}
@@ -152,15 +172,22 @@ public class CorpusModel extends CorpusBase {
 		return pathnames;
 	}
 
-	public Map<Factor, Double> getLabelBoosts() {
-		if (labelBoosts.isEmpty()) {
-			Factor.loadDefaults(labelBoosts);
+	public void initBoosts() {
+		for (Factor factor : Factor.values()) {
+			boosts.put(factor, factor.getDefault());
 		}
-		return labelBoosts;
 	}
 
-	public void setLabelBoosts(Map<Factor, Double> labelBoosts) {
-		this.labelBoosts = labelBoosts;
+	public double getBoost(Factor factor) {
+		return boosts.get(factor);
+	}
+
+	public Boosts getBoosts() {
+		return boosts;
+	}
+
+	public void setBoosts(Boosts boosts) {
+		this.boosts = boosts;
 	}
 
 	/** Returns the corpus features matching the given source feature. */
@@ -215,17 +242,15 @@ public class CorpusModel extends CorpusBase {
 		features.clear();
 	}
 
-	@Override
 	public void save(Path corpusDir) throws Exception {
 		lastModified = Time.now();
-		super.save(corpusDir);
+		ModelIO.save(corpusDir, this);
 		lastModified = Time.getLastModified(corpusDir);
 		consistent = true;
 	}
 
-	@Override
-	public void write(Path corpusDir, Document doc) {
-		super.write(corpusDir, doc);
+	public void writeDocument(Path corpusDir, Document doc) {
+		ModelIO.writeDocument(corpusDir, doc);
 		consistent = true;
 	}
 
@@ -278,4 +303,26 @@ public class CorpusModel extends CorpusBase {
 		}
 		return null;
 	}
+
+	// /**
+	// * Returns a new subsetted instance of the existing model distinguished by the absence of all
+	// * aspects of the given document.
+	// */
+	// public CorpusModel subset(CoreMgr mgr, Document doc) {
+	// int docId = doc.getDocId();
+	// CorpusModel mod = new CorpusModel();
+	// mod.setMgr(mgr);
+	// mod.corpusDir = corpusDir;
+	// mod.pathnames.putAll(pathnames);
+	// mod.pathnames.remove(docId);
+	// mod.docFeatures.putAll(docFeatures);
+	// mod.docFeatures.remove(docId);
+	// mod.features.addAll(features);
+	// for (int idx = features.size() - 1; idx >= 0; idx--) {
+	// if (features.get(idx).getDocId() == docId) {
+	// mod.features.remove(idx);
+	// }
+	// }
+	// return mod;
+	// }
 }

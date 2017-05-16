@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
 import net.certiv.adept.antlr.parser.gen.Antlr4Lexer;
-import net.certiv.adept.topo.Point;
 
 @SuppressWarnings("serial")
 public class AdeptToken extends CommonToken {
@@ -19,10 +18,6 @@ public class AdeptToken extends CommonToken {
 
 	public AdeptToken(Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
 		super(source, type, channel, start, stop);
-	}
-
-	public Point coords() {
-		return new Point(getCharPositionInLine(), getLine());
 	}
 
 	public void setMode(int mode) {

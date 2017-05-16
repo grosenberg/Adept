@@ -38,6 +38,7 @@ CHANNEL		: 'channel'		;
 
 LSKIP		: 'skip'		;
 LMORE		: 'more'		;
+LHIDDEN		: 'HIDDEN' 		;
 LEOF 		: 'EOF'			;
 
 MODE		: 'mode'		;

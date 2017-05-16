@@ -50,7 +50,9 @@ public class PerfData {
 	public int corpusFeatureTypeCnt;
 	public Map<Integer, String> corpusDocIndex;
 
-	public PerfData() {}
+	public PerfData() {
+		docs = new ArrayList<>();
+	}
 
 	public void setSize(int size) {
 		docs = new ArrayList<>(size);

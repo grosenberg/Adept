@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -13,7 +12,7 @@ import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
@@ -30,11 +29,19 @@ public class Collector extends ParseData {
 	private HashSet<Feature> features;
 	private Group group;
 
-	public Collector(Document doc) {
+	private CoreMgr mgr;
+
+	public Collector() {
+		super(null);
+	}
+
+	public Collector(CoreMgr mgr, Document doc) {
 		super(doc);
+		this.mgr = mgr;
+
 		if (doc != null) doc.setParseData(this);
 		features = new LinkedHashSet<>();
-		exTypes = Tool.mgr.excludedLangTypes();
+		exTypes = mgr.excludedLangTypes();
 		group = new Group(this);
 	}
 
@@ -69,7 +76,7 @@ public class Collector extends ParseData {
 
 		String aspect = parser.getRuleNames()[rule];
 		int format = Form.characterize(this, ctx);
-		Feature feature = Feature.create(Kind.RULE, aspect, doc.getDocId(), type, start, stop, format, false);
+		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, format, false);
 		features.add(feature);
 		contextIndex.put(start, ctx);
 		ruleIndex.put(ctx, feature);
@@ -88,7 +95,7 @@ public class Collector extends ParseData {
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
 		int format = Form.characterize(this, node);
-		Feature feature = Feature.create(Kind.NODE, aspect, doc.getDocId(), type, token, format, isVar(type));
+		Feature feature = Feature.create(mgr, Kind.NODE, aspect, doc.getDocId(), type, token, format, isVar(type));
 		features.add(feature);
 		nodeIndex.put(token, node);
 		terminalIndex.put(node, feature);
@@ -103,7 +110,7 @@ public class Collector extends ParseData {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
 				int format = Form.characterize(this, token);
 				Kind kind = type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT;
-				Feature feature = Feature.create(kind, aspect, doc.getDocId(), type, token, format);
+				Feature feature = Feature.create(mgr, kind, aspect, doc.getDocId(), type, token, format);
 				TerminalNode node = new TerminalNodeImpl(token);
 				features.add(feature);
 				nodeIndex.put(token, node);
@@ -119,11 +126,7 @@ public class Collector extends ParseData {
 		for (Feature root : features) {
 			if (root.getKind() == Kind.RULE) continue;
 
-			group.setLocus(root);
-			Set<Feature> leafs = group.getLocalFeatures(); // ordered by line, col
-			for (Feature leaf : leafs) {
-				root.addEdge(leaf);
-			}
+			group.addLocalEdges(root);
 		}
 	}
 

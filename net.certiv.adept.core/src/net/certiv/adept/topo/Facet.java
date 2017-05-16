@@ -5,8 +5,6 @@ import java.util.Set;
 
 import com.google.common.collect.HashBasedTable;
 
-import net.certiv.adept.util.Norm;
-
 public enum Facet {
 
 	// intrinsic facets - considered for similarity
@@ -44,31 +42,41 @@ public enum Facet {
 
 	;
 
-	private static final HashBasedTable<Facet, Facet, Double> scoreTable = HashBasedTable.create();
+	// -, - | 0, 0 | +, + : 1.0
+	// +, 0 : 0.7
+	// -, 0 : 0.5
+	// -, + : 0.2
+	// #TODO: control by parameters, not constants
+	private static final double[][] SignTable = new double[][] { //
+			{ 1.0, 0.7, 0.2 }, //
+			{ 0.7, 1.0, 0.5 }, //
+			{ 0.2, 0.5, 1.0 } //
+	};
+
+	// #TODO: control by parameters, not constants
+	private static final HashBasedTable<Facet, Facet, Double> ScoreTable = HashBasedTable.create();
 	static {
 		// source facet, corpus facet, value
-		scoreTable.put(INDENTED, INDENTED, 1.0);
-		scoreTable.put(AT_LINE_BEG, AT_LINE_BEG, 1.0);
-		scoreTable.put(AT_LINE_END, AT_LINE_END, 1.0);
-		scoreTable.put(WS_BEFORE, WS_BEFORE, 1.0);
-		scoreTable.put(WS_AFTER, WS_AFTER, 1.0);
-		scoreTable.put(WIDE_BEFORE, WIDE_BEFORE, 1.0);
-		scoreTable.put(WIDE_AFTER, WIDE_AFTER, 1.0);
-		scoreTable.put(ALIGNED, ALIGNED, 1.0);
-		scoreTable.put(ALIGNED_SAME, ALIGNED_SAME, 1.0);
+		ScoreTable.put(INDENTED, INDENTED, 1.0);
+		ScoreTable.put(AT_LINE_BEG, AT_LINE_BEG, 1.0);
+		ScoreTable.put(AT_LINE_END, AT_LINE_END, 1.0);
+		ScoreTable.put(WS_BEFORE, WS_BEFORE, 1.0);
+		ScoreTable.put(WS_AFTER, WS_AFTER, 1.0);
+		ScoreTable.put(WIDE_BEFORE, WIDE_BEFORE, 1.0);
+		ScoreTable.put(WIDE_AFTER, WIDE_AFTER, 1.0);
+		ScoreTable.put(ALIGNED, ALIGNED, 1.0);
+		ScoreTable.put(ALIGNED_SAME, ALIGNED_SAME, 1.0);
 
-		scoreTable.put(AT_LINE_BEG, INDENTED, 0.5);
-		scoreTable.put(WS_BEFORE, WIDE_BEFORE, 0.5);
-		scoreTable.put(WS_AFTER, WIDE_AFTER, 0.5);
-		scoreTable.put(ALIGNED, ALIGNED_SAME, 0.5);
-		scoreTable.put(ALIGNED, UNALIGNED, 0.3);
-		scoreTable.put(UNALIGNED, ALIGNED, 0.5);
-		scoreTable.put(UNALIGNED, ALIGNED_SAME, 0.2);
+		ScoreTable.put(AT_LINE_BEG, INDENTED, 0.7);
+		ScoreTable.put(WS_BEFORE, WIDE_BEFORE, 0.3);
+		ScoreTable.put(WS_AFTER, WIDE_AFTER, 0.5);
+		ScoreTable.put(ALIGNED, ALIGNED_SAME, 0.5);
+		ScoreTable.put(ALIGNED, UNALIGNED, 0.3);
+		ScoreTable.put(UNALIGNED, ALIGNED, 0.5);
+		ScoreTable.put(UNALIGNED, ALIGNED_SAME, 0.2);
 	}
 
-	private static final double DNTS = 6;			// num significant dent bits
-	// private static final double SIGF = 14 - DNTS; // num significant facet bits
-
+	static final double DNTS = 6;		// num significant dent bits
 	static final int FMASK = 0x3FC0;	// bits 6-14
 	static final int DMASK = 0x3F; 		// bits 0-5 (64bit values)
 	static final int ZERO = 32;			// defines zero
@@ -78,19 +86,6 @@ public enum Facet {
 	Facet(int shift) {
 		value = 1 << shift;
 	}
-
-	// /**
-	// * Returns a value reflecting the similarity of the two given formats. Base similarity
-	// * calculated as the Kendall's rank correlation coefficient (or normalized tau distance)
-	// between
-	// * the significant enum bits of the given formats; limited to positive values.
-	// */
-	// public static double similarity(int src, int cps) {
-	// double nc = Long.bitCount(~(src ^ cps) & FMASK);// concordant pairs
-	// double nd = SIGF - nc; // discordant pairs
-	// double tau = (nc - nd) / SIGF;
-	// return Math.max(tau, 0);
-	// }
 
 	/**
 	 * Returns a value reflecting the similarity of the two given formats. Similarity calculated
@@ -109,7 +104,7 @@ public enum Facet {
 		double s = 0;
 		for (Facet fa : a) {
 			for (Facet fb : b) {
-				Double result = scoreTable.get(fa, fb);
+				Double result = ScoreTable.get(fa, fb);
 				s += result != null ? result : 0;
 			}
 		}
@@ -117,29 +112,45 @@ public enum Facet {
 	}
 
 	/**
-	 * Returns a normalized inverse difference of dentation.
+	 * Returns the similarity of indetation levels. Based on normalized inverse difference of
+	 * dentation and relative sign.
 	 */
-	public static double simDentation(int srcFormat, int corpFormat) {
-		boolean sd = INDENTED.isSet(srcFormat);
-		boolean cd = INDENTED.isSet(corpFormat);
-		if (sd && cd) {
-			return Norm.dist(DNTS, getDentation(srcFormat), getDentation(corpFormat));
-		} else if (!sd && !cd) {
-			return 1.0;
-		} else {
+	public static double dentSimilarity(int src, int cps) {
+		boolean si = INDENTED.isSet(src);
+		boolean ci = INDENTED.isSet(cps);
+		if (si && ci) {
+			return sim(DNTS, getDentation(src), getDentation(cps));
+		} else if (!si && !ci) {
+			return 0.7;
+		} else if (!si && ci) {
 			return 0.5;
+		} else {
+			return 0.3;
 		}
+	}
+
+	private static double sim(double limit, double a, double b) {
+		double factor = SignTable[sign(a)][sign(b)];
+		double distance = factor * Math.min(limit, Math.abs(a - b));
+		return (limit - distance) / limit;
+	}
+
+	private static int sign(double value) {
+		if (value > 0) return 0;
+		if (value == 0) return 1;
+		return 2;
 	}
 
 	/** Returns the set of facets that compose the given format. */
 	public static Set<Facet> get(int format) {
 		Set<Facet> facets = new LinkedHashSet<>();
-		if (format > 0) {
+		if (format == 0) {
+			facets.add(NO_FORMAT);
+			facets.add(UNALIGNED);
+		} else {
 			for (Facet facet : Facet.values()) {
 				if ((facet.value & format) > 0) facets.add(facet);
 			}
-		} else {
-			facets.add(NO_FORMAT);
 		}
 		return facets;
 	}

@@ -2,31 +2,24 @@ package net.certiv.adept;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
-
-import org.antlr.v4.runtime.RecognitionException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.core.PerfData;
 import net.certiv.adept.model.Document;
+import net.certiv.adept.model.ModelIO;
 import net.certiv.adept.parser.Collector;
-import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.tool.LangDescriptor;
 import net.certiv.adept.tool.Level;
@@ -47,13 +40,9 @@ public class Tool extends ToolBase {
 
 			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
 			new Options("lang", "-g", OptionType.STRING, "language type"),
-			new Options("output", "-e", OptionType.STRING, "formatted output settings"),
+			new Options("output", "-e", OptionType.STRING, "formatting control settings"),
 			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')"),
-			new Options("tabWidth", "-w", OptionType.INT, "width of a tab"),
-			//
-			// new Options("trust", "-t", OptionType.INT, "formatter confidence threshold (1-6;
-			// min=1; default=3"),
-			//
+			new Options("tabWidth", "-w", OptionType.INT, "width of a tab"), //
 	};
 
 	// fields set by option manager
@@ -72,10 +61,12 @@ public class Tool extends ToolBase {
 
 	// fields set by init/validate
 	public static Settings settings;
-	public static CoreMgr mgr; 	// holds the corpus model and doc models
+
+	private CoreMgr mgr;
 
 	private String version;
 	private List<String> sourceFiles;
+	private List<String> corpusFiles;
 	private List<LangDescriptor> languages;
 	private List<Document> documents;
 	private int corpusTabWidth;
@@ -139,27 +130,13 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean loadResources() {
-		ClassLoader cl = this.getClass().getClassLoader();
 
-		try (InputStream in = cl.getResourceAsStream("adept.properties")) {
-			Properties prop = new Properties();
-			prop.load(in);
-			version = (String) prop.get("version");
-		} catch (IOException e) {
-			errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading version property (" + e.getMessage() + ")");
-			return false;
-		}
+		version = ModelIO.loadVersion(errMgr);
+		if (version == null) return false;
 
-		try (Reader reader = new InputStreamReader(cl.getResourceAsStream("languages.json"), "UTF-8")) {
-			GsonBuilder builder = new GsonBuilder();
-			Gson gson = builder.create();
+		languages = ModelIO.loadLanguages(errMgr);
+		if (languages == null) return false;
 
-			Type collection = new TypeToken<Collection<LangDescriptor>>() {}.getType();
-			languages = gson.fromJson(reader, collection);
-		} catch (Exception e) {
-			errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading lang descriptors (" + e.getMessage() + ")");
-			return false;
-		}
 		return true;
 	}
 
@@ -287,7 +264,8 @@ public class Tool extends ToolBase {
 		// ---- init core manager ----
 
 		try {
-			boolean ok = mgr.initialize(settings.lang, corpusDir, corpusExt, corpusTabWidth, settings.rebuild);
+			boolean ok = mgr.initialize(settings.lang, corpusDir, corpusExt, corpusTabWidth, settings.rebuild,
+					corpusFiles);
 			if (!ok) return false;
 		} catch (Exception e) {
 			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg, e);
@@ -304,50 +282,33 @@ public class Tool extends ToolBase {
 		for (Document doc : documents) {
 			if (settings.learn) {	// add document model to corpus model
 				mgr.update(corpusDir, doc);
-				continue;
+			} else {
+				execute(doc);
 			}
+		}
+	}
 
-			ISourceParser parser = mgr.getLanguageParser();
-			Collector collector = new Collector(doc);
-			try {
-				parser.process(collector, doc);
-			} catch (RecognitionException e) {
-				Log.error(this, ErrorType.PARSE_ERROR.msg + ": " + doc.getPathname());
-				errMgr.toolError(ErrorType.PARSE_ERROR, doc.getPathname());
-				continue;
-			} catch (Exception e) {
-				Log.error(this, ErrorType.PARSE_FAILURE.msg + ": " + doc.getPathname());
-				errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
-				continue;
-			}
+	/**
+	 * Parses the document file to create a source document model, compares the found topography
+	 * features to those of the corpus to discern formatting attributes to be applied to the
+	 * features, and then, nominally, applies the attributes to produce a revised document.
+	 */
+	public void execute(Document doc) {
+		Collector collector = mgr.collect(doc, settings.check);
+		mgr.createDocModel(collector);
 
-			if (settings.check) continue;
+		// now compare document model to corpus model
+		try {
+			mgr.compare();
+		} catch (Exception e) {
+			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg + ": " + doc.getPathname(), e);
+			errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, doc.getPathname());
+			return;
+		}
 
-			collector.index();
-			try {
-				parser.annotateFeatures(collector);
-			} catch (Exception e) {
-				Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname());
-				errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
-				continue;
-			}
-
-			collector.annotateComments();
-			collector.genLocalEdges();
-			mgr.createDocModel(collector);
-
-			try {			// compare document model to corpus model
-				mgr.evaluate();
-			} catch (Exception e) {
-				Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg + ": " + doc.getPathname(), e);
-				errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, doc.getPathname());
-				continue;
-			}
-
-			if (settings.format) {
-				mgr.apply();
-				if (settings.save) doc.saveModified(settings.backup);
-			}
+		if (settings.format) {
+			mgr.apply();
+			if (settings.save) doc.saveModified(settings.backup);
 		}
 	}
 
@@ -467,6 +428,11 @@ public class Tool extends ToolBase {
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(List<String> pathnames) {
 		sourceFiles = pathnames;
+	}
+
+	/** Provides the set of corpus filenames to be used. */
+	public void setCorpusFiles(List<String> pathnames) {
+		corpusFiles = pathnames;
 	}
 
 	public void setTabWidth(int tabWidth) {

@@ -11,9 +11,11 @@ import java.util.Set;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.topo.Align;
 import net.certiv.adept.topo.Factor;
+import net.certiv.adept.util.HashList;
+import net.certiv.adept.util.Norm;
 
 /**
  * The collection of edges, typed by leaf, that defines the connections between a root feature and
@@ -23,7 +25,7 @@ import net.certiv.adept.topo.Factor;
 public class EdgeSet {
 
 	// key=leaf type; value=equivalent edges
-	@Expose private ArrayListMultimap<Long, Edge> edgeSet;
+	@Expose private HashList<Long, Edge> edgeSet;
 	// edges, specified by leaf feature type, ordered by leaf feature line, col, type
 	@Expose private List<Long> edgeOrder;
 
@@ -42,8 +44,23 @@ public class EdgeSet {
 		}
 	};
 
+	// sort edges by leaf feature line, col, and type
+	private static Comparator<Edge> COMP = new Comparator<Edge>() {
+
+		@Override
+		public int compare(Edge a, Edge b) {
+			if (a.leaf.getLine() < b.leaf.getLine()) return -1;
+			if (a.leaf.getLine() > b.leaf.getLine()) return 1;
+			if (a.leaf.getCol() < b.leaf.getCol()) return -1;
+			if (a.leaf.getCol() > b.leaf.getCol()) return 1;
+			if (a.leaf.getType() < b.leaf.getType()) return -1;
+			if (a.leaf.getType() > b.leaf.getType()) return 1;
+			return 0;
+		}
+	};
+
 	public EdgeSet() {
-		edgeSet = ArrayListMultimap.create();
+		edgeSet = new HashList<>(COMP);
 		edgeOrder = new ArrayList<>();
 	}
 
@@ -62,7 +79,7 @@ public class EdgeSet {
 		return true;
 	}
 
-	public ArrayListMultimap<Long, Edge> getEdgeSet() {
+	public HashList<Long, Edge> getEdgeSet() {
 		return edgeSet;
 	}
 
@@ -76,7 +93,7 @@ public class EdgeSet {
 	 */
 	public List<Edge> getEdges(long leafType) {
 		List<Edge> edges = edgeSet.get(leafType);
-		return edges;
+		return new ArrayList<>(edges);
 	}
 
 	public Set<Long> getEdgeTypes() {
@@ -85,7 +102,11 @@ public class EdgeSet {
 
 	/** Returns the total number of unique leaf types. */
 	public int getTypeCount() {
-		return edgeSet.keySet().size();
+		return edgeSet.keySize();
+	}
+
+	public boolean isEmpty() {
+		return edgeSet.isEmpty();
 	}
 
 	/** Returns the total number of edges in this EdgeSet. */
@@ -93,34 +114,36 @@ public class EdgeSet {
 		return edgeSet.size();
 	}
 
+	private CoreMgr getMgr() {
+		List<Edge> edges = edgeSet.values();
+		if (edges.isEmpty()) {
+			throw new RuntimeException("No edges.");
+		}
+		return edges.get(0).root.getMgr();
+	}
+
 	/**
 	 * Returns the effective degree of similary, in the range [0-1], between this (source) edge set
 	 * and the given (corpus) edge set.
 	 * <p>
 	 * Similarity is defined as a function of (1) the intersection and disjunction rates of
-	 * equivalent edges; and (2) the relative extent of the optimal alignment of like-typed edges.
+	 * like-typed edges; and (2) the relative extent of the optimal alignment of like-typed edges.
 	 * <p>
 	 * Intersection similarity is a value based on the count of equivalent edges -- edges having the
-	 * same leaf type and, except for VAR leafs, the same text -- common to both sets (intersect)
-	 * less a discounted value based on the count of non-equivalent edges (disjoint). To fairly
-	 * balance in terms of significance, a single intersect edge is weighted equivalent to two
-	 * disjoint edges.
+	 * same leaf type common to both sets (intersect) less a discounted value based on the count of
+	 * non-equivalent edges (disjoint). To fairly balance in terms of significance, a single
+	 * intersect edge is weighted equivalent to two disjoint edges.
 	 * <p>
 	 * The intersect similarity value for two edge sets must be the maximum similarity that can be
 	 * returned for those two sets. Likewise, the identity ordering of two edge sets must represent
 	 * the maximum similarity that can be returned for any two sets.
 	 */
 	public double similarity(EdgeSet cps) {
-		double disjointCost = Tool.mgr.getFactors().get(Factor.DISCOUNT);
-		double alignWeight = Tool.mgr.getFactors().get(Factor.ORDER);
-		double intersectWeight = 1.0 - alignWeight;
+		double intersect = getMgr().getBoost(Factor.INTERSECT) * intersect(cps);
+		double alignment = getMgr().getBoost(Factor.ORDER) * alignment(cps);
+		double ortho = getMgr().getBoost(Factor.ORTHOSIM) * orthoSim(cps);
 
-		// max intersection similarity basis with reduced penalty for expected disjoints
-		double basis = Math.min(getEdgeCount(), cps.getEdgeCount());
-		basis += Math.abs(getEdgeCount() - cps.getEdgeCount()) * disjointCost;
-
-		double intersection = intersect(cps) / basis;
-		return alignment(cps) * alignWeight + intersection * intersectWeight;
+		return alignment + intersect + ortho;
 	}
 
 	/** Returns the precise intersection similarity between this and the given edge set. */
@@ -140,40 +163,30 @@ public class EdgeSet {
 		return hit.get(1).intValue();
 	}
 
-	// similarity between two sets of edges
+	public int excessCount(EdgeSet cps) {
+		List<Double> hit = cache.get(cps);
+		if (hit.isEmpty()) {
+			hit = compute(cps);
+		}
+		return hit.get(2).intValue();
+	}
+
+	// alignment similarity between two sets of edges
 	public double alignment(EdgeSet cps) {
 		List<Double> hit = cache.get(cps);
 		if (hit.isEmpty()) {
 			hit = compute(cps);
 		}
-		return hit.get(2);
+		return hit.get(3);
 	}
 
-	private List<Double> compute(EdgeSet cps) {
-		double sim = 0;
-		double cnt = 0;
-
-		// intersect: leaf types that exist in both edge sets
-		for (Long key : intersectKeys(cps)) {
-			List<Edge> srcEdges = new ArrayList<>(getEdges(key));
-			List<Edge> cpsEdges = new ArrayList<>(cps.getEdges(key));
-			Collections.sort(srcEdges, MetricComp);
-			Collections.sort(cpsEdges, MetricComp);
-
-			int base = Math.min(srcEdges.size(), cpsEdges.size());
-			for (int idx = 0; idx < base; idx++) {
-				sim += srcEdges.get(idx).similarity(cpsEdges.get(idx));
-			}
-			cnt += base;
+	// alignment similarity between two sets of edges
+	public double orthoSim(EdgeSet cps) {
+		List<Double> hit = cache.get(cps);
+		if (hit.isEmpty()) {
+			hit = compute(cps);
 		}
-
-		// determine edge alignment similarity
-		double alignSim = Align.similarity(edgeOrder, cps.edgeOrder);
-
-		cache.put(cps, sim);		// intersection similarity
-		cache.put(cps, cnt);		// count of intersected edges
-		cache.put(cps, alignSim);	// alignment similarity
-		return cache.get(cps);
+		return hit.get(4);
 	}
 
 	public Set<Long> intersectKeys(EdgeSet cps) {
@@ -191,6 +204,59 @@ public class EdgeSet {
 
 		ekeys.addAll(okeys);
 		return ekeys;
+	}
+
+	private List<Double> compute(EdgeSet cps) {
+		double sim = 0;
+		double cnt = 0;
+		double xcs = 0;
+		double smo = 0;
+
+		// intersect: leaf types that exist in both edge sets
+		Set<Long> keys = intersectKeys(cps);
+		for (Long key : keys) {
+			List<Edge> srcEdges = new ArrayList<>(getEdges(key));
+			List<Edge> cpsEdges = new ArrayList<>(cps.getEdges(key));
+			Collections.sort(srcEdges, MetricComp);
+			Collections.sort(cpsEdges, MetricComp);
+
+			int max = Math.max(srcEdges.size(), cpsEdges.size());
+			int min = Math.min(srcEdges.size(), cpsEdges.size());
+			for (int idx = 0; idx < min; idx++) {
+				sim += srcEdges.get(idx).similarity(cpsEdges.get(idx));
+			}
+			cnt += min;
+			xcs += max - min;
+
+			double srcOrtho = orthoDistance(srcEdges);
+			double cpsOrtho = orthoDistance(cpsEdges);
+			smo += Norm.invDelta(srcOrtho, cpsOrtho);
+		}
+
+		// max intersection similarity basis with reduced penalty for expected disjoints
+		double basis = Math.min(getEdgeCount(), cps.getEdgeCount());
+		basis += Math.abs(getEdgeCount() - cps.getEdgeCount()) * getMgr().getBoost(Factor.DISCOUNT);
+		sim = sim / basis;
+
+		// determine edge alignment similarity
+		double alignSim = Align.similarity(edgeOrder, cps.edgeOrder);
+		// determine similarity of ortho distances related by type
+		double orthoSim = smo / keys.size();
+
+		cache.put(cps, sim);		// intersection similarity
+		cache.put(cps, cnt);		// count of matched edges (for Stats)
+		cache.put(cps, xcs);		// count of excess edges (for Stats)
+		cache.put(cps, alignSim);	// alignment similarity
+		cache.put(cps, orthoSim);	// ortho similarity
+		return cache.get(cps);
+	}
+
+	private double orthoDistance(List<Edge> edges) {
+		double ortho = 0;
+		for (Edge edge : edges) {
+			ortho += edge.ortho;
+		}
+		return ortho / edges.size();
 	}
 
 	@Override

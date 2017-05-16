@@ -114,9 +114,9 @@ Identifier
 
 
 fragment STRING
-		:	'"' (~('"'|'\n'|'\r'))* '"'
-		|	'\'' (~('\''|'\n'|'\r'))* '\''
-		;
+	:	'"' (~('"'|'\n'|'\r'))* '"'
+	|	'\'' (~('\''|'\n'|'\r'))* '\''
+	;
 
 // string literals
 StringLiteral

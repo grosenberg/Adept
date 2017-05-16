@@ -15,6 +15,13 @@ public class Features {
 	@Expose private String pathname;
 	@Expose private List<Feature> features;
 
+	/**
+	 * Collection of features.
+	 * 
+	 * @param docId the id of the document that originated these features
+	 * @param pathname the pathname of the document that originated these features
+	 * @param features the list of features identified in the document
+	 */
 	public Features(int docId, String pathname, List<Feature> features) {
 		this.docId = docId;
 		this.pathname = pathname;

@@ -131,16 +131,11 @@ public class Form {
 		if (begInfo.blankAbove) format |= Facet.BLANK_ABOVE.value;
 		if (endInfo.blankBelow) format |= Facet.BLANK_BELOW.value;
 
-		format |= aligned(data, start);
+		int line = start.getLine() - 1;
+		format |= aligned(data, start, nonBlankLine(data, line, -1));
+		format |= aligned(data, start, nonBlankLine(data, line, 1));
 
 		return format;
-	}
-
-	private static int aligned(ParseData data, Token start) {
-		int line = start.getLine() - 1;
-		int format = aligned(data, start, nonBlankLine(data, line, -1));
-		format |= aligned(data, start, nonBlankLine(data, line, 1));
-		return format != 0 ? format : Facet.UNALIGNED.value;
 	}
 
 	// check for alignment on any column after the first non-blank; consider alignment of (1) token

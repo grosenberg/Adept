@@ -29,6 +29,7 @@ import com.google.common.collect.TreeMultimap;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.Confidence;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
@@ -194,7 +195,8 @@ public class MatchView extends AbstractBase {
 
 		@Override
 		protected void done() {
-			List<Feature> features = Tool.mgr.getDocModel().getFeatures();
+			CoreMgr mgr = tool.getMgr();
+			List<Feature> features = mgr.getDocModel().getFeatures();
 			DocTableModel model = new DocTableModel(features);
 			featTable.setModel(model);
 
@@ -251,11 +253,12 @@ public class MatchView extends AbstractBase {
 	protected void createMatchData(int featureRow, int matchRow) {
 		DocTableModel f = (DocTableModel) featTable.getModel();
 		Feature feature = f.getFeature(featureRow);
-		MatchesTableModel m = (MatchesTableModel) matchTable.getModel();
-		Feature matched = m.getFeature(matchRow);
-
-		ISourceParser lang = tool.getMgr().getLanguageParser();
-
-		matchPanel.load(feature, lang, matched);
+		TableModel mod = matchTable.getModel();
+		if (mod instanceof MatchesTableModel) {
+			MatchesTableModel m = (MatchesTableModel) mod;
+			Feature matched = m.getFeature(matchRow);
+			ISourceParser lang = tool.getMgr().getLanguageParser();
+			matchPanel.load(feature, lang, matched);
+		}
 	}
 }

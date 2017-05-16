@@ -19,6 +19,7 @@ import javax.swing.table.TableRowSorter;
 import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.parser.ISourceParser;
@@ -162,8 +163,9 @@ public class CorpusView extends AbstractBase {
 			return;
 		}
 
-		lang = Tool.mgr.getLanguageParser();
-		typeIndex = Tool.mgr.getCorpusModel().getFeatureIndex();
+		CoreMgr mgr = tool.getMgr();
+		lang = mgr.getLanguageParser();
+		typeIndex = mgr.getCorpusModel().getFeatureIndex();
 
 		// feature type fsTable
 		CorpusTableModel model = new CorpusTableModel(typeIndex, lang.getRuleNames(), lang.getTokenNames());

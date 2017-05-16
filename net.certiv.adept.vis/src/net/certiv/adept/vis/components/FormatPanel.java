@@ -302,8 +302,8 @@ public class FormatPanel extends JPanel {
 		}
 		Set<Facet> facets = Facet.get(feature.getFormat());
 		txtDocFacets.setText(Strings.join(facets, ", "));
-		txtDocRow.setText(String.valueOf(line));
-		txtDocCol.setText(String.valueOf(col));
+		txtDocRow.setText(String.valueOf(line + 1));
+		txtDocCol.setText(String.valueOf(col + 1));
 		txtDocAspect.setText(feature.getAspect());
 		chkDocVariable.setSelected(feature.isVar());
 		txtDocText.setText(feature.getText());
@@ -318,8 +318,8 @@ public class FormatPanel extends JPanel {
 				mtype = mtype >>> 32;
 			}
 
-			txtMatLine.setText(String.valueOf(matched.getLine()));
-			txtMatCol.setText(String.valueOf(matched.getCol()));
+			txtMatLine.setText(String.valueOf(matched.getLine() + 1));
+			txtMatCol.setText(String.valueOf(matched.getCol() + 1));
 			txtMatAspect.setText(matched.getAspect());
 			chkMatVariable.setSelected(matched.isVar());
 			txtMatText.setText(matched.getText());

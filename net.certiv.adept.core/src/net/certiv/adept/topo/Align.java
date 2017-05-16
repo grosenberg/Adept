@@ -6,48 +6,56 @@ import com.google.common.primitives.Longs;
 
 /**
  * Calculates the optimal alignment similarity between two arrays of values using the
- * Smith-Waterman-Gotoh algorithm and a linear gap penalty.
+ * Smith-Waterman-Gotoh algorithm and a linear Gap penalty.
  * 
  * @see <a href="https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm">Wikipedia -
  *      Smith-Waterman algorithm</a>
  */
 public final class Align {
 
-	private static final double match = 1.0f;
-	private static final double miss = -2.0f;
-	private static final double gap = -0.5f;
+	private static final double Match = 1.0f;
+	private static final double Miss = -2.0f;
+	private static final double Gap = -0.5f;
 
 	private Align() {}
 
 	/**
-	 * Returns the effective degree of similary, in the range [0-1], between the two given sequences
-	 * of values.
+	 * Returns the effective degree of similary between the given source and target sequences of
+	 * values. The degree of similary is reported in the range [0-1], with 1 indicating identity.
 	 */
-	public static double similarity(List<Long> a, List<Long> b) {
-		if (a.isEmpty() && b.isEmpty()) return 1.0;
-		if (a.isEmpty() || b.isEmpty()) return 0.0;
-
-		double maxDistance = Math.min(a.size(), b.size()) * max(match, gap);
-		return alignment(Longs.toArray(a), Longs.toArray(b)) / maxDistance;
+	public static double similarity(List<Long> s, List<Long> t) {
+		return similarity(Longs.toArray(s), Longs.toArray(t));
 	}
 
-	private static double alignment(long[] s, long[] t) {
+	public static double similarity(String s, String t) {
+		return similarity(toLongArray(s), toLongArray(t));
+	}
+
+	public static double similarity(long[] s, long[] t) {
+		if (s.length == 0 && t.length == 0) return 1.0;
+		if (s.length == 0 || t.length == 0) return 0.0;
+
+		double maxMatch = Math.min(s.length, t.length) * max(Match, Gap);
+		return match(s, t) / maxMatch;
+	}
+
+	private static double match(long[] s, long[] t) {
 		double[] m0 = new double[t.length]; // matrix scoring rows
 		double[] m1 = new double[t.length];
 
-		m0[0] = max(0, gap, eval(s[0], t[0]));
+		m0[0] = max(0, Gap, eval(s[0], t[0]));
 		double sim = m0[0];
 		for (int j = 1; j < m0.length; j++) {
-			m0[j] = max(0, m0[j - 1] + gap, eval(s[0], t[j]));
+			m0[j] = max(0, m0[j - 1] + Gap, eval(s[0], t[j]));
 			sim = max(sim, m0[j]);
 		}
 
 		// determine scored alignment similarity
 		for (int i = 1; i < s.length; i++) {
-			m1[0] = max(0, m0[0] + gap, eval(s[i], t[0]));
+			m1[0] = max(0, m0[0] + Gap, eval(s[i], t[0]));
 			sim = max(sim, m1[0]);
 			for (int j = 1; j < m0.length; j++) {
-				m1[j] = max(0, m0[j] + gap, m1[j - 1] + gap, m0[j - 1] + eval(s[i], t[j]));
+				m1[j] = max(0, m0[j] + Gap, m1[j - 1] + Gap, m0[j - 1] + eval(s[i], t[j]));
 				sim = max(sim, m1[j]);
 			}
 			for (int j = 0; j < m0.length; j++) {
@@ -58,7 +66,17 @@ public final class Align {
 	}
 
 	private static double eval(long a, long b) {
-		return a == b ? match : miss;
+		return a == b ? Match : Miss;
+	}
+
+	private static long[] toLongArray(String s) {
+		if (s == null) return new long[0];
+
+		long[] r = new long[s.length()];
+		for (int idx = 0; idx < s.length(); idx++) {
+			r[idx] = s.charAt(idx);
+		}
+		return r;
 	}
 
 	private static double max(double a, double b) {

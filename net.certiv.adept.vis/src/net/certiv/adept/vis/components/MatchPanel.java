@@ -8,6 +8,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.MatteBorder;
 
 import com.jgoodies.forms.layout.ColumnSpec;
@@ -15,13 +16,12 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.parser.ISourceParser;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Stats;
 import net.certiv.adept.util.Strings;
-import javax.swing.SwingConstants;
 
 public class MatchPanel extends JPanel {
 
@@ -262,8 +262,8 @@ public class MatchPanel extends JPanel {
 	}
 
 	public void load(Feature feature, ISourceParser lang, Feature matched) {
-
-		txtDocName.setText(Tool.mgr.getCorpusModel().getPathname(matched.getDocId()));
+		CorpusModel model = feature.getMgr().getCorpusModel();
+		txtDocName.setText(model.getPathname(matched.getDocId()));
 		txtLine.setText(String.valueOf(matched.getLine()));
 		txtCol.setText(String.valueOf(matched.getCol()));
 		txtAspect.setText(matched.getAspect());

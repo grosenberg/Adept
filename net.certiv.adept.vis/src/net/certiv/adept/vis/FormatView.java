@@ -22,15 +22,16 @@ import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.topo.Point;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.DiffPanel;
 import net.certiv.adept.vis.components.FormatPanel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.SrcItem;
+import net.certiv.adept.vis.utils.Point;
 
 public class FormatView extends AbstractBase {
 
@@ -100,7 +101,7 @@ public class FormatView extends AbstractBase {
 			if (lfs != null) {
 				for (Feature feature : lfs.descendingSet()) {
 					if (loc.getCol() >= feature.getCol()) {
-						formatPanel.loadData(loc.getLine(), loc.getCol(), feature);
+						formatPanel.loadData(loc.getLine(), feature.getCol(), feature);
 						return;
 					}
 				}
@@ -167,7 +168,8 @@ public class FormatView extends AbstractBase {
 		@Override
 		protected void done() {
 			if (valid) {
-				int srcWidth = Tool.mgr.getDocModel().getDocument().getTabWidth();
+				CoreMgr mgr = tool.getMgr();
+				int srcWidth = mgr.getDocModel().getDocument().getTabWidth();
 				int fmtWidth = Tool.settings.tabWidth;
 				diffPanel.setTabStops(srcWidth, fmtWidth);
 				diffPanel.load(original, formatted);

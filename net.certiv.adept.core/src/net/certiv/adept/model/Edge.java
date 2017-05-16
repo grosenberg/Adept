@@ -1,12 +1,10 @@
 package net.certiv.adept.model;
 
-import java.util.Map;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.topo.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Norm;
@@ -17,46 +15,52 @@ public class Edge implements Comparable<Edge> {
 
 	@Expose public long leafId;
 	@Expose public long rootId;
+	@Expose public EKind kind;
 
 	@Expose public int metric;
+	@Expose public int ortho;
 
 	public Feature root; // edge root
 	public Feature leaf; // connected leaf
 
-	private EEdge equiv;
+	private EqEdge equiv;
 
-	public static Edge create(Feature root, Feature leaf) {
+	public static Edge create(Feature root, Feature leaf, EKind kind) {
 		Edge edge = cache.get(leaf.getId(), root.getId());
 		if (edge == null) {
-			edge = new Edge(root, leaf);
+			edge = new Edge(root, leaf, kind);
 			cache.put(leaf.getId(), root.getId(), edge);
 		}
 		return edge;
 	}
 
-	private Edge(Feature root, Feature leaf) {
+	private Edge(Feature root, Feature leaf, EKind kind) {
 		this.root = root;
 		this.leaf = leaf;
+		this.kind = kind;
 
 		rootId = root.getId();
 		leafId = leaf.getId();
 
-		// linear distance
+		// stream offset distance
 		metric = root.offsetDistance(leaf);
+		// vertical offset distance
+		ortho = root.getLine() - leaf.getLine();
 	}
 
 	/** Returns a value representing the similarity of two edges of the same type. */
 	public double similarity(Edge o) {
-		double[] vals = new double[2];
-		Map<Factor, Double> boosts = Tool.mgr.getFactors();
-		vals[0] = boosts.get(Factor.METRIC) * Norm.invDelta(metric, o.metric);
-		vals[1] = boosts.get(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
+		double[] vals = new double[3];
+		CoreMgr mgr = root.getMgr();
+		vals[0] = mgr.getBoost(Factor.METRIC) * Norm.invDelta(metric, o.metric);
+		vals[1] = mgr.getBoost(Factor.ORTHO) * Norm.invDelta(ortho, o.ortho);
+		vals[2] = mgr.getBoost(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
 		return Norm.sum(vals) / vals.length;
 	}
 
-	public EEdge equiv() {
+	public EqEdge equiv() {
 		if (equiv == null) {
-			equiv = new EEdge(this);
+			equiv = new EqEdge(this);
 		}
 		return equiv;
 	}

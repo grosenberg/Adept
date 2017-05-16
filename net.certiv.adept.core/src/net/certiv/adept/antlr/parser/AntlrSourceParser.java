@@ -51,9 +51,6 @@ public class AntlrSourceParser implements ISourceParser {
 	}
 
 	private void fillCollector(String content) {
-		if (collector == null) {
-			collector = new Collector(null);
-		}
 		collector.input = new ANTLRInputStream(content);
 		collector.lexer = new Antlr4Lexer(collector.input);
 		collector.VWS = VWS;
@@ -101,14 +98,20 @@ public class AntlrSourceParser implements ISourceParser {
 
 	@Override
 	public List<String> getRuleNames() {
-		if (collector == null) fillCollector("");;
+		if (collector == null) {
+			collector = new Collector();
+			fillCollector("");
+		}
 		return Arrays.asList(collector.parser.getRuleNames());
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public List<String> getTokenNames() {
-		if (collector == null) fillCollector("");;
+		if (collector == null) {
+			collector = new Collector();
+			fillCollector("");
+		}
 		return Arrays.asList(collector.lexer.getTokenNames());
 	}
 }

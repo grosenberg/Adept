@@ -1,4 +1,4 @@
-package net.certiv.adept.topo;
+package net.certiv.adept.vis.utils;
 
 public class Point {
 

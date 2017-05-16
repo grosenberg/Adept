@@ -6,14 +6,14 @@ public enum Kind {
 	BLOCKCOMMENT("Block Comment"),
 	LINECOMMENT("Line Comment");
 
-	private String fName;
+	private String kind;
 
 	Kind(String name) {
-		fName = name;
+		kind = name;
 	}
 
 	@Override
 	public String toString() {
-		return fName;
+		return kind;
 	}
 }

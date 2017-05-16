@@ -12,7 +12,6 @@ import net.certiv.adept.parser.AdeptToken;
 import net.certiv.adept.parser.ParseData;
 import net.certiv.adept.topo.Facet;
 import net.certiv.adept.topo.Form;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class Span {
@@ -47,9 +46,17 @@ public class Span {
 	}
 
 	/**
-	 * Returns the span starting at the token having the given index and ending on the next real
-	 * token.
+	 * Returns the next span starting at the token having the given index, nominally a real token,
+	 * and ending on the next real token. If the initial lhs is not real, fake a real by adjusting
+	 * the lhs index.
+	 * 
+	 * <pre>
+	        |<--    span    -->|
+	        |  lhs         rhs |
+	    ... | real | ws | real | real | ...
+	 * </pre>
 	 */
+
 	public Span next(int idx) {
 		if (!done && idx < tokens.size()) {
 			lhs = rhs;
@@ -58,6 +65,7 @@ public class Span {
 			if (!done) {
 				beg = lhs.getTokenIndex();
 				end = rhs.getTokenIndex();
+				if (!isReal(lhs)) beg--;
 
 				Interval interval = new Interval(beg + 1, end - 1);
 				String content = data.getTokenStream().getText(interval);
@@ -86,23 +94,22 @@ public class Span {
 		return null;
 	}
 
+	// TODO: move to AdeptToken
 	private boolean isReal(AdeptToken token) {
 		int type = token.getType();
 		return type != data.HWS && type != data.VWS && type != Token.EOF;
 	}
 
 	private int getMatchedFormat(AdeptToken token) {
-		if (token == null) return -1;
-		if (token.getType() == data.HWS || token.getType() == data.VWS) {
-			Log.error(this, "Invalid token to match: " + token.toString());
-			return -1;
-		}
+		if (token != null) {
+			if (!isReal(token)) return 0;
 
-		Feature feature = data.tokenIndex.get(token.getTokenIndex());
-		if (feature != null) {
-			Feature matched = feature.getMatched();
-			if (matched != null) {
-				return matched.getFormat();
+			Feature feature = data.tokenIndex.get(token.getTokenIndex());
+			if (feature != null) {
+				Feature matched = feature.getMatched();
+				if (matched != null) {
+					return matched.getFormat();
+				}
 			}
 		}
 		return -1;
