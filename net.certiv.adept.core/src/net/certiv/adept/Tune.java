@@ -22,7 +22,7 @@ import net.certiv.adept.tune.Fitter;
 import net.certiv.adept.util.Log;
 
 /**
- * Performs a hyperparameter optimization of the boost factor parameters using latin hypercube
+ * Performs hyperparameter optimization of the boost factor parameters using latin hypercube
  * parameter set generation. Characterization of the candidate boost factor sets is performed using
  * a leave-one-out cross-validation strategy utilizing the documents of the existing corpus.
  */
@@ -121,7 +121,7 @@ public class Tune implements ITool {
 	private void tune(Fitter fitter, String name, List<String> remainder) {
 		for (int idx = 0; idx < samples; idx++) {
 			Boosts boosts = fitter.getBoosts(idx);
-			Tool tool = createTool(name, remainder, boosts);
+			Tool tool = createTool(name, remainder, boosts, true/* idx == 0 */);
 			tool.execute();
 
 			String source = tool.getMgr().getDocModel().getDocument().getContent();
@@ -131,13 +131,13 @@ public class Tune implements ITool {
 		}
 	}
 
-	private Tool createTool(String srcName, List<String> corpusNames, Boosts boosts) {
+	private Tool createTool(String srcName, List<String> corpusNames, Boosts boosts, boolean force) {
 		Tool tool = new Tool();
 		tool.setCorpusRoot(corpusRoot);
 		tool.setLang(lang);
 		tool.setTabWidth(tabWidth);
 		tool.setSave(false);
-		tool.setRebuild(false);
+		tool.setRebuild(force);
 		tool.setVerbose(Level.QUIET);
 
 		tool.setSourceFiles(srcName);
@@ -154,65 +154,6 @@ public class Tune implements ITool {
 		tool.getMgr().setBoosts(boosts);
 		return tool;
 	}
-
-	// ---
-
-	// private void tune() {
-	// tool.setCorpusRoot(corpusRoot);
-	// tool.setLang(lang);
-	// tool.setTabWidth(tabWidth);
-	// tool.setSave(false);
-	// tool.setRebuild(false);
-	// tool.setVerbose(Level.QUIET);
-	//
-	// boolean ok = tool.loadResources();
-	// ok = ok && tool.validateOptions();
-	//
-	// if (!ok) {
-	// Log.error(this, "Failed to initialize model");
-	// return;
-	// }
-	//
-	// mgr = tool.getMgr();
-	// CorpusModel model = mgr.getCorpusModel();
-	// Boosts boosts = tune(model);
-	//
-	// // now, preserve results
-	// model.setBoosts(boosts);
-	// try {
-	// model.save(tool.getCorpusDir(), false); // only save the model root
-	// } catch (Exception e) {
-	// tool.getErrMgr().toolError(ErrorType.CANNOT_WRITE_FILE, e.getMessage());
-	// exit(-1);
-	// }
-	// }
-	//
-	// private Boosts tune(CorpusModel model) {
-	// Fitter fitter = new Fitter(samples);
-	// List<Document> docs = mgr.getCorpusDocs();
-	// for (Document doc : docs) {
-	// CorpusModel subModel = model.subset(mgr, doc);
-	// mgr.setCorpusModel(model);
-	// tune(fitter, doc);
-	// subModel.dispose();
-	// }
-	// Boosts fit = fitter.bestFit();
-	// double ftn = fitter.bestFittness();
-	// Log.debug(this, String.format("Best Fit: %01.4f : %s", ftn, fit));
-	//
-	// return fit;
-	// }
-	//
-	// private void tune(Fitter fitter, Document doc) {
-	// for (int idx = 0; idx < samples; idx++) {
-	// Boosts boosts = fitter.getBoosts(idx);
-	// mgr.setBoosts(boosts);
-	// tool.execute(doc);
-	// double fitness = Align.similarity(doc.getContent(), tool.getFormatted());
-	// fitter.put(fitness, boosts);
-	// Log.debug(this, String.format("%2d %01.9f : %s", idx, fitness, boosts));
-	// }
-	// }
 
 	@Override
 	public ErrorManager getErrMgr() {

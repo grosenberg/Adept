@@ -12,7 +12,6 @@ import net.certiv.adept.model.Feature;
 
 public class Confidence {
 
-	// private static Feature target;
 	private static TreeMultimap<Double, Feature> matches;
 	private static Partitioner partitioner;
 	private static Comparator<Feature> weightComp = new Comparator<Feature>() {
@@ -25,8 +24,7 @@ public class Confidence {
 		}
 	};
 
-	public static void eval(Feature feature, TreeMultimap<Double, Feature> selected) {
-		// target = feature;
+	public static void eval(TreeMultimap<Double, Feature> selected) {
 		matches = selected;
 		partitioner = new Partitioner(selected.keySet());
 	}

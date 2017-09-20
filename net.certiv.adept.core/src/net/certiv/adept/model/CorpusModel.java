@@ -292,7 +292,7 @@ public class CorpusModel implements IModel {
 			// }
 		}
 		int reduction = 100 - (unq * 100 / tot);
-		Log.debug(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
+		Log.trace(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
 
 		return weighted;
 	}
@@ -303,26 +303,4 @@ public class CorpusModel implements IModel {
 		}
 		return null;
 	}
-
-	// /**
-	// * Returns a new subsetted instance of the existing model distinguished by the absence of all
-	// * aspects of the given document.
-	// */
-	// public CorpusModel subset(CoreMgr mgr, Document doc) {
-	// int docId = doc.getDocId();
-	// CorpusModel mod = new CorpusModel();
-	// mod.setMgr(mgr);
-	// mod.corpusDir = corpusDir;
-	// mod.pathnames.putAll(pathnames);
-	// mod.pathnames.remove(docId);
-	// mod.docFeatures.putAll(docFeatures);
-	// mod.docFeatures.remove(docId);
-	// mod.features.addAll(features);
-	// for (int idx = features.size() - 1; idx >= 0; idx--) {
-	// if (features.get(idx).getDocId() == docId) {
-	// mod.features.remove(idx);
-	// }
-	// }
-	// return mod;
-	// }
 }

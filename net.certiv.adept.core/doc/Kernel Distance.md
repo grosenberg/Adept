@@ -46,9 +46,10 @@ Similarity of the set of edges E is defined as
 
 $$
 \begin{equation} \begin{split}
-    (A,B).sim(E) = &\quad\{\,\sum_{edge\,0..n} (A,B).sim(EL_x)\;\}_{A \cap B} \\
-                   &- \, \{\,\sum_{edge\,0..n} \alpha_x * \kappa_x 
-* ( A.L_x \odot B.L_x )\;\}_{A \setminus B} \end{split} \end{equation} 
+  (A,B).sim(E) = &\quad\{\,\sum_{edge\,0..n} (A,B).sim(EL_x)\;\}_{A \cap B} \\
+                 &- \, \{\,\sum_{edge\,0..n} \alpha_x * \kappa_x *  
+  ( A.L_x \odot B.L_x )\;\}_{A \setminus B} 
+\end{split} \end{equation}
 $$
 
 - where the constant $\alpha_x$ is a tunable parameter reflecting the reduced significance 

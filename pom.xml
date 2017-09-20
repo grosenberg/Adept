@@ -30,6 +30,8 @@
 	<modules>
 		<module>net.certiv.adept.core</module>
 		<!-- <module>net.certiv.adept.vis</module> -->
+		
+		
 	</modules>
 
 	<build>

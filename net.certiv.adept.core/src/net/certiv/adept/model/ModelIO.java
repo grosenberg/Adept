@@ -154,7 +154,9 @@ public class ModelIO {
 			throws Exception {
 
 		Path path = corpusDir.resolve(MODEL + DOT + EXT);
-		if (rebuild || !Files.isRegularFile(path)) return new CorpusModel(corpusDir);
+		if (rebuild || !Files.isRegularFile(path)) {
+			return new CorpusModel(corpusDir);
+		}
 
 		CorpusModel model;
 		Gson gson = configBuilder();
@@ -233,7 +235,7 @@ public class ModelIO {
 
 		try {
 			Log.debug(ModelIO.class, "Saving " + path.toString());
-			gson.toJson(ModelIO.class, CorpusModel.class, writer);
+			gson.toJson(model, CorpusModel.class, writer);
 			writer.close();
 		} catch (IOException | JsonSyntaxException e) {
 			Log.error(ModelIO.class, "Failed saving corpus model file " + path.toString() + ": " + e.getMessage());

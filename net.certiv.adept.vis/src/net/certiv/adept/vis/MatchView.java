@@ -223,7 +223,7 @@ public class MatchView extends AbstractBase {
 		DocTableModel m = (DocTableModel) featTable.getModel();
 		Feature feature = m.getFeature(row);
 		TreeMultimap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
-		Confidence.eval(feature, matches);
+		Confidence.eval(matches);
 		Map<Double, Integer> indices = Confidence.partitionIndices();
 		MatchesTableModel model = new MatchesTableModel(matches, indices);
 		matchTable.setModel(model);

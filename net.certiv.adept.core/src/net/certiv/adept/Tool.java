@@ -130,7 +130,6 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean loadResources() {
-
 		version = ModelIO.loadVersion(errMgr);
 		if (version == null) return false;
 

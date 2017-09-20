@@ -45,7 +45,7 @@ public class CoreMgr {
 
 	public boolean initialize(String lang, Path corpusDir, String corpusExt, int tabWidth, boolean rebuild,
 			List<String> pathnames) throws Exception {
-		
+
 		this.lang = lang;
 		this.corpusDir = corpusDir;
 		this.tabWidth = tabWidth;
@@ -83,6 +83,7 @@ public class CoreMgr {
 		} catch (Exception e) {
 			cpsModel.setConsistent(false);
 			Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e.getMessage());
+			Log.error(this, "Cannot write file(s): ", e);
 		}
 	}
 
@@ -169,16 +170,22 @@ public class CoreMgr {
 	 * comment feature of the document docModel.
 	 */
 	public void compare() {
-		Instant start = Time.start();
+		Instant mark = Time.start();
 		// Log.debug(this, String.format("Using %s", getBoosts()));
 
 		for (Feature feature : docModel.getFeatures()) {
 			if (feature.getKind() == Kind.RULE) continue;
 
-			Confidence.eval(feature, getMatchSet(feature));
+			TreeMultimap<Double, Feature> mset = getMatchSet(feature);
+			if (mset.isEmpty()) {
+				Log.error(this, "No matches for: " + feature);
+				return;
+			}
+
+			Confidence.eval(mset);
 			feature.setMatched(Confidence.best());
 		}
-		perfData.addFormatTime(Time.end(start));
+		perfData.addFormatTime(Time.end(mark));
 	}
 
 	public TreeMultimap<Double, Feature> getMatchSet(Feature node) {
