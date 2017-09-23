@@ -5,9 +5,9 @@ import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.topo.Factor;
+import net.certiv.adept.model.topo.Factor;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Norm;
+import net.certiv.adept.util.Maths;
 
 public class Edge implements Comparable<Edge> {
 
@@ -15,7 +15,7 @@ public class Edge implements Comparable<Edge> {
 
 	@Expose public long leafId;
 	@Expose public long rootId;
-	@Expose public EKind kind;
+	@Expose public EdgeType kind;
 
 	@Expose public int metric;
 	@Expose public int ortho;
@@ -25,7 +25,7 @@ public class Edge implements Comparable<Edge> {
 
 	private EqEdge equiv;
 
-	public static Edge create(Feature root, Feature leaf, EKind kind) {
+	public static Edge create(Feature root, Feature leaf, EdgeType kind) {
 		Edge edge = cache.get(leaf.getId(), root.getId());
 		if (edge == null) {
 			edge = new Edge(root, leaf, kind);
@@ -34,7 +34,7 @@ public class Edge implements Comparable<Edge> {
 		return edge;
 	}
 
-	private Edge(Feature root, Feature leaf, EKind kind) {
+	private Edge(Feature root, Feature leaf, EdgeType kind) {
 		this.root = root;
 		this.leaf = leaf;
 		this.kind = kind;
@@ -52,10 +52,10 @@ public class Edge implements Comparable<Edge> {
 	public double similarity(Edge o) {
 		double[] vals = new double[3];
 		CoreMgr mgr = root.getMgr();
-		vals[0] = mgr.getBoost(Factor.METRIC) * Norm.invDelta(metric, o.metric);
-		vals[1] = mgr.getBoost(Factor.ORTHO) * Norm.invDelta(ortho, o.ortho);
+		vals[0] = mgr.getBoost(Factor.METRIC) * Maths.invDelta(metric, o.metric);
+		vals[1] = mgr.getBoost(Factor.ORTHO) * Maths.invDelta(ortho, o.ortho);
 		vals[2] = mgr.getBoost(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
-		return Norm.sum(vals) / vals.length;
+		return Maths.sum(vals) / vals.length;
 	}
 
 	public EqEdge equiv() {
@@ -100,4 +100,63 @@ public class Edge implements Comparable<Edge> {
 	public String toString() {
 		return String.format("%s {%s -> %s}", metric, root.getAspect(), leaf.getAspect());
 	}
+
+	/** Wrapper class to provide an 'equivalent' equals function */
+	public static class EqEdge implements Comparable<EqEdge> {
+
+		private Edge edge;
+
+		private long leafType;
+		private long rootType;
+		private String leafText;
+		private String rootText;
+
+		public EqEdge(Edge edge) {
+			this.edge = edge;
+
+			leafType = edge.leaf.getType();
+			rootType = edge.root.getType();
+			leafText = getText(edge.leaf);
+			rootText = getText(edge.root);
+		}
+
+		private String getText(Feature feature) {
+			return feature.isVar() || feature.isRule() ? "" : feature.getText();
+		}
+
+		@Override
+		public int compareTo(EqEdge o) {
+			if (leafType < o.leafType) return -1;
+			if (leafType > o.leafType) return 1;
+			return leafText.compareTo(o.leafText);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			EqEdge o = (EqEdge) obj;
+			if (edge == null || o.edge == null) return false;
+			if (leafType != o.leafType) return false;
+			if (rootType != o.rootType) return false;
+			if (!leafText.equals(o.leafText)) return false;
+			if (!rootText.equals(o.rootText)) return false;
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + leafText.hashCode();
+			result = prime * result + (int) (leafType >>> 32);
+			result = prime * result + (int) (leafType);
+			result = prime * result + rootText.hashCode();
+			result = prime * result + (int) (rootType >>> 32);
+			result = prime * result + (int) (rootType);
+			return result;
+		}
+	}
+
 }

@@ -12,14 +12,14 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.topo.Align;
-import net.certiv.adept.topo.Factor;
+import net.certiv.adept.model.topo.Align;
+import net.certiv.adept.model.topo.Factor;
 import net.certiv.adept.util.HashList;
-import net.certiv.adept.util.Norm;
+import net.certiv.adept.util.Maths;
 
 /**
  * The collection of edges, typed by leaf, that defines the connections between a root feature and
- * its leaf features in the local group. The EdgeSet can contain multiple edges to same leaf type
+ * its leaf features in the local group. The EdgeSet can contain multiple edges to same type leaf
  * features.
  */
 public class EdgeSet {
@@ -65,8 +65,8 @@ public class EdgeSet {
 	}
 
 	/**
-	 * Adds an edge to this edge set. The included edges are defined by the local group. The edges
-	 * will be presented ordered by leaf feature line, col, and type.
+	 * Adds an edge to this edge set. The included edges are defined by the local group. The edges will
+	 * be presented ordered by leaf feature line, col, and type.
 	 */
 	public boolean addEdge(Edge edge) {
 		long type = edge.leaf.getType();
@@ -88,8 +88,8 @@ public class EdgeSet {
 	}
 
 	/**
-	 * Returns the edges that are of the given leaf type. The edges are pre-ordered by leaf feature
-	 * line & col.
+	 * Returns the edges that are of the given leaf type. The edges are pre-ordered by leaf feature line
+	 * & col.
 	 */
 	public List<Edge> getEdges(long leafType) {
 		List<Edge> edges = edgeSet.get(leafType);
@@ -123,20 +123,20 @@ public class EdgeSet {
 	}
 
 	/**
-	 * Returns the effective degree of similary, in the range [0-1], between this (source) edge set
-	 * and the given (corpus) edge set.
+	 * Returns the effective degree of similary, in the range [0-1], between this (source) edge set and
+	 * the given (corpus) edge set.
 	 * <p>
-	 * Similarity is defined as a function of (1) the intersection and disjunction rates of
-	 * like-typed edges; and (2) the relative extent of the optimal alignment of like-typed edges.
+	 * Similarity is defined as a function of (1) the intersection and disjunction rates of like-typed
+	 * edges; and (2) the relative extent of the optimal alignment of like-typed edges.
 	 * <p>
 	 * Intersection similarity is a value based on the count of equivalent edges -- edges having the
 	 * same leaf type common to both sets (intersect) less a discounted value based on the count of
-	 * non-equivalent edges (disjoint). To fairly balance in terms of significance, a single
-	 * intersect edge is weighted equivalent to two disjoint edges.
+	 * non-equivalent edges (disjoint). To fairly balance in terms of significance, a single intersect
+	 * edge is weighted equivalent to two disjoint edges.
 	 * <p>
 	 * The intersect similarity value for two edge sets must be the maximum similarity that can be
-	 * returned for those two sets. Likewise, the identity ordering of two edge sets must represent
-	 * the maximum similarity that can be returned for any two sets.
+	 * returned for those two sets. Likewise, the identity ordering of two edge sets must represent the
+	 * maximum similarity that can be returned for any two sets.
 	 */
 	public double similarity(EdgeSet cps) {
 		double intersect = getMgr().getBoost(Factor.INTERSECT) * intersect(cps);
@@ -230,7 +230,7 @@ public class EdgeSet {
 
 			double srcOrtho = orthoDistance(srcEdges);
 			double cpsOrtho = orthoDistance(cpsEdges);
-			smo += Norm.invDelta(srcOrtho, cpsOrtho);
+			smo += Maths.invDelta(srcOrtho, cpsOrtho);
 		}
 
 		// max intersection similarity basis with reduced penalty for expected disjoints

@@ -19,7 +19,7 @@ import net.certiv.adept.core.PerfData;
 import net.certiv.adept.core.PerfData.DocPerf;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.topo.Facet;
+import net.certiv.adept.model.topo.Facet;
 import net.certiv.adept.util.Strings;
 
 public class FormatPanel extends JPanel {
@@ -116,7 +116,7 @@ public class FormatPanel extends JPanel {
 		JLabel lblCorpus = new JLabel("Corpus ");
 		add(lblCorpus, "2, 6, left, default");
 
-		JLabel lblCorpusFeatureCount = new JLabel("Features");
+		JLabel lblCorpusFeatureCount = new JLabel("FeatureSet");
 		add(lblCorpusFeatureCount, "2, 8, right, default");
 
 		txtCorpusFeatureCount = new JTextField();
@@ -140,7 +140,7 @@ public class FormatPanel extends JPanel {
 		txtDocName.setEditable(false);
 		add(txtDocName, "4, 12, 13, 1, fill, default");
 
-		JLabel lblDocFeatureCount = new JLabel("Features");
+		JLabel lblDocFeatureCount = new JLabel("FeatureSet");
 		add(lblDocFeatureCount, "18, 12, right, default");
 
 		txtDocFeatureCount = new JTextField();

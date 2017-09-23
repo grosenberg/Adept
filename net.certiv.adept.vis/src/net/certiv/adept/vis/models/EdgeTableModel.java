@@ -10,7 +10,7 @@ import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.model.load.parser.ISourceParser;
 
 public class EdgeTableModel extends AbstractTableModel {
 

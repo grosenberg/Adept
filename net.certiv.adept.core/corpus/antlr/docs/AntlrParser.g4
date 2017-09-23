@@ -5,7 +5,7 @@ options {
 }
 
 @header {
-	package net.certiv.adept.antlr.parser.gen;
+	package net.certiv.adept.lang.antlr.parser.gen;
 }
 
 adept

@@ -12,14 +12,17 @@ import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.parser.Collector;
-import net.certiv.adept.topo.Analyzer;
-import net.certiv.adept.topo.Factor;
-import net.certiv.adept.tune.Boosts;
+import net.certiv.adept.model.load.Corpus;
+import net.certiv.adept.model.load.FeatureSet;
+import net.certiv.adept.model.load.Store;
+import net.certiv.adept.model.load.parser.FeatureFactory;
+import net.certiv.adept.model.topo.Analyzer;
+import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.tune.Boosts;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
-public class CorpusModel implements IModel {
+public class CorpusModel {
 
 	private static final long GAP = 500000;
 
@@ -69,8 +72,8 @@ public class CorpusModel implements IModel {
 	}
 
 	/**
-	 * Determines whether the corpus model, typically as freshly loaded from storage, is consistent
-	 * with the actual document set contained within the corpus.
+	 * Determines whether the corpus model, typically as freshly loaded from storage, is consistent with
+	 * the actual document set contained within the corpus.
 	 */
 	public boolean isValid(List<Document> corpusDocs) {
 		if (pathnames.size() != corpusDocs.size()) {
@@ -102,12 +105,10 @@ public class CorpusModel implements IModel {
 		this.corpusDirname = corpusDir.toString();
 	}
 
-	@Override
 	public CoreMgr getMgr() {
 		return mgr;
 	}
 
-	@Override
 	public void setMgr(CoreMgr mgr) {
 		this.mgr = mgr;
 	}
@@ -118,17 +119,17 @@ public class CorpusModel implements IModel {
 	}
 
 	/** Merge features collected during an ab initio build into the corpus model. */
-	public void merge(Collector collector) {
-		Document doc = collector.getDocument();
+	public void merge(FeatureFactory featureFactory) {
+		Document doc = featureFactory.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
-		docFeatures.put(doc.getDocId(), collector.getFeatures());
-		List<Feature> weighted = weighFeatures(collector.getNonRuleFeatures());
+		docFeatures.put(doc.getDocId(), featureFactory.getFeatures());
+		List<Feature> weighted = weighFeatures(featureFactory.getNonRuleFeatures());
 		features.addAll(weighted);
 		Log.debug(this, String.format("Processed %s (%s)", doc.getPathname(), weighted.size()));
 	}
 
 	/** Merge features as retrieved from persistant store into the corpus model. */
-	public void merge(Features loader) {
+	public void merge(FeatureSet loader) {
 		docFeatures.put(loader.getDocId(), loader.getFeatures());
 		features.addAll(loader.getReducedFeatures());
 	}
@@ -244,22 +245,20 @@ public class CorpusModel implements IModel {
 
 	public void save(Path corpusDir) throws Exception {
 		lastModified = Time.now();
-		ModelIO.save(corpusDir, this);
+		Store.save(corpusDir, this);
 		lastModified = Time.getLastModified(corpusDir);
 		consistent = true;
 	}
 
 	public void writeDocument(Path corpusDir, Document doc) {
-		ModelIO.writeDocument(corpusDir, doc);
+		Corpus.writeDocument(corpusDir, doc);
 		consistent = true;
 	}
 
-	/*
-	 * Reduces the feature set initially constructed from a corpus document by collapsing equivalent
-	 * root features to single instances with correspondingly increased weight. Equivalency is
-	 * defined by identity of root feature type, equality of edge sets, including leaf node text,
-	 * and identity of format.
-	 */
+	/* Reduces the feature set initially constructed from a corpus document by collapsing equivalent
+	 * root features to single instances with correspondingly increased weight. Equivalency is defined
+	 * by identity of root feature type, equality of edge sets, including leaf node text, and identity
+	 * of format. */
 	private List<Feature> weighFeatures(List<Feature> roots) {
 		ArrayListMultimap<Long, Feature> index = ArrayListMultimap.create();
 		for (Feature f : roots) {

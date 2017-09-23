@@ -9,22 +9,23 @@ import org.antlr.v4.runtime.RecognitionException;
 import com.google.common.collect.TreeMultimap;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.antlr.parser.AntlrSourceParser;
-import net.certiv.adept.java.parser.JavaSourceParser;
+import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
+import net.certiv.adept.lang.java.parser.JavaSourceParser;
+import net.certiv.adept.lang.xvisitor.parser.XVisitorSourceParser;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.model.ModelIO;
-import net.certiv.adept.parser.Collector;
-import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.model.load.Corpus;
+import net.certiv.adept.model.load.Store;
+import net.certiv.adept.model.load.parser.FeatureFactory;
+import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.tune.Boosts;
 import net.certiv.adept.tool.ErrorType;
-import net.certiv.adept.topo.Factor;
-import net.certiv.adept.tune.Boosts;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
-import net.certiv.adept.xvisitor.parser.XVisitorSourceParser;
 
 public class CoreMgr {
 
@@ -51,8 +52,8 @@ public class CoreMgr {
 		this.tabWidth = tabWidth;
 
 		Instant start = Time.start();
-		cpsModel = ModelIO.loadModel(this, corpusDir, rebuild, pathnames);
-		corpusDocs = ModelIO.readDocuments(corpusDir, corpusExt, tabWidth);
+		cpsModel = Store.loadModel(this, corpusDir, rebuild, pathnames);
+		corpusDocs = Corpus.readDocuments(corpusDir, corpusExt, tabWidth);
 		perfData.load = Time.end(start);
 
 		if (rebuild || !cpsModel.isValid(corpusDocs)) {
@@ -71,8 +72,8 @@ public class CoreMgr {
 		cpsModel.clear();
 		Instant start = Time.start();
 		for (Document doc : corpusDocs) {
-			Collector collector = collect(doc, false);
-			cpsModel.merge(collector);
+			FeatureFactory featureFactory = collect(doc, false);
+			cpsModel.merge(featureFactory);
 		}
 
 		cpsModel.finalizeBuild();	// post-build operations
@@ -88,35 +89,35 @@ public class CoreMgr {
 	}
 
 	/** Returns a new feature collector populated from the given document. */
-	public Collector collect(Document doc, boolean checkOnly) {
+	public FeatureFactory collect(Document doc, boolean checkOnly) {
 		ISourceParser parser = getLanguageParser();
-		Collector collector = new Collector(this, doc);
+		FeatureFactory featureFactory = new FeatureFactory(this, doc);
 		try {
-			parser.process(collector, doc);
+			parser.process(featureFactory, doc);
 		} catch (RecognitionException e) {
 			Log.error(this, ErrorType.PARSE_ERROR.msg + ": " + doc.getPathname());
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, doc.getPathname());
-			return collector;
+			return featureFactory;
 		} catch (Exception e) {
 			Log.error(this, ErrorType.PARSE_FAILURE.msg + ": " + doc.getPathname());
 			Tool.errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
-			return collector;
+			return featureFactory;
 		}
 
-		if (checkOnly) return collector;
+		if (checkOnly) return featureFactory;
 
-		collector.index();
+		featureFactory.index();
 		try {
-			parser.annotateFeatures(collector);
+			parser.extractFeatures(featureFactory);
 		} catch (Exception e) {
 			Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname(), e);
 			Tool.errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
-			return collector;
+			return featureFactory;
 		}
 
-		collector.annotateComments();
-		collector.genLocalEdges();
-		return collector;
+		featureFactory.annotateComments();
+		featureFactory.genLocalEdges();
+		return featureFactory;
 	}
 
 	/** Return the cpsModel docModel */
@@ -208,9 +209,9 @@ public class CoreMgr {
 
 	// ----
 
-	public void createDocModel(Collector collector) {
-		docModel = new DocModel(this, collector);
-		perfData.addDoc(collector);
+	public void createDocModel(FeatureFactory featureFactory) {
+		docModel = new DocModel(this, featureFactory);
+		perfData.addDoc(featureFactory);
 	}
 
 	/** Return the document docModel */

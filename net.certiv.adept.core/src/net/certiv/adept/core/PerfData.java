@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.Collector;
+import net.certiv.adept.model.load.parser.FeatureFactory;
 
 public class PerfData {
 
@@ -23,11 +23,11 @@ public class PerfData {
 
 		public DocPerf() {}
 
-		public DocPerf(Collector collector) {
-			docName = collector.getDocument().getPathname();
-			docFeatureCnt = collector.getFeatures().size();
-			docTypeCnt = collector.typeSet.size();
-			docTerminalCnt = collector.terminalIndex.size();
+		public DocPerf(FeatureFactory featureFactory) {
+			docName = featureFactory.getDocument().getPathname();
+			docFeatureCnt = featureFactory.getFeatures().size();
+			docTypeCnt = featureFactory.typeSet.size();
+			docTerminalCnt = featureFactory.terminalIndex.size();
 		}
 	}
 
@@ -58,8 +58,8 @@ public class PerfData {
 		docs = new ArrayList<>(size);
 	}
 
-	public void addDoc(Collector collector) {
-		current = new DocPerf(collector);
+	public void addDoc(FeatureFactory featureFactory) {
+		current = new DocPerf(featureFactory);
 		docs.add(current);
 	}
 

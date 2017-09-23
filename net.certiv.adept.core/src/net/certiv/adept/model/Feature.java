@@ -13,12 +13,12 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.topo.Facet;
-import net.certiv.adept.topo.Factor;
-import net.certiv.adept.topo.Location;
-import net.certiv.adept.topo.Stats;
+import net.certiv.adept.model.topo.Facet;
+import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.topo.Location;
+import net.certiv.adept.model.topo.Stats;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Norm;
+import net.certiv.adept.util.Maths;
 
 public class Feature implements Comparable<Feature> {
 
@@ -130,7 +130,7 @@ public class Feature implements Comparable<Feature> {
 	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as
 	 * defined by root id and leaf id pairs.
 	 */
-	public void addEdge(Feature leaf, EKind kind) {
+	public void addEdge(Feature leaf, EdgeType kind) {
 		if (leaf != this) {
 			Edge edge = Edge.create(this, leaf, kind);
 			if (edgeSet.addEdge(edge)) {
@@ -206,10 +206,10 @@ public class Feature implements Comparable<Feature> {
 		vals[0] = mgr.getBoost(Factor.FORMAT) * Facet.similarity(format, cps.format);
 		vals[1] = mgr.getBoost(Factor.DENTATION) * Facet.dentSimilarity(format, cps.format);
 		vals[2] = mgr.getBoost(Factor.TEXT) * (text.equals(cps.text) ? 1 : 0);
-		vals[3] = mgr.getBoost(Factor.WEIGHT) * Norm.invDelta(weight, cps.weight);
-		vals[4] = mgr.getBoost(Factor.EDGE_TYPES) * Norm.invDelta(dimensionality(), cps.dimensionality());
-		vals[5] = mgr.getBoost(Factor.EDGE_CNT) * Norm.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
-		double sum = Norm.sum(vals);
+		vals[3] = mgr.getBoost(Factor.WEIGHT) * Maths.invDelta(weight, cps.weight);
+		vals[4] = mgr.getBoost(Factor.EDGE_TYPES) * Maths.invDelta(dimensionality(), cps.dimensionality());
+		vals[5] = mgr.getBoost(Factor.EDGE_CNT) * Maths.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
+		double sum = Maths.sum(vals);
 		return sum;
 	}
 

@@ -22,7 +22,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.model.load.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.models.CorpusFeatureTableModel;
@@ -67,7 +67,7 @@ public class CorpusView extends AbstractBase {
 	};
 
 	public CorpusView() {
-		super("Corpus Features Analysis", "features.gif");
+		super("Corpus FeatureSet Analysis", "features.gif");
 
 		fsTable = new JTable();
 		fsTable.setFillsViewportHeight(true);

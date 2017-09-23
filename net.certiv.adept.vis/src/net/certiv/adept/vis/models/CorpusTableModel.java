@@ -12,7 +12,7 @@ import net.certiv.adept.model.Kind;
 
 public class CorpusTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Kind", "Type", "Name", "Features" };
+	private final String[] columnNames = { "Line", "Kind", "Type", "Name", "FeatureSet" };
 	private Object[][] rowData;
 
 	public CorpusTableModel(ArrayListMultimap<Long, Feature> typeIndex, List<String> ruleNames,

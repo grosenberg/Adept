@@ -32,7 +32,7 @@ import net.certiv.adept.core.Confidence;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.model.load.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.FeaturePanel;

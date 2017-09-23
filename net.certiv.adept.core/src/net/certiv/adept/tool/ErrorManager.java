@@ -186,17 +186,12 @@ public class ErrorManager {
 
 	// S U P P O R T C O D E
 
-	@SuppressWarnings({ "fallthrough", "incomplete-switch" })
 	public void emit(ErrorType etype, Messages msg) {
 		switch (etype.severity) {
-			case WARNING_ONE_OFF:
-				if (errorTypes.contains(etype)) break;
 			case WARNING:
 				warnings++;
 				tool.warn(msg);
 				break;
-			case ERROR_ONE_OFF:
-				if (errorTypes.contains(etype)) break;
 			case ERROR:
 				errors++;
 				tool.error(msg);

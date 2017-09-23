@@ -5,9 +5,9 @@ import java.util.List;
 import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.parser.Collector;
+import net.certiv.adept.model.load.parser.FeatureFactory;
 
-public class DocModel implements IModel {
+public class DocModel {
 
 	private CoreMgr mgr;
 	private Document doc;
@@ -17,20 +17,18 @@ public class DocModel implements IModel {
 	private ArrayListMultimap<Long, Feature> typeIndex = ArrayListMultimap.create();
 
 	/** Creates a nascent model for the given doc. */
-	public DocModel(CoreMgr mgr, Collector collector) {
+	public DocModel(CoreMgr mgr, FeatureFactory featureFactory) {
 		this.mgr = mgr;
-		this.features = collector.getNonRuleFeatures();
-		doc = collector.getDocument();
+		this.features = featureFactory.getNonRuleFeatures();
+		doc = featureFactory.getDocument();
 		doc.setModel(this);
 		buildIndex();
 	}
 
-	@Override
 	public CoreMgr getMgr() {
 		return mgr;
 	}
 
-	@Override
 	public void setMgr(CoreMgr mgr) {
 		this.mgr = mgr;
 	}

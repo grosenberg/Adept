@@ -10,7 +10,7 @@ import javax.swing.table.AbstractTableModel;
 import com.google.common.collect.TreeMultimap;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.topo.Facet;
+import net.certiv.adept.model.topo.Facet;
 import net.certiv.adept.util.Strings;
 
 public class MatchesTableModel extends AbstractTableModel {

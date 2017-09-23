@@ -9,7 +9,7 @@ import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.topo.Facet;
+import net.certiv.adept.model.topo.Facet;
 import net.certiv.adept.util.Strings;
 import net.certiv.adept.vis.utils.CollUtil;
 

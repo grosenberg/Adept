@@ -1,5 +1,6 @@
 package net.certiv.adept;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -7,7 +8,11 @@ import java.util.List;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.CorpusModel;
-import net.certiv.adept.model.ModelIO;
+import net.certiv.adept.model.load.Config;
+import net.certiv.adept.model.topo.Align;
+import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.tune.Boosts;
+import net.certiv.adept.model.tune.Fitter;
 import net.certiv.adept.tool.ErrorManager;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.tool.ITool;
@@ -15,10 +20,6 @@ import net.certiv.adept.tool.LangDescriptor;
 import net.certiv.adept.tool.Level;
 import net.certiv.adept.tool.Options;
 import net.certiv.adept.tool.Options.OptionType;
-import net.certiv.adept.topo.Align;
-import net.certiv.adept.topo.Factor;
-import net.certiv.adept.tune.Boosts;
-import net.certiv.adept.tune.Fitter;
 import net.certiv.adept.util.Log;
 
 /**
@@ -68,7 +69,7 @@ public class Tune implements ITool {
 		if (lang == null) return false;
 		corpusDir = Paths.get(corpusRoot, lang);
 
-		languages = ModelIO.loadLanguages(tool.getErrMgr());
+		languages = Config.loadLanguages(tool.getErrMgr());
 		if (languages == null) return false;
 
 		boolean found = false;
@@ -93,8 +94,15 @@ public class Tune implements ITool {
 	}
 
 	void tune() {
+		List<String> names = null;
+		try {
+			names = Config.getContainedFilenames(corpusDir, corpusExt);
+		} catch (IOException e) {
+			tool.getErrMgr().toolError(ErrorType.CANNOT_READ_FILE, e.getMessage());
+			exit(-1);
+		}
+
 		Fitter fitter = new Fitter(samples);
-		List<String> names = ModelIO.readFilenames(corpusDir, corpusExt);
 		for (String name : names) {
 			ArrayList<String> remainder = new ArrayList<>(names);
 			remainder.remove(name);

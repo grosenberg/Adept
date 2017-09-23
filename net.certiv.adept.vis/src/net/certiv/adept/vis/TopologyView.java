@@ -46,7 +46,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.ISourceParser;
+import net.certiv.adept.model.load.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.Counter;
@@ -168,7 +168,7 @@ public class TopologyView extends AbstractBase {
 		});
 
 		idxSlider = new JSlider(0, 500);
-		idxSlider.setToolTipText("Features list starting offset.");
+		idxSlider.setToolTipText("FeatureSet list starting offset.");
 		idxSlider.setPaintTicks(true);
 		idxSlider.setMajorTickSpacing(55);
 		idxSlider.addChangeListener(new ChangeListener() {

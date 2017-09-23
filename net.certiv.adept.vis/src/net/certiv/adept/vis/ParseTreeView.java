@@ -25,7 +25,7 @@ import org.antlr.v4.runtime.tree.Trees;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.parser.ParseData;
+import net.certiv.adept.model.load.parser.DocParseData;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.SliderDialog;
@@ -58,7 +58,7 @@ public class ParseTreeView extends AbstractBase {
 	private int level;
 
 	public ParseTreeView() {
-		super("ParseData tree visiualization", "tree.gif");
+		super("DocParseData tree visiualization", "tree.gif");
 
 		viewer = new TreeViewer();
 		viewer.addMouseListener(new MouseAdapter() {
@@ -187,7 +187,7 @@ public class ParseTreeView extends AbstractBase {
 
 		tool.execute();
 		Document doc = tool.getDocuments().get(0);
-		ParseData data = doc.getParseData();
+		DocParseData data = doc.getParseData();
 
 		// graphical rep of tree
 		viewer.inspect(data.getTree(), data.getRuleNames());

@@ -18,8 +18,8 @@ import com.google.gson.GsonBuilder;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.core.PerfData;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.ModelIO;
-import net.certiv.adept.parser.Collector;
+import net.certiv.adept.model.load.Config;
+import net.certiv.adept.model.load.parser.FeatureFactory;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.tool.LangDescriptor;
 import net.certiv.adept.tool.Level;
@@ -130,10 +130,10 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean loadResources() {
-		version = ModelIO.loadVersion(errMgr);
+		version = Config.loadVersion(errMgr);
 		if (version == null) return false;
 
-		languages = ModelIO.loadLanguages(errMgr);
+		languages = Config.loadLanguages(errMgr);
 		if (languages == null) return false;
 
 		return true;
@@ -293,8 +293,8 @@ public class Tool extends ToolBase {
 	 * features, and then, nominally, applies the attributes to produce a revised document.
 	 */
 	public void execute(Document doc) {
-		Collector collector = mgr.collect(doc, settings.check);
-		mgr.createDocModel(collector);
+		FeatureFactory featureFactory = mgr.collect(doc, settings.check);
+		mgr.createDocModel(featureFactory);
 
 		// now compare document model to corpus model
 		try {

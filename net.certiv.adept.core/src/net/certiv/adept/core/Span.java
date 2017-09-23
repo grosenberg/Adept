@@ -8,15 +8,15 @@ import org.antlr.v4.runtime.misc.Interval;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.AdeptToken;
-import net.certiv.adept.parser.ParseData;
-import net.certiv.adept.topo.Facet;
-import net.certiv.adept.topo.Form;
+import net.certiv.adept.model.load.parser.AdeptToken;
+import net.certiv.adept.model.load.parser.DocParseData;
+import net.certiv.adept.model.topo.Facet;
+import net.certiv.adept.model.topo.Form;
 import net.certiv.adept.util.Strings;
 
 public class Span {
 
-	private ParseData data;
+	private DocParseData data;
 	private List<Token> tokens;
 
 	private AdeptToken lhs;
@@ -34,7 +34,7 @@ public class Span {
 	private int formRhs;
 	private int dents;
 
-	public Span(ParseData data) {
+	public Span(DocParseData data) {
 		this.data = data;
 
 		tokens = data.getTokens();

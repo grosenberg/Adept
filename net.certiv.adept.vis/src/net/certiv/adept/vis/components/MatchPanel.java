@@ -18,9 +18,9 @@ import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.parser.ISourceParser;
-import net.certiv.adept.topo.Facet;
-import net.certiv.adept.topo.Stats;
+import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.topo.Facet;
+import net.certiv.adept.model.topo.Stats;
 import net.certiv.adept.util.Strings;
 
 public class MatchPanel extends JPanel {

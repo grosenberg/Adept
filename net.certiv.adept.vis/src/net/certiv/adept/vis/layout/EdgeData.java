@@ -3,7 +3,7 @@ package net.certiv.adept.vis.layout;
 import java.awt.geom.Point2D;
 
 import net.certiv.adept.model.Edge;
-import net.certiv.adept.topo.Position;
+import net.certiv.adept.model.topo.Position;
 
 public class EdgeData {
 

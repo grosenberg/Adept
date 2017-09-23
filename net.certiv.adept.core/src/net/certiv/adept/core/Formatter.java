@@ -5,8 +5,8 @@ import java.util.Set;
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.parser.ParseData;
-import net.certiv.adept.topo.Facet;
+import net.certiv.adept.model.load.parser.DocParseData;
+import net.certiv.adept.model.topo.Facet;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -16,7 +16,7 @@ import net.certiv.adept.util.Strings;
 public class Formatter {
 
 	private Document doc;
-	private ParseData data;
+	private DocParseData data;
 	private OutputBuilder buffer;
 
 	private int currIndent;

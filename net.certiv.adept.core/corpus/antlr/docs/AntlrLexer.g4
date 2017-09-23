@@ -5,8 +5,8 @@ options {
 }
 
 @header {
-	package net.certiv.adept.antlr.parser.gen;
-	import net.certiv.adept.parser.LexerErrorStrategy;
+	package net.certiv.adept.lang.antlr.parser.gen;
+	import net.certiv.adept.model.load.parser.LexerErrorStrategy;
 }
 
 COMMENT
