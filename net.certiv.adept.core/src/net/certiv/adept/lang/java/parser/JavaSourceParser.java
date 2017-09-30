@@ -55,54 +55,55 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.lang.java.parser.gen.JavaLexer;
 import net.certiv.adept.lang.java.parser.gen.JavaParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.load.parser.AdeptTokenFactory;
-import net.certiv.adept.model.load.parser.FeatureFactory;
-import net.certiv.adept.model.load.parser.ISourceParser;
-import net.certiv.adept.model.load.parser.ParserErrorListener;
+import net.certiv.adept.model.parser.AdeptTokenFactory;
+import net.certiv.adept.model.parser.Builder;
+import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.model.parser.ParserErrorListener;
 import net.certiv.adept.tool.ErrorType;
 
 public class JavaSourceParser implements ISourceParser {
 
 	protected int errorCount;
-	private FeatureFactory featureFactory;
+	private Builder builder;
 
 	@Override
-	public void process(FeatureFactory featureFactory, Document doc) throws RecognitionException, Exception {
-		this.featureFactory = featureFactory;
+	public void process(Builder builder, Document doc) throws RecognitionException, Exception {
+		this.builder = builder;
 
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(featureFactory.input);
-		featureFactory.lexer.setTokenFactory(factory);
-		featureFactory.parser.setTokenFactory(factory);
-		featureFactory.parser.removeErrorListeners();
-		featureFactory.parser.addErrorListener(errors);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		builder.lexer.setTokenFactory(factory);
+		builder.parser.setTokenFactory(factory);
+		builder.parser.removeErrorListeners();
+		builder.parser.addErrorListener(errors);
 
-		featureFactory.tree = ((JavaParser) featureFactory.parser).compilationUnit();
-		featureFactory.errCount = errorCount;
+		builder.tree = ((JavaParser) builder.parser).compilationUnit();
+		builder.errCount = errorCount;
 
-		if (featureFactory.tree == null || featureFactory.tree instanceof ErrorNode || featureFactory.errCount > 0) {
+		if (builder.tree == null || builder.tree instanceof ErrorNode || builder.errCount > 0) {
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, "Bad parse tree: " + doc.getPathname());
 		}
 	}
 
 	private void fillCollector(String content) {
-		featureFactory.input = CharStreams.fromString(content);
-		featureFactory.lexer = new JavaLexer(featureFactory.input);
-		featureFactory.VWS = VWS;
-		featureFactory.HWS = HWS;
-		featureFactory.VARS = new int[] { ID, NUM, STRING, QID };
-		featureFactory.BLOCKCOMMENT = BLOCKCOMMENT;
-		featureFactory.LINECOMMENT = LINECOMMENT;
-		featureFactory.ALIGN_SAME = new int[] { ID, QID, NUM, STRING, BLOCKCOMMENT, LINECOMMENT };
-		featureFactory.ALIGN_ANY = new int[] { COLON, SEMI, COMMA, LT, GT, EQ, LE, GE, NEQ, L_AND, L_OR, LPAREN, RPAREN,
+		builder.input = CharStreams.fromString(content);
+		builder.lexer = new JavaLexer(builder.input);
+		builder.VWS = VWS;
+		builder.HWS = HWS;
+		builder.VARS = new int[] { ID, NUM, STRING, QID };
+		builder.BLOCKCOMMENT = BLOCKCOMMENT;
+		builder.LINECOMMENT = LINECOMMENT;
+		builder.ALIGN_SAME = new int[] { ID, QID, NUM, STRING, BLOCKCOMMENT, LINECOMMENT };
+		builder.ALIGN_ANY = new int[] { COLON, SEMI, COMMA, LT, GT, EQ, LE, GE, NEQ, L_AND, L_OR, LPAREN, RPAREN,
 				LBRACE, RBRACE, LBRACK, RBRACK, RARROW, PLUS_ASSIGN, MINUS_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, AND_ASSIGN,
 				OR_ASSIGN, XOR_ASSIGN, MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
-		featureFactory.ERR_TOKEN = ERRCHAR;
-		// featureFactory.ERR_RULE = JavaParser.RULE_other << 32;
-		featureFactory.stream = new CommonTokenStream(featureFactory.lexer);
-		featureFactory.parser = new JavaParser(featureFactory.stream);
+		builder.ERR_TOKEN = ERRCHAR;
+		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 32;
+		builder.stream = new CommonTokenStream(builder.lexer);
+		builder.parser = new JavaParser(builder.stream);
 	}
 
 	@Override
@@ -112,7 +113,7 @@ public class JavaSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void extractFeatures(FeatureFactory model) {
+	public void extractFeatures(Builder model) {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		JavaVisitor visitor = new JavaVisitor(model);
 		walker.walk(visitor, model.tree);
@@ -130,25 +131,30 @@ public class JavaSourceParser implements ISourceParser {
 
 	@Override
 	public ParseTree getParseTree() {
-		return featureFactory.tree;
+		return builder.tree;
+	}
+
+	@Override
+	public ParseData getParseData() {
+		return builder;
 	}
 
 	@Override
 	public List<String> getRuleNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.parser.getRuleNames());
+		return Arrays.asList(builder.parser.getRuleNames());
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public List<String> getTokenNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.lexer.getTokenNames());
+		return Arrays.asList(builder.lexer.getTokenNames());
 	}
 }

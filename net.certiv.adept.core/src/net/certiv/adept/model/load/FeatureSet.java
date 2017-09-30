@@ -7,7 +7,9 @@ import java.util.Map;
 
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Edge;
+import net.certiv.adept.model.EdgeSet;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.util.Log;
@@ -57,14 +59,21 @@ public class FeatureSet {
 		return result;
 	}
 
-	/** Restore feature objects to edgeSet using the persisted indicies */
-	public void fixEdgeRefs() {
+	/**
+	 * Restore feature objects to edgeSet using the persisted indicies
+	 * 
+	 * @param mgr
+	 */
+	public void fixEdgeRefs(ProcessMgr mgr) {
 		Map<Long, Feature> cache = new HashMap<>();
 		for (Feature feature : features) {
+			feature.setMgr(mgr);
 			cache.put(feature.getId(), feature);
 		}
 		for (Feature feature : features) {
-			for (Edge edge : feature.getEdgeSet().getEdges()) {
+			EdgeSet edgeSet = feature.getEdgeSet();
+			edgeSet.setMgr(mgr);
+			for (Edge edge : edgeSet.getEdges()) {
 				edge.root = cache.get(edge.rootId);
 				edge.leaf = cache.get(edge.leafId);
 				if (edge.root == null || edge.leaf == null) {

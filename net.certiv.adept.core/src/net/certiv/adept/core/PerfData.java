@@ -6,43 +6,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.load.parser.FeatureFactory;
+import net.certiv.adept.model.parser.Builder;
 
 public class PerfData {
 
 	private ArrayList<DocPerf> docs;
 	private DocPerf current;
-
-	public static class DocPerf {
-
-		public String docName;
-		public int docFeatureCnt;
-		public int docTypeCnt;
-		public int docTerminalCnt;
-		public Duration docFormat;
-
-		public DocPerf() {}
-
-		public DocPerf(FeatureFactory featureFactory) {
-			docName = featureFactory.getDocument().getPathname();
-			docFeatureCnt = featureFactory.getFeatures().size();
-			docTypeCnt = featureFactory.typeSet.size();
-			docTerminalCnt = featureFactory.terminalIndex.size();
-		}
-	}
-
-	public static class Record {
-
-		public Feature terminal;
-		public Feature best;
-		public TreeMap<Double, Feature> selected;
-
-		public Record(Feature terminal, Feature best, TreeMap<Double, Feature> selected) {
-			this.terminal = terminal;
-			this.best = best;
-			this.selected = selected;
-		}
-	}
 
 	public Duration load;
 	public Duration rebuild;
@@ -58,8 +27,8 @@ public class PerfData {
 		docs = new ArrayList<>(size);
 	}
 
-	public void addDoc(FeatureFactory featureFactory) {
-		current = new DocPerf(featureFactory);
+	public void addDoc(Builder builder) {
+		current = new DocPerf(builder);
 		docs.add(current);
 	}
 
@@ -82,5 +51,39 @@ public class PerfData {
 		load = Duration.ZERO;
 		rebuild = Duration.ZERO;
 		if (current != null) current.docFormat = Duration.ZERO;
+	}
+
+	public class Record {
+
+		public Feature terminal;
+		public Feature best;
+		public TreeMap<Double, Feature> selected;
+
+		public Record(Feature terminal, Feature best, TreeMap<Double, Feature> selected) {
+			this.terminal = terminal;
+			this.best = best;
+			this.selected = selected;
+		}
+	}
+
+	public class DocPerf {
+
+		public String docName;
+		public int docFeatureCnt;
+		public int docTypeCnt;
+		public int docTerminalCnt;
+		public Duration docFormat;
+
+		public DocPerf() {}
+
+		public DocPerf(Builder builder) {
+			docName = builder.getDocument().getPathname();
+			docFeatureCnt = builder.getFeatures().size();
+			docTypeCnt = builder.typeSet.size();
+			docTerminalCnt = 0;
+			for (Feature feature : builder.contextFeatureIndex.values()) {
+				if (feature.isTerminal()) docTerminalCnt++;
+			}
+		}
 	}
 }

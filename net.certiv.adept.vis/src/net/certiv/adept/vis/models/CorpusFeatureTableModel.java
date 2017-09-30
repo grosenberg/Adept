@@ -14,12 +14,12 @@ public class CorpusFeatureTableModel extends AbstractTableModel {
 	private final String[] columnNames = { "Line", "Leafs", "Edges" };
 	private Object[][] rowData;
 
-	public CorpusFeatureTableModel(ArrayListMultimap<Long, Feature> typeIndex, long type) {
+	public CorpusFeatureTableModel(ArrayListMultimap<Integer, Feature> typeIndex, int type) {
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
 		for (Feature feature : typeIndex.get(type)) {
-			int tc = feature.getEdgeSet().getTypeCount();
-			int ec = feature.getEdgeSet().getEdgeCount();
+			int tc = feature.getEdgeSet().getEdgeTypes().size();
+			int ec = feature.getEdgeSet().size();
 
 			Object[] row = { line, tc, ec };
 			rows.add(row);

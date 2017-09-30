@@ -19,10 +19,10 @@ import javax.swing.table.TableRowSorter;
 import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.models.CorpusFeatureTableModel;
@@ -53,8 +53,8 @@ public class CorpusView extends AbstractBase {
 	private JTable egTable;
 
 	private ISourceParser lang;
-	private ArrayListMultimap<Long, Feature> typeIndex;
-	private long typeKey;
+	private ArrayListMultimap<Integer, Feature> typeIndex;
+	private int typeKey;
 
 	private Comparator<Integer> intComparator = new Comparator<Integer>() {
 
@@ -67,7 +67,7 @@ public class CorpusView extends AbstractBase {
 	};
 
 	public CorpusView() {
-		super("Corpus FeatureSet Analysis", "features.gif");
+		super("CorpusDocs FeatureSet Analysis", "features.gif");
 
 		fsTable = new JTable();
 		fsTable.setFillsViewportHeight(true);
@@ -78,7 +78,7 @@ public class CorpusView extends AbstractBase {
 				int row = fsTable.getSelectedRow();
 				if (row >= 0) {
 					CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
-					typeKey = (long) m.getValueAt(row, 2);
+					typeKey = (int) m.getValueAt(row, 2);
 					String kind = (String) m.getValueAt(row, 1);
 					if (kind.equals(Kind.RULE.toString())) {
 						typeKey = typeKey << 32;
@@ -163,7 +163,7 @@ public class CorpusView extends AbstractBase {
 			return;
 		}
 
-		CoreMgr mgr = tool.getMgr();
+		ProcessMgr mgr = tool.getMgr();
 		lang = mgr.getLanguageParser();
 		typeIndex = mgr.getCorpusModel().getFeatureIndex();
 
@@ -187,7 +187,7 @@ public class CorpusView extends AbstractBase {
 		cols.getColumn(4).setPreferredWidth(10);
 	}
 
-	protected void createDependentData(long typeKey) {
+	protected void createDependentData(int typeKey) {
 		CorpusFeatureTableModel model = new CorpusFeatureTableModel(typeIndex, typeKey);
 		fxTable.setModel(model);
 

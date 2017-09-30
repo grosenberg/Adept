@@ -4,32 +4,32 @@ import java.util.List;
 
 import com.google.common.collect.ArrayListMultimap;
 
-import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.model.load.parser.FeatureFactory;
+import net.certiv.adept.core.ProcessMgr;
+import net.certiv.adept.model.parser.Builder;
 
 public class DocModel {
 
-	private CoreMgr mgr;
+	private ProcessMgr mgr;
 	private Document doc;
 	private List<Feature> features;
 
 	// key = feature type; value = corresponding features
-	private ArrayListMultimap<Long, Feature> typeIndex = ArrayListMultimap.create();
+	private final ArrayListMultimap<Integer, Feature> index = ArrayListMultimap.create();
 
 	/** Creates a nascent model for the given doc. */
-	public DocModel(CoreMgr mgr, FeatureFactory featureFactory) {
+	public DocModel(ProcessMgr mgr, Builder builder) {
 		this.mgr = mgr;
-		this.features = featureFactory.getNonRuleFeatures();
-		doc = featureFactory.getDocument();
+		this.features = builder.getNonRuleFeatures();
+		doc = builder.getDocument();
 		doc.setModel(this);
 		buildIndex();
 	}
 
-	public CoreMgr getMgr() {
+	public ProcessMgr getMgr() {
 		return mgr;
 	}
 
-	public void setMgr(CoreMgr mgr) {
+	public void setMgr(ProcessMgr mgr) {
 		this.mgr = mgr;
 	}
 
@@ -42,14 +42,14 @@ public class DocModel {
 	}
 
 	/** Returns a map, keyed by feature type, of all features in the document model */
-	public ArrayListMultimap<Long, Feature> getFeatureIndex() {
-		if (typeIndex.isEmpty()) buildIndex();
-		return typeIndex;
+	public ArrayListMultimap<Integer, Feature> getFeatureIndex() {
+		if (index.isEmpty()) buildIndex();
+		return index;
 	}
 
 	private void buildIndex() {
-		for (Feature f : features) {
-			typeIndex.put(f.getType(), f);
+		for (Feature feature : features) {
+			index.put(feature.getType(), feature);
 		}
 	}
 }

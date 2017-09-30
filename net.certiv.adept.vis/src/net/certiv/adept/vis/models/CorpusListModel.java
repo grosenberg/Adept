@@ -15,11 +15,11 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 	public static class FeatureListItem {
 
 		public int line;
-		public long type;
+		public int type;
 		public String name;
 		public int featureCnt;
 
-		public FeatureListItem(int line, long type, String name, int featureCnt) {
+		public FeatureListItem(int line, int type, String name, int featureCnt) {
 			super();
 			this.line = line;
 			this.type = type;
@@ -35,7 +35,7 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 
 	private List<String> ruleNames;
 	private List<String> tokenNames;
-	private ArrayListMultimap<Long, Feature> typeIndex;
+	private ArrayListMultimap<Integer, Feature> typeIndex;
 
 	public CorpusListModel(List<String> ruleNames, List<String> tokenNames) {
 		super();
@@ -43,14 +43,14 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 		this.tokenNames = tokenNames;
 	}
 
-	public void addElements(ArrayListMultimap<Long, Feature> typeIndex) {
+	public void addElements(ArrayListMultimap<Integer, Feature> typeIndex) {
 		this.typeIndex = typeIndex;
 
 		int line = 1;
-		for (Long key : typeIndex.keySet()) {
+		for (Integer key : typeIndex.keySet()) {
 			List<Feature> features = typeIndex.get(key);
 
-			long type = key;
+			int type = key;
 			String name;
 			if (features.get(0).getKind() == Kind.RULE) {
 				type = type >>> 32;

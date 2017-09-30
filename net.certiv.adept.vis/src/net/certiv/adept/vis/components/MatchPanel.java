@@ -18,10 +18,9 @@ import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.load.parser.ISourceParser;
-import net.certiv.adept.model.topo.Facet;
-import net.certiv.adept.model.topo.Stats;
-import net.certiv.adept.util.Strings;
+import net.certiv.adept.model.Format;
+import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.model.util.Stats;
 
 public class MatchPanel extends JPanel {
 
@@ -32,20 +31,19 @@ public class MatchPanel extends JPanel {
 	private JTextField txtDocName;
 	private JTextField txtCol;
 	private JTextField txtFacets;
-	private JTextField txtDistance;
+	private JTextField txtSimilarity;
 	private JTextField txtDents;
 	private JTextField txtFormat;
-	private JTextField txtFeatSim;
+	private JTextField txtAncestorSim;
 	private JTextField txtSelfSimF;
-	private JTextField txtEdgeSim;
+	private JTextField txtEdgeTypeSim;
 	private JTextField txtSelfSimM;
 	private JTextField txtMutualSim;
-	private JTextField txtIntersectSim;
+	private JTextField txtEdgeTextSim;
 	private JTextField txtTotTypes;
 	private JTextField txtTotEdges;
-	private JTextField txtIntersect;
-	private JTextField txtIntersectTypes;
-	private JTextField txtDisjointTypes;
+	private JTextField txtFormatSim;
+	private JTextField txtWeightSim;
 
 	private JCheckBox chkVariable;
 	private JCheckBox chkAlign;
@@ -160,19 +158,19 @@ public class MatchPanel extends JPanel {
 		JLabel lblDistance = new JLabel("Distance");
 		add(lblDistance, "13, 16, right, default");
 
-		txtDistance = new JTextField();
-		txtDistance.setHorizontalAlignment(SwingConstants.LEFT);
-		txtDistance.setEditable(false);
-		add(txtDistance, "15, 16, fill, default");
-		txtDistance.setColumns(10);
+		txtSimilarity = new JTextField();
+		txtSimilarity.setHorizontalAlignment(SwingConstants.LEFT);
+		txtSimilarity.setEditable(false);
+		add(txtSimilarity, "15, 16, fill, default");
+		txtSimilarity.setColumns(10);
 
 		JLabel lblFeatSim = new JLabel("Label Sim");
 		add(lblFeatSim, "17, 16, right, default");
 
-		txtFeatSim = new JTextField();
-		txtFeatSim.setEditable(false);
-		add(txtFeatSim, "19, 16, fill, default");
-		txtFeatSim.setColumns(10);
+		txtAncestorSim = new JTextField();
+		txtAncestorSim.setEditable(false);
+		add(txtAncestorSim, "19, 16, fill, default");
+		txtAncestorSim.setColumns(10);
 
 		JLabel lblSelfSim = new JLabel("Self Sim Feature");
 		add(lblSelfSim, "13, 18, right, default");
@@ -185,10 +183,10 @@ public class MatchPanel extends JPanel {
 		JLabel lblEdgeSim = new JLabel("Edge Set Sim");
 		add(lblEdgeSim, "17, 18, right, default");
 
-		txtEdgeSim = new JTextField();
-		txtEdgeSim.setEditable(false);
-		add(txtEdgeSim, "19, 18, fill, default");
-		txtEdgeSim.setColumns(10);
+		txtEdgeTypeSim = new JTextField();
+		txtEdgeTypeSim.setEditable(false);
+		add(txtEdgeTypeSim, "19, 18, fill, default");
+		txtEdgeTypeSim.setColumns(10);
 
 		JLabel lblEdgeTypes = new JLabel("Edge Types");
 		add(lblEdgeTypes, "3, 20, right, default");
@@ -209,10 +207,10 @@ public class MatchPanel extends JPanel {
 		JLabel lblIntersect = new JLabel("Intersect Sim");
 		add(lblIntersect, "17, 20, right, default");
 
-		txtIntersectSim = new JTextField();
-		txtIntersectSim.setEditable(false);
-		add(txtIntersectSim, "19, 20, fill, default");
-		txtIntersectSim.setColumns(10);
+		txtEdgeTextSim = new JTextField();
+		txtEdgeTextSim.setEditable(false);
+		add(txtEdgeTextSim, "19, 20, fill, default");
+		txtEdgeTextSim.setColumns(10);
 
 		JLabel lblCount = new JLabel("Total Edges");
 		add(lblCount, "3, 22, right, default");
@@ -236,29 +234,21 @@ public class MatchPanel extends JPanel {
 		JLabel lblOverlap = new JLabel("Intersects");
 		add(lblOverlap, "3, 24, right, default");
 
-		txtIntersect = new JTextField();
-		txtIntersect.setEditable(false);
-		add(txtIntersect, "5, 24, fill, default");
-		txtIntersect.setColumns(10);
+		txtFormatSim = new JTextField();
+		txtFormatSim.setEditable(false);
+		add(txtFormatSim, "5, 24, fill, default");
+		txtFormatSim.setColumns(10);
 
 		JLabel lblIntersectTypes = new JLabel("Types");
 		add(lblIntersectTypes, "7, 24, right, default");
 
-		txtIntersectTypes = new JTextField();
-		txtIntersectTypes.setEditable(false);
-		add(txtIntersectTypes, "9, 24, 11, 1, fill, default");
-		txtIntersectTypes.setColumns(10);
+		txtWeightSim = new JTextField();
+		txtWeightSim.setEditable(false);
+		add(txtWeightSim, "9, 24, 11, 1, fill, default");
+		txtWeightSim.setColumns(10);
 
 		JLabel lblDisjoint = new JLabel("Disjoints");
 		add(lblDisjoint, "3, 26, right, default");
-
-		JLabel lblDisjointTypes = new JLabel("Types");
-		add(lblDisjointTypes, "7, 26, right, default");
-
-		txtDisjointTypes = new JTextField();
-		txtDisjointTypes.setEditable(false);
-		add(txtDisjointTypes, "9, 26, 11, 1, fill, default");
-		txtDisjointTypes.setColumns(10);
 	}
 
 	public void load(Feature feature, ISourceParser lang, Feature matched) {
@@ -271,31 +261,28 @@ public class MatchPanel extends JPanel {
 		txtType.setText(String.valueOf(matched.getType()));
 		txtText.setText(matched.getText());
 		chkAlign.setSelected(matched.isAligned());
-		chkAlignSame.setSelected(matched.isAlignedSame());
 
-		int format = matched.getFormat();
-		int dents = Facet.getDentation(format);
-		txtFormat.setText("0x" + Integer.toHexString(format).toUpperCase());
+		Format format = matched.getFormat();
+		int dents = format.relDents;
+		txtFormat.setText(format.encode());
 		txtDents.setText(String.valueOf(dents));
-		txtFacets.setText(Strings.join(Facet.get(format), ", "));
+		txtFacets.setText(format.toString());
 
 		Stats stats = feature.getStats(matched);
-		stats.setLanguage(lang);
 
-		txtDistance.setText(String.valueOf(stats.distance));
+		txtSimilarity.setText(String.valueOf(stats.similarity));
 		txtSelfSimF.setText(String.valueOf(stats.selfSimF));
 		txtSelfSimM.setText(String.valueOf(stats.selfSimM));
 		txtMutualSim.setText(String.valueOf(stats.mutualSim));
-		txtFeatSim.setText(String.valueOf(stats.featLabelSim));
-		txtEdgeSim.setText(String.valueOf(stats.edgeSetSim));
-		txtIntersectSim.setText(String.valueOf(stats.intersectSim));
+
+		txtAncestorSim.setText(String.valueOf(stats.ancestorSim));
+		txtEdgeTypeSim.setText(String.valueOf(stats.edgeTypeSim));
+		txtEdgeTextSim.setText(String.valueOf(stats.edgeTextSim));
+		txtFormatSim.setText(String.valueOf(stats.formatSim));
+		txtWeightSim.setText(String.valueOf(stats.weightSim));
 
 		txtTotTypes.setText(String.valueOf(stats.typeCount));
 		txtTotEdges.setText(String.valueOf(stats.edgeCount));
-		txtIntersect.setText(String.valueOf(stats.intersectCount));
-
-		txtIntersectTypes.setText(stats.intersectTypes);
-		txtDisjointTypes.setText(stats.disjointTypes);
 	}
 
 	public void clear() {

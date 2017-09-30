@@ -21,33 +21,29 @@ public enum ErrorType {
 	// ---
 
 	INVALID_CMDLINE_ARG(100, "unknown command-line option <arg>", ErrorSeverity.ERROR),
-
 	CONFIG_FAILURE(101, "Configuration failure", ErrorSeverity.ERROR),
-
 	INVALID_VERBOSE_LEVEL(103, "Invalid verbosity verbose: <arg>", ErrorSeverity.ERROR),
 
 	// ---
 
 	PARSE_FAILURE(200, "Failed to parse: <arg>", ErrorSeverity.ERROR),
-
 	PARSE_ERROR(201, "Error in parse: <arg>", ErrorSeverity.ERROR),
-
 	VISITOR_FAILURE(230, "Failed to walk: <arg>", ErrorSeverity.ERROR),
-
 	VISITOR_ERROR(231, "Error in visitor: <arg>", ErrorSeverity.ERROR),
 
 	// ---
 
-	MODEL_BUILD_FAILURE(300, "Failed model construction: <arg>", ErrorSeverity.ERROR),
+	MODEL_BUILD_FAILURE(300, "Failed model build: <arg>", ErrorSeverity.ERROR),
+	MODEL_LOAD_FAILURE(301, "Failed model load: <arg>", ErrorSeverity.ERROR),
+	MODEL_SAVE_FAILURE(302, "Failed model save: <arg>", ErrorSeverity.ERROR),
+	MODEL_VALIDATE_FAILURE(303, "Model validation failed: <arg>", ErrorSeverity.ERROR),
 
 	// ---
 
 	;
 
 	public final String msg;
-
 	public final int code;
-
 	public final ErrorSeverity severity;
 
 	ErrorType(int code, String msg, ErrorSeverity severity) {

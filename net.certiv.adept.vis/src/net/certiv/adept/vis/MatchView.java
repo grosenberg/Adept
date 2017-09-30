@@ -25,15 +25,14 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import com.google.common.collect.TreeMultimap;
-
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.Confidence;
-import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.model.util.Chunk;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.TreeMultimap;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.FeaturePanel;
 import net.certiv.adept.vis.components.MatchPanel;
@@ -195,7 +194,7 @@ public class MatchView extends AbstractBase {
 
 		@Override
 		protected void done() {
-			CoreMgr mgr = tool.getMgr();
+			ProcessMgr mgr = tool.getMgr();
 			List<Feature> features = mgr.getDocModel().getFeatures();
 			DocTableModel model = new DocTableModel(features);
 			featTable.setModel(model);
@@ -223,8 +222,8 @@ public class MatchView extends AbstractBase {
 		DocTableModel m = (DocTableModel) featTable.getModel();
 		Feature feature = m.getFeature(row);
 		TreeMultimap<Double, Feature> matches = tool.getMgr().getMatchSet(feature);
-		Confidence.eval(matches);
-		Map<Double, Integer> indices = Confidence.partitionIndices();
+		Chunk.eval(matches);
+		Map<Double, Integer> indices = Chunk.partitionIndices();
 		MatchesTableModel model = new MatchesTableModel(matches, indices);
 		matchTable.setModel(model);
 

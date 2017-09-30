@@ -12,111 +12,131 @@ import org.antlr.v4.runtime.misc.Utils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.model.topo.Facet;
-import net.certiv.adept.model.topo.Factor;
-import net.certiv.adept.model.topo.Location;
-import net.certiv.adept.model.topo.Stats;
+import net.certiv.adept.core.ProcessMgr;
+import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.model.util.DamerauAlignment;
+import net.certiv.adept.model.util.Factor;
+import net.certiv.adept.model.util.Location;
+import net.certiv.adept.model.util.Stats;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Maths;
 
 public class Feature implements Comparable<Feature> {
 
-	private static final String ErrInvalidDist = "Invalid distance computed (%s) for %s -> %s";
 	private static final int TXTLEN = 16;
+	private static final String ErrInvalidDist = "Invalid distance computed (%s) for %s -> %s";
 
-	private static Map<Feature, Feature> pool = new LinkedHashMap<>();
+	// -------------------------------------------------------------------------------
 
-	@Expose private int id;			// internal value uniquely identifying this feature
+	// description 
+	@Expose private int id;					// internal value uniquely identifying this feature
+	@Expose private int docId;				// unique id of the document containing this feature
+	@Expose private int type;				// encoded token type or rule idx (rules are << 16)
+	@Expose private Kind kind;				// feature category
+	@Expose private String aspect;			// node name
+	@Expose private String text;			// text content
+	@Expose private boolean isVar;			// variable identifier
+	@Expose private boolean isComment;		// comment type
 
-	@Expose private int docId;		// unique id of the document containing this feature
-	@Expose private long type;		// encoded token type or rule id (ids are << 32)
+	// ancestor path
+	@Expose private List<Integer> ancestors;
 
-	@Expose private Kind kind;		// feature category
-	@Expose private String aspect;	// rule or token name
-	@Expose private boolean isVar;	// variable content is ignored
-	@Expose private String text;	// rule or token text
-	@Expose private int format;		// describes this feature's Facets
+	// connections to other features in a local group
+	@Expose private EdgeSet edgeSet;
 
-	@Expose private int col;		// feature locus
+	// formatting
+	@Expose private Format format;
+
+	// position
+	@Expose private int col;			// feature locus
 	@Expose private int line;
+	@Expose private int begIdx;			// feature token begIdx index
+	@Expose private int endIdx;			// feature token endIdx index
+	@Expose private int begOffset;		// feature beg character offset
+	@Expose private int endOffset;		// feature end character offset
+	@Expose private int length;			// feature real token length
 
-	@Expose private int begIdx;		// feature token begIdx index
-	@Expose private int endIdx;		// feature token endIdx index
-	@Expose private int begOffset;	// feature beg character offset
-	@Expose private int endOffset;	// feature end character offset
+	// key = docId; value = locations of features equivalent to this
+	@Expose private ArrayListMultimap<Integer, Location> equivalents;
+	@Expose private boolean equivalent;		// equivalent to another
 
-	@Expose private int weight;		// number of equivalents
-	@Expose private boolean equiv;	// is weighted to another corpus feature
+	// -------------------------------------------------------------------------------
 
-	// defines connections between this feature and others in a local group
-	@Expose EdgeSet edgeSet;
+	private static final Map<Feature, Feature> pool = new LinkedHashMap<>();
 
-	// key = docId; value = locations of equivalent features
-	@Expose ArrayListMultimap<Integer, Location> equivalents;
-
-	private CoreMgr mgr;
-
+	private ProcessMgr mgr;
 	private boolean reCalc;
 	private double selfSim;
 	private Feature matched;
 
 	// comments
-	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token token, int format) {
-		return create(mgr, kind, aspect, docId, type, token, format, false);
+	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
+			Format format) {
+		return create(mgr, kind, aspect, docId, type, token, token, format, false, true);
 	}
 
-	// nodes
-	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token token, int format,
-			boolean isVar) {
-		return create(mgr, kind, aspect, docId, type, token, token, format, isVar);
+	// terminal nodes
+	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
+			Format format, boolean isVar) {
+		return create(mgr, kind, aspect, docId, type, token, token, format, isVar, false);
 	}
 
 	// rules
-	public static Feature create(CoreMgr mgr, Kind kind, String aspect, int docId, long type, Token start, Token stop,
-			int format, boolean isVar) {
+	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop,
+			Format format, boolean isVar, boolean isComment) {
 
-		Feature feature = new Feature(mgr, docId, type, start, stop);
+		Feature feature = new Feature(mgr, kind, aspect, docId, type, start, stop, format, isVar, isComment);
 		Feature existing = pool.get(feature);
 		if (existing != null) return existing;
 
 		int id = pool.size();
-		feature.update(id, kind, aspect, format, isVar, start, stop);
+		feature.setId(id);
 		pool.put(feature, feature);
 		return feature;
 	}
 
-	Feature() {
-		super();
+	public Feature() {
 		edgeSet = new EdgeSet();
 		equivalents = ArrayListMultimap.create();
+		this.reCalc = true;
 	}
 
-	Feature(CoreMgr mgr, int docId, long type, Token start, Token stop) {
+	public Feature(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop,
+			Format format, boolean isVar, boolean isComment) {
+
 		this();
 		this.mgr = mgr;
 		this.docId = docId;
 		this.type = type;
-		this.begIdx = start.getTokenIndex();
-		this.endIdx = stop.getTokenIndex();
-	}
-
-	void update(int id, Kind kind, String aspect, int format, boolean isVar, Token start, Token stop) {
-		this.id = id;
 		this.kind = kind;
 		this.aspect = aspect;
 		this.format = format;
 		this.isVar = isVar;
+		this.isComment = isComment;
 
-		this.col = start.getCharPositionInLine();
-		this.line = start.getLine() - 1;
+		this.begIdx = start.getTokenIndex();
+		this.endIdx = stop.getTokenIndex();
 		this.begOffset = start.getStartIndex();
 		this.endOffset = stop.getStopIndex();
-
 		this.text = genText(start.getInputStream(), begOffset, endOffset);
+		this.col = start.getCharPositionInLine();
+		this.line = start.getLine() - 1;
+		this.length = countLength(start, stop);
+	}
 
-		weight = 1;
-		reCalc = true;
+	private int countLength(Token start, Token stop) {
+		int beg = start.getTokenIndex();
+		int end = stop.getTokenIndex();
+		if (beg == -1 || end == -1) return 0;
+
+		Document doc = mgr.getDocument(docId);
+		ParseData data = doc.getParseData();
+		int len = 0;
+		for (Token token : data.getTokenStream().get(beg, end)) {
+			if (data.isWsOrComment(token.getType())) continue;
+			len++;
+		}
+		return len;
 	}
 
 	private String genText(CharStream is, int startIndex, int stopIndex) {
@@ -127,20 +147,24 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	/**
-	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as
-	 * defined by root id and leaf id pairs.
+	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as defined
+	 * by root id and leaf id pairs.
 	 */
 	public void addEdge(Feature leaf, EdgeType kind) {
 		if (leaf != this) {
-			Edge edge = Edge.create(this, leaf, kind);
+			Edge edge = Edge.create((Feature) this, leaf, kind);
 			if (edgeSet.addEdge(edge)) {
 				reCalc = true;
 			}
 		}
 	}
 
-	public CoreMgr getMgr() {
+	public ProcessMgr getMgr() {
 		return mgr;
+	}
+
+	public void setMgr(ProcessMgr mgr) {
+		this.mgr = mgr;
 	}
 
 	public EdgeSet getEdgeSet() {
@@ -155,7 +179,6 @@ public class Feature implements Comparable<Feature> {
 	public void mergeEquivalent(Feature other) {
 		other.setEquivalent(true);
 		equivalents.put(other.getDocId(), other.getLocation());
-		weight++;
 	}
 
 	public boolean isAfter(Feature root) {
@@ -170,52 +193,20 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	/**
-	 * Returns a positive value representing a kernel-based distance between this and the given
-	 * corpus feature. A distance value of <code>zero</code> indicates that the two features are
-	 * identical.
+	 * Returns the ancestor path for this feature. The path starts with the node type and ends with the
+	 * parse tree root rule index.
 	 */
-	public double distance(Feature cps) {
-		double dist = selfSimularity() + cps.selfSimularity() - (2 * similarity(cps));
-		if (dist < 0) {
-			String msg = String.format(ErrInvalidDist, dist, this.toString(), cps.toString());
-			// throw new ComputationException(new Throwable(msg));
-			Log.error(this, msg);
-			dist = Double.POSITIVE_INFINITY;
-		}
-		return dist;
+	public List<Integer> getAncestorPath() {
+		return ancestors;
 	}
 
-	public double selfSimularity() {
-		if (reCalc) {
-			selfSim = similarity(this);
-			reCalc = false;
-		}
-		return selfSim;
-	}
-
-	// sum of feature label similarities and the edge set similarity
-	public double similarity(Feature cps) {
-		double featSim = featLabelSimilarity(cps);
-		double edgeSim = getEdgeSet().similarity(cps.getEdgeSet());
-		return featSim + edgeSim;
-	}
-
-	// type and text (if applicable) have to be identical
-	public double featLabelSimilarity(Feature cps) {
-		double[] vals = new double[6];
-		vals[0] = mgr.getBoost(Factor.FORMAT) * Facet.similarity(format, cps.format);
-		vals[1] = mgr.getBoost(Factor.DENTATION) * Facet.dentSimilarity(format, cps.format);
-		vals[2] = mgr.getBoost(Factor.TEXT) * (text.equals(cps.text) ? 1 : 0);
-		vals[3] = mgr.getBoost(Factor.WEIGHT) * Maths.invDelta(weight, cps.weight);
-		vals[4] = mgr.getBoost(Factor.EDGE_TYPES) * Maths.invDelta(dimensionality(), cps.dimensionality());
-		vals[5] = mgr.getBoost(Factor.EDGE_CNT) * Maths.invDelta(edgeSet.getEdgeCount(), cps.edgeSet.getEdgeCount());
-		double sum = Maths.sum(vals);
-		return sum;
+	public void setAncestorPath(List<Integer> ancestors) {
+		this.ancestors = ancestors;
 	}
 
 	/** Returns the number of unique types of feature type edgeSet */
 	public int dimensionality() {
-		return edgeSet.getTypeCount();
+		return edgeSet.getEdgeTypes().size();
 	}
 
 	/** Returns the character stream distance between the this and the given feature. */
@@ -227,12 +218,20 @@ public class Feature implements Comparable<Feature> {
 		return id;
 	}
 
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public Kind getKind() {
 		return kind;
 	}
 
 	public boolean isVar() {
 		return isVar;
+	}
+
+	public boolean isComment() {
+		return isComment;
 	}
 
 	public int getDocId() {
@@ -248,7 +247,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	/** Returns the combined type of the feature */
-	public long getType() {
+	public int getType() {
 		return type;
 	}
 
@@ -262,6 +261,11 @@ public class Feature implements Comparable<Feature> {
 		return endIdx;
 	}
 
+	/** Length, in tokens, of the feature. */
+	public int getLength() {
+		return length;
+	}
+
 	public int getCol() {
 		return col;
 	}
@@ -270,45 +274,12 @@ public class Feature implements Comparable<Feature> {
 		return line;
 	}
 
-	public double getWeight() {
-		return weight;
-	}
-
-	public int getFormat() {
+	public Format getFormat() {
 		return format;
 	}
 
-	public void setWeight(int weight) {
-		this.weight = weight;
-	}
-
-	public boolean isEquivalent() {
-		return equiv;
-	}
-
-	/** Sets this feature as being not a unique root feature. */
-	public void setEquivalent(boolean equiv) {
-		this.equiv = equiv;
-	}
-
-	public boolean isAligned() {
-		return (format & Facet.ALIGNED.value()) > 0;
-	}
-
-	public boolean isAlignedSame() {
-		return (format & Facet.ALIGNED_SAME.value()) > 0;
-	}
-
-	public void setAligned(Facet aligned) {
-		format |= aligned.value();
-	}
-
-	public boolean isRule() {
-		return kind == Kind.RULE;
-	}
-
-	public boolean isNode() {
-		return kind == Kind.NODE;
+	public void setFormat(Format format) {
+		this.format = format;
 	}
 
 	public Feature getMatched() {
@@ -323,6 +294,34 @@ public class Feature implements Comparable<Feature> {
 		return selfSim;
 	}
 
+	public int numEquivalent() {
+		return equivalents.size();
+	}
+
+	public ArrayListMultimap<Integer, Location> getEquivalents() {
+		return equivalents;
+	}
+
+	public boolean isEquivalent() {
+		return equivalent;
+	}
+
+	public void setEquivalent(boolean equivalent) {
+		this.equivalent = equivalent;
+	}
+
+	public boolean isAligned() {
+		return format.alignAbove || format.alignBelow;
+	}
+
+	public boolean isRule() {
+		return kind == Kind.RULE;
+	}
+
+	public boolean isTerminal() {
+		return kind == Kind.TERMINAL;
+	}
+
 	public Stats getStats() {
 		return new Stats(this);
 	}
@@ -331,60 +330,75 @@ public class Feature implements Comparable<Feature> {
 		return new Stats(this, matched);
 	}
 
-	public void setFormat(int format) {
-		this.format = format;
+	// ===============================================================================================
+
+	/**
+	 * Returns a positive value in the range [0-1] representing the similarity between this and the
+	 * given feature. A kernel-based method is used to normalize between the two features being
+	 * evaluated. A value of <code>1</code> indicates that the two features are identical.
+	 */
+	public double similarity(Feature other) {
+		double sim = selfSimularity() + other.selfSimularity() - (2 * mutualSimilarity(other));
+		if (sim < 0) {
+			String msg = String.format(ErrInvalidDist, sim, this.toString(), other.toString());
+			Log.error(this, msg);
+			sim = 0;
+		}
+		return sim;
 	}
+
+	public double selfSimularity() {
+		if (reCalc) {
+			selfSim = mutualSimilarity(this);
+			reCalc = false;
+		}
+		return selfSim;
+	}
+
+	// normalized sum of the labeled feature similarities 
+	public double mutualSimilarity(Feature other) {
+		double sim = 0;
+		sim += mgr.getBoost(Factor.ANCESTORS) * ancestorSimilarity(other);
+		sim += mgr.getBoost(Factor.EDGE_TYPES) * edgeSetTypeSimilarity(other);
+		sim += mgr.getBoost(Factor.EDGE_TEXTS) * edgeSetTextSimilarity(other);
+		sim += mgr.getBoost(Factor.FORMAT) * formatSimilarity(other);
+		sim += mgr.getBoost(Factor.WEIGHT) * weightSimilarity(other);
+		return sim / 5;
+	}
+
+	public double ancestorSimilarity(Feature other) {
+		List<Integer> opath = other.getAncestorPath();
+		double dist = DamerauAlignment.distance(ancestors.subList(1, ancestors.size()), opath.subList(1, opath.size()));
+		return DamerauAlignment.simularity(dist, ancestors.size(), opath.size());
+	}
+
+	public double edgeSetTypeSimilarity(Feature other) {
+		return getEdgeSet().typeSimilarity(other.getEdgeSet());
+	}
+
+	public double edgeSetTextSimilarity(Feature other) {
+		return getEdgeSet().textSimilarity(other.getEdgeSet());
+	}
+
+	public double formatSimilarity(Feature other) {
+		return format.similarity(other.format);
+	}
+
+	public double weightSimilarity(Feature other) {
+		return Maths.invDelta(numEquivalent(), other.numEquivalent());
+	}
+
+	// ===============================================================================================
 
 	/**
 	 * Returns whether this feature is equivalent to the given feature. Equivalency is defined by
-	 * identity of feature type, equality of edge sets (including identity of edge leaf node text),
-	 * and identity of format.
+	 * identity of feature type, identity of format, and equality of edge set leaf type sequences.
 	 */
 	public boolean equivalentTo(Feature o) {
 		if (type != o.type) return false;
 		if (format != o.format) return false;
+		if (!edgeSet.equals(o.getEdgeSet())) return false;
 		return true;
-	}
-
-	@Override
-	public int compareTo(Feature o) {
-		if (docId < o.docId) return -1;
-		if (docId > o.docId) return 1;
-		if (type < o.type) return -1;
-		if (type > o.type) return 1;
-		if (begIdx < o.begIdx) return -1;
-		if (begIdx > o.begIdx) return 1;
-		if (endIdx < o.endIdx) return -1;
-		if (endIdx > o.endIdx) return 1;
-		if (weight < o.weight) return -1;
-		if (weight > o.weight) return 1;
-		return 0;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
-
-		Feature o = (Feature) obj;
-		if (docId != o.docId) return false;
-		if (type != o.type) return false;
-		if (begIdx != o.begIdx) return false;
-		if (endIdx != o.endIdx) return false;
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + docId;
-		result = prime * result + (int) (type >>> 32);
-		result = prime * result + (int) type;
-		result = prime * result + begIdx;
-		result = prime * result + endIdx;
-		return result;
 	}
 
 	public String diff(Feature o) {
@@ -402,10 +416,49 @@ public class Feature implements Comparable<Feature> {
 			if (endOffset != o.endOffset) sb.append("endOffset [" + endOffset + ":" + o.endOffset + "] ");
 			if (col != o.col) sb.append("col [" + col + ":" + o.col + "] ");
 			if (line != o.line) sb.append("line [" + line + ":" + o.line + "] ");
-			if (weight != o.weight) sb.append("rarity [" + weight + ":" + o.weight + "] ");
-			if (selfSim != o.selfSim) sb.append("selfSim [" + selfSim + ":" + o.selfSim + "] ");
+			if (numEquivalent() != o.numEquivalent())
+				sb.append("equivalents [" + numEquivalent() + ":" + o.numEquivalent() + "] ");
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public int compareTo(Feature o) {
+		if (docId < o.docId) return -1;
+		if (docId > o.docId) return 1;
+		if (type < o.type) return -1;
+		if (type > o.type) return 1;
+		if (begIdx < o.begIdx) return -1;
+		if (begIdx > o.begIdx) return 1;
+		if (endIdx < o.endIdx) return -1;
+		if (endIdx > o.endIdx) return 1;
+		if (numEquivalent() < o.numEquivalent()) return -1;
+		if (numEquivalent() > o.numEquivalent()) return 1;
+		return 0;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		Feature o = (Feature) obj;
+		if (docId != o.docId) return false;
+		if (type != o.type) return false;
+		if (begIdx != o.begIdx) return false;
+		if (endIdx != o.endIdx) return false;
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + docId;
+		result = prime * result + type;
+		result = prime * result + begIdx;
+		result = prime * result + endIdx;
+		return result;
 	}
 
 	@Override

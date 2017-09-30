@@ -4,32 +4,28 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.model.topo.Factor;
-import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Maths;
+import net.certiv.adept.util.Coord;
 
 public class Edge implements Comparable<Edge> {
 
+	// X=root Id; Y=leaf Id; value=connecting edge
 	private static final Table<Long, Long, Edge> cache = HashBasedTable.create();
+
+	public static final Edge RootMark = new Edge();
 
 	@Expose public long leafId;
 	@Expose public long rootId;
 	@Expose public EdgeType kind;
+	@Expose public Coord coord;
 
-	@Expose public int metric;
-	@Expose public int ortho;
-
-	public Feature root; // edge root
-	public Feature leaf; // connected leaf
-
-	private EqEdge equiv;
+	public Feature root;
+	public Feature leaf;
 
 	public static Edge create(Feature root, Feature leaf, EdgeType kind) {
-		Edge edge = cache.get(leaf.getId(), root.getId());
+		Edge edge = cache.get(root.getId(), leaf.getId());
 		if (edge == null) {
 			edge = new Edge(root, leaf, kind);
-			cache.put(leaf.getId(), root.getId(), edge);
+			cache.put(root.getId(), leaf.getId(), edge);
 		}
 		return edge;
 	}
@@ -42,36 +38,22 @@ public class Edge implements Comparable<Edge> {
 		rootId = root.getId();
 		leafId = leaf.getId();
 
-		// stream offset distance
-		metric = root.offsetDistance(leaf);
-		// vertical offset distance
-		ortho = root.getLine() - leaf.getLine();
+		int offset = root.offsetDistance(leaf);
+		int vert = root.getLine() - leaf.getLine();
+		coord = new Coord(offset, vert, leaf.getLength());
 	}
 
-	/** Returns a value representing the similarity of two edges of the same type. */
-	public double similarity(Edge o) {
-		double[] vals = new double[3];
-		CoreMgr mgr = root.getMgr();
-		vals[0] = mgr.getBoost(Factor.METRIC) * Maths.invDelta(metric, o.metric);
-		vals[1] = mgr.getBoost(Factor.ORTHO) * Maths.invDelta(ortho, o.ortho);
-		vals[2] = mgr.getBoost(Factor.TEXT) * (leaf.getText().equals(o.leaf.getText()) ? 1 : 0);
-		return Maths.sum(vals) / vals.length;
+	private Edge() {
+		this.rootId = 0;
+		this.leafId = 0;
+		this.kind = EdgeType.ROOT;
+		this.coord = new Coord(0, 0, 0);
 	}
 
-	public EqEdge equiv() {
-		if (equiv == null) {
-			equiv = new EqEdge(this);
-		}
-		return equiv;
-	}
-
+	/** Coordinate-based comparison order by default. */
 	@Override
 	public int compareTo(Edge o) {
-		if (rootId != o.rootId) Log.error(this, "Wrong orientation for " + toString());
-		if (leaf.getType() < o.leaf.getType()) return -1;
-		if (leaf.getType() > o.leaf.getType()) return 1;
-		if (leaf.isVar()) return 0;
-		return leaf.getText().compareTo(o.leaf.getText());
+		return coord.compareTo(o.coord);
 	}
 
 	@Override
@@ -98,65 +80,15 @@ public class Edge implements Comparable<Edge> {
 
 	@Override
 	public String toString() {
-		return String.format("%s {%s -> %s}", metric, root.getAspect(), leaf.getAspect());
+		return String.format("%s {%s -> %s}", coord, root.getAspect(), leaf.getAspect());
 	}
 
-	/** Wrapper class to provide an 'equivalent' equals function */
-	public static class EqEdge implements Comparable<EqEdge> {
-
-		private Edge edge;
-
-		private long leafType;
-		private long rootType;
-		private String leafText;
-		private String rootText;
-
-		public EqEdge(Edge edge) {
-			this.edge = edge;
-
-			leafType = edge.leaf.getType();
-			rootType = edge.root.getType();
-			leafText = getText(edge.leaf);
-			rootText = getText(edge.root);
-		}
-
-		private String getText(Feature feature) {
-			return feature.isVar() || feature.isRule() ? "" : feature.getText();
-		}
-
-		@Override
-		public int compareTo(EqEdge o) {
-			if (leafType < o.leafType) return -1;
-			if (leafType > o.leafType) return 1;
-			return leafText.compareTo(o.leafText);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) return true;
-			if (obj == null) return false;
-			if (getClass() != obj.getClass()) return false;
-			EqEdge o = (EqEdge) obj;
-			if (edge == null || o.edge == null) return false;
-			if (leafType != o.leafType) return false;
-			if (rootType != o.rootType) return false;
-			if (!leafText.equals(o.leafText)) return false;
-			if (!rootText.equals(o.rootText)) return false;
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + leafText.hashCode();
-			result = prime * result + (int) (leafType >>> 32);
-			result = prime * result + (int) (leafType);
-			result = prime * result + rootText.hashCode();
-			result = prime * result + (int) (rootType >>> 32);
-			result = prime * result + (int) (rootType);
-			return result;
-		}
-	}
-
+	//	/** Identity-based comparison order: considers only type and text of the edges. */
+	//	@Override
+	//	public int compareTo(Edge o) {
+	//		if (leaf.getType() < o.leaf.getType()) return -1;
+	//		if (leaf.getType() > o.leaf.getType()) return 1;
+	//		if (leaf.isVar()) return 0;
+	//		return leaf.getText().compareTo(o.leaf.getText());
+	//	}
 }

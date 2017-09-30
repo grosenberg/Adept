@@ -30,52 +30,53 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.load.parser.AdeptTokenFactory;
-import net.certiv.adept.model.load.parser.FeatureFactory;
-import net.certiv.adept.model.load.parser.ISourceParser;
-import net.certiv.adept.model.load.parser.ParserErrorListener;
+import net.certiv.adept.model.parser.AdeptTokenFactory;
+import net.certiv.adept.model.parser.Builder;
+import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.model.parser.ParserErrorListener;
 import net.certiv.adept.tool.ErrorType;
 
 public class XVisitorSourceParser implements ISourceParser {
 
 	protected int errorCount;
-	private FeatureFactory featureFactory;
+	private Builder builder;
 
 	@Override
-	public void process(FeatureFactory featureFactory, Document doc) throws RecognitionException, Exception {
-		this.featureFactory = featureFactory;
+	public void process(Builder builder, Document doc) throws RecognitionException, Exception {
+		this.builder = builder;
 
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(featureFactory.input);
-		featureFactory.lexer.setTokenFactory(factory);
-		featureFactory.parser.setTokenFactory(factory);
-		featureFactory.parser.removeErrorListeners();
-		featureFactory.parser.addErrorListener(errors);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		builder.lexer.setTokenFactory(factory);
+		builder.parser.setTokenFactory(factory);
+		builder.parser.removeErrorListeners();
+		builder.parser.addErrorListener(errors);
 
-		featureFactory.tree = ((XVisitorParser) featureFactory.parser).grammarSpec();
-		featureFactory.errCount = errorCount;
+		builder.tree = ((XVisitorParser) builder.parser).grammarSpec();
+		builder.errCount = errorCount;
 
-		if (featureFactory.tree == null || featureFactory.tree instanceof ErrorNode || featureFactory.errCount > 0) {
+		if (builder.tree == null || builder.tree instanceof ErrorNode || builder.errCount > 0) {
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, "Bad parse tree: " + doc.getPathname());
 		}
 	}
 
 	private void fillCollector(String content) {
-		featureFactory.input = CharStreams.fromString(content);
-		featureFactory.lexer = new XVisitorLexer(featureFactory.input);
-		featureFactory.VWS = VERT_WS;
-		featureFactory.HWS = HORZ_WS;
-		featureFactory.BLOCKCOMMENT = BLOCK_COMMENT;
-		featureFactory.LINECOMMENT = LINE_COMMENT;
-		featureFactory.VARS = new int[] { ID, LITERAL };
-		featureFactory.ALIGN_SAME = new int[] { ID, LITERAL, BLOCK_COMMENT, LINE_COMMENT };
-		featureFactory.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
-		featureFactory.ERR_TOKEN = ERRCHAR;
-		// featureFactory.ERR_RULE = XVisitorParser.RULE_other << 32;
-		featureFactory.stream = new CommonTokenStream(featureFactory.lexer);
-		featureFactory.parser = new XVisitorParser(featureFactory.stream);
+		builder.input = CharStreams.fromString(content);
+		builder.lexer = new XVisitorLexer(builder.input);
+		builder.VWS = VERT_WS;
+		builder.HWS = HORZ_WS;
+		builder.BLOCKCOMMENT = BLOCK_COMMENT;
+		builder.LINECOMMENT = LINE_COMMENT;
+		builder.VARS = new int[] { ID, LITERAL };
+		builder.ALIGN_SAME = new int[] { ID, LITERAL, BLOCK_COMMENT, LINE_COMMENT };
+		builder.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
+		builder.ERR_TOKEN = ERRCHAR;
+		// featureBuilder.ERR_RULE = XVisitorParser.RULE_other << 32;
+		builder.stream = new CommonTokenStream(builder.lexer);
+		builder.parser = new XVisitorParser(builder.stream);
 	}
 
 	@Override
@@ -85,10 +86,10 @@ public class XVisitorSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void extractFeatures(FeatureFactory featureFactory) {
+	public void extractFeatures(Builder builder) {
 		ParseTreeWalker walker = new ParseTreeWalker();
-		XVisitorVisitor visitor = new XVisitorVisitor(featureFactory);
-		walker.walk(visitor, featureFactory.tree);
+		XVisitorVisitor visitor = new XVisitorVisitor(builder);
+		walker.walk(visitor, builder.tree);
 	}
 
 	@Override
@@ -102,25 +103,30 @@ public class XVisitorSourceParser implements ISourceParser {
 
 	@Override
 	public ParseTree getParseTree() {
-		return featureFactory.tree;
+		return builder.tree;
+	}
+
+	@Override
+	public ParseData getParseData() {
+		return builder;
 	}
 
 	@Override
 	public List<String> getRuleNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.parser.getRuleNames());
+		return Arrays.asList(builder.parser.getRuleNames());
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public List<String> getTokenNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.lexer.getTokenNames());
+		return Arrays.asList(builder.lexer.getTokenNames());
 	}
 }

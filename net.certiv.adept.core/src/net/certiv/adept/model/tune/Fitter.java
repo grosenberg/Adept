@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.certiv.adept.Tune;
-import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.util.Factor;
 
 public class Fitter {
 

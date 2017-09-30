@@ -2,7 +2,6 @@ package net.certiv.adept.vis.components;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.util.Set;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -18,9 +17,8 @@ import com.jgoodies.forms.layout.RowSpec;
 import net.certiv.adept.core.PerfData;
 import net.certiv.adept.core.PerfData.DocPerf;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.Format;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.model.topo.Facet;
-import net.certiv.adept.util.Strings;
 
 public class FormatPanel extends JPanel {
 
@@ -105,7 +103,7 @@ public class FormatPanel extends JPanel {
 		txtRebuild.setEditable(false);
 		add(txtRebuild, "12, 4, fill, default");
 
-		JLabel lblFormatting = new JLabel("Formatting");
+		JLabel lblFormatting = new JLabel("Format");
 		add(lblFormatting, "14, 4, right, default");
 
 		txtFormating = new JTextField();
@@ -113,7 +111,7 @@ public class FormatPanel extends JPanel {
 		add(txtFormating, "16, 4, fill, default");
 		txtFormating.setColumns(10);
 
-		JLabel lblCorpus = new JLabel("Corpus ");
+		JLabel lblCorpus = new JLabel("CorpusDocs ");
 		add(lblCorpus, "2, 6, left, default");
 
 		JLabel lblCorpusFeatureCount = new JLabel("FeatureSet");
@@ -300,8 +298,8 @@ public class FormatPanel extends JPanel {
 		if (kind == Kind.RULE) {
 			type = type >>> 32;
 		}
-		Set<Facet> facets = Facet.get(feature.getFormat());
-		txtDocFacets.setText(Strings.join(facets, ", "));
+
+		txtDocFacets.setText(feature.getFormat().toString());
 		txtDocRow.setText(String.valueOf(line + 1));
 		txtDocCol.setText(String.valueOf(col + 1));
 		txtDocAspect.setText(feature.getAspect());
@@ -324,9 +322,9 @@ public class FormatPanel extends JPanel {
 			chkMatVariable.setSelected(matched.isVar());
 			txtMatText.setText(matched.getText());
 
-			int format = matched.getFormat();
-			txtMatFacets.setText(Strings.join(Facet.get(format), ", "));
-			txtMatDents.setText(String.valueOf(Facet.getDentation(format)));
+			Format mf = matched.getFormat();
+			txtMatFacets.setText(mf.toString());
+			txtMatDents.setText(String.valueOf(mf.relDents));
 
 		} else {
 			clearMatched();

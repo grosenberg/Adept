@@ -2,7 +2,7 @@ package net.certiv.adept.model;
 
 public enum Kind {
 	RULE("Rule"),
-	NODE("Node"),
+	TERMINAL("Node"),
 	BLOCKCOMMENT("Block Comment"),
 	LINECOMMENT("Line Comment");
 

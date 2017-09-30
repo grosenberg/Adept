@@ -6,21 +6,23 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.TreeMultimap;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.model.load.Corpus;
+import net.certiv.adept.core.ProcessMgr;
+import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
-import net.certiv.adept.model.load.Store;
-import net.certiv.adept.model.load.parser.FeatureFactory;
-import net.certiv.adept.model.topo.Analyzer;
-import net.certiv.adept.model.topo.Factor;
+import net.certiv.adept.model.parser.Builder;
 import net.certiv.adept.model.tune.Boosts;
+import net.certiv.adept.model.util.Analyzer;
+import net.certiv.adept.model.util.Chunk;
+import net.certiv.adept.model.util.DamerauAlignment;
+import net.certiv.adept.model.util.Factor;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
+import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusModel {
 
@@ -36,15 +38,14 @@ public class CorpusModel {
 	@Expose private Boosts boosts;
 
 	// corpus manager
-	private CoreMgr mgr;
-	// corpus path (interface, so cannot be serialized)
-	private Path corpusDir;
+	private ProcessMgr mgr;
+
 	// list of features that represent the corpus as a whole
 	private List<Feature> features;
 	// key = docId; value = contained features
 	private Map<Integer, List<Feature>> docFeatures;
 	// key = feature type; value = corresponding features
-	private ArrayListMultimap<Long, Feature> index;
+	private ArrayListMultimap<Integer, Feature> index;
 
 	private boolean consistent; // current state of model
 
@@ -101,29 +102,29 @@ public class CorpusModel {
 	}
 
 	public void setCorpusDir(Path corpusDir) {
-		this.corpusDir = corpusDir;
+		//		this.corpusDir = corpusDir;
 		this.corpusDirname = corpusDir.toString();
 	}
 
-	public CoreMgr getMgr() {
+	public ProcessMgr getMgr() {
 		return mgr;
 	}
 
-	public void setMgr(CoreMgr mgr) {
+	public void setMgr(ProcessMgr mgr) {
 		this.mgr = mgr;
 	}
 
-	/** Add new document to the corpus model */
-	public void add(Document doc) {
-		writeDocument(corpusDir, doc);
-	}
+	//	/** Add new document to the corpus model */
+	//	public void add(Document doc) {
+	//		writeDocument(corpusDir, doc);
+	//	}
 
 	/** Merge features collected during an ab initio build into the corpus model. */
-	public void merge(FeatureFactory featureFactory) {
-		Document doc = featureFactory.getDocument();
+	public void merge(Builder builder) {
+		Document doc = builder.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
-		docFeatures.put(doc.getDocId(), featureFactory.getFeatures());
-		List<Feature> weighted = weighFeatures(featureFactory.getNonRuleFeatures());
+		docFeatures.put(doc.getDocId(), builder.getFeatures());
+		List<Feature> weighted = weighFeatures(builder.getNonRuleFeatures());
 		features.addAll(weighted);
 		Log.debug(this, String.format("Processed %s (%s)", doc.getPathname(), weighted.size()));
 	}
@@ -137,7 +138,7 @@ public class CorpusModel {
 	/** Perform operations to finalize the rebuilt corpus. */
 	public void finalizeBuild() {
 		getFeatureIndex();
-		for (Long type : index.keySet()) {
+		for (int type : index.keySet()) {
 			List<Feature> tfs = index.get(type);
 			Analyzer ana = new Analyzer();
 			for (Feature tf : tfs) {
@@ -150,13 +151,13 @@ public class CorpusModel {
 		consistent = true;
 	}
 
-	/** Returns all features in the Corpus model */
+	/** Returns all features in the CorpusDocs model */
 	public List<Feature> getFeatures() {
 		return features;
 	}
 
-	/** Returns a map, keyed by feature type, of all features in the Corpus model */
-	public ArrayListMultimap<Long, Feature> getFeatureIndex() {
+	/** Returns a map, keyed by feature type, of all features in the CorpusDocs model */
+	public ArrayListMultimap<Integer, Feature> getFeatureIndex() {
 		if (index.isEmpty()) buildIndex();
 		return index;
 	}
@@ -175,7 +176,7 @@ public class CorpusModel {
 
 	public void initBoosts() {
 		for (Factor factor : Factor.values()) {
-			boosts.put(factor, factor.getDefault());
+			boosts.put(factor, factor.getWeight());
 		}
 	}
 
@@ -191,31 +192,64 @@ public class CorpusModel {
 		this.boosts = boosts;
 	}
 
-	/** Returns the corpus features matching the given source feature. */
-	public TreeMultimap<Double, Feature> match(Feature source) {
-		if (index.isEmpty()) buildIndex();
+	/**
+	 * Returns a multimap, ordered by {@code key=similarity value}, of the corpus features 'matching'
+	 * the given feature. The last key corresponds to the features with the highest similarity.
+	 * 
+	 * The feature matching function first subselects for corpus features based on similarity of
+	 * ancestor path, subject to an identity requirement for the initial terminal node. The resulting
+	 * selection of corpus features is then ranked on a combination of ancestor path similarity and
+	 * mutual feature similarity for each corpus feature.
+	 * 
+	 * While it should be unlikely, multiple features could have the same similarity value.
+	 * 
+	 * Public for visualization use.
+	 */
+	public TreeMultimap<Double, Feature> match(Feature docFeature) {
+		List<Integer> ancestors = docFeature.getAncestorPath();
+		// key=ancestors similarity, value=features
+		TreeMultimap<Double, Feature> typeMatches = match(ancestors);
 
-		TreeMultimap<Double, Feature> matches = TreeMultimap.create();
-		List<Feature> corpus = index.get(source.getType());
-		if (corpus != null) {
-			for (Feature member : corpus) {
-				if (member.getKind() == Kind.RULE) {
-					Log.error(this, "Found rule in match set");
+		// cluster and restrict number of matches then consdered
+		Chunk.eval(typeMatches);
+		typeMatches = Chunk.bestMatches();
+
+		// key=total similarity, value=feature
+		TreeMultimap<Double, Feature> results = new TreeMultimap<>();
+		for (Double ancestorSim : typeMatches.keySet()) {
+			Set<Feature> corFeatures = typeMatches.get(ancestorSim);
+			for (Feature corFeature : corFeatures) {
+				if (corFeature.getKind() == Kind.RULE) {
+					Log.error(this, "Found rule in feature match set");
 					continue;
 				}
 
-				// compute and save relative distance between features
-				double dist = source.distance(member);
-				matches.put(dist, member);
+				double sim = docFeature.similarity(corFeature);
+				results.put(sim, corFeature);
 			}
 		}
-		return matches;
+		return results;
+	}
+
+	// constrains to features of the same terminal 'type' 
+	// then computes similarity of the parent ancestors 
+	private TreeMultimap<Double, Feature> match(List<Integer> ancestors) {
+		List<Feature> matching = index.get(ancestors.get(0));
+		TreeMultimap<Double, Feature> results = new TreeMultimap<>();
+		for (Feature match : matching) {
+			List<Integer> apm = match.getAncestorPath();
+			double dist = DamerauAlignment.distance(ancestors.subList(1, ancestors.size()), apm.subList(1, apm.size()));
+			double sim = DamerauAlignment.simularity(dist, ancestors.size(), apm.size());
+			results.put(sim, match);
+		}
+		return results;
 	}
 
 	// index the corpus features by feature type
+	// also used to find node features that match the sequence anchor of the ancestor path  
 	private void buildIndex() {
-		for (Feature f : features) {
-			index.put(f.getType(), f);
+		for (Feature feature : features) {
+			index.put(feature.getType(), feature);
 		}
 	}
 
@@ -245,30 +279,30 @@ public class CorpusModel {
 
 	public void save(Path corpusDir) throws Exception {
 		lastModified = Time.now();
-		Store.save(corpusDir, this);
+		CorpusData.save(corpusDir, this);
 		lastModified = Time.getLastModified(corpusDir);
 		consistent = true;
 	}
 
-	public void writeDocument(Path corpusDir, Document doc) {
-		Corpus.writeDocument(corpusDir, doc);
-		consistent = true;
-	}
+	//	public void writeDocument(Path corpusDir, Document doc) {
+	//		CorpusDocs.writeDocument(corpusDir, doc);
+	//		consistent = true;
+	//	}
 
 	/* Reduces the feature set initially constructed from a corpus document by collapsing equivalent
 	 * root features to single instances with correspondingly increased weight. Equivalency is defined
 	 * by identity of root feature type, equality of edge sets, including leaf node text, and identity
 	 * of format. */
 	private List<Feature> weighFeatures(List<Feature> roots) {
-		ArrayListMultimap<Long, Feature> index = ArrayListMultimap.create();
-		for (Feature f : roots) {
-			index.put(f.getType(), f);
+		ArrayListMultimap<Integer, Feature> index = ArrayListMultimap.create();
+		for (Feature features : roots) {
+			index.put(features.getType(), features);
 		}
 		List<Feature> weighted = new ArrayList<>();
 
 		int tot = 0;
 		int unq = 0;
-		for (Long type : index.keySet()) {
+		for (Integer type : index.keySet()) {
 			List<Feature> features = index.get(type);
 			tot += features.size();
 			List<Feature> uniques = new ArrayList<>();

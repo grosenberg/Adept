@@ -9,8 +9,6 @@ import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
-import net.certiv.adept.model.topo.Facet;
-import net.certiv.adept.util.Strings;
 import net.certiv.adept.vis.utils.CollUtil;
 
 public class DocTableModel extends AbstractTableModel {
@@ -32,7 +30,7 @@ public class DocTableModel extends AbstractTableModel {
 			int col = feature.getCol();
 			String aspect = feature.getAspect();
 			String text = feature.getText();
-			String facets = Strings.join(Facet.get(feature.getFormat()), ", ");
+			String facets = feature.getFormat().toString();
 
 			Object[] row = { num + 1, line, col + 1, aspect, text, facets };
 			rows.add(row);

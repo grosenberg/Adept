@@ -19,6 +19,8 @@ public class Time {
 		}
 	}
 
+	// ------------------------------------------------
+
 	public static long now() {
 		return Date.from(Instant.now()).getTime();
 	}

@@ -10,14 +10,14 @@ import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.parser.ISourceParser;
 
 public class EdgeTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Root", "Root text", "Leaf", "Leaf text", "Metric"};
+	private final String[] columnNames = { "Line", "Root", "Root text", "Leaf", "Leaf text", "Metric" };
 	private Object[][] rowData;
 
-	public EdgeTableModel(ArrayListMultimap<Long, Feature> typeIndex, ISourceParser lang, long key, int idx) {
+	public EdgeTableModel(ArrayListMultimap<Integer, Feature> typeIndex, ISourceParser lang, int key, int idx) {
 
 		List<Feature> features = typeIndex.get(key);
 		Feature feature = features.get(idx);
@@ -30,9 +30,9 @@ public class EdgeTableModel extends AbstractTableModel {
 			String rTxt = edge.root.getText();
 			String leaf = edge.leaf.getAspect();
 			String lTxt = edge.leaf.getText();
-			double metric = edge.metric;
+			double metric = edge.coord.distance();
 
-			Object[] row = { line, root, rTxt, leaf, lTxt, metric};
+			Object[] row = { line, root, rTxt, leaf, lTxt, metric };
 			rows.add(row);
 			line++;
 		}

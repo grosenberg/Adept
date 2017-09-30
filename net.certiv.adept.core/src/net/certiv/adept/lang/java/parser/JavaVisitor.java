@@ -5,23 +5,23 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.java.parser.gen.JavaParserBaseListener;
-import net.certiv.adept.model.load.parser.FeatureFactory;
+import net.certiv.adept.model.parser.Builder;
 
 public class JavaVisitor extends JavaParserBaseListener {
 
-	private FeatureFactory featureFactory;
+	private Builder builder;
 
-	public JavaVisitor(FeatureFactory featureFactory) {
-		this.featureFactory = featureFactory;
+	public JavaVisitor(Builder builder) {
+		this.builder = builder;
 	}
 
 	@Override
 	public void enterEveryRule(ParserRuleContext ctx) {
-		featureFactory.annotateRule(ctx);
+		builder.annotateRule(ctx);
 		for (ParseTree child : ctx.children) {
 			if (child instanceof TerminalNode) {
 				TerminalNode node = (TerminalNode) child;
-				featureFactory.annotateNode(ctx, node);
+				builder.annotateTerminal(ctx, node);
 			}
 		}
 	}

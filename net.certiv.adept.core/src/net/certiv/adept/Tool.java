@@ -1,25 +1,15 @@
 package net.certiv.adept;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.core.PerfData;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.load.Config;
-import net.certiv.adept.model.load.parser.FeatureFactory;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.tool.LangDescriptor;
 import net.certiv.adept.tool.Level;
@@ -30,19 +20,28 @@ import net.certiv.adept.util.Log;
 
 public class Tool extends ToolBase {
 
-	private static Options[] optionDefs = { //
-			new Options("backup", "-b", OptionType.BOOL, "create doc backup"),
-			new Options("check", "-c", OptionType.BOOL, "check doc for suitability to format"),
-			new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
-			new Options("learn", "-l", OptionType.BOOL, "add doc to corpus training"),
-			new Options("rebuild", "-r", OptionType.BOOL, "force rebuild of the corpus model"),
-			new Options("save", "-s", OptionType.BOOL, "save formatted doc to file"),
+	private static Options[] optionDefs = {
 
-			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
-			new Options("lang", "-g", OptionType.STRING, "language type"),
-			new Options("output", "-e", OptionType.STRING, "formatting control settings"),
-			new Options("verbose", "-v", OptionType.STRING, "verbosity (one of 'quiet', 'info', 'warn', 'error')"),
-			new Options("tabWidth", "-w", OptionType.INT, "width of a tab"), //
+			// atomic commands
+
+			new Options("check", "-C", OptionType.BOOL, "parse doc for suitability to format"),
+			new Options("learn", "-L", OptionType.BOOL, "add doc to corpus training repo"),
+
+			// command formatting qualifiers
+
+			new Options("backup", "-b", OptionType.BOOL, "create doc backup before formatting"),
+			new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
+			new Options("save", "-s", OptionType.BOOL, "save formatted doc"),
+
+			// command operators
+
+			new Options("config", "-c", OptionType.STRING, "config settings file pathname"),
+			new Options("corpusRoot", "-d", OptionType.STRING, "corpus root directory"),
+			new Options("lang", "-g", OptionType.STRING, "grammar language ('antlr', 'java', 'xvisitor'"),
+			new Options("rebuild", "-r", OptionType.BOOL, "force rebuild of the corpus model"),
+			new Options("tabWidth", "-t", OptionType.INT, "tab width"),
+			new Options("verbose", "-v", OptionType.STRING, "verbosity ('quiet', 'info', 'warn', 'error')"),
+
 	};
 
 	// fields set by option manager
@@ -55,37 +54,34 @@ public class Tool extends ToolBase {
 
 	private String corpusRoot;
 	private String lang;
-	private String output;
+	private String config;
 	private String verbose;
 	private Integer tabWidth;
 
 	// fields set by init/validate
 	public static Settings settings;
 
-	private CoreMgr mgr;
+	private ProcessMgr mgr;
 
 	private String version;
 	private List<String> sourceFiles;
 	private List<String> corpusFiles;
 	private List<LangDescriptor> languages;
 	private List<Document> documents;
-	private int corpusTabWidth;
-	private Path corpusDir;		// root dir + lang
-	private String corpusExt;	// lang extention type
 
 	public static void main(String[] args) {
-		Tool adept = new Tool();
+		Tool tool = new Tool();
 		if (args.length == 0) {
-			adept.help();
-			adept.exit(0);
+			tool.help();
+			tool.exit(0);
 		}
-		boolean ok = adept.processFlags(args);
-		ok = ok && adept.validateOptions();
+		boolean ok = tool.processFlags(args);
+		ok = ok && tool.validateOptions();
 		if (!ok) {
-			adept.exit(1);
+			tool.exit(1);
 		}
-		adept.execute();
-		adept.exit(0);
+		tool.execute();
+		tool.exit(0);
 	}
 
 	/**
@@ -113,7 +109,7 @@ public class Tool extends ToolBase {
 	 */
 	public Tool() {
 		super();
-		mgr = new CoreMgr();
+		mgr = new ProcessMgr();
 	}
 
 	/**
@@ -130,17 +126,18 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean loadResources() {
-		version = Config.loadVersion(errMgr);
+		version = Config.loadVersion();
 		if (version == null) return false;
 
-		languages = Config.loadLanguages(errMgr);
+		languages = Config.loadLanguages();
 		if (languages == null) return false;
 
 		return true;
 	}
 
 	public boolean validateOptions() {
-		// ---- settings & output ----
+
+		// ---- settings & config ----
 
 		if (!chkSettings()) return false;
 
@@ -161,9 +158,9 @@ public class Tool extends ToolBase {
 		for (LangDescriptor language : languages) {
 			if (language.name.equals(settings.lang)) {
 				found = true;
-				corpusExt = language.ext;
+				settings.corpusExt = language.ext;
 				if (settings.corpusRoot == null) settings.corpusRoot = language.corpusRoot;
-				corpusTabWidth = language.tabWidth;
+				settings.corpusTabWidth = language.tabWidth;
 				break;
 			}
 		}
@@ -178,8 +175,8 @@ public class Tool extends ToolBase {
 			return false;
 		}
 
-		corpusDir = Paths.get(settings.corpusRoot, settings.lang);
-		File corpusFile = corpusDir.toFile();
+		settings.corpusDir = Paths.get(settings.corpusRoot, settings.lang);
+		File corpusFile = settings.corpusDir.toFile();
 		if (!corpusFile.exists()) {
 			corpusFile.mkdirs();
 		}
@@ -196,7 +193,7 @@ public class Tool extends ToolBase {
 			settings.backup = backup;
 		}
 
-		// ---- check ----
+		// ---- check parser ----
 
 		if (check == null && settings.check == null) {
 			settings.check = false;
@@ -260,87 +257,39 @@ public class Tool extends ToolBase {
 			errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, settings.verbose);
 		}
 
-		// ---- init core manager ----
+		// ---- load and validate the corpus model ----
 
-		try {
-			boolean ok = mgr.initialize(settings.lang, corpusDir, corpusExt, corpusTabWidth, settings.rebuild,
-					corpusFiles);
-			if (!ok) return false;
-		} catch (Exception e) {
-			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg, e);
-			errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, "Failed to create model manager");
-			return false;
-		}
+		boolean ok = mgr.loadCorpusModel(settings, corpusFiles);
+		if (ok && mgr.getCorpusModel().isConsistent()) return true;
 
-		return true;
+		Log.error(this, ErrorType.MODEL_VALIDATE_FAILURE.msg);
+		errMgr.toolError(ErrorType.MODEL_VALIDATE_FAILURE, "Invalid corpus error.");
+		return false;
 	}
 
-	public void execute() {
-		documents = loadDocuments(sourceFiles);
-		Log.info(this, documents.size() + " source documents to process.");
-		for (Document doc : documents) {
-			if (settings.learn) {	// add document model to corpus model
-				mgr.update(corpusDir, doc);
-			} else {
-				execute(doc);
-			}
+	private boolean chkSettings() {
+		if (settings == null) {
+			settings = Config.loadConfig(config);
 		}
+		return settings != null;
 	}
 
 	/**
-	 * Parses the document file to create a source document model, compares the found topography
-	 * features to those of the corpus to discern formatting attributes to be applied to the
-	 * features, and then, nominally, applies the attributes to produce a revised document.
+	 * Tool entry point processing one or more source documents.
+	 * 
+	 * If the tool is set for learning, the source documents are added to the corpus document repository
+	 * for subsequent inclusion into the corpus model.
+	 * 
+	 * Otherwise, each source document is parsed to create a document model containing a set of
+	 * features. Each such feature is matched against corpus model features to discern applicable
+	 * formatting attributes. If formatting is enabled, the attributes are applied to produce a revised
+	 * document that is written to disk.
 	 */
-	public void execute(Document doc) {
-		FeatureFactory featureFactory = mgr.collect(doc, settings.check);
-		mgr.createDocModel(featureFactory);
-
-		// now compare document model to corpus model
-		try {
-			mgr.compare();
-		} catch (Exception e) {
-			Log.error(this, ErrorType.MODEL_BUILD_FAILURE.msg + ": " + doc.getPathname(), e);
-			errMgr.toolError(ErrorType.MODEL_BUILD_FAILURE, e, doc.getPathname());
-			return;
-		}
-
-		if (settings.format) {
-			mgr.apply();
-			if (settings.save) doc.saveModified(settings.backup);
-		}
+	public void execute() {
+		mgr.execute(settings, sourceFiles);
 	}
 
-	private List<Document> loadDocuments(List<String> filenames) {
-		List<Document> documents = new ArrayList<>();
-		if (filenames != null) {
-			for (String fileName : filenames) {
-				try {
-					Document document = loadDocument(fileName);
-					if (document == null) continue; // came back as error
-					documents.add(document);
-				} catch (IOException e) {
-					errMgr.toolError(ErrorType.CANNOT_OPEN_FILE, e, fileName);
-				}
-			}
-		}
-		mgr.perfData.setSize(documents.size());
-		return documents;
-	}
-
-	private Document loadDocument(String filename) throws IOException {
-		info("Parsing " + filename);
-
-		File file = new File(filename);
-		if (!file.exists()) {
-			throw new IOException("doc does not exist: " + filename);
-		}
-
-		byte[] bytes = Files.readAllBytes(file.toPath());
-		return new Document(filename, settings.tabWidth, new String(bytes, StandardCharsets.UTF_8));
-	}
-
-	public CoreMgr getMgr() {
+	public ProcessMgr getMgr() {
 		return mgr;
 	}
 
@@ -359,7 +308,7 @@ public class Tool extends ToolBase {
 	}
 
 	public Path getCorpusDir() {
-		return corpusDir;
+		return settings.corpusDir;
 	}
 
 	/** Sets whether to create a backup file of a doc being saved */
@@ -408,15 +357,15 @@ public class Tool extends ToolBase {
 		settings.save = save;
 	}
 
-	/** Sets the settings value object defining the formatted output settings. */
+	/** Sets the settings value object defining the formatted config settings. */
 	public void setSettings(Settings obj) {
 		settings = obj;
-		output = null;
+		config = null;
 	}
 
-	/** Sets the pathname of the file (**.json) containing the formatted output settings. */
-	public void setSettings(String pathname) {
-		output = pathname;
+	/** Sets the pathname of the file (**.json) containing the formatted config settings. */
+	public void setSettingsLocation(String pathname) {
+		config = pathname;
 	}
 
 	/** Provides the set of doc pathnames of the files to be processed */
@@ -450,32 +399,9 @@ public class Tool extends ToolBase {
 		settings.verbose = verbose;
 	}
 
-	private boolean chkSettings() {
-		if (settings == null) {
-			if (output != null && !output.endsWith(".json")) {
-				output += ".json";
-			}
-
-			ClassLoader cl = this.getClass().getClassLoader();
-			try (Reader reader = output != null ? Files.newBufferedReader(Paths.get(output))
-					: new InputStreamReader(cl.getResourceAsStream("settings.json"), "UTF-8")) {
-				GsonBuilder builder = new GsonBuilder();
-				Gson gson = builder.create();
-				settings = gson.fromJson(reader, Settings.class);
-				if (output != null) {
-					settings.output = output;
-				}
-			} catch (Exception e) {
-				errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading output settings (" + e.getMessage() + ")");
-				settings = new Settings();
-				return false;
-			}
-		}
-		return true;
-	}
-
 	public void help() {
 		version();
+		Arrays.sort(optionDefs);
 		for (Options o : optionDefs) {
 			String name = o.name + (o.argType != OptionType.BOOL ? " ___" : "");
 			String s = String.format(" %-19s %s", name, o.description);

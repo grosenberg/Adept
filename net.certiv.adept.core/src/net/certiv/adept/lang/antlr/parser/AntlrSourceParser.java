@@ -47,53 +47,54 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Lexer;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.load.parser.AdeptTokenFactory;
-import net.certiv.adept.model.load.parser.FeatureFactory;
-import net.certiv.adept.model.load.parser.ISourceParser;
-import net.certiv.adept.model.load.parser.ParserErrorListener;
+import net.certiv.adept.model.parser.AdeptTokenFactory;
+import net.certiv.adept.model.parser.Builder;
+import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.model.parser.ParserErrorListener;
 import net.certiv.adept.tool.ErrorType;
 
 public class AntlrSourceParser implements ISourceParser {
 
-	private FeatureFactory featureFactory;
+	private Builder builder;
 	protected int errorCount;
 
 	@Override
-	public void process(FeatureFactory featureFactory, Document doc) throws RecognitionException, Exception {
-		this.featureFactory = featureFactory;
+	public void process(Builder builder, Document doc) throws RecognitionException, Exception {
+		this.builder = builder;
 
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(featureFactory.input);
-		featureFactory.lexer.setTokenFactory(factory);
-		featureFactory.parser.setTokenFactory(factory);
-		featureFactory.parser.removeErrorListeners();
-		featureFactory.parser.addErrorListener(errors);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		builder.lexer.setTokenFactory(factory);
+		builder.parser.setTokenFactory(factory);
+		builder.parser.removeErrorListeners();
+		builder.parser.addErrorListener(errors);
 
-		featureFactory.tree = ((Antlr4Parser) featureFactory.parser).adept();
-		featureFactory.errCount = errorCount;
+		builder.tree = ((Antlr4Parser) builder.parser).adept();
+		builder.errCount = errorCount;
 
-		if (featureFactory.tree == null || featureFactory.tree instanceof ErrorNode || featureFactory.errCount > 0) {
+		if (builder.tree == null || builder.tree instanceof ErrorNode || builder.errCount > 0) {
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, "Bad parse tree: " + doc.getPathname());
 		}
 	}
 
 	private void fillCollector(String content) {
-		featureFactory.input = CharStreams.fromString(content);
-		featureFactory.lexer = new Antlr4Lexer(featureFactory.input);
-		featureFactory.VWS = VWS;
-		featureFactory.HWS = HWS;
-		featureFactory.BLOCKCOMMENT = BLOCKCOMMENT;
-		featureFactory.LINECOMMENT = LINECOMMENT;
-		featureFactory.VARS = new int[] { ID, INT, SET, STRING };
-		featureFactory.ALIGN_SAME = new int[] { ID, INT, SET, STRING, RANGE, BLOCKCOMMENT, LINECOMMENT };
-		featureFactory.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LPAREN, RPAREN, LBRACE, RBRACE, LBRACK, RBRACK,
+		builder.input = CharStreams.fromString(content);
+		builder.lexer = new Antlr4Lexer(builder.input);
+		builder.VWS = VWS;
+		builder.HWS = HWS;
+		builder.BLOCKCOMMENT = BLOCKCOMMENT;
+		builder.LINECOMMENT = LINECOMMENT;
+		builder.VARS = new int[] { ID, INT, SET, STRING };
+		builder.ALIGN_SAME = new int[] { ID, INT, SET, STRING, RANGE, BLOCKCOMMENT, LINECOMMENT };
+		builder.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LPAREN, RPAREN, LBRACE, RBRACE, LBRACK, RBRACK,
 				RARROW, EQ, PLUSEQ, LSKIP, LMORE, LEOF, MODE, PUSHMODE, POPMODE, TYPE, };
-		featureFactory.ERR_TOKEN = ERRCHAR;
-		featureFactory.ERR_RULE = Antlr4Parser.RULE_other << 32;
-		featureFactory.stream = new CommonTokenStream(featureFactory.lexer);
-		featureFactory.parser = new Antlr4Parser(featureFactory.stream);
+		builder.ERR_TOKEN = ERRCHAR;
+		builder.ERR_RULE = Antlr4Parser.RULE_other << 32;
+		builder.stream = new CommonTokenStream(builder.lexer);
+		builder.parser = new Antlr4Parser(builder.stream);
 	}
 
 	@Override
@@ -103,10 +104,10 @@ public class AntlrSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public void extractFeatures(FeatureFactory featureFactory) {
+	public void extractFeatures(Builder builder) {
 		ParseTreeWalker walker = new ParseTreeWalker();
-		AntlrVisitor visitor = new AntlrVisitor(featureFactory);
-		walker.walk(visitor, featureFactory.tree);
+		AntlrVisitor visitor = new AntlrVisitor(builder);
+		walker.walk(visitor, builder.tree);
 	}
 
 	@Override
@@ -122,25 +123,30 @@ public class AntlrSourceParser implements ISourceParser {
 
 	@Override
 	public ParseTree getParseTree() {
-		return featureFactory.tree;
+		return builder.tree;
+	}
+
+	@Override
+	public ParseData getParseData() {
+		return builder;
 	}
 
 	@Override
 	public List<String> getRuleNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.parser.getRuleNames());
+		return Arrays.asList(builder.parser.getRuleNames());
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public List<String> getTokenNames() {
-		if (featureFactory == null) {
-			featureFactory = new FeatureFactory();
+		if (builder == null) {
+			builder = new Builder();
 			fillCollector("");
 		}
-		return Arrays.asList(featureFactory.lexer.getTokenNames());
+		return Arrays.asList(builder.lexer.getTokenNames());
 	}
 }

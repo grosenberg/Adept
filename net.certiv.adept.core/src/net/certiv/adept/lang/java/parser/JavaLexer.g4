@@ -6,7 +6,7 @@ options {
 
 @header {
 	package net.certiv.adept.lang.java.parser.gen;
-	import net.certiv.adept.model.load.parser.LexerErrorStrategy;
+	import net.certiv.adept.model.parser.LexerErrorStrategy;
 }
 
 BLOCKCOMMENT

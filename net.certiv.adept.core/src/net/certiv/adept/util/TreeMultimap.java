@@ -1,7 +1,6 @@
 package net.certiv.adept.util;
 
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -37,6 +36,23 @@ public class TreeMultimap<K, V> {
 		return set.add(value);
 	}
 
+	public boolean put(K key, Set<V> values) {
+		TreeSet<V> set = (TreeSet<V>) map.get(key);
+		if (set == null) {
+			set = new TreeSet<>(valComp);
+			map.put(key, set);
+		}
+		return set.addAll(values);
+	}
+
+	public K firstKey() {
+		return map.firstKey();
+	}
+
+	public K lastKey() {
+		return map.lastKey();
+	}
+
 	/** Returns {@code true} if a value set for the given key exists. */
 	public boolean containsKey(K key) {
 		return map.containsKey(key);
@@ -57,12 +73,24 @@ public class TreeMultimap<K, V> {
 		return map.keySet();
 	}
 
+	public int keySize() {
+		return map.keySet().size();
+	}
+
 	public Set<V> values() {
-		Set<V> results = new LinkedHashSet<>();
+		Set<V> results = new TreeSet<>(valComp);
 		for (Set<V> set : map.values()) {
 			results.addAll(set);
 		}
 		return results;
+	}
+
+	public int size() {
+		return map.size();
+	}
+
+	public boolean isEmpty() {
+		return map.isEmpty();
 	}
 
 	public Set<V> remove(K key) {
@@ -71,13 +99,5 @@ public class TreeMultimap<K, V> {
 
 	public void clear() {
 		map.clear();
-	}
-
-	public boolean isEmpty() {
-		return map.isEmpty();
-	}
-
-	public int size() {
-		return map.size();
 	}
 }

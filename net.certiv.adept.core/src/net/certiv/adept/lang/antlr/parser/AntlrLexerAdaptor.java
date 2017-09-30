@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
 
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Lexer;
-import net.certiv.adept.model.load.parser.LexerErrorStrategy;
+import net.certiv.adept.model.parser.LexerErrorStrategy;
 
 public abstract class AntlrLexerAdaptor extends LexerErrorStrategy {
 

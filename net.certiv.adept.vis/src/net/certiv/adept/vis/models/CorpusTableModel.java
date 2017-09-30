@@ -15,12 +15,12 @@ public class CorpusTableModel extends AbstractTableModel {
 	private final String[] columnNames = { "Line", "Kind", "Type", "Name", "FeatureSet" };
 	private Object[][] rowData;
 
-	public CorpusTableModel(ArrayListMultimap<Long, Feature> typeIndex, List<String> ruleNames,
+	public CorpusTableModel(ArrayListMultimap<Integer, Feature> typeIndex, List<String> ruleNames,
 			List<String> tokenNames) {
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
-		for (Long key : typeIndex.keySet()) {
+		for (Integer key : typeIndex.keySet()) {
 			List<Feature> features = typeIndex.get(key);
 			Feature feature = features.get(0);
 

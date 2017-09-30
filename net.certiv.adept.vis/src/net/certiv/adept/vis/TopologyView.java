@@ -43,10 +43,10 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexLabelRenderer.Outside
 import edu.uci.ics.jung.visualization.renderers.GradientVertexRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.load.parser.ISourceParser;
+import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.Counter;
@@ -72,7 +72,7 @@ public class TopologyView extends AbstractBase {
 
 	private CorpusListModel model;
 	private ISourceParser lang;
-	private ArrayListMultimap<Long, Feature> typeIndex;
+	private ArrayListMultimap<Integer, Feature> typeIndex;
 	private TopoPanel topoDetail;
 
 	public static void main(String[] args) {
@@ -283,7 +283,7 @@ public class TopologyView extends AbstractBase {
 			return;
 		}
 
-		CoreMgr mgr = tool.getMgr();
+		ProcessMgr mgr = tool.getMgr();
 		lang = mgr.getLanguageParser();
 		typeIndex = mgr.getCorpusModel().getFeatureIndex();
 		model = new CorpusListModel(lang.getRuleNames(), lang.getTokenNames());

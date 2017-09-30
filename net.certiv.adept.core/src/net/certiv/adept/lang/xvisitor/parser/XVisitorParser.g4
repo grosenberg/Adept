@@ -10,14 +10,11 @@
 parser grammar XVisitorParser;
 
 options {
-	superClass = ParserAdaptor	;
 	tokenVocab = XVisitorLexer	;
 }
 
 @header {
 	package net.certiv.adept.lang.xvisitor.parser.gen;
-
-	import net.certiv.adept.lang.xvisitor.parser.ParserAdaptor;
 }
 
 grammarSpec

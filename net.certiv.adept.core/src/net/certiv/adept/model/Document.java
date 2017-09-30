@@ -10,14 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.model.load.parser.DocParseData;
-import net.certiv.adept.model.topo.Info;
+import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.model.util.Info;
 import net.certiv.adept.tool.ErrorType;
 
 public class Document {
 
 	private DocModel model;
-	private DocParseData data;
+	private ParseData data;
 
 	private String pathname;
 	private int docId;
@@ -55,11 +55,11 @@ public class Document {
 		this.model = model;
 	}
 
-	public DocParseData getParseData() {
+	public ParseData getParseData() {
 		return data;
 	}
 
-	public void setParseData(DocParseData data) {
+	public void setParseData(ParseData data) {
 		this.data = data;
 	}
 

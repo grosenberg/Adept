@@ -19,7 +19,7 @@ import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.topo.Facet;
+import net.certiv.adept.model.Format;
 import net.certiv.adept.util.Strings;
 
 public class FeaturePanel extends JPanel {
@@ -180,19 +180,20 @@ public class FeaturePanel extends JPanel {
 		chkVariable.setSelected(feature.isVar());
 		textType.setText(String.valueOf(feature.getType()));
 		textText.setText(feature.getText());
-		textFormat.setText(String.valueOf(feature.getFormat()));
-		textDents.setText(String.valueOf(Facet.getDentation(feature.getFormat())));
-		chkAlign.setSelected(feature.isAligned());
-		chkAlignSame.setSelected(feature.isAlignedSame());
 
-		textFacets.setText(Strings.join(Facet.get(feature.getFormat()), ", "));
-		textTotEdges.setText(String.valueOf(feature.getEdgeSet().getEdgeCount()));
-		textTypeCnt.setText(String.valueOf(feature.getEdgeSet().getTypeCount()));
+		Format format = feature.getFormat();
+		textFormat.setText(format.toString());
+		textDents.setText(String.valueOf(format.relDents));
+		chkAlign.setSelected(feature.isAligned());
+
+		textFacets.setText(format.toString());
+		textTotEdges.setText(String.valueOf(feature.getEdgeSet().size()));
+		textTypeCnt.setText(String.valueOf(feature.getEdgeSet().getEdgeTypes().size()));
 
 		List<String> ruleNames = doc.getParseData().getRuleNames();
 		List<String> tokenNames = doc.getParseData().getTokenNames();
 		List<String> v = new ArrayList<>();
-		for (Long key : feature.getEdgeSet().getEdgeTypes()) {
+		for (Integer key : feature.getEdgeSet().getEdgeTypes()) {
 			if (key.longValue() == 0) {
 				v.add("Adept");
 			} else {

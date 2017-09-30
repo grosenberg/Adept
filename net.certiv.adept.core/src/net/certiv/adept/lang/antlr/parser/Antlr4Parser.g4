@@ -1,8 +1,9 @@
 parser grammar Antlr4Parser;
 
 options {
-	tokenVocab = Antlr4Lexer;
+	tokenVocab = Antlr4Lexer ;
 	TokenLabelType = AdeptToken ;
+	// contextSuperClass = RuleContextWithAltNum ;
 }
 
 @header {

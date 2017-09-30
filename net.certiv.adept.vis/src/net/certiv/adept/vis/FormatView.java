@@ -22,7 +22,7 @@ import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.util.Log;
@@ -168,7 +168,7 @@ public class FormatView extends AbstractBase {
 		@Override
 		protected void done() {
 			if (valid) {
-				CoreMgr mgr = tool.getMgr();
+				ProcessMgr mgr = tool.getMgr();
 				int srcWidth = mgr.getDocModel().getDocument().getTabWidth();
 				int fmtWidth = Tool.settings.tabWidth;
 				diffPanel.setTabStops(srcWidth, fmtWidth);

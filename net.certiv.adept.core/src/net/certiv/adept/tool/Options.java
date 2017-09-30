@@ -5,7 +5,7 @@ import java.util.List;
 
 import net.certiv.adept.util.Reflect;
 
-public class Options {
+public class Options implements Comparable<Options> {
 
 	public static enum OptionType {
 		BOOL,
@@ -36,7 +36,7 @@ public class Options {
 	}
 
 	public static boolean process(ITool tool, Options[] optionDefs, String[] args) {
-		remainder = new ArrayList<String>();
+		remainder = new ArrayList<>();
 
 		boolean ok = true;
 		for (int idx = 0; idx < args.length; idx++) {
@@ -84,5 +84,10 @@ public class Options {
 
 	public static List<String> getRemainder() {
 		return remainder;
+	}
+
+	@Override
+	public int compareTo(Options o) {
+		return name.compareTo(o.name);
 	}
 }

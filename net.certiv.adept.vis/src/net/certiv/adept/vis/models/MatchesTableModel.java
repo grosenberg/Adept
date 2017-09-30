@@ -7,11 +7,7 @@ import java.util.Map;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.google.common.collect.TreeMultimap;
-
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.topo.Facet;
-import net.certiv.adept.util.Strings;
 
 public class MatchesTableModel extends AbstractTableModel {
 
@@ -20,7 +16,8 @@ public class MatchesTableModel extends AbstractTableModel {
 
 	private Map<Integer, Feature> index = new HashMap<>();
 
-	public MatchesTableModel(TreeMultimap<Double, Feature> matches, Map<Double, Integer> indices) {
+	public MatchesTableModel(net.certiv.adept.util.TreeMultimap<Double, Feature> matches,
+			Map<Double, Integer> indices) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 		for (Double key : matches.keySet()) {
@@ -29,7 +26,7 @@ public class MatchesTableModel extends AbstractTableModel {
 			String part = partition != null ? String.valueOf(partition) : "None";
 
 			for (Feature feature : matches.get(key)) {
-				String facets = Strings.join(Facet.get(feature.getFormat()), ", ");
+				String facets = feature.getFormat().toString();
 
 				Object[] row = { num + 1, dist, part, feature.toString(), facets };
 				rows.add(row);

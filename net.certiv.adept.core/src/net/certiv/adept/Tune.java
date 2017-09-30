@@ -6,13 +6,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.load.Config;
-import net.certiv.adept.model.topo.Align;
-import net.certiv.adept.model.topo.Factor;
 import net.certiv.adept.model.tune.Boosts;
 import net.certiv.adept.model.tune.Fitter;
+import net.certiv.adept.model.util.Align;
+import net.certiv.adept.model.util.Factor;
 import net.certiv.adept.tool.ErrorManager;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.tool.ITool;
@@ -32,7 +32,7 @@ public class Tune implements ITool {
 	public static final int DIMS = Factor.values().length;
 
 	private Tool tool;
-	private CoreMgr mgr;
+	private ProcessMgr mgr;
 
 	private static Options[] optionDefs = { //
 			new Options("corpusRoot", "-d", OptionType.STRING, "root corpus directory"),
@@ -69,7 +69,7 @@ public class Tune implements ITool {
 		if (lang == null) return false;
 		corpusDir = Paths.get(corpusRoot, lang);
 
-		languages = Config.loadLanguages(tool.getErrMgr());
+		languages = Config.loadLanguages();
 		if (languages == null) return false;
 
 		boolean found = false;

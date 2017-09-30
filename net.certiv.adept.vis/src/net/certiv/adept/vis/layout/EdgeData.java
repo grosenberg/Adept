@@ -3,7 +3,7 @@ package net.certiv.adept.vis.layout;
 import java.awt.geom.Point2D;
 
 import net.certiv.adept.model.Edge;
-import net.certiv.adept.model.topo.Position;
+import net.certiv.adept.model.util.Position;
 
 public class EdgeData {
 
@@ -27,7 +27,7 @@ public class EdgeData {
 	public EdgeData(Edge edge) {
 		this.rootStart = edge.root.getStart();
 		this.leafStart = edge.leaf.getStart();
-		this.metric = edge.metric;
+		this.metric = edge.coord.distance();
 
 		rootX = edge.root.getCol();
 		rootY = edge.root.getLine();
@@ -39,8 +39,7 @@ public class EdgeData {
 	}
 
 	/**
-	 * Return a point defining the position of a leaf relative to the given point represeting a
-	 * root.
+	 * Return a point defining the position of a leaf relative to the given point represeting a root.
 	 */
 	public Point2D getRelative(Point2D root) {
 		double x = leafX - root.getX();

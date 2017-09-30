@@ -30,11 +30,15 @@
 		<dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>antlr4</artifactId>
-			<version>4.5.3</version>
+			<version>4.7</version>
 		</dependency>
 
-		<!-- <dependency> <groupId>org.knowm.xchart</groupId> <artifactId>xchart</artifactId> 
-			<version>3.2.2</version> </dependency> -->
+		<!-- https://github.com/timmolter/XChart -->
+		<dependency>
+			<groupId>org.knowm.xchart</groupId>
+			<artifactId>xchart</artifactId>
+			<version>3.5.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>net.sf.jung</groupId>
@@ -56,6 +60,11 @@
 			<artifactId>jung-visualization</artifactId>
 			<version>2.1.1</version>
 		</dependency>
+		<dependency>
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-samples</artifactId>
+			<version>2.1.1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.googlecode.java-diff-utils</groupId>
@@ -66,7 +75,7 @@
 		<dependency>
 			<groupId>com.jgoodies</groupId>
 			<artifactId>jgoodies-forms</artifactId>
-			<version>1.8.0</version>
+			<version>1.9.0</version>
 		</dependency>
 
 	</dependencies>
