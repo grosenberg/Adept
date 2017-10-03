@@ -74,7 +74,7 @@ public class JavaSourceParser implements ISourceParser {
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.charStream);
 		builder.lexer.setTokenFactory(factory);
 		builder.parser.setTokenFactory(factory);
 		builder.parser.removeErrorListeners();
@@ -89,8 +89,8 @@ public class JavaSourceParser implements ISourceParser {
 	}
 
 	private void fillCollector(String content) {
-		builder.input = CharStreams.fromString(content);
-		builder.lexer = new JavaLexer(builder.input);
+		builder.charStream = CharStreams.fromString(content);
+		builder.lexer = new JavaLexer(builder.charStream);
 		builder.VWS = VWS;
 		builder.HWS = HWS;
 		builder.VARS = new int[] { ID, NUM, STRING, QID };
@@ -102,8 +102,8 @@ public class JavaSourceParser implements ISourceParser {
 				OR_ASSIGN, XOR_ASSIGN, MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
 		builder.ERR_TOKEN = ERRCHAR;
 		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 32;
-		builder.stream = new CommonTokenStream(builder.lexer);
-		builder.parser = new JavaParser(builder.stream);
+		builder.tokenStream = new CommonTokenStream(builder.lexer);
+		builder.parser = new JavaParser(builder.tokenStream);
 	}
 
 	@Override

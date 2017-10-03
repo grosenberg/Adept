@@ -40,18 +40,8 @@ public class Builder extends ParseData {
 		group = new Group(this);
 	}
 
-	public List<Feature> getFeatures() {
+	public List<Feature> getAllFeatures() {
 		return new ArrayList<>(contextFeatureIndex.values());
-	}
-
-	public List<Feature> getNonRuleFeatures() {
-		List<Feature> nonRules = new ArrayList<>();
-		for (Feature feature : contextFeatureIndex.values()) {
-			if (feature.getKind() != Kind.RULE) {
-				nonRules.add(feature);
-			}
-		}
-		return nonRules;
 	}
 
 	public void annotateRule(ParserRuleContext ctx) {
@@ -72,8 +62,9 @@ public class Builder extends ParseData {
 
 		String aspect = parser.getRuleNames()[rule];
 		Format format = new Format(this, ctx);
-		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, format, false,
-				false);
+		int length = ruleLength(start, stop);
+		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, length, format,
+				false, false);
 		contextFeatureIndex.put(ctx, feature);
 		tokenRuleIndex.put(start, ctx);
 		typeSet.add(type);
@@ -96,11 +87,12 @@ public class Builder extends ParseData {
 		contextFeatureIndex.put(terminal, feature);
 		tokenTerminalIndex.put(token, terminal);
 		tokenStartFeatureIndex.put(token.getTokenIndex(), feature);
+		tokenTypeFeatureIndex.put(token.getType(), feature);
 		typeSet.add(type);
 	}
 
 	public void annotateComments() {
-		for (Token token : stream.getTokens()) {
+		for (Token token : tokenStream.getTokens()) {
 			int type = token.getType();
 			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
@@ -111,9 +103,23 @@ public class Builder extends ParseData {
 				contextFeatureIndex.put(terminal, feature);
 				tokenTerminalIndex.put(token, terminal);
 				tokenStartFeatureIndex.put(token.getTokenIndex(), feature);
+				tokenTypeFeatureIndex.put(token.getType(), feature);
 				typeSet.add(type);
 			}
 		}
+	}
+
+	private int ruleLength(Token start, Token stop) {
+		int beg = start.getTokenIndex();
+		int end = stop.getTokenIndex();
+		if (beg == -1 || end == -1) return 2;
+
+		int len = 0;
+		for (Token token : getTokenStream().get(beg, end)) {
+			if (isWsOrComment(token.getType())) continue;
+			len++;
+		}
+		return len;
 	}
 
 	// starts with the node type and ends with the parse tree root rule index
@@ -133,10 +139,10 @@ public class Builder extends ParseData {
 	public void genLocalEdges() {
 		for (Feature feature : contextFeatureIndex.values()) {
 			switch (feature.getKind()) {
-				case BLOCKCOMMENT:
-				case LINECOMMENT:
 				case RULE:
 					break;
+				case BLOCKCOMMENT:
+				case LINECOMMENT:
 				case TERMINAL:
 					group.addLocalEdges(feature);
 					break;

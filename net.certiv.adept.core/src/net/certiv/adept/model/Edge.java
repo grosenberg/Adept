@@ -4,49 +4,46 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.util.Coord;
+import net.certiv.adept.model.util.Coord;
 
 public class Edge implements Comparable<Edge> {
 
 	// X=root Id; Y=leaf Id; value=connecting edge
 	private static final Table<Long, Long, Edge> cache = HashBasedTable.create();
 
-	public static final Edge RootMark = new Edge();
-
 	@Expose public long leafId;
 	@Expose public long rootId;
-	@Expose public EdgeType kind;
+	@Expose public EdgeType type;
+	@Expose public int len;
 	@Expose public Coord coord;
 
 	public Feature root;
 	public Feature leaf;
 
-	public static Edge create(Feature root, Feature leaf, EdgeType kind) {
+	public static Edge create(Feature root, Feature leaf, EdgeType kind, int len) {
 		Edge edge = cache.get(root.getId(), leaf.getId());
 		if (edge == null) {
-			edge = new Edge(root, leaf, kind);
+			edge = new Edge(root, leaf, kind, len);
 			cache.put(root.getId(), leaf.getId(), edge);
 		}
 		return edge;
 	}
 
-	private Edge(Feature root, Feature leaf, EdgeType kind) {
+	private Edge(Feature root, Feature leaf, EdgeType kind, int len) {
 		this.root = root;
 		this.leaf = leaf;
-		this.kind = kind;
+		this.type = kind;
+		this.len = len;
 
 		rootId = root.getId();
 		leafId = leaf.getId();
 
-		int offset = root.offsetDistance(leaf);
 		int vert = root.getLine() - leaf.getLine();
-		coord = new Coord(offset, vert, leaf.getLength());
+		coord = new Coord(len, vert, leaf.getLength());
 	}
 
-	private Edge() {
-		this.rootId = 0;
-		this.leafId = 0;
-		this.kind = EdgeType.ROOT;
+	Edge() {
+		this.type = EdgeType.ROOT;
 		this.coord = new Coord(0, 0, 0);
 	}
 
@@ -54,6 +51,12 @@ public class Edge implements Comparable<Edge> {
 	@Override
 	public int compareTo(Edge o) {
 		return coord.compareTo(o.coord);
+	}
+
+	public boolean isEquivalent(Edge o) {
+		if (leaf.getType() != o.leaf.getType()) return false;
+		if (compareTo(o) != 0) return false;
+		return true;
 	}
 
 	@Override
@@ -75,6 +78,7 @@ public class Edge implements Comparable<Edge> {
 		result = prime * result + (int) (leafId >>> 32);
 		result = prime * result + (int) rootId;
 		result = prime * result + (int) (rootId >>> 32);
+		result = prime * result + len;
 		return result;
 	}
 
@@ -82,13 +86,4 @@ public class Edge implements Comparable<Edge> {
 	public String toString() {
 		return String.format("%s {%s -> %s}", coord, root.getAspect(), leaf.getAspect());
 	}
-
-	//	/** Identity-based comparison order: considers only type and text of the edges. */
-	//	@Override
-	//	public int compareTo(Edge o) {
-	//		if (leaf.getType() < o.leaf.getType()) return -1;
-	//		if (leaf.getType() > o.leaf.getType()) return 1;
-	//		if (leaf.isVar()) return 0;
-	//		return leaf.getText().compareTo(o.leaf.getText());
-	//	}
 }

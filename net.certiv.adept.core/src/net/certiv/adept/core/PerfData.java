@@ -78,7 +78,7 @@ public class PerfData {
 
 		public DocPerf(Builder builder) {
 			docName = builder.getDocument().getPathname();
-			docFeatureCnt = builder.getFeatures().size();
+			docFeatureCnt = builder.getAllFeatures().size();
 			docTypeCnt = builder.typeSet.size();
 			docTerminalCnt = 0;
 			for (Feature feature : builder.contextFeatureIndex.values()) {

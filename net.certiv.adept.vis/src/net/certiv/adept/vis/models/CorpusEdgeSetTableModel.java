@@ -9,16 +9,16 @@ import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Feature;
 
-public class CorpusFeatureTableModel extends AbstractTableModel {
+public class CorpusEdgeSetTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Leafs", "Edges" };
+	private final String[] columnNames = { "Index", "Leaf Types", "Edges" };
 	private Object[][] rowData;
 
-	public CorpusFeatureTableModel(ArrayListMultimap<Integer, Feature> typeIndex, int type) {
+	public CorpusEdgeSetTableModel(ArrayListMultimap<Integer, Feature> typeIndex, int type) {
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
 		for (Feature feature : typeIndex.get(type)) {
-			int tc = feature.getEdgeSet().getEdgeTypes().size();
+			int tc = feature.getEdgeSet().sizeTypes();
 			int ec = feature.getEdgeSet().size();
 
 			Object[] row = { line, tc, ec };

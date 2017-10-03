@@ -4,11 +4,12 @@ public enum EdgeType {
 
 	ROOT,		// root edge type marker
 
-	SIB,		// siblings
 	RENT,		// parentals
+	SIB,		// siblings
 	KIN,		// related
 
-	COMMENT,	// adjacent
+	COMMENT,	// comment
+	NEAR,		// near comment
 
 	;
 }

@@ -90,7 +90,7 @@ public class TreeTreeMultimap<K, N, V> {
 
 	public int size(K key) {
 		TreeMultimap<N, V> keyMap = map.get(key);
-		return keyMap != null ? keyMap.size() : 0;
+		return keyMap != null ? keyMap.keySize() : 0;
 	}
 
 	public void clear() {

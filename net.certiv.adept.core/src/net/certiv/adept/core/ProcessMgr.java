@@ -51,13 +51,13 @@ public class ProcessMgr {
 
 		CorpusProcessor cp = new CorpusProcessor(this, settings, pathnames);
 		cp.loadModel();
+		corModel = cp.getCorpusModel();
 
 		perfData.load = Time.end(start);
 		perfData.corpusFeatureCnt = corModel.getFeatures().size();
 		perfData.corpusFeatureTypeCnt = corModel.getFeatureIndex().size();
 		perfData.corpusDocIndex = corModel.getPathnames();
 
-		corModel = cp.getCorpusModel();
 		return cp.isConsistent() ? true : false;
 	}
 

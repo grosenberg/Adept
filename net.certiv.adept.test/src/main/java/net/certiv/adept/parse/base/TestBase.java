@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style
  * license that can be found in the License.md file.
  */
-package net.certiv.adept.test.base;
+package net.certiv.adept.parse.base;
 
 import java.io.File;
 import java.io.IOException;

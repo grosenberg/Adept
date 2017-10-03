@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style
  * license that can be found in the License.md file.
  */
-package net.certiv.adept.test;
+package net.certiv.adept.parse;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,8 +16,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.test.base.TestBase;
-import net.certiv.adept.test.base.TestUtils;
+import net.certiv.adept.parse.base.TestBase;
+import net.certiv.adept.parse.base.TestUtils;
 import net.certiv.adept.tool.Level;
 
 public class SnippetsTest extends TestBase {
@@ -26,7 +26,7 @@ public class SnippetsTest extends TestBase {
 	// Custom configuration area - change as needed ---------------------------
 
 	/** Base directory for snippet data files and results */
-	public static final String BasesDir = "D:/DevFiles/Eclipse/Adept/net.certiv.adept.test";
+	public static final String BasesDir = "D:/DevFiles/Eclipse/Adept/net.certiv.adept.parse";
 	/** File extension for snippet data */
 	public static final String Ext = ".g4";
 	/** If true, enables echoing to console */

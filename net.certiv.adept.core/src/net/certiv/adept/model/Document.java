@@ -67,6 +67,10 @@ public class Document {
 		return pathname;
 	}
 
+	public String getFilename() {
+		return Paths.get(pathname).getFileName().toString();
+	}
+
 	/** Returns the id of this document */
 	public int getDocId() {
 		return docId;

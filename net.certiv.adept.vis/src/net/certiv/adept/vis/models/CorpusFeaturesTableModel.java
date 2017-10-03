@@ -10,12 +10,12 @@ import com.google.common.collect.ArrayListMultimap;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 
-public class CorpusTableModel extends AbstractTableModel {
+public class CorpusFeaturesTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Line", "Kind", "Type", "Name", "FeatureSet" };
+	private final String[] columnNames = { "Index", "Kind", "Type", "Name", "Instances" };
 	private Object[][] rowData;
 
-	public CorpusTableModel(ArrayListMultimap<Integer, Feature> typeIndex, List<String> ruleNames,
+	public CorpusFeaturesTableModel(ArrayListMultimap<Integer, Feature> typeIndex, List<String> ruleNames,
 			List<String> tokenNames) {
 
 		List<Object[]> rows = new ArrayList<>();
@@ -26,7 +26,7 @@ public class CorpusTableModel extends AbstractTableModel {
 
 			String kind = feature.getKind().toString();
 
-			long type = feature.getType();
+			int type = feature.getType();
 			String name;
 			if (feature.getKind() == Kind.RULE) {
 				type = type >>> 32;

@@ -46,8 +46,8 @@ import net.certiv.adept.util.Log;
 public class CorpusData {
 
 	/**
-	 * Load the corpus model from persistent store. The model is stored in two parts: (1) the base
-	 * model file; and (2) a plurality of feature set data files.
+	 * Load the corpus model from persistent store. The model is stored in two parts: (1) the base model
+	 * file; and (2) a plurality of feature set data files.
 	 * 
 	 * @param mgr
 	 * @param corpusDir directory to load from
@@ -127,7 +127,7 @@ public class CorpusData {
 				.disableHtmlEscaping() //
 				.enableComplexMapKeySerialization() //
 				.excludeFieldsWithoutExposeAnnotation() //
-				.registerTypeAdapter(ArrayListMultimap.class, new MultiMapAdapter<Long, Edge>()) //
+				.registerTypeAdapter(ArrayListMultimap.class, new MultimapAdapter<Long, Edge>()) //
 				// .registerTypeAdapter(HashTreeSet.class, new HashTreeAdapter<Long, Edge>()) //
 				.serializeNulls() //
 				.setDateFormat(DateFormat.LONG) //
@@ -169,7 +169,7 @@ public class CorpusData {
 		JsonWriter writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
 
 		try {
-			Log.debug(CorpusData.class, "Saving " + path.toString());
+			Log.debug(CorpusData.class, "Saving " + path.getFileName().toString());
 			gson.toJson(model, CorpusModel.class, writer);
 			writer.close();
 		} catch (IOException | JsonSyntaxException e) {
@@ -184,10 +184,16 @@ public class CorpusData {
 				List<Feature> features = model.getDocFeatures().get(docId);
 
 				path = corpusDir.resolve(String.format("%s%03d%s", Config.DATA, idx, Config.DOT + Config.EXT));
-				writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
+				try {
+					writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
+				} catch (IOException e) {
+					Log.error(CorpusData.class,
+							"Failed accessing corpus data file " + path.toString() + ": " + e.getMessage());
+					throw e;
+				}
 
 				try {
-					Log.debug(Config.class, "Saving " + path.toString());
+					Log.debug(Config.class, "Saving " + path.getFileName().toString());
 					gson.toJson(new FeatureSet(docId, pathname, features), FeatureSet.class, writer);
 					writer.close();
 				} catch (IOException | JsonSyntaxException e) {
@@ -201,7 +207,8 @@ public class CorpusData {
 		Log.debug(CorpusData.class, "Save complete.");
 	}
 
-	private static final class MultiMapAdapter<K, V>
+	// Google Multimap
+	private static final class MultimapAdapter<K, V>
 			implements JsonSerializer<Multimap<K, V>>, JsonDeserializer<Multimap<K, V>> {
 
 		private static final Type retType;

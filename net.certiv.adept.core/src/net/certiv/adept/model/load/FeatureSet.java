@@ -72,7 +72,6 @@ public class FeatureSet {
 		}
 		for (Feature feature : features) {
 			EdgeSet edgeSet = feature.getEdgeSet();
-			edgeSet.setMgr(mgr);
 			for (Edge edge : edgeSet.getEdges()) {
 				edge.root = cache.get(edge.rootId);
 				edge.leaf = cache.get(edge.leafId);

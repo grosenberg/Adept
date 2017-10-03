@@ -73,10 +73,6 @@ public class TreeMultimap<K, V> {
 		return map.keySet();
 	}
 
-	public int keySize() {
-		return map.keySet().size();
-	}
-
 	public Set<V> values() {
 		Set<V> results = new TreeSet<>(valComp);
 		for (Set<V> set : map.values()) {
@@ -85,8 +81,12 @@ public class TreeMultimap<K, V> {
 		return results;
 	}
 
-	public int size() {
+	public int keySize() {
 		return map.size();
+	}
+
+	public int valueSize() {
+		return values().size();
 	}
 
 	public boolean isEmpty() {

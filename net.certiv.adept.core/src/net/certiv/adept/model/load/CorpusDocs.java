@@ -18,12 +18,15 @@ public class CorpusDocs {
 
 	/** Returns a list of the corpus document pathnames. */
 	public static List<String> readPathnames(Path corpusDir, String ext) {
+		List<String> pathnames;
 		try {
-			return Files.walk(corpusDir) //
+			pathnames = Files.walk(corpusDir) //
 					.filter(Files::isRegularFile) //
 					.filter(p -> p.getFileName().toString().endsWith(Config.DOT + ext)) //
 					.map(Path::toString) //
+					.distinct() //
 					.collect(Collectors.toList());
+			return pathnames;
 		} catch (IOException e) {
 			Log.error(Config.class, "Failed to read corpus pathnames" + ": " + e.getMessage());
 		}
@@ -39,6 +42,7 @@ public class CorpusDocs {
 					.filter(Files::isRegularFile) //
 					.filter(p -> p.getFileName().toString().endsWith(Config.DOT + ext)) //
 					.map(Path::toFile) //
+					.distinct() //
 					.collect(Collectors.toList());
 		} catch (IOException e) {
 			return documents;

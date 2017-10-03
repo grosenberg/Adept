@@ -49,7 +49,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.charStream);
 		builder.lexer.setTokenFactory(factory);
 		builder.parser.setTokenFactory(factory);
 		builder.parser.removeErrorListeners();
@@ -64,8 +64,8 @@ public class XVisitorSourceParser implements ISourceParser {
 	}
 
 	private void fillCollector(String content) {
-		builder.input = CharStreams.fromString(content);
-		builder.lexer = new XVisitorLexer(builder.input);
+		builder.charStream = CharStreams.fromString(content);
+		builder.lexer = new XVisitorLexer(builder.charStream);
 		builder.VWS = VERT_WS;
 		builder.HWS = HORZ_WS;
 		builder.BLOCKCOMMENT = BLOCK_COMMENT;
@@ -75,8 +75,8 @@ public class XVisitorSourceParser implements ISourceParser {
 		builder.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
 		builder.ERR_TOKEN = ERRCHAR;
 		// featureBuilder.ERR_RULE = XVisitorParser.RULE_other << 32;
-		builder.stream = new CommonTokenStream(builder.lexer);
-		builder.parser = new XVisitorParser(builder.stream);
+		builder.tokenStream = new CommonTokenStream(builder.lexer);
+		builder.parser = new XVisitorParser(builder.tokenStream);
 	}
 
 	@Override

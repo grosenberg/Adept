@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
@@ -48,15 +47,6 @@ public class MatchView extends AbstractBase {
 	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
 	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
 	private static final String srcExt = ".g4";
-	private static final Comparator<Integer> intComparator = new Comparator<Integer>() {
-
-		@Override
-		public int compare(Integer o1, Integer o2) {
-			if (o1 < o2) return -1;
-			if (o1 > o2) return 1;
-			return 0;
-		}
-	};
 
 	private Tool tool;
 	private JComboBox<SrcItem> srcBox;
@@ -88,7 +78,7 @@ public class MatchView extends AbstractBase {
 			}
 		});
 
-		JPanel cntlPanel = new JPanel();
+		JPanel cntlPanel = createPanel("Features");
 		cntlPanel.add(srcBox);
 
 		// ----
@@ -203,9 +193,9 @@ public class MatchView extends AbstractBase {
 
 			TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
 			matchTable.setRowSorter(sorter);
-			sorter.setComparator(0, intComparator);
-			sorter.setComparator(1, intComparator);
-			sorter.setComparator(2, intComparator);
+			sorter.setComparator(0, NumComp);
+			sorter.setComparator(1, NumComp);
+			sorter.setComparator(2, NumComp);
 
 			TableColumnModel cols = featTable.getColumnModel();
 			cols.getColumn(0).setPreferredWidth(10);
@@ -231,9 +221,9 @@ public class MatchView extends AbstractBase {
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
 		matchTable.setRowSorter(sorter);
-		sorter.setComparator(0, intComparator);
-		sorter.setComparator(1, intComparator);
-		sorter.setComparator(2, intComparator);
+		sorter.setComparator(0, NumComp);
+		sorter.setComparator(1, NumComp);
+		sorter.setComparator(2, NumComp);
 
 		TableColumnModel cols = matchTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);

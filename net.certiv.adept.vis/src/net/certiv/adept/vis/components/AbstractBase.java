@@ -1,5 +1,7 @@
 package net.certiv.adept.vis.components;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.prefs.Preferences;
 
 import javax.imageio.ImageIO;
@@ -23,6 +26,13 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -35,6 +45,18 @@ public abstract class AbstractBase {
 	protected static final String ext = ".png";
 	protected static final String Eol = System.lineSeparator();
 
+	protected static final Dimension minDim = new Dimension(100, 100);
+
+	protected static final Comparator<Number> NumComp = new Comparator<Number>() {
+
+		@Override
+		public int compare(Number o1, Number o2) {
+			if (o1.doubleValue() < o2.doubleValue()) return -1;
+			if (o1.doubleValue() > o2.doubleValue()) return 1;
+			return 0;
+		}
+	};
+
 	protected static final String KEY_WIDTH = "frame_width";
 	protected static final String KEY_HEIGHT = "frame_height";
 	protected static final String KEY_X = "frame_x";
@@ -46,26 +68,62 @@ public abstract class AbstractBase {
 	protected JFrame frame;
 	protected Container content;
 	protected Preferences prefs;
+	protected String qual;
 
 	public AbstractBase(String title, String icon) {
 		frame = new JFrame(title);
+		qual = this.getClass().getName() + ".";
 		ImageIcon imgicon = new ImageIcon(this.getClass().getClassLoader().getResource(icon));
 		frame.setIconImage(imgicon.getImage());
 
 		content = frame.getContentPane();
+		content.setLayout(new BorderLayout(0, 0));
 		prefs = Preferences.userRoot().node(nodeName(this.getClass()));
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.addWindowListener(new WindowAdapter() {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				prefs.putDouble(KEY_X, frame.getLocationOnScreen().getX());
-				prefs.putDouble(KEY_Y, frame.getLocationOnScreen().getY());
-				prefs.putInt(KEY_WIDTH, (int) frame.getSize().getWidth());
-				prefs.putInt(KEY_HEIGHT, (int) frame.getSize().getHeight());
+				prefs.putDouble(qual + KEY_X, frame.getLocationOnScreen().getX());
+				prefs.putDouble(qual + KEY_Y, frame.getLocationOnScreen().getY());
+				prefs.putInt(qual + KEY_WIDTH, (int) frame.getSize().getWidth());
+				prefs.putInt(qual + KEY_HEIGHT, (int) frame.getSize().getHeight());
 				saveWindowClosingPrefs(prefs);
 			}
 		});
+	}
+
+	protected JPanel createPanel(String title) {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout(0, 0));
+		if (title != null) {
+			panel.setBorder(createTitledBorder(title));
+		}
+		return panel;
+	}
+
+	protected JSplitPane createSplitPane(double weight) {
+		JSplitPane pane = new JSplitPane();
+		pane.setResizeWeight(weight);
+		return pane;
+	}
+
+	protected JScrollPane createScrollPane(JComponent comp) {
+		JScrollPane scrollPane = new JScrollPane(comp);
+		scrollPane.setMinimumSize(minDim);
+		return scrollPane;
+	}
+
+	protected JTable createTable() {
+		JTable table = new JTable();
+		table.setBorder(new LineBorder(new Color(0, 0, 0)));
+		table.setFillsViewportHeight(true);
+		return table;
+	}
+
+	protected Border createTitledBorder(String title) {
+		return new TitledBorder(new LineBorder(new Color(0, 0, 0), 1, true), title, TitledBorder.LEADING,
+				TitledBorder.TOP, null, null);
 	}
 
 	private String nodeName(Class<? extends AbstractBase> c) {
@@ -85,10 +143,10 @@ public abstract class AbstractBase {
 	}
 
 	protected void setLocation() {
-		int width = prefs.getInt(KEY_WIDTH, 400);
-		int height = prefs.getInt(KEY_HEIGHT, 400);
+		int width = prefs.getInt(qual + KEY_WIDTH, 400);
+		int height = prefs.getInt(qual + KEY_HEIGHT, 400);
 		content.setPreferredSize(new Dimension(width, height));
-		frame.setLocation((int) prefs.getDouble(KEY_X, 100), (int) prefs.getDouble(KEY_Y, 100));
+		frame.setLocation((int) prefs.getDouble(qual + KEY_X, 100), (int) prefs.getDouble(qual + KEY_Y, 100));
 		frame.pack();
 	}
 

@@ -1,16 +1,15 @@
 package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Comparator;
 import java.util.prefs.Preferences;
 
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -25,11 +24,11 @@ import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
-import net.certiv.adept.vis.models.CorpusFeatureTableModel;
-import net.certiv.adept.vis.models.CorpusTableModel;
-import net.certiv.adept.vis.models.EdgeTableModel;
+import net.certiv.adept.vis.models.CorpusEdgeSetTableModel;
+import net.certiv.adept.vis.models.CorpusEdgeTableModel;
+import net.certiv.adept.vis.models.CorpusFeaturesTableModel;
 import net.certiv.adept.vis.renderers.EdgeCellRenderer;
-import net.certiv.adept.vis.renderers.FeatureCellRenderer;
+import net.certiv.adept.vis.renderers.EdgeSetCellRenderer;
 import net.certiv.adept.vis.renderers.FeaturesCellRenderer;
 
 public class CorpusView extends AbstractBase {
@@ -47,37 +46,30 @@ public class CorpusView extends AbstractBase {
 	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
 
 	private JSplitPane mainPane;
-	private JSplitPane subPane;
+	private JSplitPane centPane;
 	private JTable fsTable;
 	private JTable fxTable;
 	private JTable egTable;
 
+	private ProcessMgr mgr;
 	private ISourceParser lang;
 	private ArrayListMultimap<Integer, Feature> typeIndex;
 	private int typeKey;
 
-	private Comparator<Integer> intComparator = new Comparator<Integer>() {
-
-		@Override
-		public int compare(Integer o1, Integer o2) {
-			if (o1 < o2) return -1;
-			if (o1 > o2) return 1;
-			return 0;
-		}
-	};
-
 	public CorpusView() {
-		super("CorpusDocs FeatureSet Analysis", "features.gif");
+		super("CorpusDocs Features Analysis", "features.gif");
 
-		fsTable = new JTable();
-		fsTable.setFillsViewportHeight(true);
+		// ---
+		// left
+
+		fsTable = createTable();
 		fsTable.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fsTable.getSelectedRow();
 				if (row >= 0) {
-					CorpusTableModel m = (CorpusTableModel) fsTable.getModel();
+					CorpusFeaturesTableModel m = (CorpusFeaturesTableModel) fsTable.getModel();
 					typeKey = (int) m.getValueAt(row, 2);
 					String kind = (String) m.getValueAt(row, 1);
 					if (kind.equals(Kind.RULE.toString())) {
@@ -89,61 +81,64 @@ public class CorpusView extends AbstractBase {
 			}
 		});
 
-		JScrollPane fsScroll = new JScrollPane(fsTable);
+		JScrollPane fsScroll = createScrollPane(fsTable);
+		JPanel fsPanel = createPanel("Feature Set");
+		fsPanel.add(fsScroll);
 
-		fxTable = new JTable();
-		fxTable.setFillsViewportHeight(true);
+		// ---
+		// center
+
+		fxTable = createTable();
 		fxTable.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				int row = fxTable.getSelectedRow();
 				if (row >= 0) {
-					CorpusFeatureTableModel m = (CorpusFeatureTableModel) fxTable.getModel();
+					CorpusEdgeSetTableModel m = (CorpusEdgeSetTableModel) fxTable.getModel();
 					int index = (int) m.getValueAt(row, 0);
 					createEdgeData(index - 1);
 				}
 			}
 		});
 
-		JScrollPane fxScroll = new JScrollPane(fxTable);
+		JScrollPane fxScroll = createScrollPane(fxTable);
+		JPanel fxPanel = createPanel("Edge Set");
+		fxPanel.add(fxScroll);
 
-		egTable = new JTable();
-		egTable.setFillsViewportHeight(true);
-		JScrollPane egScroll = new JScrollPane(egTable);
+		// ---
+		// right
 
-		mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		subPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		egTable = createTable();
+		JScrollPane egScroll = createScrollPane(egTable);
+		JPanel egPanel = createPanel("Edge");
+		egPanel.add(egScroll);
 
-		mainPane.setLeftComponent(fsScroll);
-		mainPane.setRightComponent(subPane);
-		subPane.setLeftComponent(fxScroll);
-		subPane.setRightComponent(egScroll);
+		// ---
 
-		Dimension minimumSize = new Dimension(100, 100);
-		fsScroll.setMinimumSize(minimumSize);
-		fxScroll.setMinimumSize(minimumSize);
-		egScroll.setMinimumSize(minimumSize);
-		mainPane.setDividerLocation(0.5);
-		subPane.setDividerLocation(0.5);
+		mainPane = createSplitPane(0.33);
+		centPane = createSplitPane(0.5);
 
-		Container content = frame.getContentPane();
+		mainPane.setLeftComponent(fsPanel);
+		mainPane.setRightComponent(centPane);
+		centPane.setLeftComponent(fxPanel);
+		centPane.setRightComponent(egPanel);
+
 		content.add(mainPane, BorderLayout.CENTER);
 
 		setLocation();
-
-		int split = prefs.getInt(KEY_SPLIT_HORZ, 300);
-		mainPane.setDividerLocation(split);
-		split = prefs.getInt(KEY_SPLIT_HORZ1, 300);
-		subPane.setDividerLocation(split);
+		int pos = prefs.getInt(qual + KEY_SPLIT_HORZ, 300);
+		mainPane.setDividerLocation(pos);
+		pos = prefs.getInt(qual + KEY_SPLIT_HORZ1, 300);
+		centPane.setDividerLocation(pos);
 
 		frame.setVisible(true);
 	}
 
 	@Override
 	protected void saveWindowClosingPrefs(Preferences prefs) {
-		prefs.putInt(KEY_SPLIT_HORZ, mainPane.getDividerLocation());
-		prefs.putInt(KEY_SPLIT_HORZ1, subPane.getDividerLocation());
+		prefs.putInt(qual + KEY_SPLIT_HORZ, mainPane.getDividerLocation());
+		prefs.putInt(qual + KEY_SPLIT_HORZ1, centPane.getDividerLocation());
 	}
 
 	protected void createFeaturesData() {
@@ -152,7 +147,6 @@ public class CorpusView extends AbstractBase {
 		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
-
 		tool.setRebuild(true);
 
 		boolean ok = tool.loadResources();
@@ -163,21 +157,25 @@ public class CorpusView extends AbstractBase {
 			return;
 		}
 
-		ProcessMgr mgr = tool.getMgr();
+		mgr = tool.getMgr();
 		lang = mgr.getLanguageParser();
 		typeIndex = mgr.getCorpusModel().getFeatureIndex();
 
 		// feature type fsTable
-		CorpusTableModel model = new CorpusTableModel(typeIndex, lang.getRuleNames(), lang.getTokenNames());
+		CorpusFeaturesTableModel model = new CorpusFeaturesTableModel(typeIndex, lang.getRuleNames(),
+				lang.getTokenNames());
 		fsTable.setModel(model);
 
-		fsTable.setDefaultRenderer(Object.class, new FeaturesCellRenderer(model));
+		fsTable.setDefaultRenderer(Object.class, new FeaturesCellRenderer(model, SwingConstants.LEFT));
+		fsTable.getColumnModel().getColumn(0).setCellRenderer(new FeaturesCellRenderer(model, SwingConstants.CENTER));
+		fsTable.getColumnModel().getColumn(2).setCellRenderer(new FeaturesCellRenderer(model, SwingConstants.RIGHT));
+		fsTable.getColumnModel().getColumn(4).setCellRenderer(new FeaturesCellRenderer(model, SwingConstants.RIGHT));
 
-		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(fsTable.getModel());
+		TableRowSorter<TableModel> sorter = new TableRowSorter<>(fsTable.getModel());
 		fsTable.setRowSorter(sorter);
-		sorter.setComparator(0, intComparator);
-		sorter.setComparator(2, intComparator);
-		sorter.setComparator(4, intComparator);
+		sorter.setComparator(0, NumComp);
+		sorter.setComparator(2, NumComp);
+		sorter.setComparator(4, NumComp);
 
 		TableColumnModel cols = fsTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
@@ -188,16 +186,19 @@ public class CorpusView extends AbstractBase {
 	}
 
 	protected void createDependentData(int typeKey) {
-		CorpusFeatureTableModel model = new CorpusFeatureTableModel(typeIndex, typeKey);
+		CorpusEdgeSetTableModel model = new CorpusEdgeSetTableModel(typeIndex, typeKey);
 		fxTable.setModel(model);
 
-		fxTable.setDefaultRenderer(Object.class, new FeatureCellRenderer(model));
+		fxTable.setDefaultRenderer(Object.class, new EdgeSetCellRenderer(model, SwingConstants.LEFT));
+		fxTable.getColumnModel().getColumn(0).setCellRenderer(new EdgeSetCellRenderer(model, SwingConstants.CENTER));
+		fxTable.getColumnModel().getColumn(1).setCellRenderer(new EdgeSetCellRenderer(model, SwingConstants.RIGHT));
+		fxTable.getColumnModel().getColumn(2).setCellRenderer(new EdgeSetCellRenderer(model, SwingConstants.RIGHT));
 
-		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+		TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
 		fxTable.setRowSorter(sorter);
-		sorter.setComparator(0, intComparator);
-		sorter.setComparator(1, intComparator);
-		sorter.setComparator(2, intComparator);
+		sorter.setComparator(0, NumComp);
+		sorter.setComparator(1, NumComp);
+		sorter.setComparator(2, NumComp);
 
 		TableColumnModel cols = fxTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
@@ -207,28 +208,33 @@ public class CorpusView extends AbstractBase {
 
 	protected void clearEdgeData() {
 		TableModel model = egTable.getModel();
-		if (model instanceof EdgeTableModel) {
-			((EdgeTableModel) model).clear();
+		if (model instanceof CorpusEdgeTableModel) {
+			((CorpusEdgeTableModel) model).clear();
 		}
 	}
 
 	protected void createEdgeData(int line) {
-		EdgeTableModel model = new EdgeTableModel(typeIndex, lang, typeKey, line);
+		CorpusEdgeTableModel model = new CorpusEdgeTableModel(mgr, typeIndex, lang, typeKey, line);
 		egTable.setModel(model);
 
-		egTable.setDefaultRenderer(Object.class, new EdgeCellRenderer(model));
+		egTable.setDefaultRenderer(Object.class, new EdgeCellRenderer(model, SwingConstants.LEFT));
+		egTable.getColumnModel().getColumn(0).setCellRenderer(new EdgeCellRenderer(model, SwingConstants.CENTER));
+		egTable.getColumnModel().getColumn(3).setCellRenderer(new EdgeCellRenderer(model, SwingConstants.RIGHT));
+		egTable.getColumnModel().getColumn(6).setCellRenderer(new EdgeCellRenderer(model, SwingConstants.RIGHT));
 
-		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+		TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
 		egTable.setRowSorter(sorter);
-		sorter.setComparator(0, intComparator);
-		sorter.setComparator(5, intComparator);
+		sorter.setComparator(0, NumComp);
+		sorter.setComparator(3, NumComp);
+		sorter.setComparator(6, NumComp);
 
 		TableColumnModel cols = egTable.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(50);
 		cols.getColumn(2).setPreferredWidth(50);
-		cols.getColumn(3).setPreferredWidth(50);
-		cols.getColumn(4).setPreferredWidth(50);
-		cols.getColumn(5).setPreferredWidth(10);
+		cols.getColumn(3).setPreferredWidth(10);
+		cols.getColumn(4).setPreferredWidth(80);
+		cols.getColumn(5).setPreferredWidth(50);
+		cols.getColumn(6).setPreferredWidth(70);
 	}
 }

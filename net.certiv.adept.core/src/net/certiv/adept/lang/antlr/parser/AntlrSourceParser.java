@@ -66,7 +66,7 @@ public class AntlrSourceParser implements ISourceParser {
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(builder.input);
+		AdeptTokenFactory factory = new AdeptTokenFactory(builder.charStream);
 		builder.lexer.setTokenFactory(factory);
 		builder.parser.setTokenFactory(factory);
 		builder.parser.removeErrorListeners();
@@ -81,8 +81,8 @@ public class AntlrSourceParser implements ISourceParser {
 	}
 
 	private void fillCollector(String content) {
-		builder.input = CharStreams.fromString(content);
-		builder.lexer = new Antlr4Lexer(builder.input);
+		builder.charStream = CharStreams.fromString(content);
+		builder.lexer = new Antlr4Lexer(builder.charStream);
 		builder.VWS = VWS;
 		builder.HWS = HWS;
 		builder.BLOCKCOMMENT = BLOCKCOMMENT;
@@ -93,8 +93,8 @@ public class AntlrSourceParser implements ISourceParser {
 				RARROW, EQ, PLUSEQ, LSKIP, LMORE, LEOF, MODE, PUSHMODE, POPMODE, TYPE, };
 		builder.ERR_TOKEN = ERRCHAR;
 		builder.ERR_RULE = Antlr4Parser.RULE_other << 32;
-		builder.stream = new CommonTokenStream(builder.lexer);
-		builder.parser = new Antlr4Parser(builder.stream);
+		builder.tokenStream = new CommonTokenStream(builder.lexer);
+		builder.parser = new Antlr4Parser(builder.tokenStream);
 	}
 
 	@Override

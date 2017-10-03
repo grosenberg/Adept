@@ -15,6 +15,7 @@ import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.parser.Builder;
+import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.model.tune.Boosts;
 import net.certiv.adept.model.util.Analyzer;
 import net.certiv.adept.model.util.Chunk;
@@ -26,6 +27,7 @@ import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusModel {
 
+	private static final String MSG = "Features %5s/%-5s (reduced %2d%%) %s";
 	private static final long GAP = 500000;
 
 	@Expose private String corpusDirname;
@@ -114,19 +116,48 @@ public class CorpusModel {
 		this.mgr = mgr;
 	}
 
-	//	/** Add new document to the corpus model */
-	//	public void add(Document doc) {
-	//		writeDocument(corpusDir, doc);
-	//	}
-
-	/** Merge features collected during an ab initio build into the corpus model. */
+	/** Merge features collected during a scratch build into the corpus model. */
 	public void merge(Builder builder) {
 		Document doc = builder.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
-		docFeatures.put(doc.getDocId(), builder.getFeatures());
-		List<Feature> weighted = weighFeatures(builder.getNonRuleFeatures());
-		features.addAll(weighted);
-		Log.debug(this, String.format("Processed %s (%s)", doc.getPathname(), weighted.size()));
+		docFeatures.put(doc.getDocId(), builder.getAllFeatures());
+		List<Feature> reduced = reduceFeatures(builder);
+		features.addAll(reduced);
+
+		int totalSize = builder.tokenTypeFeatureIndex.valueSize();
+		int reducedSize = reduced.size();
+		int reduction = 100 - (reducedSize * 100 / totalSize);
+		Log.debug(this, String.format(MSG, reducedSize, totalSize, reduction, doc.getFilename()));
+	}
+
+	/* Reduces the feature set initially constructed from a corpus document by collapsing equivalent
+	 * root features to single instances with correspondingly increased weight. Equivalency is defined
+	 * by identity of root feature type, equality of edge sets, including leaf node text, and identity
+	 * of format. */
+	private List<Feature> reduceFeatures(ParseData data) {
+		List<Feature> reduced = new ArrayList<>();
+		for (Integer type : data.tokenTypeFeatureIndex.keySet()) {
+			Set<Feature> typeFeatures = data.tokenTypeFeatureIndex.get(type);
+			List<Feature> typeReduced = new ArrayList<>();
+			for (Feature typeFeature : typeFeatures) {
+				if (isUnique(typeReduced, typeFeature)) {
+					typeReduced.add(typeFeature);
+				}
+			}
+			reduced.addAll(typeReduced);
+		}
+		return reduced;
+	}
+
+	private boolean isUnique(List<Feature> uniques, Feature next) {
+		for (Feature unique : uniques) {
+			if (unique.equivalentTo(next)) {
+				unique.mergeEquivalent(next);
+				next.setEquivalent(true);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** Merge features as retrieved from persistant store into the corpus model. */
@@ -148,6 +179,13 @@ public class CorpusModel {
 				ana.apply(tf);
 			}
 		}
+		consistent = true;
+	}
+
+	public void save(Path corpusDir) throws Exception {
+		lastModified = Time.now();
+		CorpusData.save(corpusDir, this);
+		lastModified = Time.getLastModified(corpusDir);
 		consistent = true;
 	}
 
@@ -275,65 +313,5 @@ public class CorpusModel {
 
 	private void clearFeatures() {
 		features.clear();
-	}
-
-	public void save(Path corpusDir) throws Exception {
-		lastModified = Time.now();
-		CorpusData.save(corpusDir, this);
-		lastModified = Time.getLastModified(corpusDir);
-		consistent = true;
-	}
-
-	//	public void writeDocument(Path corpusDir, Document doc) {
-	//		CorpusDocs.writeDocument(corpusDir, doc);
-	//		consistent = true;
-	//	}
-
-	/* Reduces the feature set initially constructed from a corpus document by collapsing equivalent
-	 * root features to single instances with correspondingly increased weight. Equivalency is defined
-	 * by identity of root feature type, equality of edge sets, including leaf node text, and identity
-	 * of format. */
-	private List<Feature> weighFeatures(List<Feature> roots) {
-		ArrayListMultimap<Integer, Feature> index = ArrayListMultimap.create();
-		for (Feature features : roots) {
-			index.put(features.getType(), features);
-		}
-		List<Feature> weighted = new ArrayList<>();
-
-		int tot = 0;
-		int unq = 0;
-		for (Integer type : index.keySet()) {
-			List<Feature> features = index.get(type);
-			tot += features.size();
-			List<Feature> uniques = new ArrayList<>();
-			for (Feature feature : features) {
-				Feature unique = getEquivalent(uniques, feature);
-				if (unique == null) {
-					uniques.add(feature);
-				} else {
-					unique.mergeEquivalent(feature);
-				}
-			}
-			weighted.addAll(uniques);
-			unq += uniques.size();
-
-			// if (uniques.size() < features.size()) {
-			// String aspect = features.get(0).getAspect();
-			// Log.debug(this, String.format("Feature reduction for %12s (%5d) %5d -> %d", aspect,
-			// type,
-			// features.size(), uniques.size()));
-			// }
-		}
-		int reduction = 100 - (unq * 100 / tot);
-		Log.trace(this, String.format("Feature reduction (%2d%%) %6d -> %d", reduction, tot, unq));
-
-		return weighted;
-	}
-
-	private Feature getEquivalent(List<Feature> uniques, Feature feature) {
-		for (Feature unique : uniques) {
-			if (unique.equivalentTo(feature)) return unique;
-		}
-		return null;
 	}
 }

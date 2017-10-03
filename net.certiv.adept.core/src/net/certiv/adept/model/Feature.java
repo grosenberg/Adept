@@ -13,7 +13,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.ProcessMgr;
-import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.model.util.DamerauAlignment;
 import net.certiv.adept.model.util.Factor;
 import net.certiv.adept.model.util.Location;
@@ -54,7 +53,7 @@ public class Feature implements Comparable<Feature> {
 	@Expose private int endIdx;			// feature token endIdx index
 	@Expose private int begOffset;		// feature beg character offset
 	@Expose private int endOffset;		// feature end character offset
-	@Expose private int length;			// feature real token length
+	@Expose private int length;			// feature real feature length
 
 	// key = docId; value = locations of features equivalent to this
 	@Expose private ArrayListMultimap<Integer, Location> equivalents;
@@ -72,20 +71,20 @@ public class Feature implements Comparable<Feature> {
 	// comments
 	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
 			Format format) {
-		return create(mgr, kind, aspect, docId, type, token, token, format, false, true);
+		return create(mgr, kind, aspect, docId, type, token, token, 1, format, false, true);
 	}
 
 	// terminal nodes
 	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
 			Format format, boolean isVar) {
-		return create(mgr, kind, aspect, docId, type, token, token, format, isVar, false);
+		return create(mgr, kind, aspect, docId, type, token, token, 1, format, isVar, false);
 	}
 
 	// rules
 	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop,
-			Format format, boolean isVar, boolean isComment) {
+			int length, Format format, boolean isVar, boolean isComment) {
 
-		Feature feature = new Feature(mgr, kind, aspect, docId, type, start, stop, format, isVar, isComment);
+		Feature feature = new Feature(mgr, kind, aspect, docId, type, start, stop, length, format, isVar, isComment);
 		Feature existing = pool.get(feature);
 		if (existing != null) return existing;
 
@@ -101,7 +100,7 @@ public class Feature implements Comparable<Feature> {
 		this.reCalc = true;
 	}
 
-	public Feature(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop,
+	public Feature(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop, int length,
 			Format format, boolean isVar, boolean isComment) {
 
 		this();
@@ -110,6 +109,7 @@ public class Feature implements Comparable<Feature> {
 		this.type = type;
 		this.kind = kind;
 		this.aspect = aspect;
+		this.length = length;
 		this.format = format;
 		this.isVar = isVar;
 		this.isComment = isComment;
@@ -121,22 +121,6 @@ public class Feature implements Comparable<Feature> {
 		this.text = genText(start.getInputStream(), begOffset, endOffset);
 		this.col = start.getCharPositionInLine();
 		this.line = start.getLine() - 1;
-		this.length = countLength(start, stop);
-	}
-
-	private int countLength(Token start, Token stop) {
-		int beg = start.getTokenIndex();
-		int end = stop.getTokenIndex();
-		if (beg == -1 || end == -1) return 0;
-
-		Document doc = mgr.getDocument(docId);
-		ParseData data = doc.getParseData();
-		int len = 0;
-		for (Token token : data.getTokenStream().get(beg, end)) {
-			if (data.isWsOrComment(token.getType())) continue;
-			len++;
-		}
-		return len;
 	}
 
 	private String genText(CharStream is, int startIndex, int stopIndex) {
@@ -147,12 +131,16 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	/**
-	 * Adds an edge from the receiver, as root, to the given feature. Does not add duplicates as defined
-	 * by root id and leaf id pairs.
+	 * Adds an edge from the receiver, as root, to the given feature, as leaf. EdgeSet will not add
+	 * duplicates as defined by root and leaf id pairs.
+	 * 
+	 * @param type the defined type of edge
+	 * @param leaf the connected leaf
+	 * @param len the real token length of the edge
 	 */
-	public void addEdge(Feature leaf, EdgeType kind) {
-		if (leaf != this) {
-			Edge edge = Edge.create((Feature) this, leaf, kind);
+	public void addEdge(EdgeType type, Feature leaf, int len) {
+		if (leaf != null) {
+			Edge edge = Edge.create(this, leaf, type, len);
 			if (edgeSet.addEdge(edge)) {
 				reCalc = true;
 			}
@@ -209,9 +197,14 @@ public class Feature implements Comparable<Feature> {
 		return edgeSet.getEdgeTypes().size();
 	}
 
-	/** Returns the character stream distance between the this and the given feature. */
-	public int offsetDistance(Feature o) {
-		return Math.abs(begOffset - o.begOffset);
+	/** Returns the signed raw character stream distance between the this and the given feature. */
+	public int charOffset(Feature o) {
+		return begOffset - o.begOffset;
+	}
+
+	/** Returns the signed raw token stream distance between the this and the given feature. */
+	public int tokenOffset(Feature o) {
+		return begIdx - o.begIdx;
 	}
 
 	public long getId() {
@@ -395,9 +388,10 @@ public class Feature implements Comparable<Feature> {
 	 * identity of feature type, identity of format, and equality of edge set leaf type sequences.
 	 */
 	public boolean equivalentTo(Feature o) {
+		if (id == o.id) return false;			// exclude identity
 		if (type != o.type) return false;
-		if (format != o.format) return false;
-		if (!edgeSet.equals(o.getEdgeSet())) return false;
+		if (!format.equivalentTo(o.format)) return false;
+		if (!edgeSet.equivalentTo(o.getEdgeSet())) return false;
 		return true;
 	}
 

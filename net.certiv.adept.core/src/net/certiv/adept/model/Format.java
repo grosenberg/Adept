@@ -36,12 +36,12 @@ public class Format {
 
 	@Expose public int alignCol;			// alignment column
 
-	public boolean joinAlways;
-	public boolean joinShould;
-	public boolean joinNever;
-	public boolean joinAllow;
+	@Expose public boolean joinAlways;
+	@Expose public boolean joinShould;
+	@Expose public boolean joinNever;
+	@Expose public boolean joinAllow;
 
-	public boolean noFormat;
+	@Expose public boolean noFormat;
 
 	// ------------------------------------------------------------------------
 
@@ -173,7 +173,7 @@ public class Format {
 	}
 
 	private static String leftWS(ParseData data, int idx) {
-		List<Token> leftHidden = data.stream.getHiddenTokensToLeft(idx);
+		List<Token> leftHidden = data.tokenStream.getHiddenTokensToLeft(idx);
 		if (leftHidden != null) {
 			for (Token left : leftHidden) {
 				if (left.getType() == data.BLOCKCOMMENT) continue;
@@ -184,7 +184,7 @@ public class Format {
 	}
 
 	private static String rightWS(ParseData data, int idx) {
-		List<Token> rightHidden = data.stream.getHiddenTokensToRight(idx);
+		List<Token> rightHidden = data.tokenStream.getHiddenTokensToRight(idx);
 		if (rightHidden != null) {
 			for (Token right : rightHidden) {
 				if (right.getType() == data.BLOCKCOMMENT) continue;
@@ -214,6 +214,19 @@ public class Format {
 
 	private static boolean isWhitespace(ParseData data, Token token) {
 		return token.getType() == data.HWS || token.getType() == data.VWS;
+	}
+
+	public boolean equivalentTo(Format o) {
+		if (indented != o.indented) return false;
+		if (atLineBeg != o.atLineBeg) return false;
+		if (atLineEnd != o.atLineEnd) return false;
+		if (wsBefore != o.wsBefore) return false;
+		if (wsAfter != o.wsAfter) return false;
+		if (multBefore != o.multBefore) return false;
+		if (multAfter != o.multAfter) return false;
+		if (relDents != o.relDents) return false;
+		if (noFormat != o.noFormat) return false;
+		return true;
 	}
 
 	@Override

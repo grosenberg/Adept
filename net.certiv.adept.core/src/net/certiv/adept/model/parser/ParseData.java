@@ -1,5 +1,6 @@
 package net.certiv.adept.model.parser;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import com.google.common.collect.HashBiMap;
 
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.util.TreeMultimap;
 
 /** Collects the information generated through the parsing of a single Document. */
 public class ParseData {
@@ -29,8 +31,8 @@ public class ParseData {
 	public ParserRuleContext tree;
 
 	public Lexer lexer;
-	public CommonTokenStream stream;
-	public CodePointCharStream input;
+	public CommonTokenStream tokenStream;
+	public CodePointCharStream charStream;
 
 	public int VWS;
 	public int HWS;
@@ -53,11 +55,14 @@ public class ParseData {
 	// key=start token; value=rule context
 	public Map<Token, ParserRuleContext> tokenRuleIndex;
 
-	// key=tree context; value=feature
+	// key=context; value=feature
 	public HashBiMap<ParseTree, Feature> contextFeatureIndex;
 
-	// key=token start index; value=feature
+	// key=token start index; value=terminal/comment feature
 	public Map<Integer, Feature> tokenStartFeatureIndex;
+
+	// key=token type; value=terminal/comment features
+	public TreeMultimap<Integer, Feature> tokenTypeFeatureIndex;
 
 	// key=line number; value=tokens in line
 	public Map<Integer, List<Token>> lineTokensIndex;
@@ -68,6 +73,9 @@ public class ParseData {
 	// key=unique feature types
 	public HashSet<Integer> typeSet;
 
+	// key=line number; value=is blank?
+	public HashMap<Integer, Boolean> blankLines;
+
 	// ---------------------------------------------------------
 
 	public ParseData(Document doc) {
@@ -77,9 +85,11 @@ public class ParseData {
 		tokenRuleIndex = new HashMap<>();
 		contextFeatureIndex = HashBiMap.create();
 		tokenStartFeatureIndex = new HashMap<>();
+		tokenTypeFeatureIndex = new TreeMultimap<>();
 		lineTokensIndex = new HashMap<>();
 		tokenVisOffsetIndex = new HashMap<>();
 		typeSet = new HashSet<>();
+		blankLines = new HashMap<>();
 	}
 
 	public Document getDocument() {
@@ -87,11 +97,11 @@ public class ParseData {
 	}
 
 	public CommonTokenStream getTokenStream() {
-		return stream;
+		return tokenStream;
 	}
 
 	public List<Token> getTokens() {
-		return stream.getTokens();
+		return tokenStream.getTokens();
 	}
 
 	public ParserRuleContext getTree() {
@@ -111,8 +121,58 @@ public class ParseData {
 		return Arrays.asList(parser.getTokenNames());
 	}
 
+	public List<Feature> getNonRuleFeatures() {
+		return new ArrayList<>(tokenTypeFeatureIndex.values());
+	}
+
+	public boolean isWhitespace(int type) {
+		return type == HWS || type == VWS;
+	}
+
+	public boolean isVertWS(int type) {
+		return type == VWS;
+	}
+
+	public boolean isHorzWS(int type) {
+		return type == HWS;
+	}
+
+	public boolean isComment(int type) {
+		return type == BLOCKCOMMENT || type == LINECOMMENT;
+	}
+
 	public boolean isWsOrComment(int type) {
-		if (type == VWS || type == HWS || type == BLOCKCOMMENT || type == LINECOMMENT) return true;
-		return false;
+		return type == VWS || type == HWS || type == BLOCKCOMMENT || type == LINECOMMENT;
+	}
+
+	public boolean isBlankLine(int line) {
+		Boolean state = blankLines.get(line);
+		if (state != null) return state;
+
+		state = true;
+		List<Token> tokens = lineTokensIndex.get(line);
+		if (tokens != null) {
+			for (Token token : tokens) {
+				if (!isWhitespace(token.getType())) {
+					state = false;
+					break;
+				}
+			}
+		}
+		blankLines.put(line, state);
+		return state;
+	}
+
+	// TODO: implement cleanup flow
+	public void dispose() {
+		tokenTerminalIndex.clear();
+		tokenRuleIndex.clear();
+		contextFeatureIndex.clear();
+		tokenStartFeatureIndex.clear();
+		tokenTypeFeatureIndex.clear();
+		lineTokensIndex.clear();
+		tokenVisOffsetIndex.clear();
+		typeSet.clear();
+		blankLines.clear();
 	}
 }
