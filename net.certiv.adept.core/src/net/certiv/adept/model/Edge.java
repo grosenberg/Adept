@@ -84,6 +84,6 @@ public class Edge implements Comparable<Edge> {
 
 	@Override
 	public String toString() {
-		return String.format("%s {%s -> %s}", coord, root.getAspect(), leaf.getAspect());
+		return String.format("%s {%s: %s -> %s}", coord, type, root.getAspect(), leaf.getAspect());
 	}
 }

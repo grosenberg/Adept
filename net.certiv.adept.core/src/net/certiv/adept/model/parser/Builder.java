@@ -61,10 +61,11 @@ public class Builder extends ParseData {
 		}
 
 		String aspect = parser.getRuleNames()[rule];
-		Format format = new Format(this, ctx);
 		int length = ruleLength(start, stop);
-		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, length, format,
-				false, false);
+		int visCol = tokenVisOffsetIndex.get(ctx.start);
+		Format format = new Format(this, ctx);
+		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, length, visCol,
+				format, false, false);
 		contextFeatureIndex.put(ctx, feature);
 		tokenRuleIndex.put(start, ctx);
 		typeSet.add(type);
@@ -81,8 +82,10 @@ public class Builder extends ParseData {
 		}
 
 		String aspect = lexer.getVocabulary().getDisplayName(type);
+		int visCol = tokenVisOffsetIndex.get(token);
 		Format format = new Format(this, terminal);
-		Feature feature = Feature.create(mgr, Kind.TERMINAL, aspect, doc.getDocId(), type, token, format, isVar(type));
+		Feature feature = Feature.create(mgr, Kind.TERMINAL, aspect, doc.getDocId(), type, token, visCol, format,
+				isVar(type));
 		feature.setAncestorPath(genAncestorPath(terminal));
 		contextFeatureIndex.put(terminal, feature);
 		tokenTerminalIndex.put(token, terminal);
@@ -96,9 +99,10 @@ public class Builder extends ParseData {
 			int type = token.getType();
 			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
 				String aspect = lexer.getVocabulary().getDisplayName(type);
+				int visCol = tokenVisOffsetIndex.get(token);
 				Format format = new Format(this, token);
 				Kind kind = type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT;
-				Feature feature = Feature.create(mgr, kind, aspect, doc.getDocId(), type, token, format);
+				Feature feature = Feature.create(mgr, kind, aspect, doc.getDocId(), type, token, visCol, format);
 				TerminalNode terminal = new TerminalNodeImpl(token);
 				contextFeatureIndex.put(terminal, feature);
 				tokenTerminalIndex.put(token, terminal);
@@ -157,7 +161,7 @@ public class Builder extends ParseData {
 		return false;
 	}
 
-	/** Builds a source line->visual offset->token index */
+	/** Builds a source line->visual offset->token index. Built prior to feature extraction. */
 	public void index() {
 		Token begToken = null;
 		int line = -1;

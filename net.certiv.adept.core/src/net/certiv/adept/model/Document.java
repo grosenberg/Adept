@@ -84,9 +84,9 @@ public class Document {
 		return content;
 	}
 
-	/** Returns the Info at the given index representing the document line number (0..n) */
-	public Info getInfo(int idx) {
-		return infos.get(idx);
+	/** Returns the Info at the given document line number (0..n) */
+	public Info getInfo(int line) {
+		return infos.get(line);
 	}
 
 	public String getModified() {

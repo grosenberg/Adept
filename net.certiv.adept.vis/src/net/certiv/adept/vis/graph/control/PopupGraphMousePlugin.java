@@ -1,4 +1,4 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.graph.control;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

@@ -47,13 +47,14 @@ public class Feature implements Comparable<Feature> {
 	@Expose private Format format;
 
 	// position
-	@Expose private int col;			// feature locus
+	@Expose private int col;			// document locus 
 	@Expose private int line;
-	@Expose private int begIdx;			// feature token begIdx index
-	@Expose private int endIdx;			// feature token endIdx index
-	@Expose private int begOffset;		// feature beg character offset
-	@Expose private int endOffset;		// feature end character offset
-	@Expose private int length;			// feature real feature length
+	@Expose private int visCol;
+	@Expose private int begIdx;			// token stream index
+	@Expose private int endIdx;
+	@Expose private int begOffset;		// character stream offset
+	@Expose private int endOffset;
+	@Expose private int length;			// in real tokens
 
 	// key = docId; value = locations of features equivalent to this
 	@Expose private ArrayListMultimap<Integer, Location> equivalents;
@@ -69,22 +70,23 @@ public class Feature implements Comparable<Feature> {
 	private Feature matched;
 
 	// comments
-	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
+	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token, int visCol,
 			Format format) {
-		return create(mgr, kind, aspect, docId, type, token, token, 1, format, false, true);
+		return create(mgr, kind, aspect, docId, type, token, token, 1, visCol, format, false, true);
 	}
 
 	// terminal nodes
-	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token,
+	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token token, int visCol,
 			Format format, boolean isVar) {
-		return create(mgr, kind, aspect, docId, type, token, token, 1, format, isVar, false);
+		return create(mgr, kind, aspect, docId, type, token, token, 1, visCol, format, isVar, false);
 	}
 
 	// rules
 	public static Feature create(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop,
-			int length, Format format, boolean isVar, boolean isComment) {
+			int length, int visCol, Format format, boolean isVar, boolean isComment) {
 
-		Feature feature = new Feature(mgr, kind, aspect, docId, type, start, stop, length, format, isVar, isComment);
+		Feature feature = new Feature(mgr, kind, aspect, docId, type, start, stop, length, visCol, format, isVar,
+				isComment);
 		Feature existing = pool.get(feature);
 		if (existing != null) return existing;
 
@@ -101,7 +103,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public Feature(ProcessMgr mgr, Kind kind, String aspect, int docId, int type, Token start, Token stop, int length,
-			Format format, boolean isVar, boolean isComment) {
+			int visCol, Format format, boolean isVar, boolean isComment) {
 
 		this();
 		this.mgr = mgr;
@@ -110,17 +112,18 @@ public class Feature implements Comparable<Feature> {
 		this.kind = kind;
 		this.aspect = aspect;
 		this.length = length;
+		this.visCol = visCol;
 		this.format = format;
 		this.isVar = isVar;
 		this.isComment = isComment;
 
+		this.col = start.getCharPositionInLine();
+		this.line = start.getLine() - 1;
 		this.begIdx = start.getTokenIndex();
 		this.endIdx = stop.getTokenIndex();
 		this.begOffset = start.getStartIndex();
 		this.endOffset = stop.getStopIndex();
 		this.text = genText(start.getInputStream(), begOffset, endOffset);
-		this.col = start.getCharPositionInLine();
-		this.line = start.getLine() - 1;
 	}
 
 	private String genText(CharStream is, int startIndex, int stopIndex) {
@@ -139,7 +142,7 @@ public class Feature implements Comparable<Feature> {
 	 * @param len the real token length of the edge
 	 */
 	public void addEdge(EdgeType type, Feature leaf, int len) {
-		if (leaf != null) {
+		if (leaf != null && id != leaf.id) {
 			Edge edge = Edge.create(this, leaf, type, len);
 			if (edgeSet.addEdge(edge)) {
 				reCalc = true;
@@ -263,6 +266,10 @@ public class Feature implements Comparable<Feature> {
 		return col;
 	}
 
+	public int getVisCol() {
+		return visCol;
+	}
+
 	public int getLine() {
 		return line;
 	}
@@ -287,7 +294,7 @@ public class Feature implements Comparable<Feature> {
 		return selfSim;
 	}
 
-	public int numEquivalent() {
+	public int getEquivalentWeight() {
 		return equivalents.size();
 	}
 
@@ -378,7 +385,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public double weightSimilarity(Feature other) {
-		return Maths.invDelta(numEquivalent(), other.numEquivalent());
+		return Maths.invDelta(getEquivalentWeight(), other.getEquivalentWeight());
 	}
 
 	// ===============================================================================================
@@ -410,8 +417,8 @@ public class Feature implements Comparable<Feature> {
 			if (endOffset != o.endOffset) sb.append("endOffset [" + endOffset + ":" + o.endOffset + "] ");
 			if (col != o.col) sb.append("col [" + col + ":" + o.col + "] ");
 			if (line != o.line) sb.append("line [" + line + ":" + o.line + "] ");
-			if (numEquivalent() != o.numEquivalent())
-				sb.append("equivalents [" + numEquivalent() + ":" + o.numEquivalent() + "] ");
+			if (getEquivalentWeight() != o.getEquivalentWeight())
+				sb.append("equivalents [" + getEquivalentWeight() + ":" + o.getEquivalentWeight() + "] ");
 		}
 		return sb.toString();
 	}
@@ -426,8 +433,8 @@ public class Feature implements Comparable<Feature> {
 		if (begIdx > o.begIdx) return 1;
 		if (endIdx < o.endIdx) return -1;
 		if (endIdx > o.endIdx) return 1;
-		if (numEquivalent() < o.numEquivalent()) return -1;
-		if (numEquivalent() > o.numEquivalent()) return 1;
+		if (getEquivalentWeight() < o.getEquivalentWeight()) return -1;
+		if (getEquivalentWeight() > o.getEquivalentWeight()) return 1;
 		return 0;
 	}
 

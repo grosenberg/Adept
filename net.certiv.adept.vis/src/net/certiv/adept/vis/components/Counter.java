@@ -10,19 +10,19 @@ import javax.swing.JTextField;
 
 public class Counter extends JPanel {
 
-	// event require strings
+	// event identifiers
 	public static final String ADD = "ADD";
 	public static final String SUB = "SUB";
 	public static final String SET = "SET";
 
-	private JTextField text;
-	private JButton sub;
-	private JButton add;
+	protected JTextField txt;
+	protected JButton sub;
+	protected JButton add;
 
-	private int max = 100;
-	private int min = 0;
-	private int inc = 1;
-	private int value;
+	protected int max = 100;
+	protected int min = 0;
+	protected int inc = 1;
+	protected int count;
 
 	private boolean disable;
 
@@ -31,54 +31,50 @@ public class Counter extends JPanel {
 		build();
 	}
 
-	public Counter(int max, int min, int inc) {
+	public Counter(int max, int min) {
 		this();
 		this.max = max;
 		this.min = min;
-		this.inc = inc;
 	}
 
-	public void setMaximum(int max) {
+	public void setRange(int max) {
 		this.max = max;
 	}
 
-	public void setMinimum(int min) {
+	public void setRange(int min, int max) {
 		this.min = min;
+		this.max = max;
 	}
 
-	public void setIncrement(int inc) {
-		this.inc = inc;
-	}
-
-	private void build() {
+	protected void build() {
 		sub = new JButton("<");
 		sub.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int oldValue = value;
-				if (value - inc >= min) {
-					setValue(value - inc);
-					firePropertyChange(SUB, oldValue, value);
+				int oldValue = count;
+				if (count - inc >= min) {
+					setCount(count - inc);
+					firePropertyChange(SUB, oldValue, count);
 				}
 			}
 		});
 		add(sub);
 
-		text = new JTextField(4);
-		text.setEditable(false);
-		text.setHorizontalAlignment(JTextField.CENTER);
-		add(text);
+		txt = new JTextField(6);
+		txt.setEditable(false);
+		txt.setHorizontalAlignment(JTextField.CENTER);
+		add(txt);
 
 		add = new JButton(">");
 		add.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int oldValue = value;
-				if (value + inc <= max) {
-					setValue(value + inc);
-					firePropertyChange(ADD, oldValue, value);
+				int oldValue = count;
+				if (count + inc <= max) {
+					setCount(count + inc);
+					firePropertyChange(ADD, oldValue, count);
 				}
 			}
 		});
@@ -93,25 +89,28 @@ public class Counter extends JPanel {
 		return sub;
 	}
 
-	public int getValue() {
-		return value;
+	public int getCount() {
+		return count;
 	}
 
-	public void setValue(int value) {
-		if (value >= min && value <= max) {
+	public void setCount(int count) {
+		if (count >= min && count <= max) {
 			disable = true;
-			this.value = value;
-			text.setText(String.valueOf(value));
+			this.count = count;
+			txt.setText(String.valueOf(count));
 			disable = false;
 		}
 	}
 
 	public void reset() {
-		setValue(min);
+		setCount(min);
 		firePropertyChange(SET, min - 1, min);
 	}
 
 	public void firePropertyChange(String propertyName, int oldValue, int newValue) {
-		if (!disable) super.firePropertyChange(propertyName, oldValue, newValue);
+		if (!disable) {
+			// Log.debug(this, String.format("Issuing property change: %s %s -> %s", propertyName, oldValue, newValue));
+			super.firePropertyChange(propertyName, oldValue, newValue);
+		}
 	}
 }

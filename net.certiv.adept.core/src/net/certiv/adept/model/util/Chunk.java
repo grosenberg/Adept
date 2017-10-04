@@ -44,7 +44,7 @@ public class Chunk {
 
 		Feature best = null;
 		for (Feature feature : bests) {
-			if (best == null || best.numEquivalent() < feature.numEquivalent()) {
+			if (best == null || best.getEquivalentWeight() < feature.getEquivalentWeight()) {
 				best = feature;
 			}
 		}

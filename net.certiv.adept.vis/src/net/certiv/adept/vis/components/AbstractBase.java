@@ -6,6 +6,7 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -84,10 +85,11 @@ public abstract class AbstractBase {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				prefs.putDouble(qual + KEY_X, frame.getLocationOnScreen().getX());
-				prefs.putDouble(qual + KEY_Y, frame.getLocationOnScreen().getY());
-				prefs.putInt(qual + KEY_WIDTH, (int) frame.getSize().getWidth());
-				prefs.putInt(qual + KEY_HEIGHT, (int) frame.getSize().getHeight());
+				Rectangle b = frame.getBounds();
+				prefs.putInt(qual + KEY_X, b.x);
+				prefs.putInt(qual + KEY_Y, b.y);
+				prefs.putInt(qual + KEY_WIDTH, b.width);
+				prefs.putInt(qual + KEY_HEIGHT, b.height);
 				saveWindowClosingPrefs(prefs);
 			}
 		});
@@ -143,11 +145,11 @@ public abstract class AbstractBase {
 	}
 
 	protected void setLocation() {
-		int width = prefs.getInt(qual + KEY_WIDTH, 400);
+		int x = prefs.getInt(qual + KEY_X, 100);
+		int y = prefs.getInt(qual + KEY_Y, 100);
+		int width = prefs.getInt(qual + KEY_WIDTH, 600);
 		int height = prefs.getInt(qual + KEY_HEIGHT, 400);
-		content.setPreferredSize(new Dimension(width, height));
-		frame.setLocation((int) prefs.getDouble(qual + KEY_X, 100), (int) prefs.getDouble(qual + KEY_Y, 100));
-		frame.pack();
+		frame.setBounds(x, y, width, height);
 	}
 
 	protected Action getOpenAction() {
