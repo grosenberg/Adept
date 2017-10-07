@@ -97,7 +97,7 @@ public abstract class AbstractBase {
 
 	protected JPanel createPanel(String title) {
 		JPanel panel = new JPanel();
-		panel.setLayout(new BorderLayout(0, 0));
+		panel.setLayout(new BorderLayout());
 		if (title != null) {
 			panel.setBorder(createTitledBorder(title));
 		}

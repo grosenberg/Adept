@@ -1,7 +1,6 @@
 package net.certiv.adept.model.parser;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -132,10 +131,9 @@ public class Builder extends ParseData {
 		path.add(node.getSymbol().getType());
 		RuleContext parent = (RuleContext) node.getParent();
 		while (parent != null) {
-			path.add(parent.getRuleIndex());
+			path.add(parent.getRuleIndex() << 16);
 			parent = parent.getParent();
 		}
-		Collections.reverse(path);
 		return path;
 	}
 

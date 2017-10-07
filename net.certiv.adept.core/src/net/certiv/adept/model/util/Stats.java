@@ -11,7 +11,7 @@ public class Stats {
 	public double similarity;
 	public double selfSimF;
 	public double selfSimM;
-	public double mutualSim;
+	public double pairSim;
 
 	public double ancestorSim;
 	public double edgeTypeSim;
@@ -19,23 +19,23 @@ public class Stats {
 	public double formatSim;
 	public double weightSim;
 
-	public Stats(Feature source) {
-		this.feature = source;
-		this.edgeCount = source.getEdgeSet().size();
-		this.typeCount = source.getEdgeSet().sizeTypes();
+	public Stats(Feature feature) {
+		this.feature = feature;
+		this.edgeCount = feature.getEdgeSet().size();
+		this.typeCount = feature.getEdgeSet().sizeTypes();
 	}
 
-	public Stats(Feature source, Feature matched) {
-		this(source);
-		this.similarity = source.similarity(matched);
-		this.selfSimF = source.getSelfSim();
+	public Stats(Feature feature, Feature matched) {
+		this(feature);
+		this.similarity = feature.similarity(matched);
+		this.selfSimF = feature.getSelfSim();
 		this.selfSimM = matched.getSelfSim();
-		this.mutualSim = source.mutualSimilarity(matched);
+		this.pairSim = feature.pairSimilarity(matched);
 
-		this.ancestorSim = source.ancestorSimilarity(matched);
-		this.edgeTypeSim = source.edgeSetTypeSimilarity(matched);
-		this.edgeTextSim = source.edgeSetTextSimilarity(matched);
-		this.formatSim = source.formatSimilarity(matched);
-		this.weightSim = source.weightSimilarity(matched);
+		this.ancestorSim = feature.ancestorSimilarity(matched);
+		this.edgeTypeSim = feature.edgeSetTypeSimilarity(matched);
+		this.edgeTextSim = feature.edgeSetTextSimilarity(matched);
+		this.formatSim = feature.formatSimilarity(matched);
+		this.weightSim = feature.weightSimilarity(matched);
 	}
 }

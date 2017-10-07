@@ -2,7 +2,8 @@ grammar First ;
 
 rule
 	: A
-	| B ;
+		| B 
+	;
 
 A
 	: 'a' ;

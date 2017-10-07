@@ -45,11 +45,6 @@ public class Format {
 
 	// ------------------------------------------------------------------------
 
-	private boolean[] vec = { true, true, indented, atLineBeg, atLineEnd, wsBefore, wsAfter, multBefore, multAfter,
-			alignAbove, alignBelow, blankAbove, blankBelow };
-
-	// ------------------------------------------------------------------------
-
 	/** Rule */
 	public Format(ParseData data, ParserRuleContext ctx) {
 		CommonToken start = (CommonToken) ctx.getStart();
@@ -111,16 +106,17 @@ public class Format {
 		boolean[] vector = simVector();
 		int value = 0;
 		for (int idx = 0; idx < vector.length; idx++) {
-			value = value << 1;
-			value += vector[idx] ? 1 : 0;
+			if (vector[idx]) {
+				int bit = (1 << idx);
+				value = value | bit;
+			}
 		}
-		return "0x" + Integer.toHexString(value).toUpperCase();
+		return String.format("0x%04X", value & 0xFFFFFFFF);
 	}
 
 	private boolean[] simVector() {
-		vec[0] = relDents > -1;
-		vec[1] = Math.abs(relDents) > 1;
-		return vec;
+		return new boolean[] { indented, atLineBeg, atLineEnd, wsBefore, wsAfter, multBefore, multAfter, alignAbove,
+				alignBelow, blankAbove, blankBelow, relDents > -1, Math.abs(relDents) > 0 };
 	}
 
 	private void characterize(ParseData data, Token start, Token stop, Info begInfo, Info endInfo, int len) {
@@ -131,9 +127,11 @@ public class Format {
 		atLineBeg = start.getCharPositionInLine() == begInfo.beg;
 		atLineEnd = len == endInfo.end;
 
-		indented = begInfo.indents > 0;
-		indents = begInfo.indents;
-		relDents = begInfo.indents - begInfo.priorIndents;
+		if (atLineBeg) {
+			indented = begInfo.indents > 0;
+			indents = begInfo.indents;
+			relDents = begInfo.indents - begInfo.priorIndents;
+		}
 
 		numBefore = leftWS(data, idxStart).length();
 		wsBefore = numBefore > 0;

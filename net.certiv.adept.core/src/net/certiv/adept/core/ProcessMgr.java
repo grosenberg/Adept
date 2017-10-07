@@ -138,7 +138,7 @@ public class ProcessMgr {
 		return settings.tabWidth;
 	}
 
-	public TreeMultimap<Double, Feature> getMatchSet(Feature source) {
+	public TreeMultimap<Double, Feature> getMatches(Feature source) {
 		return corModel.match(source);
 	}
 

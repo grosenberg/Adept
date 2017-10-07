@@ -1,6 +1,7 @@
 package net.certiv.adept.vis.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,27 +9,26 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.util.TreeMultimap;
 
 public class MatchesTableModel extends AbstractTableModel {
 
-	private final String[] columnNames = { "Order", "Distance", "Partition", "Feature", "Facets" };
+	private final String[] columnNames = { "Order", "Similarity", "Weight", "Feature", "Format" };
 	private Object[][] rowData;
 
 	private Map<Integer, Feature> index = new HashMap<>();
 
-	public MatchesTableModel(net.certiv.adept.util.TreeMultimap<Double, Feature> matches,
-			Map<Double, Integer> indices) {
+	public MatchesTableModel(TreeMultimap<Double, Feature> matches) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
-		for (Double key : matches.keySet()) {
-			String dist = String.valueOf(key);
-			Integer partition = indices.get(key);
-			String part = partition != null ? String.valueOf(partition) : "None";
 
-			for (Feature feature : matches.get(key)) {
+		List<Double> sims = new ArrayList<>(matches.keySet());
+		Collections.reverse(sims);
+		for (Double sim : sims) {
+			for (Feature feature : matches.get(sim)) {
 				String facets = feature.getFormat().toString();
 
-				Object[] row = { num + 1, dist, part, feature.toString(), facets };
+				Object[] row = { num + 1, sim, feature.getEquivalentWeight(), feature.toString(), facets };
 				rows.add(row);
 				index.put(num, feature);
 				num++;

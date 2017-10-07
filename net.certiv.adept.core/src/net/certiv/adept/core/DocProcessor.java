@@ -37,14 +37,13 @@ public class DocProcessor extends ParseProcessor {
 					continue;
 				case BLOCKCOMMENT:
 				case LINECOMMENT:
-					continue;
 				case TERMINAL:
 					TreeMultimap<Double, Feature> matches = corModel.match(feature);
 					if (!matches.isEmpty()) {
 						Chunk.eval(matches);
-						Feature matched = Chunk.bestMatch();
-						if (matched != null) {
-							feature.setMatched(matched);
+						Feature best = Chunk.bestMatch();
+						if (best != null) {
+							feature.setMatched(best);
 						}
 					}
 			}

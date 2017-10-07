@@ -21,11 +21,16 @@ public class Chunk {
 
 	/**
 	 * Returns the collection {@code key=similarity; value=features} of best possible choices. Includes
-	 * the features in the '0' partition.
+	 * the features in the max valued partition.
 	 */
 	public static TreeMultimap<Double, Feature> bestMatches() {
 		TreeMultimap<Double, Feature> matches = new TreeMultimap<>();
-		double[] maxSims = _partitioner.getValues(0);
+		int maxIdx = _partitioner.getMaxValuedPartitionIndex();
+		if (maxIdx == -1) {
+			return _matches;
+		}
+
+		double[] maxSims = _partitioner.getValues(maxIdx);
 		for (double sim : maxSims) {
 			matches.put(sim, _matches.get(sim));
 		}

@@ -23,7 +23,7 @@ import net.certiv.adept.util.Maths;
 public class Feature implements Comparable<Feature> {
 
 	private static final int TXTLEN = 16;
-	private static final String ErrInvalidDist = "Invalid distance computed (%s) for %s -> %s";
+	private static final String ErrInvalidDist = "Invalid distance (%s) for %s -> %s";
 
 	// -------------------------------------------------------------------------------
 
@@ -335,28 +335,31 @@ public class Feature implements Comparable<Feature> {
 	/**
 	 * Returns a positive value in the range [0-1] representing the similarity between this and the
 	 * given feature. A kernel-based method is used to normalize between the two features being
-	 * evaluated. A value of <code>1</code> indicates that the two features are identical.
+	 * evaluated. A value of {@code 1} indicates the two features are identical.
 	 */
 	public double similarity(Feature other) {
-		double sim = selfSimularity() + other.selfSimularity() - (2 * mutualSimilarity(other));
-		if (sim < 0) {
-			String msg = String.format(ErrInvalidDist, sim, this.toString(), other.toString());
-			Log.error(this, msg);
-			sim = 0;
+		double self = selfSimularity();
+		double them = other.selfSimularity();
+		double pair = pairSimilarity(other);
+		double dist = self + them - (2 * pair);
+		if (dist > 1) dist = 1; // happens due to asymmetries of boosts
+		if (dist < 0) {
+			Log.error(this, String.format(ErrInvalidDist, dist, this.toString(), other.toString()));
+			dist = 1;
 		}
-		return sim;
+		return 1 - dist;
 	}
 
 	public double selfSimularity() {
 		if (reCalc) {
-			selfSim = mutualSimilarity(this);
+			selfSim = pairSimilarity(this);
 			reCalc = false;
 		}
 		return selfSim;
 	}
 
 	// normalized sum of the labeled feature similarities 
-	public double mutualSimilarity(Feature other) {
+	public double pairSimilarity(Feature other) {
 		double sim = 0;
 		sim += mgr.getBoost(Factor.ANCESTORS) * ancestorSimilarity(other);
 		sim += mgr.getBoost(Factor.EDGE_TYPES) * edgeSetTypeSimilarity(other);
@@ -464,6 +467,7 @@ public class Feature implements Comparable<Feature> {
 
 	@Override
 	public String toString() {
-		return String.format("Feature @%s:%s %s %s 0x%08x '%s'", line, col, kind, aspect, format, text);
+		String lc = String.format("@%d:%d", line, col);
+		return String.format("%s %-10s'%s'", aspect, lc, text);
 	}
 }
