@@ -1,4 +1,4 @@
-package net.certiv.adept.model;
+package net.certiv.adept.model.util;
 
 public enum Kind {
 	RULE("Rule"),

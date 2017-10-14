@@ -11,7 +11,7 @@ import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.load.Config;
 import net.certiv.adept.model.tune.Boosts;
 import net.certiv.adept.model.tune.Fitter;
-import net.certiv.adept.model.util.Align;
+import net.certiv.adept.model.util.WatermanAlignment;
 import net.certiv.adept.model.util.Factor;
 import net.certiv.adept.tool.ErrorManager;
 import net.certiv.adept.tool.ErrorType;
@@ -133,7 +133,7 @@ public class Tune implements ITool {
 			tool.execute();
 
 			String source = tool.getMgr().getDocModel().getDocument().getContent();
-			double fitness = Align.similarity(source, tool.getFormatted());
+			double fitness = WatermanAlignment.similarity(source, tool.getFormatted());
 			fitter.put(fitness, boosts);
 			Log.debug(this, String.format("%2d %01.9f : %s", idx, fitness, boosts));
 		}

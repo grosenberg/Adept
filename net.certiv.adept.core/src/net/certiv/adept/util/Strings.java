@@ -26,12 +26,12 @@ public class Strings {
 	private Strings() {}
 
 	/**
-	 * Returns a separator delimited string representation of the given values. The returned string
-	 * will not include a trailing separator.
+	 * Returns a separator delimited string representation of the given values. The returned string will
+	 * not include a trailing separator.
 	 * 
 	 * @param values ordered list of string values
-	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix to each list
-	 *            value, otherwise as a suffix
+	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix to each list value,
+	 *            otherwise as a suffix
 	 * @param sep the string literal to be used as a list string separator
 	 * @return separator delimited string
 	 */
@@ -70,75 +70,29 @@ public class Strings {
 	}
 
 	/**
-	 * Concatenate the given strings into one string using the passed line delimiter as a delimiter.
-	 * No delimiter is added to the last line.
+	 * Join the given strings into one string using the passed line delimiter as a delimiter. No
+	 * delimiter is added to the last line.
 	 *
 	 * @param lines the lines
 	 * @param delimiter line delimiter
 	 * @return the concatenated lines
 	 */
-	public static String concatenate(String[] lines, String delimiter) {
+	public static String join(String[] lines, String delimiter) {
 		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < lines.length; i++) {
-			if (i > 0) buffer.append(delimiter);
-			buffer.append(lines[i]);
+		for (int idx = 0; idx < lines.length; idx++) {
+			if (idx > 0) buffer.append(delimiter);
+			buffer.append(lines[idx]);
 		}
 		return buffer.toString();
 	}
 
-	/**
-	 * Returns a new array adding the second array at the end of first array. It answers null if the
-	 * first and second are null. If the first array is null or if it is blank, then a new array is
-	 * created with second. If the second array is null, then the first array is returned. <br>
-	 * <br>
-	 * For example:
-	 * <ol>
-	 * <li>
-	 * 
-	 * <pre>
-	 *    first = null
-	 *    second = "a"
-	 *    => result = {"a"}
-	 * </pre>
-	 * 
-	 * <li>
-	 * 
-	 * <pre>
-	 *    first = {"a"}
-	 *    second = null
-	 *    => result = {"a"}
-	 * </pre>
-	 * 
-	 * </li>
-	 * <li>
-	 * 
-	 * <pre>
-	 *    first = {"a"}
-	 *    second = {"b"}
-	 *    => result = {"a", "b"}
-	 * </pre>
-	 * 
-	 * </li>
-	 * </ol>
-	 *
-	 * @param first the first array to concatenate
-	 * @param second the array to add at the end of the first array
-	 * @return a new array adding the second array at the end of first array, or null if the two
-	 *         arrays are null.
-	 */
-	public static String[] arrayConcat(String[] first, String second) {
-		if (second == null) return first;
-		if (first == null) return new String[] { second };
-
-		int length = first.length;
-		if (first.length == 0) {
-			return new String[] { second };
+	public static String join(int[] values, String sep) {
+		StringBuilder sb = new StringBuilder();
+		for (int idx = 0; idx < values.length; idx++) {
+			sb.append(String.format("[%s, %s]", idx, values[idx]));
+			if (idx < values.length - 1) sb.append(sep);
 		}
-
-		String[] result = new String[length + 1];
-		System.arraycopy(first, 0, result, 0, length);
-		result[length] = second;
-		return result;
+		return sb.toString();
 	}
 
 	public static String titleCase(String word) {
@@ -226,8 +180,8 @@ public class Strings {
 	}
 
 	/**
-	 * Returns <code>true</code> if the given string only consists of white spaces according to
-	 * Java. If the string is blank, <code>true
+	 * Returns <code>true</code> if the given string only consists of white spaces according to Java. If
+	 * the string is blank, <code>true
 	 * </code> is returned.
 	 *
 	 * @param s the string to test
@@ -271,9 +225,8 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the indentation of the given line in indentation units. Odd spaces are not counted.
-	 * This method only analyzes the content of <code>line</code> up to the first non-whitespace
-	 * character.
+	 * Returns the indentation of the given line in indentation units. Odd spaces are not counted. This
+	 * method only analyzes the content of <code>line</code> up to the first non-whitespace character.
 	 *
 	 * @param line the string to measure the indent of
 	 * @param tabWidth the width of one tab character in space equivalents
@@ -298,9 +251,9 @@ public class Strings {
 	/**
 	 * Returns the indentation of the given line in space equivalents.
 	 * <p>
-	 * Tab characters are counted using the given <code>tabWidth</code> and every other indent
-	 * character as one. This method analyzes the content of <code>line</code> up to the first
-	 * non-whitespace character.
+	 * Tab characters are counted using the given <code>tabWidth</code> and every other indent character
+	 * as one. This method analyzes the content of <code>line</code> up to the first non-whitespace
+	 * character.
 	 * </p>
 	 *
 	 * @param line the string to measure the indent of
@@ -338,8 +291,8 @@ public class Strings {
 	 * character are all whitespace characters except the line delimiter characters.
 	 *
 	 * @param ch the given character
-	 * @return Returns <code>true</code> if this the character is a indent character,
-	 *         <code>false</code> otherwise
+	 * @return Returns <code>true</code> if this the character is a indent character, <code>false</code>
+	 *         otherwise
 	 */
 	public static boolean isIndentChar(char ch) {
 		return Character.isWhitespace(ch) && !isLineDelimiterChar(ch);

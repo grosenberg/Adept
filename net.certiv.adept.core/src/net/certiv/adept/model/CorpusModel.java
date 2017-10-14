@@ -17,10 +17,11 @@ import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.parser.Builder;
 import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.model.tune.Boosts;
-import net.certiv.adept.model.util.Analyzer;
+import net.certiv.adept.model.util.CorpusAnalyzer;
 import net.certiv.adept.model.util.Chunk;
 import net.certiv.adept.model.util.DamerauAlignment;
 import net.certiv.adept.model.util.Factor;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 import net.certiv.adept.util.TreeMultimap;
@@ -38,6 +39,8 @@ public class CorpusModel {
 	@Expose private Map<Integer, String> pathnames;
 	// boost values set
 	@Expose private Boosts boosts;
+	// maximum number of equivalent features found in corpus
+	@Expose private int maxEquivs;
 
 	// corpus manager
 	private ProcessMgr mgr;
@@ -154,6 +157,7 @@ public class CorpusModel {
 			if (unique.equivalentTo(next)) {
 				unique.mergeEquivalent(next);
 				next.setEquivalent(true);
+				if (unique.getEquivalentWeight() > maxEquivs) maxEquivs = unique.getEquivalentWeight();
 				return false;
 			}
 		}
@@ -171,7 +175,7 @@ public class CorpusModel {
 		getFeatureIndex();
 		for (int type : index.keySet()) {
 			List<Feature> tfs = index.get(type);
-			Analyzer ana = new Analyzer();
+			CorpusAnalyzer ana = new CorpusAnalyzer();
 			for (Feature tf : tfs) {
 				ana.accum(tf);
 			}
@@ -297,6 +301,10 @@ public class CorpusModel {
 
 	public void setConsistent(boolean consistent) {
 		this.consistent = consistent;
+	}
+
+	public int getMaxEquivs() {
+		return maxEquivs;
 	}
 
 	public void clear() {

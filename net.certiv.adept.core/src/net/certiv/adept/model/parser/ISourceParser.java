@@ -10,14 +10,14 @@ import net.certiv.adept.model.Document;
 public interface ISourceParser extends IParseErrorReporter {
 
 	/**
-	 * Fills in the given model by parsing the given document.
+	 * Fills in the given builder by parsing the given document.
 	 * 
 	 * @throws Exception
 	 * @throws RecognitionException
 	 */
-	void process(Builder model, Document doc) throws RecognitionException, Exception;
+	void process(Builder builder, Document doc) throws RecognitionException, Exception;
 
-	/** Annotate the given model with features identified by walking the parse tree. */
+	/** Annotate the given builder with features identified by walking the parse tree. */
 	void extractFeatures(Builder model);
 
 	/** Returns the language specific list of feature types that are to be excluded. */

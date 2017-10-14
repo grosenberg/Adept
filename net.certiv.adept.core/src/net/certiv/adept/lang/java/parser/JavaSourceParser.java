@@ -125,7 +125,7 @@ public class JavaSourceParser implements ISourceParser {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
 		excludes.add(JavaParser.ERRCHAR);
-		// excludes.add(JavaParser.RULE_??? << 32);
+		// excludes.add(JavaParser.RULE_??? << 16);
 		return excludes;
 	}
 

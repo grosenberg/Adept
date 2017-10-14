@@ -1,4 +1,4 @@
-package net.certiv.adept.output;
+package net.certiv.adept.format;
 
 import java.util.List;
 

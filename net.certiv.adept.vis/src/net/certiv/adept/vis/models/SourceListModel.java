@@ -10,16 +10,16 @@ import java.util.stream.Collectors;
 
 import javax.swing.DefaultComboBoxModel;
 
-import net.certiv.adept.vis.models.SourceListModel.SrcItem;
+import net.certiv.adept.vis.models.SourceListModel.Item;
 
-public class SourceListModel extends DefaultComboBoxModel<SrcItem> {
+public class SourceListModel extends DefaultComboBoxModel<Item> {
 
-	public static class SrcItem {
+	public static class Item {
 
 		public String name;
 		public String pathname;
 
-		public SrcItem(String name, String pathname) {
+		public Item(String name, String pathname) {
 			super();
 			this.name = name;
 			this.pathname = pathname;
@@ -36,24 +36,19 @@ public class SourceListModel extends DefaultComboBoxModel<SrcItem> {
 		addElements(rootDir, srcExt);
 	}
 
-	private void addElements(String rootDir, String srcExt) {
-		List<Path> paths = read(Paths.get(rootDir), srcExt);
+	private void addElements(String dir, String ext) {
+		List<Path> paths = read(Paths.get(dir), ext);
 		for (Path path : paths) {
-			SrcItem item = new SrcItem(path.getFileName().toString(), path.toString());
+			Item item = new Item(path.getFileName().toString(), path.toString());
 			addElement(item);
 		}
 		setSelectedItem(getElementAt(0));
 	}
 
-	public String getSelectedPathname() {
-		SrcItem item = (SrcItem) super.getSelectedItem();
-		return item.pathname;
-	}
-
-	private List<Path> read(Path rootDir, String ext) {
+	private List<Path> read(Path dir, String ext) {
 		List<Path> paths;
 		try {
-			paths = Files.walk(rootDir) //
+			paths = Files.walk(dir) //
 					.filter(Files::isRegularFile) //
 					.filter(p -> p.getFileName().toString().endsWith(ext)) //
 					.collect(Collectors.toList());
@@ -61,5 +56,10 @@ public class SourceListModel extends DefaultComboBoxModel<SrcItem> {
 			return Collections.emptyList();
 		}
 		return paths;
+	}
+
+	public String getSelectedPathname() {
+		Item item = (Item) super.getSelectedItem();
+		return item.pathname;
 	}
 }

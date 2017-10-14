@@ -5,6 +5,7 @@ import com.google.common.collect.Table;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.model.util.Coord;
+import net.certiv.adept.model.util.EdgeType;
 
 public class Edge implements Comparable<Edge> {
 
@@ -39,12 +40,13 @@ public class Edge implements Comparable<Edge> {
 		leafId = leaf.getId();
 
 		int vert = root.getLine() - leaf.getLine();
-		coord = new Coord(len, vert, leaf.getLength());
+		int horz = root.getVisCol() - leaf.getVisCol();
+		coord = new Coord(len, horz, vert, leaf.getLength());
 	}
 
 	Edge() {
 		this.type = EdgeType.ROOT;
-		this.coord = new Coord(0, 0, 0);
+		this.coord = new Coord(0, 0, 0, 0);
 	}
 
 	/** Coordinate-based comparison order by default. */

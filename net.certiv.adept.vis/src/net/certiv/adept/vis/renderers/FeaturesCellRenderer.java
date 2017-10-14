@@ -8,7 +8,7 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.vis.models.CorpusFeaturesTableModel;
 
 public class FeaturesCellRenderer extends DefaultTableCellRenderer {

@@ -1,6 +1,7 @@
 package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,8 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.prefs.Preferences;
 
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -24,16 +27,21 @@ import javax.swing.UIManager;
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.DiffPanel;
+import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.components.FormatPanel;
 import net.certiv.adept.vis.models.SourceListModel;
-import net.certiv.adept.vis.models.SourceListModel.SrcItem;
+import net.certiv.adept.vis.models.SourceListModel.Item;
 import net.certiv.adept.vis.utils.Point;
 
 public class FormatView extends AbstractBase {
+
+	private static final String KEY_FONT_NAME = "font_name";
+	private static final String KEY_FONT_SIZE = "font_size";
+	private static final Integer[] SIZES = { 8, 11, 12, 14, 16, 18, 20, 24 };
 
 	private static final String name = "FormatView";
 	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
@@ -41,7 +49,8 @@ public class FormatView extends AbstractBase {
 	private static final String srcExt = ".g4";
 
 	private Tool tool;
-	private JComboBox<SrcItem> srcBox;
+	private JComboBox<Item> srcBox;
+	private FontChoiceBox fontBox;
 	private DiffPanel diffPanel;
 	private FormatPanel formatPanel;
 
@@ -52,8 +61,8 @@ public class FormatView extends AbstractBase {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {}
-		FormatView fd = new FormatView();
-		fd.loadTool();
+		FormatView view = new FormatView();
+		view.loadTool();
 	}
 
 	public FormatView() {
@@ -71,12 +80,26 @@ public class FormatView extends AbstractBase {
 			}
 		});
 
-		JPanel cntlPanel = new JPanel();
-		cntlPanel.add(srcBox);
-
 		// "Droid Sans Mono", "DejaVu Sans Mono", "Oxygen Mono", "NanumGothicCoding"
-		Font font = new Font("Droid Sans Mono", Font.PLAIN, 12);
-		diffPanel = new DiffPanel(400, 400, font, "Source", "Formatted");
+		String fontname = prefs.get(KEY_FONT_NAME, "Droid Sans Mono");
+		fontBox = new FontChoiceBox(fontname, Font.PLAIN, true);
+
+		JComboBox<Integer> sizeBox = new JComboBox<>(SIZES);
+		Integer fontsize = prefs.getInt(KEY_FONT_SIZE, 12);
+		sizeBox.setSelectedItem(fontsize);
+
+		JPanel selectPanel = createPanel("Source");
+		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+		selectPanel.add(new JLabel("    Document: "));
+		selectPanel.add(srcBox);
+		selectPanel.add(new JLabel("    Font: "));
+		selectPanel.add(fontBox);
+		selectPanel.add(new JLabel("    Size: "));
+		selectPanel.add(sizeBox);
+
+		// ------------------------------------------------------------
+
+		diffPanel = new DiffPanel(400, 400, fontBox, sizeBox, "Original Source", "Formatted Source");
 		diffPanel.addPropertyChangeListener(DiffPanel.CLICK1_LEFT, new PropertyChangeListener() {
 
 			@Override
@@ -85,14 +108,27 @@ public class FormatView extends AbstractBase {
 			}
 		});
 
-		formatPanel = new FormatPanel(font);
+		// ------------------------------------------------------------
 
-		content.add(cntlPanel, BorderLayout.NORTH);
+		formatPanel = new FormatPanel();
+		JPanel fPanel = createPanel("Formatting Information");
+		fPanel.add(formatPanel);
+
+		// ------------------------------------------------------------
+
+		content.add(selectPanel, BorderLayout.NORTH);
 		content.add(diffPanel, BorderLayout.CENTER);
-		content.add(formatPanel, BorderLayout.SOUTH);
+		content.add(fPanel, BorderLayout.SOUTH);
 
 		setLocation();
 		frame.setVisible(true);
+	}
+
+	@Override
+	protected void saveWindowClosingPrefs(Preferences prefs) {
+		Font font = (Font) fontBox.getSelectedItem();
+		prefs.put(KEY_FONT_NAME, font.getName());
+		prefs.putInt(KEY_FONT_SIZE, font.getSize());
 	}
 
 	protected void selectFeatureData(Point loc) {
@@ -155,6 +191,7 @@ public class FormatView extends AbstractBase {
 				String pathname = model.getSelectedPathname();
 				original = loadContent(pathname);
 				tool.setSourceFiles(pathname);
+				tool.setTabWidth(4);
 				tool.execute();
 				formatted = tool.getFormatted();
 				valid = true;

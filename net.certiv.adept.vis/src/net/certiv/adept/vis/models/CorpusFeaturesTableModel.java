@@ -8,7 +8,7 @@ import javax.swing.table.AbstractTableModel;
 import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 
 public class CorpusFeaturesTableModel extends AbstractTableModel {
 

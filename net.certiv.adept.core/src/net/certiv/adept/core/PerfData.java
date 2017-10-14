@@ -13,8 +13,9 @@ public class PerfData {
 	private ArrayList<DocPerf> docs;
 	private DocPerf current;
 
-	public Duration load;
-	public Duration rebuild;
+	public Duration load;		// corpus load time including any rebuild
+	public Duration rebuild;	// corpus rebuild time only
+
 	public int corpusFeatureCnt;
 	public int corpusFeatureTypeCnt;
 	public Map<Integer, String> corpusDocIndex;
@@ -32,9 +33,9 @@ public class PerfData {
 		docs.add(current);
 	}
 
-	public DocPerf getDoc(int i) {
-		if (i < docs.size()) {
-			return docs.get(i);
+	public DocPerf getDoc(int idx) {
+		if (idx < docs.size()) {
+			return docs.get(idx);
 		}
 		return new DocPerf();
 	}
@@ -47,10 +48,21 @@ public class PerfData {
 		}
 	}
 
+	public void addMatchTime(Duration d) {
+		if (current.docMatch == null) {
+			current.docMatch = d;
+		} else {
+			current.docMatch.plus(d);
+		}
+	}
+
 	public void reset() {
 		load = Duration.ZERO;
 		rebuild = Duration.ZERO;
-		if (current != null) current.docFormat = Duration.ZERO;
+		if (current != null) {
+			current.docMatch = Duration.ZERO;
+			current.docFormat = Duration.ZERO;
+		}
 	}
 
 	public class Record {
@@ -72,6 +84,8 @@ public class PerfData {
 		public int docFeatureCnt;
 		public int docTypeCnt;
 		public int docTerminalCnt;
+
+		public Duration docMatch;
 		public Duration docFormat;
 
 		public DocPerf() {}

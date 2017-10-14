@@ -1,5 +1,6 @@
 package net.certiv.adept.core;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
@@ -66,13 +67,8 @@ public class CorpusProcessor extends ParseProcessor {
 		corModel.finalizeBuild();	// post-build operations
 		mgr.perfData.rebuild = Time.end(start);
 
-		try {
-			corModel.save(settings.corpusDir);
-		} catch (Exception e) {
-			corModel.setConsistent(false);
-			Tool.errMgr.toolError(ErrorType.MODEL_SAVE_FAILURE, e.getMessage());
-			Log.error(this, "Cannot write file(s): ", e);
-		}
+		Thread t = new Thread(new SaveOp(corModel, settings.corpusDir));
+		t.start();
 	}
 
 	public CorpusModel getCorpusModel() {
@@ -81,5 +77,29 @@ public class CorpusProcessor extends ParseProcessor {
 
 	public boolean isConsistent() {
 		return corModel.isConsistent();
+	}
+
+	private class SaveOp implements Runnable {
+
+		private CorpusModel model;
+		private Path dir;
+
+		public SaveOp(CorpusModel model, Path dir) {
+			super();
+			this.model = model;
+			this.dir = dir;
+		}
+
+		@Override
+		public void run() {
+			try {
+				model.save(dir);
+			} catch (Exception e) {
+				corModel.setConsistent(false);
+				Tool.errMgr.toolError(ErrorType.MODEL_SAVE_FAILURE, e.getMessage());
+				Log.error(this, "Cannot write file(s): ", e);
+			}
+		}
+
 	}
 }

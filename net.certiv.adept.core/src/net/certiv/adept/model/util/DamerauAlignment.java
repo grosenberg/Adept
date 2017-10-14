@@ -19,7 +19,8 @@ import com.google.common.primitives.Ints;
 public class DamerauAlignment {
 
 	public static double simularity(double dist, int srcLen, int tgtLen) {
-		double d_norm = dist / Math.max(srcLen, tgtLen);
+		int mLen = Math.max(srcLen, tgtLen);
+		double d_norm = mLen > 0 ? dist / mLen : 0;
 		return 1 - d_norm;
 	}
 

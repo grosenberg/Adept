@@ -1,15 +1,17 @@
 package net.certiv.adept.core;
 
 import net.certiv.adept.Settings;
+import net.certiv.adept.format.Formatter;
+import net.certiv.adept.format.OutputBuilder;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Chunk;
-import net.certiv.adept.output.Formatter;
-import net.certiv.adept.output.OutputBuilder;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.TreeMultimap;
 
+// TODO: rename to SourceProcessor/SourceModel?
 public class DocProcessor extends ParseProcessor {
 
 	private Document doc;
@@ -45,6 +47,8 @@ public class DocProcessor extends ParseProcessor {
 						if (best != null) {
 							feature.setMatched(best);
 						}
+					} else {
+						Log.debug(this, "No match");
 					}
 			}
 		}

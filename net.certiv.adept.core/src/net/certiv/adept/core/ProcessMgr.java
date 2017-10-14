@@ -69,11 +69,12 @@ public class ProcessMgr {
 				CorpusDocs.writeDocument(settings.corpusDir, doc);
 			} else {
 				Instant start = Time.start();
-
 				DocProcessor dp = new DocProcessor(this, doc, settings);
 				if (dp.parseDocument(doc, settings.check)) {
 					docModel = dp.createDocModel();
+					Instant startMatch = Time.start();
 					dp.match(corModel);
+					perfData.addMatchTime(Time.end(startMatch));
 					dp.formatDocument();
 				}
 
@@ -119,9 +120,29 @@ public class ProcessMgr {
 
 	// ----
 
-	/** Returns the document identified by the given document id or {@code null}. */
-	public Document getDocument(int docId) {
+	/** Returns the source document identified by the given document id, or {@code null}. */
+	public Document getSourceDocument(int docId) {
 		return documents.get(docId);
+	}
+
+	/**
+	 * Returns the filepath name of the source document identified by the given document id, or
+	 * {@code null}.
+	 */
+	public String getSourceDocname(int docId) {
+		Document doc = getSourceDocument(docId);
+		if (doc != null) {
+			return doc.getPathname();
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the filepath name of the corpus document identified by the given document id, or
+	 * {@code null}.
+	 */
+	public String getCorpusDocname(int docId) {
+		return corModel.getPathname(docId);
 	}
 
 	/** Return the document model */

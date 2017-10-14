@@ -1,47 +1,64 @@
 package net.certiv.adept.model.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.annotations.Expose;
 
 /**
  * Defines a point in a non-standard coordinate system.
  * 
- * The 'X' value represents the signed sequential unit separation of this point from a referent. The
- * 'Y' value represents the signed vertical unit separation of this point from the referent. The 'L'
- * value represents the positive unit length of this point.
+ * The 'pos' value represents the signed sequential (stream offset delta) unit separation of this
+ * point from a referent. The 'horz' value represents the signed horizontal unit separation of this
+ * point from the referent. The 'vert' value represents the signed vertical unit separation of this
+ * point from the referent. The 'len' value represents the positive unit length of this point.
  */
 public class Coord implements Comparable<Coord> {
 
-	@Expose public int x;
-	@Expose public int y;
-	@Expose public int l;
+	@Expose public int pos; // position: stream offset; before +
+	@Expose public int horz; // horizontal: visCol delta; left +
+	@Expose public int vert; // vertical: line delta; up +
+	@Expose public int len; // length
 
-	public Coord(int x, int y, int l) {
-		this.x = x;
-		this.y = y;
-		this.l = l;
+	public Coord(int pos, int horz, int vert, int len) {
+		this.pos = pos;
+		this.horz = horz;
+		this.vert = vert;
+		this.len = len;
 	}
 
 	public double distance() {
-		return sign() * Math.sqrt(x * x + y * y + l * l);
+		return sign() * Math.sqrt(pos * pos + vert * vert + len * len);
 	}
 
 	public int sign() {
-		return x >= 0 && y >= 0 ? 1 : -1;
+		return pos >= 0 && vert >= 0 ? 1 : -1;
 	}
 
 	public boolean isBefore(Coord o) {
-		if (x > o.x || y > o.y) return true;
-		if (x < o.x || y < o.y) return false;
-		if (l > o.l) return true;
+		if (pos > o.pos || vert > o.vert) return true;
+		if (pos < o.pos || vert < o.vert) return false;
+		if (len > o.len) return true;
 		return false;
 	}
 
+	public List<Aspect> getEdgeAspects() {
+		List<Aspect> seq = new ArrayList<>();
+		if (vert > 0) seq.add(Aspect.ABOVE);
+		if (vert < 0) seq.add(Aspect.BELOW);
+		if (vert == 0) seq.add(Aspect.ALIGNED_HORZ);
+		if (horz > 0) seq.add(Aspect.BEFORE);
+		if (horz < 0) seq.add(Aspect.AFTER);
+		if (horz == 0) seq.add(Aspect.ALIGNED_VERT);
+		return seq;
+	}
+
 	public int quadrant() {
-		if (x >= 0 && y >= 0) {
+		if (pos >= 0 && vert >= 0) {
 			return 1;
-		} else if (x < 0 && y >= 0) {
+		} else if (pos < 0 && vert >= 0) {
 			return 2;
-		} else if (x >= 0 && y < 0) {
+		} else if (pos >= 0 && vert < 0) {
 			return 3;
 		}
 		return 4;
@@ -58,9 +75,9 @@ public class Coord implements Comparable<Coord> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + x;
-		result = prime * result + y;
-		result = prime * result + l;
+		result = prime * result + pos;
+		result = prime * result + vert;
+		result = prime * result + len;
 		return result;
 	}
 
@@ -71,11 +88,11 @@ public class Coord implements Comparable<Coord> {
 			return false;
 		}
 		Coord other = (Coord) o;
-		return x == other.x && y == other.y && l == other.l;
+		return pos == other.pos && vert == other.vert && len == other.len;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("(%s, %s, %s)", x, y, l);
+		return String.format("(%s, %s, %s)", pos, vert, len);
 	}
 }

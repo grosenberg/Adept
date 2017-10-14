@@ -6,7 +6,6 @@ import java.util.List;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import net.certiv.adept.model.EdgeType;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.parser.ParseData;
 

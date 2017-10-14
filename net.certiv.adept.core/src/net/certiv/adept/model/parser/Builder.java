@@ -15,8 +15,8 @@ import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Format;
-import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.util.Group;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
@@ -103,6 +103,7 @@ public class Builder extends ParseData {
 				Kind kind = type == BLOCKCOMMENT ? Kind.BLOCKCOMMENT : Kind.LINECOMMENT;
 				Feature feature = Feature.create(mgr, kind, aspect, doc.getDocId(), type, token, visCol, format);
 				TerminalNode terminal = new TerminalNodeImpl(token);
+				feature.setAncestorPath(genAncestorPath(terminal));
 				contextFeatureIndex.put(terminal, feature);
 				tokenTerminalIndex.put(token, terminal);
 				tokenStartFeatureIndex.put(token.getTokenIndex(), feature);

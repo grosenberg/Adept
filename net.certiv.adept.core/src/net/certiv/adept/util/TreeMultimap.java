@@ -1,10 +1,17 @@
 package net.certiv.adept.util;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+/**
+ * Multimap implemented as a TreeMap with TreeSet instance values
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class TreeMultimap<K, V> {
 
 	private final TreeMap<K, Set<V>> map;
@@ -36,7 +43,7 @@ public class TreeMultimap<K, V> {
 		return set.add(value);
 	}
 
-	public boolean put(K key, Set<V> values) {
+	public boolean put(K key, Collection<V> values) {
 		TreeSet<V> set = (TreeSet<V>) map.get(key);
 		if (set == null) {
 			set = new TreeSet<>(valComp);

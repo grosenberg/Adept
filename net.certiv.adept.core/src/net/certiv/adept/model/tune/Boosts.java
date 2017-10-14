@@ -46,6 +46,14 @@ public class Boosts {
 		return boosts.get(factor);
 	}
 
+	public double getTotal() {
+		double total = 0;
+		for (Factor factor : Factor.values()) {
+			total += boosts.get(factor);
+		}
+		return total;
+	}
+
 	public boolean isEmpty() {
 		return boosts.isEmpty();
 	}

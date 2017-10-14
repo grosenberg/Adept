@@ -8,7 +8,7 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.vis.utils.CollUtil;
 
 public class DocTableModel extends AbstractTableModel {

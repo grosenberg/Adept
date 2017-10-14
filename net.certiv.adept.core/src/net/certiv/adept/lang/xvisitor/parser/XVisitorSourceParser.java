@@ -97,7 +97,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
 		excludes.add(XVisitorParser.ERRCHAR);
-		// excludes.add(XVisitorParser.RULE_??? << 32);
+		// excludes.add(XVisitorParser.RULE_??? << 16);
 		return excludes;
 	}
 

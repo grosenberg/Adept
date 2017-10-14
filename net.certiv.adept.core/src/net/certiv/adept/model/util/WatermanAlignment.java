@@ -11,13 +11,13 @@ import com.google.common.primitives.Longs;
  * @see <a href="https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm">Wikipedia -
  *      Smith-Waterman algorithm</a>
  */
-public final class Align {
+public final class WatermanAlignment {
 
 	private static final double Match = 1.0f;
 	private static final double Miss = -2.0f;
 	private static final double Gap = -0.5f;
 
-	private Align() {}
+	private WatermanAlignment() {}
 
 	/**
 	 * Returns the effective degree of similary between the given source and target sequences of

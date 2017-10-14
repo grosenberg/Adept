@@ -6,12 +6,12 @@ public enum Factor {
 
 	ANCESTORS("ancestors", 0.75),
 	EDGE_TYPES("types", 0.75),
+	EDGE_ASPECTS("aspects", 0.75),
 	EDGE_TEXTS("text", 0.5),
-	FORMAT("format", 0.75),
+	FORMAT_LINE("format", 0.75),
+	FORMAT_WS("format", 0.75),
+	FORMAT_STYLE("format", 0.5),
 	WEIGHT("weight", 0.5),
-
-	DENTATION("dentation", 0.8),
-	DENTSIGN("dentsign", 0.8),
 
 	;
 

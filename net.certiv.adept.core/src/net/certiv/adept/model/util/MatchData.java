@@ -2,7 +2,7 @@ package net.certiv.adept.model.util;
 
 import net.certiv.adept.model.Feature;
 
-public class Stats {
+public class MatchData {
 
 	public Feature feature;
 	public int edgeCount; 		// size of edgeSet 
@@ -11,31 +11,37 @@ public class Stats {
 	public double similarity;
 	public double selfSimF;
 	public double selfSimM;
-	public double pairSim;
+	public double mutualSim;
 
 	public double ancestorSim;
 	public double edgeTypeSim;
+	public double edgeAspectsSim;
 	public double edgeTextSim;
-	public double formatSim;
+	public double formatLineSim;
+	public double formatWsSim;
+	public double formatStyleSim;
 	public double weightSim;
 
-	public Stats(Feature feature) {
+	public MatchData(Feature feature) {
 		this.feature = feature;
 		this.edgeCount = feature.getEdgeSet().size();
 		this.typeCount = feature.getEdgeSet().sizeTypes();
 	}
 
-	public Stats(Feature feature, Feature matched) {
+	public MatchData(Feature feature, Feature matched) {
 		this(feature);
 		this.similarity = feature.similarity(matched);
 		this.selfSimF = feature.getSelfSim();
 		this.selfSimM = matched.getSelfSim();
-		this.pairSim = feature.pairSimilarity(matched);
+		this.mutualSim = feature.mutualSimilarity(matched);
 
 		this.ancestorSim = feature.ancestorSimilarity(matched);
 		this.edgeTypeSim = feature.edgeSetTypeSimilarity(matched);
+		this.edgeAspectsSim = feature.edgeSetAspectsSimilarity(matched);
 		this.edgeTextSim = feature.edgeSetTextSimilarity(matched);
-		this.formatSim = feature.formatSimilarity(matched);
+		this.formatLineSim = feature.formatLineSimilarity(matched);
+		this.formatWsSim = feature.formatWsSimilarity(matched);
+		this.formatStyleSim = feature.formatStyleSimilarity(matched);
 		this.weightSim = feature.weightSimilarity(matched);
 	}
 }

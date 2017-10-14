@@ -20,8 +20,7 @@ public class AntlrVisitor extends Antlr4ParserBaseListener {
 		builder.annotateRule(ctx);
 		for (ParseTree child : ctx.children) {
 			if (child instanceof TerminalNode) {
-				TerminalNode node = (TerminalNode) child;
-				builder.annotateTerminal(ctx, node);
+				builder.annotateTerminal(ctx, (TerminalNode) child);
 			}
 		}
 	}

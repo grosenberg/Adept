@@ -7,7 +7,7 @@ import javax.swing.DefaultComboBoxModel;
 import com.google.common.collect.ArrayListMultimap;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
 public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {

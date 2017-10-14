@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -34,11 +36,11 @@ import net.certiv.adept.util.Log;
 import net.certiv.adept.util.TreeMultimap;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.FeaturePanel;
-import net.certiv.adept.vis.components.StatPanel;
+import net.certiv.adept.vis.components.SimularityPanel;
 import net.certiv.adept.vis.models.DocTableModel;
 import net.certiv.adept.vis.models.MatchesTableModel;
 import net.certiv.adept.vis.models.SourceListModel;
-import net.certiv.adept.vis.models.SourceListModel.SrcItem;
+import net.certiv.adept.vis.models.SourceListModel.Item;
 import net.certiv.adept.vis.renderers.AlignCellRenderer;
 
 public class MatchView extends AbstractBase {
@@ -50,13 +52,13 @@ public class MatchView extends AbstractBase {
 	private static final String srcExt = ".g4";
 
 	private Tool tool;
-	private JComboBox<SrcItem> srcBox;
+	private JComboBox<Item> srcBox;
 	private JSplitPane mainPanel;
 	private JTable featTable;
 	private JTable matchTable;
-	private StatPanel matchedPanel;
-	private FeaturePanel featurePanel1;
-	private FeaturePanel featurePanel2;
+	private SimularityPanel simularityPanel;
+	private FeaturePanel documentPanel;
+	private FeaturePanel matchedPanel;
 
 	public static void main(String[] args) {
 		try {
@@ -93,13 +95,14 @@ public class MatchView extends AbstractBase {
 		dataPanel.add(featureTitle);
 		dataPanel.add(matchedTitle);
 
-		featurePanel1 = new FeaturePanel(null);
-		featureTitle.add(featurePanel1);
+		documentPanel = new FeaturePanel(null);
+		featureTitle.add(documentPanel);
 
-		matchedPanel = new StatPanel(null);
-		featurePanel2 = new FeaturePanel(null);
-		matchedTitle.add(featurePanel2, BorderLayout.NORTH);
-		matchedTitle.add(matchedPanel, BorderLayout.CENTER);
+		simularityPanel = new SimularityPanel(null);
+		matchedPanel = new FeaturePanel(null);
+
+		matchedTitle.add(matchedPanel, BorderLayout.NORTH);
+		matchedTitle.add(simularityPanel, BorderLayout.CENTER);
 
 		// ----
 
@@ -110,6 +113,14 @@ public class MatchView extends AbstractBase {
 			public void mouseReleased(MouseEvent e) {
 				createMatchList(featTable.getSelectedRow());
 			}
+		});
+		featTable.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				createMatchList(featTable.getSelectedRow());
+			}
+
 		});
 
 		JPanel features = createPanel("Feature Set");
@@ -125,6 +136,14 @@ public class MatchView extends AbstractBase {
 			public void mouseReleased(MouseEvent e) {
 				createMatchData(featTable.getSelectedRow(), matchTable.getSelectedRow());
 			}
+		});
+		matchTable.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				createMatchData(featTable.getSelectedRow(), matchTable.getSelectedRow());
+			}
+
 		});
 
 		JPanel matches = createPanel("Matched Features");
@@ -180,10 +199,11 @@ public class MatchView extends AbstractBase {
 
 	// selected target source changed
 	private void process() {
-		new Matcher().execute();
-		featurePanel1.clear();
-		featurePanel2.clear();
+		documentPanel.clear();
 		matchedPanel.clear();
+		simularityPanel.clear();
+
+		new Matcher().execute();
 	}
 
 	private class Matcher extends SwingWorker<String, Object> {
@@ -199,37 +219,43 @@ public class MatchView extends AbstractBase {
 
 		@Override
 		protected void done() {
-			ProcessMgr mgr = tool.getMgr();
-			List<Feature> features = mgr.getDocModel().getFeatures();
-			DocTableModel model = new DocTableModel(features);
-			featTable.setModel(model);
-
-			featTable.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
-			featTable.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
-			featTable.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
-			featTable.getColumnModel().getColumn(2).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
-			featTable.getColumnModel().getColumn(3).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
-			featTable.getColumnModel().getColumn(4).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
-			featTable.getColumnModel().getColumn(5).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
-
-			TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-			matchTable.setRowSorter(sorter);
-			sorter.setComparator(0, NumComp);
-			sorter.setComparator(1, NumComp);
-			sorter.setComparator(2, NumComp);
-			sorter.setComparator(3, NumComp);
-
-			TableColumnModel cols = featTable.getColumnModel();
-			cols.getColumn(0).setPreferredWidth(10);
-			cols.getColumn(1).setPreferredWidth(10);
-			cols.getColumn(2).setPreferredWidth(10);
-			cols.getColumn(3).setPreferredWidth(60);
-			cols.getColumn(4).setPreferredWidth(60);
-			cols.getColumn(5).setPreferredWidth(300);
+			createDocumentList();
 		}
 	}
 
-	// clicked on the target feature table
+	// after combo selected document has been parsed 
+	protected void createDocumentList() {
+		ProcessMgr mgr = tool.getMgr();
+		List<Feature> features = mgr.getDocModel().getFeatures();
+		DocTableModel model = new DocTableModel(features);
+		featTable.setModel(model);
+		featTable.changeSelection(0, 0, false, false);
+
+		featTable.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
+		featTable.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
+		featTable.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
+		featTable.getColumnModel().getColumn(2).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
+		featTable.getColumnModel().getColumn(3).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
+		featTable.getColumnModel().getColumn(4).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
+		featTable.getColumnModel().getColumn(5).setCellRenderer(new AlignCellRenderer(SwingConstants.LEFT));
+
+		TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+		matchTable.setRowSorter(sorter);
+		sorter.setComparator(0, NumComp);
+		sorter.setComparator(1, NumComp);
+		sorter.setComparator(2, NumComp);
+		sorter.setComparator(3, NumComp);
+
+		TableColumnModel cols = featTable.getColumnModel();
+		cols.getColumn(0).setPreferredWidth(10);
+		cols.getColumn(1).setPreferredWidth(10);
+		cols.getColumn(2).setPreferredWidth(10);
+		cols.getColumn(3).setPreferredWidth(60);
+		cols.getColumn(4).setPreferredWidth(60);
+		cols.getColumn(5).setPreferredWidth(300);
+	}
+
+	// clicked on the document feature table
 	protected void createMatchList(int row) {
 		DocTableModel m = (DocTableModel) featTable.getModel();
 		Feature feature = m.getFeature(row);
@@ -260,22 +286,21 @@ public class MatchView extends AbstractBase {
 		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
 
 		Document doc = tool.getMgr().getDocModel().getDocument();
-		featurePanel1.load(doc.getParseData(), doc.getPathname(), feature);
-		featurePanel2.clear();
+		documentPanel.load(doc.getParseData(), doc.getPathname(), feature);
 		matchedPanel.clear();
+		simularityPanel.clear();
 	}
 
+	// clicked on the matched feature table
 	protected void createMatchData(int featureRow, int matchRow) {
-		DocTableModel f = (DocTableModel) featTable.getModel();
-		Feature feature = f.getFeature(featureRow);
-		TableModel mod = matchTable.getModel();
-		if (mod instanceof MatchesTableModel) {
-			MatchesTableModel m = (MatchesTableModel) mod;
-			Feature matched = m.getFeature(matchRow);
-			ParseData data = tool.getMgr().getDocModel().getDocument().getParseData();
-			String pathname = matched.getMgr().getCorpusModel().getPathname(matched.getDocId());
-			featurePanel2.load(data, pathname, matched);
-			matchedPanel.load(feature.getStats(matched));
-		}
+		DocTableModel docModel = (DocTableModel) featTable.getModel();
+		Feature feature = docModel.getFeature(featureRow);
+		MatchesTableModel matchModel = (MatchesTableModel) matchTable.getModel();
+		Feature matched = matchModel.getFeature(matchRow);
+
+		ParseData data = tool.getMgr().getDocModel().getDocument().getParseData();
+		String pathname = matched.getMgr().getCorpusModel().getPathname(matched.getDocId());
+		matchedPanel.load(data, pathname, matched);
+		simularityPanel.load(feature.getStats(matched));
 	}
 }

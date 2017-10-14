@@ -3,6 +3,7 @@ package net.certiv.adept.model;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -10,6 +11,7 @@ import java.util.TreeMap;
 import com.google.common.primitives.Ints;
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.model.util.Sim;
 import net.certiv.adept.model.util.DamerauAlignment;
 
 /**
@@ -19,12 +21,15 @@ import net.certiv.adept.model.util.DamerauAlignment;
  */
 public class EdgeSet {
 
-	//	public static final String RootText = "@$#$%root%$#@";
 	private static final Edge RootMark = new Edge();
 	private static final int RootMarkType = -3;
 
 	// edges sorted by coord, mapped to type
+	// key=edge; value=edge type
 	@Expose private TreeMap<Edge, Integer> edgeSet;
+
+	// edge edgeAspects, keyed by edge types in order of occurrence
+	private EdgeAspects edgeAspects;
 
 	public EdgeSet() {
 		edgeSet = new TreeMap<>();
@@ -94,8 +99,16 @@ public class EdgeSet {
 		double dist1 = DamerauAlignment.distance(tsqx[0], osqx[0]);
 		double dist2 = DamerauAlignment.distance(tsqx[1], osqx[1]);
 
-		double sim = DamerauAlignment.simularity(dist1 + dist2, tseq.size(), oseq.size());
-		return sim;
+		double sim0 = DamerauAlignment.simularity(dist1, tsqx[0].length, osqx[0].length);
+		double sim1 = DamerauAlignment.simularity(dist2, tsqx[1].length, osqx[1].length);
+		return (sim0 + sim1) / 2;
+	}
+
+	/* Returns the sequence of leaf types ordered by leaf coord. */
+	private List<Integer> getTypeSequence() {
+		TreeMap<Edge, Integer> tmp = new TreeMap<>(edgeSet);
+		tmp.put(RootMark, RootMarkType); 		// supply a root coord
+		return new ArrayList<>(tmp.values());
 	}
 
 	/**
@@ -117,13 +130,6 @@ public class EdgeSet {
 		return sim;
 	}
 
-	/* Returns the sequence of leaf types ordered by leaf coord. */
-	private List<Integer> getTypeSequence() {
-		TreeMap<Edge, Integer> tmp = new TreeMap<>(edgeSet);
-		tmp.put(RootMark, RootMarkType); 		// supply a root coord
-		return new ArrayList<>(tmp.values());
-	}
-
 	/* Returns the sequence of the encoded text of the edge connected leafs, excluding rule, var, and
 	 * comment leafs. */
 	private List<Integer> getTextSequence() {
@@ -138,6 +144,42 @@ public class EdgeSet {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Returns the effective degree of similary, in the range [0-1], between this (document) edge set
+	 * and the given (corpus) edge set.
+	 * 
+	 * Similarity is computed as the normed edit distance between the ordered type-sets of the two edge
+	 * sets.
+	 * 
+	 * arity / max : degree of potential similarity<br>
+	 * sim / arity : degree of similarity
+	 */
+	public double aspectsSimilarity(EdgeSet o) {
+		EdgeAspects tAspects = getAspects();
+		EdgeAspects oAspects = o.getAspects();
+		Map<Sim, Double> vals = tAspects.similarities(oAspects);
+		double max = vals.get(Sim.MAX);
+		double arity = vals.get(Sim.ARITY);
+		double sim = vals.get(Sim.SIM);
+
+		arity = arity / max;
+		sim = sim * arity;
+		return sim;
+	}
+
+	private EdgeAspects getAspects() {
+		if (edgeAspects == null) {
+			edgeAspects = new EdgeAspects();
+			for (Edge edge : edgeSet.keySet()) {
+				Integer type = edge.leaf.getType();
+				edgeAspects.add(type, edge.coord.getEdgeAspects());
+				//			int rootIdx = getTypeSequence().indexOf(RootMarkType);
+				//			typedOrient.add(rootIdx, type, Aspect.ROOT);
+			}
+		}
+		return edgeAspects;
 	}
 
 	// split an ordered type-set at the position of the root marker 

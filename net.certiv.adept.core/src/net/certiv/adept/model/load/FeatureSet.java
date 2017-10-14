@@ -11,7 +11,7 @@ import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.EdgeSet;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
 
 /**

@@ -1,13 +1,14 @@
 package net.certiv.adept.vis.components;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
-import javax.swing.border.MatteBorder;
+import javax.swing.SwingConstants;
 
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
@@ -18,317 +19,322 @@ import net.certiv.adept.core.PerfData;
 import net.certiv.adept.core.PerfData.DocPerf;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Format;
-import net.certiv.adept.model.Kind;
 
 public class FormatPanel extends JPanel {
 
-	private PerfData perfData;
+	private PerfData data;
 
 	private JTextField txtTotal;
 	private JTextField txtLoad;
 	private JTextField txtRebuild;
 	private JTextField txtFormating;
 
-	private JTextField txtCorpusFeatureCount;
-	private JTextField txtCorpusTypeCount;
-
-	private JTextField txtDocName;
-	private JTextField txtDocFeatureCount;
-	private JTextField txtDocTerminalCount;
+	private JTextField txtCorpusFeatures;
+	private JTextField txtCorpusTypes;
+	private JTextField txtDocFeatures;
+	private JTextField txtDocReals;
 
 	private JTextField txtDocCol;
 	private JTextField txtDocRow;
 	private JTextField txtDocAspect;
 	private JCheckBox chkDocVariable;
-	private JTextField txtDocText;
-	private JTextField txtDocFacets;
+	private JTextField txtDocVisCol;
+	private JTextField txtDocFormat;
 
 	private JTextField txtMatName;
 	private JTextField txtMatLine;
 	private JTextField txtMatCol;
 	private JTextField txtMatAspect;
 	private JCheckBox chkMatVariable;
-	private JTextField txtMatText;
-	private JTextField txtMatFacets;
+	private JTextField txtMatVisCol;
+	private JTextField txtMatFormat;
 	private JTextField txtMatDents;
-	private JTextField txtDocTypeCount;
-	private JTextField textMatMerged;
+	private JTextField txtDocTypes;
+	private JTextField txtMerged;
+	private JTextField txtMatching;
 
-	public FormatPanel(Font font) {
-		setFont(font);
-		setBorder(new MatteBorder(1, 1, 1, 1, (Color) new Color(0, 0, 0)));
-		setLayout(new FormLayout(new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min):grow"), FormSpecs.RELATED_GAP_COLSPEC,
-				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"),
+	public FormatPanel() {
+		setLayout(new FormLayout(new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(50dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), FormSpecs.UNRELATED_GAP_COLSPEC,
+				FormSpecs.LABEL_COMPONENT_GAP_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(40dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(30dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(50dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("max(50dlu;min)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"), FormSpecs.UNRELATED_GAP_COLSPEC,
-				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;min)"),
-				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("50dlu:grow"), FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("50dlu:grow"),
-				FormSpecs.RELATED_GAP_COLSPEC, },
-				new RowSpec[] { FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+				ColumnSpec.decode("max(30dlu;min)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow(2)"),
+				ColumnSpec.decode("7dlu:grow(3)"), },
+				new RowSpec[] { FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.PARAGRAPH_GAP_ROWSPEC, }));
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, }));
 
 		JLabel lblPerformance = new JLabel("Performance");
-		add(lblPerformance, "2, 2, left, default");
+		add(lblPerformance, "2, 2, 3, 1, left, default");
+
+		JLabel lblSourceFeature = new JLabel("Source Feature");
+		add(lblSourceFeature, "10, 2");
 
 		JLabel lblTotalTime = new JLabel("Total Time");
 		add(lblTotalTime, "2, 4, right, default");
 
 		txtTotal = new JTextField();
 		txtTotal.setEditable(false);
-		add(txtTotal, "4, 4, fill, default");
-
-		JLabel lblLoad = new JLabel("Loading");
-		add(lblLoad, "6, 4, right, default");
-
-		txtLoad = new JTextField();
-		txtLoad.setEditable(false);
-		add(txtLoad, "8, 4, fill, default");
-
-		JLabel lblRebuildTime = new JLabel("Rebuilding");
-		add(lblRebuildTime, "10, 4, right, default");
-
-		txtRebuild = new JTextField();
-		txtRebuild.setEditable(false);
-		add(txtRebuild, "12, 4, fill, default");
-
-		JLabel lblFormatting = new JLabel("Format");
-		add(lblFormatting, "14, 4, right, default");
-
-		txtFormating = new JTextField();
-		txtFormating.setEditable(false);
-		add(txtFormating, "16, 4, fill, default");
-		txtFormating.setColumns(10);
-
-		JLabel lblCorpus = new JLabel("CorpusDocs ");
-		add(lblCorpus, "2, 6, left, default");
-
-		JLabel lblCorpusFeatureCount = new JLabel("FeatureSet");
-		add(lblCorpusFeatureCount, "2, 8, right, default");
-
-		txtCorpusFeatureCount = new JTextField();
-		txtCorpusFeatureCount.setEditable(false);
-		add(txtCorpusFeatureCount, "4, 8, fill, default");
-
-		JLabel lblCorpusTypeCount = new JLabel("Types");
-		add(lblCorpusTypeCount, "6, 8, right, default");
-
-		txtCorpusTypeCount = new JTextField();
-		txtCorpusTypeCount.setEditable(false);
-		add(txtCorpusTypeCount, "8, 8, fill, default");
-
-		JLabel lblDocument = new JLabel("Document");
-		add(lblDocument, "2, 10, left, default");
-
-		JLabel lblDocName = new JLabel("Name");
-		add(lblDocName, "2, 12, right, default");
-
-		txtDocName = new JTextField();
-		txtDocName.setEditable(false);
-		add(txtDocName, "4, 12, 13, 1, fill, default");
-
-		JLabel lblDocFeatureCount = new JLabel("FeatureSet");
-		add(lblDocFeatureCount, "18, 12, right, default");
-
-		txtDocFeatureCount = new JTextField();
-		txtDocFeatureCount.setEditable(false);
-		add(txtDocFeatureCount, "20, 12, fill, default");
-
-		JLabel lblDocTypes = new JLabel("Types");
-		add(lblDocTypes, "22, 12, right, default");
-
-		txtDocTypeCount = new JTextField();
-		txtDocTypeCount.setEditable(false);
-		add(txtDocTypeCount, "24, 12, fill, default");
+		add(txtTotal, "4, 4, 3, 1, fill, default");
 
 		JLabel lblDocLine = new JLabel("Line");
-		add(lblDocLine, "2, 14, right, default");
+		add(lblDocLine, "10, 4, right, default");
 
 		txtDocRow = new JTextField();
+		txtDocRow.setColumns(5);
 		txtDocRow.setEditable(false);
-		add(txtDocRow, "4, 14, fill, default");
-
-		JLabel lblDocCol = new JLabel("Col");
-		add(lblDocCol, "6, 14, right, default");
-
-		txtDocCol = new JTextField();
-		txtDocCol.setEditable(false);
-		add(txtDocCol, "8, 14, fill, default");
-
-		// --
+		add(txtDocRow, "12, 4, fill, default");
 
 		JLabel lblAspect = new JLabel("Aspect");
-		add(lblAspect, "10, 14, right, default");
+		add(lblAspect, "14, 4, right, default");
 
 		txtDocAspect = new JTextField();
 		txtDocAspect.setEditable(false);
-		add(txtDocAspect, "12, 14, 3, 1, fill, default");
+		add(txtDocAspect, "16, 4, 5, 1, fill, default");
+
+		JLabel lblLoad = new JLabel("Loading");
+		add(lblLoad, "2, 6, right, default");
+
+		txtLoad = new JTextField();
+		txtLoad.setEditable(false);
+		add(txtLoad, "4, 6, 3, 1, fill, default");
+
+		JLabel lblVisCol = new JLabel("Visual Col");
+		add(lblVisCol, "10, 6, right, default");
+
+		txtDocVisCol = new JTextField();
+		txtDocVisCol.setColumns(5);
+		txtDocVisCol.setEditable(false);
+		add(txtDocVisCol, "12, 6, fill, default");
 
 		chkDocVariable = new JCheckBox("Variable");
-		add(chkDocVariable, "16, 14, left, default");
+		add(chkDocVariable, "16, 6, left, default");
 
-		JLabel lblText = new JLabel("Text");
-		add(lblText, "18, 14, right, default");
+		JLabel lblRebuildTime = new JLabel("Rebuilding");
+		add(lblRebuildTime, "2, 8, right, default");
 
-		txtDocText = new JTextField();
-		txtDocText.setEditable(false);
-		add(txtDocText, "20, 14, fill, default");
+		txtRebuild = new JTextField();
+		txtRebuild.setEditable(false);
+		add(txtRebuild, "4, 8, 3, 1, fill, default");
 
-		JLabel lblDocTerminalCount = new JLabel("Reals");
-		add(lblDocTerminalCount, "22, 14, right, default");
+		JSeparator separator = new JSeparator();
+		separator.setOrientation(SwingConstants.VERTICAL);
+		add(separator, "8, 2, 1, 28");
 
-		txtDocTerminalCount = new JTextField();
-		txtDocTerminalCount.setColumns(5);
-		txtDocTerminalCount.setEditable(false);
-		add(txtDocTerminalCount, "24, 14, fill, default");
+		JLabel lblDocCol = new JLabel("Col");
+		add(lblDocCol, "10, 8, right, default");
 
-		JLabel lblFacets = new JLabel("Facets");
-		add(lblFacets, "2, 16, right, default");
+		txtDocCol = new JTextField();
+		txtDocCol.setColumns(5);
+		txtDocCol.setEditable(false);
+		add(txtDocCol, "12, 8, fill, default");
 
-		txtDocFacets = new JTextField();
-		txtDocFacets.setEditable(false);
-		add(txtDocFacets, "4, 16, 17, 1, fill, default");
+		JLabel lblMatching = new JLabel("Matching");
+		add(lblMatching, "2, 10, right, default");
+
+		txtMatching = new JTextField();
+		txtMatching.setEditable(false);
+		add(txtMatching, "4, 10, 3, 1, fill, default");
+		txtMatching.setColumns(10);
+
+		JLabel lblDocFormat = new JLabel("Format");
+		add(lblDocFormat, "10, 10, right, default");
+
+		txtDocFormat = new JTextField();
+		txtDocFormat.setEditable(false);
+		add(txtDocFormat, "12, 10, 15, 1, fill, default");
+
+		JLabel lblFormatting = new JLabel("Formatting");
+		add(lblFormatting, "2, 12, right, default");
+
+		txtFormating = new JTextField();
+		txtFormating.setEditable(false);
+		add(txtFormating, "4, 12, 3, 1, fill, default");
+		txtFormating.setColumns(10);
+
+		JLabel lblDocument = new JLabel("Source");
+		add(lblDocument, "2, 14, left, default");
+
+		JLabel lblMerged = new JLabel("Merged");
+		add(lblMerged, "10, 14, left, default");
+
+		txtMerged = new JTextField();
+		txtMerged.setEditable(false);
+		add(txtMerged, "12, 14, 15, 1, fill, default");
+		txtMerged.setColumns(10);
+
+		JLabel lblDocReals = new JLabel("Reals");
+		add(lblDocReals, "2, 16, right, default");
+
+		txtDocReals = new JTextField();
+		txtDocReals.setColumns(5);
+		txtDocReals.setEditable(false);
+		add(txtDocReals, "4, 16, fill, default");
 
 		// --
 
 		JLabel lblMatched = new JLabel("Matched");
-		add(lblMatched, "2, 18");
+		add(lblMatched, "10, 16");
 
-		JLabel lblMatName = new JLabel("Name");
-		add(lblMatName, "2, 20, right, default");
+		JLabel lblDocFeatures = new JLabel("Features");
+		add(lblDocFeatures, "2, 18, right, default");
 
-		txtMatName = new JTextField();
-		txtMatName.setEditable(false);
-		add(txtMatName, "4, 20, 13, 1, fill, default");
-		txtMatName.setColumns(10);
+		txtDocFeatures = new JTextField();
+		txtDocFeatures.setColumns(5);
+		txtDocFeatures.setEditable(false);
+		add(txtDocFeatures, "4, 18, fill, default");
+
+		JLabel lblMatFormat = new JLabel("Format");
+		add(lblMatFormat, "10, 18, right, default");
+
+		txtMatFormat = new JTextField();
+		txtMatFormat.setEditable(false);
+		add(txtMatFormat, "12, 18, 15, 1, fill, top");
+
+		JLabel lblDocTypes = new JLabel("Types");
+		add(lblDocTypes, "2, 20, right, default");
+
+		txtDocTypes = new JTextField();
+		txtDocTypes.setColumns(5);
+		txtDocTypes.setEditable(false);
+		add(txtDocTypes, "4, 20, fill, default");
 
 		JLabel lblMatLine = new JLabel("Line");
-		add(lblMatLine, "2, 22, right, default");
+		add(lblMatLine, "10, 20, right, default");
 
 		txtMatLine = new JTextField();
 		txtMatLine.setEditable(false);
-		add(txtMatLine, "4, 22, fill, default");
-		txtMatLine.setColumns(10);
-
-		JLabel lblMatCol = new JLabel("Col");
-		add(lblMatCol, "6, 22, right, default");
-
-		txtMatCol = new JTextField();
-		txtMatCol.setEditable(false);
-		add(txtMatCol, "8, 22, fill, default");
-		txtMatCol.setColumns(10);
+		add(txtMatLine, "12, 20, fill, default");
+		txtMatLine.setColumns(5);
 
 		JLabel lblMatAspect = new JLabel("Aspect");
-		add(lblMatAspect, "10, 22, right, default");
+		add(lblMatAspect, "14, 20, right, default");
 
 		txtMatAspect = new JTextField();
 		txtMatAspect.setEditable(false);
-		add(txtMatAspect, "12, 22, 3, 1, fill, default");
+		add(txtMatAspect, "16, 20, 5, 1, fill, default");
+
+		JLabel lblMatDents = new JLabel("Dents");
+		add(lblMatDents, "22, 20, right, default");
+
+		txtMatDents = new JTextField();
+		txtMatDents.setColumns(5);
+		txtMatDents.setEditable(false);
+		add(txtMatDents, "24, 20, fill, default");
+
+		JLabel lblCorpus = new JLabel("Corpus");
+		add(lblCorpus, "2, 22, left, default");
+
+		JLabel lblMatVisCol = new JLabel("Visual Col");
+		add(lblMatVisCol, "10, 22, right, default");
+
+		txtMatVisCol = new JTextField();
+		txtMatVisCol.setEditable(false);
+		add(txtMatVisCol, "12, 22, fill, default");
 
 		chkMatVariable = new JCheckBox("Variable");
 		add(chkMatVariable, "16, 22, left, default");
 
-		JLabel lblMatText = new JLabel("Text");
-		add(lblMatText, "18, 22, right, default");
+		JLabel lblCorpusFeatures = new JLabel("Features");
+		add(lblCorpusFeatures, "2, 24, right, default");
 
-		txtMatText = new JTextField();
-		txtMatText.setEditable(false);
-		add(txtMatText, "20, 22, fill, default");
+		txtCorpusFeatures = new JTextField();
+		txtCorpusFeatures.setColumns(5);
+		txtCorpusFeatures.setEditable(false);
+		add(txtCorpusFeatures, "4, 24, fill, default");
 
-		JLabel lblMatFacets = new JLabel("Facets");
-		add(lblMatFacets, "2, 24, right, default");
+		JLabel lblMatCol = new JLabel("Col");
+		add(lblMatCol, "10, 24, right, default");
 
-		txtMatFacets = new JTextField();
-		txtMatFacets.setEditable(false);
-		add(txtMatFacets, "4, 24, 17, 1, fill, top");
+		txtMatCol = new JTextField();
+		txtMatCol.setEditable(false);
+		add(txtMatCol, "12, 24, fill, default");
+		txtMatCol.setColumns(5);
 
-		JLabel lblMatDents = new JLabel("Dents");
-		add(lblMatDents, "22, 24, right, default");
+		JLabel lblCorpusTypes = new JLabel("Types");
+		add(lblCorpusTypes, "2, 26, right, default");
 
-		txtMatDents = new JTextField();
-		txtMatDents.setEditable(false);
-		add(txtMatDents, "24, 24, fill, default");
+		txtCorpusTypes = new JTextField();
+		txtCorpusTypes.setColumns(5);
+		txtCorpusTypes.setEditable(false);
+		add(txtCorpusTypes, "4, 26, fill, default");
 
-		JLabel lblMerged = new JLabel("Merged");
-		add(lblMerged, "2, 26, right, default");
+		JLabel lblMatName = new JLabel("Name");
+		add(lblMatName, "10, 26, right, default");
 
-		textMatMerged = new JTextField();
-		textMatMerged.setEditable(false);
-		add(textMatMerged, "4, 26, 17, 1, fill, default");
-		textMatMerged.setColumns(10);
+		txtMatName = new JTextField();
+		txtMatName.setEditable(false);
+		add(txtMatName, "12, 26, 5, 1, fill, default");
+		txtMatName.setColumns(10);
 	}
 
-	public void load(PerfData perfData) {
-		this.perfData = perfData;
+	public void load(PerfData data) {
+		this.data = data;
 
-		DocPerf dp = perfData.getDoc(0);
-		long load = perfData.load.toMillis();
-		long rebuild = perfData.rebuild.toMillis();
-		long formatting = dp.docFormat.toMillis();
-		long total = load + rebuild + formatting;
+		DocPerf performance = data.getDoc(0);
+		long rebuild = data.rebuild.toMillis();
+		long load = data.load.toMillis() - rebuild;
+		long matching = performance.docMatch.toMillis();
+		long formatting = performance.docFormat.toMillis() - matching;
+		long total = load + rebuild + matching + formatting;
 
 		txtTotal.setText(String.valueOf(total) + " ms");
 		txtLoad.setText(String.valueOf(load) + " ms");
 		txtRebuild.setText(String.valueOf(rebuild) + " ms");
+		txtMatching.setText(String.valueOf(matching) + " ms");
 		txtFormating.setText(String.valueOf(formatting) + " ms");
 
-		txtCorpusFeatureCount.setText(String.valueOf(perfData.corpusFeatureCnt));
-		txtCorpusTypeCount.setText(String.valueOf(perfData.corpusFeatureTypeCnt));
+		txtDocFeatures.setText(String.valueOf(performance.docFeatureCnt));
+		txtDocTypes.setText(String.valueOf(performance.docTypeCnt));
+		txtDocReals.setText(String.valueOf(performance.docTerminalCnt));
 
-		txtDocName.setText(dp.docName);
-		txtDocFeatureCount.setText(String.valueOf(dp.docFeatureCnt));
-		txtDocTypeCount.setText(String.valueOf(dp.docTypeCnt));
-		txtDocTerminalCount.setText(String.valueOf(dp.docTerminalCnt));
+		txtCorpusFeatures.setText(String.valueOf(data.corpusFeatureCnt));
+		txtCorpusTypes.setText(String.valueOf(data.corpusFeatureTypeCnt));
 	}
 
 	public void loadData(int line, int col, Feature feature) {
-		Kind kind = feature.getKind();
-		long type = feature.getType();
-		if (kind == Kind.RULE) {
-			type = type >>> 32;
-		}
-
-		txtDocFacets.setText(feature.getFormat().toString());
 		txtDocRow.setText(String.valueOf(line + 1));
+		txtDocVisCol.setText(String.valueOf(feature.getVisCol()));
 		txtDocCol.setText(String.valueOf(col + 1));
 		txtDocAspect.setText(feature.getAspect());
 		chkDocVariable.setSelected(feature.isVar());
-		txtDocText.setText(feature.getText());
+		Format docFormat = feature.getFormat();
+		txtDocFormat.setText(docFormat.toString());
 
 		Feature matched = feature.getMatched();
 		if (matched != null) {
-			String corpusDocName = perfData.corpusDocIndex.get(matched.getDocId());
-			txtMatName.setText(corpusDocName);
-			Kind mkind = matched.getKind();
-			long mtype = matched.getType();
-			if (mkind == Kind.RULE) {
-				mtype = mtype >>> 32;
-			}
+			Format matchedFormat = matched.getFormat();
+			txtMatFormat.setText(matchedFormat.toString());
+			txtMatDents.setText(String.valueOf(matchedFormat.relDents));
 
 			txtMatLine.setText(String.valueOf(matched.getLine() + 1));
+			txtMatVisCol.setText(String.valueOf(matched.getVisCol()));
 			txtMatCol.setText(String.valueOf(matched.getCol() + 1));
 			txtMatAspect.setText(matched.getAspect());
 			chkMatVariable.setSelected(matched.isVar());
-			txtMatText.setText(matched.getText());
 
-			Format mf = matched.getFormat();
-			txtMatFacets.setText(mf.toString());
-			txtMatDents.setText(String.valueOf(mf.relDents));
+			String corpusDocName = data.corpusDocIndex.get(matched.getDocId());
+			Path pathname = Paths.get(corpusDocName);
+			txtMatName.setText(pathname.getFileName().toString());
+
+			Format mergedFormat = new Format(docFormat, matchedFormat);
+			txtMerged.setText(mergedFormat.toString());
 
 		} else {
 			clearMatched();
-			txtMatName.setText("No match.");
 		}
 	}
 
@@ -337,9 +343,8 @@ public class FormatPanel extends JPanel {
 		txtLoad.setText("");
 		txtRebuild.setText("");
 		txtFormating.setText("");
-		txtCorpusFeatureCount.setText("");
-		txtCorpusTypeCount.setText("");
-		txtDocName.setText("");
+		txtCorpusFeatures.setText("");
+		txtCorpusTypes.setText("");
 
 		clearData();
 	}
@@ -349,8 +354,8 @@ public class FormatPanel extends JPanel {
 		txtDocCol.setText("");
 		txtDocAspect.setText("");
 		chkDocVariable.setSelected(false);
-		txtDocText.setText("");
-		txtDocFacets.setText("");
+		txtDocVisCol.setText("");
+		txtDocFormat.setText("");
 
 		clearMatched();
 	}
@@ -361,7 +366,7 @@ public class FormatPanel extends JPanel {
 		txtMatCol.setText("");
 		txtMatAspect.setText("");
 		chkMatVariable.setSelected(false);
-		txtMatText.setText("");
-		txtMatFacets.setText("");
+		txtMatVisCol.setText("");
+		txtMatFormat.setText("");
 	}
 }

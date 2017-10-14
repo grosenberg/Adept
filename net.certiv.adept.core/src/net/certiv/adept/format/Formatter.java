@@ -1,4 +1,4 @@
-package net.certiv.adept.output;
+package net.certiv.adept.format;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.DocModel;

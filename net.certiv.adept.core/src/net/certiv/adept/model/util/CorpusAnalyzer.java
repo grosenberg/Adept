@@ -3,7 +3,7 @@ package net.certiv.adept.model.util;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Format;
 
-public class Analyzer {
+public class CorpusAnalyzer {
 
 	private int total;
 	private int atLineBeg;
@@ -11,7 +11,7 @@ public class Analyzer {
 	private int blankAbove;
 	private int blankBelow;
 
-	public Analyzer() {
+	public CorpusAnalyzer() {
 		super();
 	}
 

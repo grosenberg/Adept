@@ -1,5 +1,6 @@
 package net.certiv.adept.model;
 
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,16 +15,16 @@ import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.util.DamerauAlignment;
+import net.certiv.adept.model.util.EdgeType;
 import net.certiv.adept.model.util.Factor;
+import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.model.util.Location;
-import net.certiv.adept.model.util.Stats;
-import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Maths;
+import net.certiv.adept.model.util.MatchData;
 
 public class Feature implements Comparable<Feature> {
 
 	private static final int TXTLEN = 16;
-	private static final String ErrInvalidDist = "Invalid distance (%s) for %s -> %s";
+	//	private static final String ErrInvalidDist = "Invalid distance (%s) for %s -> %s";
 
 	// -------------------------------------------------------------------------------
 
@@ -295,7 +296,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public int getEquivalentWeight() {
-		return equivalents.size();
+		return equivalents.size() + 1;
 	}
 
 	public ArrayListMultimap<Integer, Location> getEquivalents() {
@@ -322,12 +323,12 @@ public class Feature implements Comparable<Feature> {
 		return kind == Kind.TERMINAL;
 	}
 
-	public Stats getStats() {
-		return new Stats(this);
+	public MatchData getStats() {
+		return new MatchData(this);
 	}
 
-	public Stats getStats(Feature matched) {
-		return new Stats(this, matched);
+	public MatchData getStats(Feature matched) {
+		return new MatchData(this, matched);
 	}
 
 	// ===============================================================================================
@@ -340,33 +341,33 @@ public class Feature implements Comparable<Feature> {
 	public double similarity(Feature other) {
 		double self = selfSimularity();
 		double them = other.selfSimularity();
-		double pair = pairSimilarity(other);
+		double pair = mutualSimilarity(other);
 		double dist = self + them - (2 * pair);
 		if (dist > 1) dist = 1; // happens due to asymmetries of boosts
-		if (dist < 0) {
-			Log.error(this, String.format(ErrInvalidDist, dist, this.toString(), other.toString()));
-			dist = 1;
-		}
+		if (dist < 0) dist = 0;
 		return 1 - dist;
 	}
 
 	public double selfSimularity() {
 		if (reCalc) {
-			selfSim = pairSimilarity(this);
+			selfSim = mutualSimilarity(this);
 			reCalc = false;
 		}
 		return selfSim;
 	}
 
 	// normalized sum of the labeled feature similarities 
-	public double pairSimilarity(Feature other) {
+	public double mutualSimilarity(Feature other) {
 		double sim = 0;
 		sim += mgr.getBoost(Factor.ANCESTORS) * ancestorSimilarity(other);
 		sim += mgr.getBoost(Factor.EDGE_TYPES) * edgeSetTypeSimilarity(other);
+		sim += mgr.getBoost(Factor.EDGE_ASPECTS) * edgeSetAspectsSimilarity(other);
 		sim += mgr.getBoost(Factor.EDGE_TEXTS) * edgeSetTextSimilarity(other);
-		sim += mgr.getBoost(Factor.FORMAT) * formatSimilarity(other);
+		sim += mgr.getBoost(Factor.FORMAT_LINE) * formatLineSimilarity(other);
+		sim += mgr.getBoost(Factor.FORMAT_WS) * formatWsSimilarity(other);
+		sim += mgr.getBoost(Factor.FORMAT_STYLE) * formatStyleSimilarity(other);
 		sim += mgr.getBoost(Factor.WEIGHT) * weightSimilarity(other);
-		return sim / 5;
+		return sim / (mgr.getBoosts().getTotal() + 0.5); // XXX: fudged
 	}
 
 	public double ancestorSimilarity(Feature other) {
@@ -383,12 +384,25 @@ public class Feature implements Comparable<Feature> {
 		return getEdgeSet().textSimilarity(other.getEdgeSet());
 	}
 
-	public double formatSimilarity(Feature other) {
-		return format.similarity(other.format);
+	public double edgeSetAspectsSimilarity(Feature other) {
+		return getEdgeSet().aspectsSimilarity(other.getEdgeSet());
+	}
+
+	public double formatLineSimilarity(Feature other) {
+		return format.similarityLine(other.format);
+	}
+
+	public double formatWsSimilarity(Feature other) {
+		return format.similarityWs(other.format);
+	}
+
+	public double formatStyleSimilarity(Feature other) {
+		return format.similarityStyle(other.format);
 	}
 
 	public double weightSimilarity(Feature other) {
-		return Maths.invDelta(getEquivalentWeight(), other.getEquivalentWeight());
+		return Math.max(getEquivalentWeight(), other.getEquivalentWeight())
+				/ (double) mgr.getCorpusModel().getMaxEquivs();
 	}
 
 	// ===============================================================================================
@@ -467,7 +481,15 @@ public class Feature implements Comparable<Feature> {
 
 	@Override
 	public String toString() {
-		String lc = String.format("@%d:%d", line, col);
-		return String.format("%s %-10s'%s'", aspect, lc, text);
+		String name = mgr.getSourceDocname(docId);
+		if (name != null) {
+			name = "[S] " + Paths.get(name).getFileName().toString();
+		} else {
+			name = mgr.getCorpusDocname(docId);
+			if (name != null) name = "[C] " + Paths.get(name).getFileName().toString();
+		}
+		if (name == null) name = "[Unknown DocId]";
+		String lineCol = String.format("@%03d:%03d", line, col);
+		return String.format("%s %-8s %s '%s'", aspect, lineCol, name, text);
 	}
 }

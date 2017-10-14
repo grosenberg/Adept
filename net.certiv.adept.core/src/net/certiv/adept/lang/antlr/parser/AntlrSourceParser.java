@@ -117,7 +117,7 @@ public class AntlrSourceParser implements ISourceParser {
 		excludes.add(Antlr4Parser.ERRCHAR);
 		excludes.add(Antlr4Parser.ACT_CONTENT);
 		excludes.add(Antlr4Parser.ARG_CONTENT);
-		excludes.add(Antlr4Parser.RULE_other << 32);
+		excludes.add(Antlr4Parser.RULE_other << 16);
 		return excludes;
 	}
 

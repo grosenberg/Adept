@@ -7,8 +7,11 @@ import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Arrays;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -19,9 +22,11 @@ import javax.swing.event.CaretListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
@@ -37,25 +42,53 @@ public class DiffPanel extends JPanel {
 
 	private int width;
 	private int height;
-	private Font font;
 
 	private String lhsTitle;
-	private JTextPane lhs;
-
 	private String rhsTitle;
+	private JTextPane lhs;
 	private JTextPane rhs;
 
-	public DiffPanel(int width, int height, Font font, //
-			String lhsTitle, String rhsTitle) {
-
+	public DiffPanel(int width, int height, FontChoiceBox fontBox, JComboBox<Integer> sizeBox, String lhsTitle,
+			String rhsTitle) {
 		super();
 		this.width = width;
 		this.height = height;
-		this.font = font;
 		this.lhsTitle = lhsTitle;
 		this.rhsTitle = rhsTitle;
 
 		create();
+		fontBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				Font font = (Font) e.getItem();
+				float size = getFont().getSize();
+				font = font.deriveFont(size);
+				updateDocFont(lhs, font);
+				updateDocFont(rhs, font);
+			}
+		});
+		sizeBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				float size = (int) e.getItem();
+				Font font = getFont();
+				font = font.deriveFont(size);
+				updateDocFont(lhs, font);
+				updateDocFont(rhs, font);
+			}
+		});
+	}
+
+	protected void updateDocFont(JTextPane pane, Font font) {
+		MutableAttributeSet attrs = pane.getInputAttributes();
+		StyleConstants.setFontFamily(attrs, font.getFamily());
+		StyleConstants.setFontSize(attrs, font.getSize());
+		StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
+		StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
+		StyledDocument doc = pane.getStyledDocument();
+		doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
 	}
 
 	private void create() {
@@ -70,7 +103,6 @@ public class DiffPanel extends JPanel {
 		lhs = new JTextPane();
 		lhs.setSize(width, height);
 		lhs.setEditable(false);
-		lhs.setFont(font);
 		lhs.addCaretListener(new CaretListener() {
 
 			@Override
@@ -87,16 +119,17 @@ public class DiffPanel extends JPanel {
 		rhs = new JTextPane();
 		rhs.setSize(width, height);
 		rhs.setEditable(false);
-		rhs.setFont(font);
 
 		JScrollPane lhsScroll = new JScrollPane(lhs);
 		TextLineNumber lhsNums = new TextLineNumber(lhs);
+		lhsNums.setUpdateFont(true);
 		lhsScroll.setRowHeaderView(lhsNums);
 		lhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		lhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		JScrollPane rhsScroll = new JScrollPane(rhs);
 		TextLineNumber rhsNums = new TextLineNumber(rhs);
+		rhsNums.setUpdateFont(true);
 		rhsScroll.setRowHeaderView(rhsNums);
 		rhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		rhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -105,11 +138,9 @@ public class DiffPanel extends JPanel {
 
 		JLabel lhsLabel = new JLabel(lhsTitle, JLabel.CENTER);
 		lhsLabel.setForeground(Color.black);
-		lhsLabel.setFont(font);
 
 		JLabel rhsLabel = new JLabel(rhsTitle, JLabel.CENTER);
 		rhsLabel.setForeground(Color.black);
-		rhsLabel.setFont(font);
 
 		lhsPanel.add(lhsLabel, BorderLayout.NORTH);
 		lhsPanel.add(lhsScroll, BorderLayout.CENTER);
@@ -126,7 +157,7 @@ public class DiffPanel extends JPanel {
 
 	public void setTabStops(int lhsTabWidth, int rhsTabWidth) {
 		StyleContext sc = StyleContext.getDefaultStyleContext();
-		FontMetrics fm = lhs.getFontMetrics(font);
+		FontMetrics fm = lhs.getFontMetrics(getFont());
 
 		TabSet tabs = calcTabSet(fm, lhsTabWidth);
 		AttributeSet attrs = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.TabSet, tabs);
@@ -154,7 +185,6 @@ public class DiffPanel extends JPanel {
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
 		// rhs.setText(diff(lhsContent, rhsContent));
-
 		lhs.setCaretPosition(0);
 	}
 

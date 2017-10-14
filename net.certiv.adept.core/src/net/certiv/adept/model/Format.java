@@ -89,17 +89,47 @@ public class Format {
 		alignCol = Math.max(lhs.alignCol, rhs.alignCol);
 	}
 
-	public double similarity(Format o) {
-		boolean[] tvec = simVector();
-		boolean[] ovec = o.simVector();
-		int len = tvec.length;
-		int match = 0;
-		for (int idx = 0; idx < len; idx++) {
-			if (tvec[idx] == ovec[idx]) match++;
-		}
+	public double similarityLine(Format o) {
+		double sim = 0;
+		sim += boolSim(atLineBeg, o.atLineBeg);
+		sim += boolSim(atLineEnd, o.atLineEnd);
+		sim += boolSim(indented, o.indented);
 
-		// Jaccard (like) similarity
-		return match / (2 * len - match);
+		if (indented && o.indented) {
+			if (Integer.signum(relDents) == Integer.signum(o.relDents)) {
+				sim += 1;
+				if (relDents == o.relDents) {
+					sim += 1;
+				} else {
+					double tdent = Math.abs(relDents);
+					double odent = Math.abs(o.relDents);
+					sim += Math.min(tdent, odent) / Math.max(tdent, odent);
+				}
+			}
+		}
+		return sim / 5;
+	}
+
+	public double similarityWs(Format o) {
+		double sim = 0;
+		sim += boolSim(wsBefore, o.wsBefore);
+		sim += boolSim(wsAfter, o.wsAfter);
+		sim += boolSim(multBefore, o.multBefore);
+		sim += boolSim(multAfter, o.multAfter);
+		return sim / 4;
+	}
+
+	public double similarityStyle(Format o) {
+		double sim = 0;
+		sim += boolSim(alignAbove, o.alignAbove);
+		sim += boolSim(alignBelow, o.alignBelow);
+		sim += boolSim(blankAbove, o.blankAbove);
+		sim += boolSim(blankBelow, o.blankBelow);
+		return sim / 4;
+	}
+
+	private double boolSim(boolean one, boolean two) {
+		return one == two ? 1 : 0;
 	}
 
 	public String encode() {
@@ -116,7 +146,7 @@ public class Format {
 
 	private boolean[] simVector() {
 		return new boolean[] { indented, atLineBeg, atLineEnd, wsBefore, wsAfter, multBefore, multAfter, alignAbove,
-				alignBelow, blankAbove, blankBelow, relDents > -1, Math.abs(relDents) > 0 };
+				alignBelow, blankAbove, blankBelow, (Integer.signum(relDents) >= 0), (Math.abs(relDents) > 0) };
 	}
 
 	private void characterize(ParseData data, Token start, Token stop, Info begInfo, Info endInfo, int len) {
