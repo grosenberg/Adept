@@ -21,6 +21,17 @@ public class ArrayMultilist<K, V> implements Iterable<Entry<K, V>> {
 		keyMap = new ArrayList<>();
 	}
 
+	public boolean add(K key, V value) {
+		for (Entry<K, V> entry : keyMap) {
+			if (entry.ident.equals(key)) {
+				return entry.data.add(value);
+			}
+		}
+		ArrayList<V> list = new ArrayList<>();
+		list.add(value);
+		return add(key, list);
+	}
+
 	public boolean add(K key, List<V> value) {
 		Entry<K, V> entry = new Entry<>(key, value);
 		return keyMap.add(entry);

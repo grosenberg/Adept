@@ -47,7 +47,9 @@ public class DocProcessor extends ParseProcessor {
 						if (best != null) {
 							feature.setMatched(best);
 						}
-					} else {
+					}
+					if (feature.getMatched() == null) {
+						feature.getFormat().noFormat = true;
 						Log.debug(this, "No match");
 					}
 			}
@@ -57,7 +59,7 @@ public class DocProcessor extends ParseProcessor {
 	/** Applies the docModel to format the doc content. */
 	public void formatDocument() {
 		if (settings.format) {
-			Formatter formatter = new Formatter(docModel);
+			Formatter formatter = new Formatter(docModel, settings);
 			OutputBuilder buffer = formatter.process();
 			doc.setModified(buffer.toString());
 			if (settings.save) doc.saveModified(settings.backup);

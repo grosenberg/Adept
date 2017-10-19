@@ -5,39 +5,38 @@ import java.util.List;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
-import net.certiv.adept.Tool;
+import net.certiv.adept.Settings;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Format;
-import net.certiv.adept.model.parser.AdeptToken;
 import net.certiv.adept.model.parser.ParseData;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class Span {
 
 	private ParseData data;
+	private Settings settings;
 	private List<Token> tokens;
 
-	private AdeptToken lhs;
-	private AdeptToken rhs;
-	private boolean done;
+	Token lhs;
+	boolean done;
+	int end;
 
-	private int beg;
-	private int end;
+	private Token rhs;
+	private int eols;
+	private int blankLines;
+	private int indents;
 	private String lead;
 	private String trail;
-	private int terminals;
-	private int blankLines;
-	private Format formLhs;
-	private Format formRhs;
-	private Format format;
-	private int dents;
+	private Gap gap;
 
-	public Span(ParseData data) {
+	public Span(ParseData data, Settings settings) {
 		this.data = data;
+		this.settings = settings;
 
 		tokens = data.getTokens();
 		if (tokens.size() > 0) {
-			rhs = (AdeptToken) tokens.get(0);
+			rhs = tokens.get(0);
 		} else {
 			done = true;
 		}
@@ -49,19 +48,17 @@ public class Span {
 	 * index.
 	 * 
 	 * <pre>
-	        |<--    span    -->|
-	        |  lhs         rhs |
-	    ... | real | ws | real | real | ...
+	        |<-----     span     ----->|
+	    ... | lhs real | ws | rhs real | ...
 	 * </pre>
 	 */
-
 	public Span next(int idx) {
 		if (!done && idx < tokens.size()) {
 			lhs = rhs;
 			rhs = nextReal(idx);
 			done = rhs == null;
 			if (!done) {
-				beg = lhs.getTokenIndex();
+				int beg = lhs.getTokenIndex();
 				end = rhs.getTokenIndex();
 				if (!isReal(lhs)) beg--;
 
@@ -69,117 +66,111 @@ public class Span {
 				String content = data.getTokenStream().getText(interval);
 				String[] parts = content.split(Strings.EOL, -1);
 
-				terminals = parts.length - 1;
-				blankLines = Math.max(terminals - 1, 0);
-				lead = parts[terminals];	// leads rhs
+				eols = parts.length - 1;
+				blankLines = Math.max(eols - 1, 0);
+				lead = parts[eols];			// leads rhs
 				trail = parts[0];			// trails lhs
 
-				formLhs = getMatchedFormat(lhs);
-				formRhs = getMatchedFormat(rhs);
-				format = new Format(formLhs, formRhs);
-				dents = formRhs.indents;
+				Format formLhs = matchedFormat(lhs);
+				Format formRhs = matchedFormat(rhs);
+				gap = Gap.define(formLhs, formRhs);
+
+				String lhsText = lhs.getText();
+				String gapWs = Strings.encodeWS(getGapWs());
+				String rhsText = rhs != null ? rhs.getText() : "";
+				Log.debug(this, String.format("%s%s%s", lhsText, gapWs, rhsText));
 			}
 		}
 		return this;
 	}
 
 	// Returns the first non-WS token in the line after the given index, or <code>null</code>.
-	private AdeptToken nextReal(int idx) {
+	private Token nextReal(int idx) {
 		while (idx + 1 < tokens.size()) {
-			AdeptToken token = (AdeptToken) tokens.get(++idx);
+			idx++;
+			Token token = tokens.get(idx);
 			if (isReal(token)) return token;
 		}
 		return null;
 	}
 
-	// TODO: move to AdeptToken
-	private boolean isReal(AdeptToken token) {
-		int type = token.getType();
-		return type != data.HWS && type != data.VWS && type != Token.EOF;
-	}
-
-	private Format getMatchedFormat(AdeptToken token) {
-		if (token != null) {
-			if (!isReal(token)) return null;
-
-			Feature feature = data.tokenStartFeatureIndex.get(token.getTokenIndex());
-			if (feature != null) {
-				Feature matched = feature.getMatched();
+	private Format matchedFormat(Token token) {
+		if (token != null && isReal(token)) {
+			Feature docFeature = data.tokenStartFeatureIndex.get(token.getTokenIndex());
+			if (docFeature != null) {
+				Feature matched = docFeature.getMatched();
 				if (matched != null) {
-					return matched.getFormat();
+					return Format.merge(docFeature.getFormat(), matched.getFormat());
 				}
 			}
 		}
 		return null;
 	}
 
-	public AdeptToken getLhs() {
-		return lhs;
+	private boolean isReal(Token token) {
+		int type = token.getType();
+		return type != data.HWS && type != data.VWS && type != Token.EOF;
 	}
 
-	public AdeptToken getRhs() {
-		return rhs;
+	public boolean isAligned() {
+		return gap.aligned;
 	}
 
-	public Format getFormLhs() {
-		return formLhs;
+	public int visCol() {
+		return gap.visCol;
 	}
 
-	public Format getFormRhs() {
-		return formRhs;
+	public boolean breaks() {
+		return !gap.noFormat && !gap.join && (gap.lineBreak || eols > 0);
 	}
 
-	public Format getFormat() {
-		return format;
+	public String getGapWs() {
+		if (gap.noFormat) return lead;
+		if (gap.join) {
+			if (gap.multWs) return multWs();
+			if (gap.ws) return Strings.SPACE;
+			return "";
+		}
+		if (gap.lineBreak || eols > 0) {
+			return trailingWs() + eols() + indents();
+		}
+		if (gap.multWs) return multWs();
+		if (gap.ws) return Strings.SPACE;
+		return "";
 	}
 
-	public int getBeg() {
-		return beg;
-	}
-
-	public int getEnd() {
-		return end;
-	}
-
-	public String getLead() {
-		return lead;
-	}
-
-	public String getTrail() {
-		if (Tool.settings.removeTrailingWS) return "";
+	public String trailingWs() {
+		if (settings.removeTrailingWS) return "";
 		return trail;
 	}
 
-	public boolean insertsTerminal() {
-		return terminals > 0;
+	public String eols() {
+		if (eols == 0 && gap.lineBreak) eols++;
+		return Strings.getN(eols, Strings.EOL);
 	}
 
-	public String getTerminals() {
-		terminals = getBlankLines() + 1;
-		StringBuilder sb = new StringBuilder();
-		for (int idx = 0; idx < terminals; idx++) {
-			sb.append(Strings.EOL);
+	public String indents() {
+		if (gap.indented && !gap.aligned) {
+			indents = gap.indents;
+		} else if (gap.lineBreak) {
+			indents = 0;
 		}
-		return sb.toString();
+		return Strings.createIndent(settings.tabWidth, settings.useTabs, indents);
+	}
+
+	private String multWs() {
+		return Strings.getNSpaces(gap.numWs);
 	}
 
 	public int getBlankLines() {
-		if (Tool.settings.removeBlankLines) {
-			blankLines = Math.min(blankLines, Tool.settings.keepBlankLines);
+		if (settings.removeBlankLines) {
+			blankLines = Math.min(blankLines, settings.keepBlankLines);
 		}
 		return blankLines;
 	}
 
-	public int getDentation() {
-		return dents;
-	}
-
-	public boolean done() {
-		return done;
-	}
-
 	@Override
 	public String toString() {
-		return String.format("'%s' -> '%s' %s", lhs.getText(), rhs.getText(), format.toString());
+		return String.format("'%s' -> '%s' %s", lhs.getText(), rhs.getText(), gap.toString());
 	}
 }

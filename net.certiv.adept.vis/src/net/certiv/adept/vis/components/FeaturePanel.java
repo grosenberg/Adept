@@ -161,9 +161,9 @@ public class FeaturePanel extends JPanel {
 		textAspect.setText(feature.getAspect());
 		textText.setText(feature.getText());
 		chkVariable.setSelected(feature.isVar());
-		textLine.setText(String.valueOf(feature.getLine()));
-		textCol.setText(String.valueOf(feature.getCol()));
-		textViscol.setText(String.valueOf(feature.getVisCol()));
+		textLine.setText(String.valueOf(feature.getLine() + 1));
+		textCol.setText(String.valueOf(feature.getCol() + 1));
+		textViscol.setText(String.valueOf(feature.getVisCol() + 1));
 
 		Format format = feature.getFormat();
 		textFormat.setText(format.toString());

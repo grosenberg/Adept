@@ -13,14 +13,22 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Helper class to provide String manipulation functions not available in standard JDK.
  */
 public class Strings {
 
+	public static final String SPACE_MARK = "\u00B7";
+	public static final String PARA_MARK = "\u00B6";
+	public static final String TAB_MARK = "\u21E5";
+	public static final String TAB_MARK1 = "\u2B7E";
+
 	public static final String EOL = System.lineSeparator();
 	public static final char EOP = File.separatorChar; // path separator
+	public static final char SPACE = ' ';
+	public static final char TAB = '\t';
 	public static final char DOT = '.';
 
 	private Strings() {}
@@ -102,12 +110,12 @@ public class Strings {
 	}
 
 	public static String createIndent(int tabWidth, boolean useTabs, int indents) {
+		if (indents < 1) return "";
+
 		StringBuilder sb = new StringBuilder();
-		if (indents > 0) {
-			String indent = useTabs ? "\t" : getNSpaces(tabWidth);
-			for (int i = 0; i < indents; i++) {
-				sb.append(indent);
-			}
+		String indent = useTabs ? "\t" : getNSpaces(tabWidth);
+		for (int i = 0; i < indents; i++) {
+			sb.append(indent);
 		}
 		return sb.toString();
 	}
@@ -197,20 +205,25 @@ public class Strings {
 		return true;
 	}
 
-	/**
-	 * Returns the given number of spaces.
-	 */
-	public static String getNSpaces(int spaces) {
-		return getNChars(spaces, ' ');
+	/** Returns a string containing {@code count} spaces. */
+	public static String getNSpaces(int count) {
+		return getN(count, ' ');
 	}
 
-	/**
-	 * Returns <code>count</code> copies of the given character.
-	 */
-	public static String getNChars(int count, char ch) {
-		StringBuffer buf = new StringBuffer(count);
+	/** Returns a string containing {@code count} sequential copies of the given character. */
+	public static String getN(int count, char c) {
+		StringBuffer buf = new StringBuffer();
 		for (int i = 0; i < count; i++) {
-			buf.append(ch);
+			buf.append(c);
+		}
+		return buf.toString();
+	}
+
+	/** Returns a string containing {@code count} sequential copies of the given text. */
+	public static String getN(int count, String text) {
+		StringBuffer buf = new StringBuffer();
+		for (int i = 0; i < count; i++) {
+			buf.append(text);
 		}
 		return buf.toString();
 	}
@@ -222,6 +235,29 @@ public class Strings {
 			if (!isIndentChar(str.charAt(col))) return col;
 		}
 		return -1;
+	}
+
+	/**
+	 * Returns <code>true</code> if the given character is an indentation character. Indentation
+	 * character are all whitespace characters except the line delimiter characters.
+	 *
+	 * @param ch the given character
+	 * @return Returns <code>true</code> if this the character is a indent character, <code>false</code>
+	 *         otherwise
+	 */
+	public static boolean isIndentChar(char ch) {
+		return Character.isWhitespace(ch) && !isLineDelimiterChar(ch);
+	}
+
+	/**
+	 * Returns <code>true</code> if the given character is a line delimiter character.
+	 *
+	 * @param ch the given character
+	 * @return Returns <code>true</code> if this the character is a line delimiter character,
+	 *         <code>false</code> otherwise
+	 */
+	public static boolean isLineDelimiterChar(char ch) {
+		return ch == '\n' || ch == '\r';
 	}
 
 	/**
@@ -287,29 +323,6 @@ public class Strings {
 	}
 
 	/**
-	 * Returns <code>true</code> if the given character is an indentation character. Indentation
-	 * character are all whitespace characters except the line delimiter characters.
-	 *
-	 * @param ch the given character
-	 * @return Returns <code>true</code> if this the character is a indent character, <code>false</code>
-	 *         otherwise
-	 */
-	public static boolean isIndentChar(char ch) {
-		return Character.isWhitespace(ch) && !isLineDelimiterChar(ch);
-	}
-
-	/**
-	 * Returns <code>true</code> if the given character is a line delimiter character.
-	 *
-	 * @param ch the given character
-	 * @return Returns <code>true</code> if this the character is a line delimiter character,
-	 *         <code>false</code> otherwise
-	 */
-	public static boolean isLineDelimiterChar(char ch) {
-		return ch == '\n' || ch == '\r';
-	}
-
-	/**
 	 * Returns the visual length of a given given line subject to the given visual tab width.
 	 *
 	 * @param line the string to measure
@@ -317,17 +330,52 @@ public class Strings {
 	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
 	 */
 	public static int measureVisualWidth(CharSequence line, int tabWidth) {
-		if (tabWidth < 0 || line == null) throw new IllegalArgumentException();
+		return measureVisualWidth(line, tabWidth, 0);
+	}
 
-		int length = 0;
+	public static int measureVisualWidth(CharSequence line, int tabWidth, int from) {
+		if (line == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
+
+		int width = from;
 		int max = line.length();
 		for (int idx = 0; idx < max; idx++) {
 			if (line.charAt(idx) == '\t') {
-				length += tabWidth - length % tabWidth;
+				if (tabWidth > 0) width += tabWidth - width % tabWidth;
 			} else {
-				length++;
+				width++;
 			}
 		}
-		return length;
+		return width - from;
+	}
+
+	public static String createVisualHWs(int tabWidth, int from, int to) {
+		if (tabWidth < 1) tabWidth = 1;
+		if (from < 0 || to < from) throw new IllegalArgumentException();
+
+		StringBuilder sb = new StringBuilder();
+		int dot = from;
+		int nxt = dot;
+		while ((nxt = dot + tabWidth - dot % tabWidth) < to) {
+			sb.append(TAB);
+			dot = nxt;
+		}
+		while (dot < to) {
+			sb.append(SPACE);
+			dot++;
+		}
+		return sb.toString();
+	}
+
+	public static String encodeWS(String in) {
+		String out = in;
+		out = out.replace(" ", SPACE_MARK);
+		out = out.replace("\t", TAB_MARK);
+		out = out.replaceAll("\\R", PARA_MARK);
+		return out;
+	}
+
+	public static int count(String text, String mark) {
+		if (text == null || text.isEmpty()) return 0;
+		return text.split(Pattern.quote(mark), -1).length - 1;
 	}
 }

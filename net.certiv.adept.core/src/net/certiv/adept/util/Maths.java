@@ -347,6 +347,11 @@ public class Maths {
 		return (a - b > SMALL);
 	}
 
+	/** Returns the average of the given values, rounded to an int. */
+	public static int ave(double... vals) {
+		return round(sum(vals) / vals.length);
+	}
+
 	/**
 	 * Rounds a double to the next nearest integer value. The JDK version of it doesn't work properly.
 	 *

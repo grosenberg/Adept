@@ -11,19 +11,22 @@ import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.model.util.Info;
+import net.certiv.adept.util.Maths;
 
 public class Format {
 
 	@Expose public boolean indented;		// at line begin and indented
+
 	@Expose public boolean atLineBeg;		// occurs at line begin, ignoring hws and comments
 	@Expose public boolean atLineEnd;		// occurs at line end, ignoring hws and comments
+
 	@Expose public boolean wsBefore;		// has leading ws, ignoring any in-line block comment
 	@Expose public boolean wsAfter; 		// has trailing ws, ignoring any in-line block comment 
-	@Expose public boolean multBefore;		// has multiple leading ws, not at line begin
-	@Expose public boolean multAfter; 		// has multiple trailing ws, not at line end 
+	@Expose public boolean multBefore;		// has multiple leading ws
+	@Expose public boolean multAfter; 		// has multiple trailing ws 
 
-	@Expose public boolean alignAbove;		// aligned to a node feature in a surrounding real line
-	@Expose public boolean alignBelow;
+	@Expose public boolean alignedAbove;	// to a node feature in a surrounding real line
+	@Expose public boolean alignedBelow;
 
 	@Expose public boolean blankAbove;		// blank line separates
 	@Expose public boolean blankBelow;
@@ -31,19 +34,66 @@ public class Format {
 	@Expose public int indents;				// absolute number of indents
 	@Expose public int relDents;			// num indents relative to real line above
 
-	@Expose public int numBefore;			// num leading ws, not at line begin
-	@Expose public int numAfter; 			// num trailing ws, not at line end 
+	@Expose public int numBefore;			// num leading ws
+	@Expose public int numAfter; 			// num trailing ws
+	@Expose public int visCol;				// visual column
 
-	@Expose public int alignCol;			// alignment column
-
-	@Expose public boolean joinAlways;
+	@Expose public boolean joinAlways;		// derived from corpus as a whole
 	@Expose public boolean joinShould;
-	@Expose public boolean joinNever;
 	@Expose public boolean joinAllow;
+	@Expose public boolean joinNever;
 
-	@Expose public boolean noFormat;
+	public boolean aligned;					// whether visually aligned
+	public boolean join;					// {@code true} to keep or force line joining
+	public boolean noFormat;				// no match found in corpus
 
 	// ------------------------------------------------------------------------
+	/**
+	 * Merge the format of a source document feature with the format of its matched feature. Precedence
+	 * is given to the matched feature format aspects with the source format aspects are considered as
+	 * hinting.
+	 */
+	public static Format merge(Format src, Format matched) {
+		Format merged = new Format();
+
+		merged.indented = matched.indented;
+
+		merged.atLineBeg = matched.atLineBeg;
+		merged.atLineEnd = matched.atLineEnd;
+
+		merged.wsBefore = matched.wsBefore;
+		merged.wsAfter = matched.wsAfter;
+		merged.multBefore = matched.multBefore;
+		merged.multAfter = matched.multAfter;
+
+		merged.alignedAbove = src.alignedAbove || matched.alignedAbove;
+		merged.alignedBelow = src.alignedBelow || matched.alignedBelow;
+
+		merged.blankAbove = src.blankAbove && matched.blankAbove;
+		merged.blankBelow = src.blankBelow && matched.blankBelow;
+
+		merged.indents = matched.indents;
+		merged.relDents = matched.relDents;
+
+		merged.numBefore = Math.max(src.numBefore, matched.numBefore);
+		merged.numAfter = Math.max(src.numAfter, matched.numAfter);
+		merged.visCol = Maths.ave(src.visCol, matched.visCol);
+
+		merged.joinAlways = matched.joinAlways;
+		merged.joinShould = matched.joinShould;
+		merged.joinAllow = matched.joinAllow;
+		merged.joinNever = matched.joinNever;
+
+		merged.aligned = merged.alignedAbove || merged.alignedBelow;
+		merged.join = matched.joinAlways;
+		merged.noFormat = matched.noFormat;
+
+		return merged;
+	}
+
+	// ------------------------------------------------------------------------
+
+	public Format() {}
 
 	/** Rule */
 	public Format(ParseData data, ParserRuleContext ctx) {
@@ -67,26 +117,6 @@ public class Format {
 	public Format(ParseData data, Token token) {
 		Info info = data.getDocument().getInfo(token.getLine() - 1);
 		characterize(data, token, token, info, info, token.getText().length());
-	}
-
-	public Format(Format lhs, Format rhs) {
-		atLineBeg = lhs.atLineBeg && rhs.atLineBeg;
-		atLineEnd = lhs.atLineEnd && rhs.atLineEnd;
-		wsBefore = lhs.wsBefore || rhs.wsBefore;
-		wsAfter = lhs.wsAfter || rhs.wsAfter;
-		multBefore = lhs.multBefore || rhs.multBefore;
-		multAfter = lhs.multAfter || rhs.multAfter;
-		alignAbove = lhs.alignAbove || rhs.alignAbove;
-		alignBelow = lhs.alignBelow || rhs.alignBelow;
-		blankAbove = lhs.blankAbove || rhs.blankAbove;
-		blankBelow = lhs.blankBelow || rhs.blankBelow;
-
-		indented = atLineBeg && (lhs.indented || rhs.indented);
-		indents = atLineBeg ? Math.max(lhs.indents, rhs.indents) : 0;
-		relDents = atLineBeg ? Math.max(lhs.relDents, rhs.relDents) : 0;
-		numBefore = Math.max(lhs.numBefore, rhs.numBefore);
-		numAfter = Math.max(lhs.numAfter, rhs.numAfter);
-		alignCol = Math.max(lhs.alignCol, rhs.alignCol);
 	}
 
 	public double similarityLine(Format o) {
@@ -121,11 +151,12 @@ public class Format {
 
 	public double similarityStyle(Format o) {
 		double sim = 0;
-		sim += boolSim(alignAbove, o.alignAbove);
-		sim += boolSim(alignBelow, o.alignBelow);
+		sim += boolSim(alignedAbove || alignedBelow, o.alignedAbove || o.alignedBelow);
+		sim += boolSim(alignedAbove, o.alignedAbove);
+		sim += boolSim(alignedBelow, o.alignedBelow);
 		sim += boolSim(blankAbove, o.blankAbove);
 		sim += boolSim(blankBelow, o.blankBelow);
-		return sim / 4;
+		return sim / 5;
 	}
 
 	private double boolSim(boolean one, boolean two) {
@@ -145,17 +176,17 @@ public class Format {
 	}
 
 	private boolean[] simVector() {
-		return new boolean[] { indented, atLineBeg, atLineEnd, wsBefore, wsAfter, multBefore, multAfter, alignAbove,
-				alignBelow, blankAbove, blankBelow, (Integer.signum(relDents) >= 0), (Math.abs(relDents) > 0) };
+		return new boolean[] { indented, atLineBeg, atLineEnd, wsBefore, wsAfter, multBefore, multAfter, alignedAbove,
+				alignedBelow, blankAbove, blankBelow, (Integer.signum(relDents) >= 0), (Math.abs(relDents) > 0) };
 	}
 
 	private void characterize(ParseData data, Token start, Token stop, Info begInfo, Info endInfo, int len) {
 		int idxStart = start.getTokenIndex();
 		int idxStop = stop.getTokenIndex();
-		int line = start.getLine() - 1;
+		int line = start.getLine() - 1; // make zero indexed
 
 		atLineBeg = start.getCharPositionInLine() == begInfo.beg;
-		atLineEnd = len == endInfo.end;
+		atLineEnd = stop.getCharPositionInLine() == endInfo.end;
 
 		if (atLineBeg) {
 			indented = begInfo.indents > 0;
@@ -174,12 +205,14 @@ public class Format {
 		blankAbove = begInfo.blankAbove;
 		blankBelow = endInfo.blankBelow;
 
-		alignCol = aligned(data, start, nonBlankLine(data, line, -1));
-		alignAbove = alignCol > 0;
+		visCol = aligned(data, start, nonBlankLine(data, line, -1));
+		alignedAbove = visCol > 0;
 
-		int tmp = aligned(data, start, nonBlankLine(data, line, 1));
-		alignBelow = tmp > 0;
-		if (!alignAbove) alignCol = tmp;
+		int visBelow = aligned(data, start, nonBlankLine(data, line, 1));
+		alignedBelow = visBelow > 0;
+		if (!alignedAbove) visCol = visBelow;
+
+		aligned = alignedAbove || alignedBelow;
 	}
 
 	// returns the alignment column after the first non-blank; -1 if not aligned
@@ -193,11 +226,13 @@ public class Format {
 					int tokCol = data.tokenVisOffsetIndex.get(token);
 					if (tokCol < visCol) continue;
 					if (tokCol > visCol) break;
-					if (tokCol == visCol) return visCol;
+					if (tokCol == visCol && start.getType() == token.getType()) {
+						return visCol;
+					}
 				}
 			}
 		}
-		return -1;
+		return 0;
 	}
 
 	private static String leftWS(ParseData data, int idx) {
@@ -267,10 +302,24 @@ public class Format {
 		if (wsAfter) builder.append("wsAfter, ");
 		if (multBefore) builder.append("multBefore, ");
 		if (multAfter) builder.append("multAfter, ");
-		if (alignAbove) builder.append("alignAbove, ");
-		if (alignBelow) builder.append("alignBelow, ");
+		if (aligned) builder.append("aligned, ");
+		if (alignedAbove) builder.append("alignedAbove, ");
+		if (alignedBelow) builder.append("alignedBelow, ");
 		if (blankAbove) builder.append("blankAbove, ");
 		if (blankBelow) builder.append("blankBelow, ");
+		if (indents > 0) builder.append("indents=" + indents + ", ");
+		if (relDents != 0) builder.append("relDents=" + relDents + ", ");
+		if (numBefore > 1) builder.append("numBefore=" + numBefore + ", ");
+		if (numAfter > 1) builder.append("numAfter=" + numAfter + ", ");
+		if (visCol != 0) builder.append("visCol=" + visCol + ", ");
+		if (joinAlways) builder.append("joinAlways, ");
+		if (joinShould) builder.append("joinShould, ");
+		if (joinAllow) builder.append("joinAllow, ");
+		if (joinNever) builder.append("joinNever, ");
+		if (aligned) builder.append("aligned, ");
+		if (join) builder.append("join, ");
+		if (noFormat) builder.append("noFormat, ");
+
 		int dot = builder.lastIndexOf(",");
 		if (dot > -1) builder.setLength(dot);
 		return builder.toString();

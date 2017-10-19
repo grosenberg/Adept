@@ -9,6 +9,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
 import javax.swing.JComboBox;
@@ -17,15 +18,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.ToolTipManager;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
@@ -33,10 +33,11 @@ import javax.swing.text.TabStop;
 import difflib.DiffUtils;
 import difflib.Patch;
 import difflib.PatchFailedException;
+import net.certiv.adept.util.Strings;
 import net.certiv.adept.vis.utils.Point;
 import net.certiv.adept.vis.utils.TextUtils;
 
-public class DiffPanel extends JPanel {
+public class ContentPanel extends JPanel {
 
 	public static final String CLICK1_LEFT = "click1_left";
 
@@ -48,8 +49,8 @@ public class DiffPanel extends JPanel {
 	private JTextPane lhs;
 	private JTextPane rhs;
 
-	public DiffPanel(int width, int height, FontChoiceBox fontBox, JComboBox<Integer> sizeBox, String lhsTitle,
-			String rhsTitle) {
+	public ContentPanel(int width, int height, FontChoiceBox fontBox, JComboBox<Integer> sizeBox,
+			JComboBox<Integer> tabBox, String lhsTitle, String rhsTitle) {
 		super();
 		this.width = width;
 		this.height = height;
@@ -62,8 +63,8 @@ public class DiffPanel extends JPanel {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				Font font = (Font) e.getItem();
-				float size = getFont().getSize();
-				font = font.deriveFont(size);
+				int size = (int) sizeBox.getSelectedItem();
+				font = font.deriveFont((float) size);
 				updateDocFont(lhs, font);
 				updateDocFont(rhs, font);
 			}
@@ -77,6 +78,14 @@ public class DiffPanel extends JPanel {
 				font = font.deriveFont(size);
 				updateDocFont(lhs, font);
 				updateDocFont(rhs, font);
+			}
+		});
+		tabBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				int width = (int) e.getItem();
+				setTabStops(width);
 			}
 		});
 	}
@@ -116,7 +125,26 @@ public class DiffPanel extends JPanel {
 			}
 		});
 
-		rhs = new JTextPane();
+		rhs = new JTextPane() {
+
+			@Override
+			public String getToolTipText(MouseEvent e) {
+				int pos = rhs.viewToModel(e.getPoint());
+				if (pos >= 0) {
+					StyledDocument doc = (StyledDocument) rhs.getDocument();
+					try {
+						int line = TextUtils.getLineOfOffset(doc, pos); 			// 0..n
+						int beg = TextUtils.getLineStartOffset(doc, line);
+						int len = TextUtils.getLineEndOffset(doc, line) - beg;
+						String text = doc.getText(beg, len);
+						return Strings.encodeWS(text);
+					} catch (BadLocationException e1) {}
+				}
+				return null;
+			}
+
+		};
+		ToolTipManager.sharedInstance().registerComponent(rhs);
 		rhs.setSize(width, height);
 		rhs.setEditable(false);
 
@@ -155,24 +183,24 @@ public class DiffPanel extends JPanel {
 		add(mainPanel);
 	}
 
-	public void setTabStops(int lhsTabWidth, int rhsTabWidth) {
-		StyleContext sc = StyleContext.getDefaultStyleContext();
-		FontMetrics fm = lhs.getFontMetrics(getFont());
+	public void setTabStops(int width) {
+		FontMetrics fm = lhs.getFontMetrics(lhs.getFont());
+		int px = fm.charWidth('m');
+		TabSet tabs = calcTabSet(width * px);
+		SimpleAttributeSet attributes = new SimpleAttributeSet();
+		StyleConstants.setTabSet(attributes, tabs);
 
-		TabSet tabs = calcTabSet(fm, lhsTabWidth);
-		AttributeSet attrs = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.TabSet, tabs);
-		lhs.setParagraphAttributes(attrs, true);
+		int length = lhs.getDocument().getLength();
+		lhs.getStyledDocument().setParagraphAttributes(0, length, attributes, false);
 
-		tabs = calcTabSet(fm, rhsTabWidth);
-		attrs = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.TabSet, tabs);
-		rhs.setParagraphAttributes(attrs, true);
+		length = rhs.getDocument().getLength();
+		rhs.getStyledDocument().setParagraphAttributes(0, length, attributes, false);
 	}
 
-	private TabSet calcTabSet(FontMetrics fm, int tabWidth) {
-		int px = fm.getMaxAdvance();
-		TabStop[] tabs = new TabStop[20];
-		for (int idx = 0; idx < 20; idx++) {
-			tabs[idx] = new TabStop((idx + 1) * tabWidth * px);
+	private TabSet calcTabSet(int width) {
+		TabStop[] tabs = new TabStop[10];
+		for (int idx = 0; idx < 10; idx++) {
+			tabs[idx] = new TabStop((idx + 1) * width);
 		}
 		return new TabSet(tabs);
 	}
@@ -184,7 +212,6 @@ public class DiffPanel extends JPanel {
 	public void load(String lhsContent, String rhsContent) {
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
-		// rhs.setText(diff(lhsContent, rhsContent));
 		lhs.setCaretPosition(0);
 	}
 

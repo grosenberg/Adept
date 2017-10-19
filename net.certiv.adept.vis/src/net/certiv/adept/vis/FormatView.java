@@ -30,7 +30,7 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
-import net.certiv.adept.vis.components.DiffPanel;
+import net.certiv.adept.vis.components.ContentPanel;
 import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.components.FormatPanel;
 import net.certiv.adept.vis.models.SourceListModel;
@@ -41,7 +41,9 @@ public class FormatView extends AbstractBase {
 
 	private static final String KEY_FONT_NAME = "font_name";
 	private static final String KEY_FONT_SIZE = "font_size";
+	private static final String KEY_TAB_WIDTH = "tab_width";
 	private static final Integer[] SIZES = { 8, 11, 12, 14, 16, 18, 20, 24 };
+	private static final Integer[] WIDTHS = { 2, 4, 6, 8 };
 
 	private static final String name = "FormatView";
 	private static final String corpusRoot = "../net.certiv.adept.core/corpus";
@@ -51,11 +53,14 @@ public class FormatView extends AbstractBase {
 	private Tool tool;
 	private JComboBox<Item> srcBox;
 	private FontChoiceBox fontBox;
-	private DiffPanel diffPanel;
+	private JComboBox<Integer> sizeBox;
+	private JComboBox<Integer> tabBox;
+	private ContentPanel contentPanel;
 	private FormatPanel formatPanel;
 
 	// key=source line; value=col ordered set of features
 	private Map<Integer, TreeSet<Feature>> index;
+	public String sourceContent;
 
 	public static void main(String args[]) {
 		try {
@@ -84,9 +89,8 @@ public class FormatView extends AbstractBase {
 		String fontname = prefs.get(KEY_FONT_NAME, "Droid Sans Mono");
 		fontBox = new FontChoiceBox(fontname, Font.PLAIN, true);
 
-		JComboBox<Integer> sizeBox = new JComboBox<>(SIZES);
-		Integer fontsize = prefs.getInt(KEY_FONT_SIZE, 12);
-		sizeBox.setSelectedItem(fontsize);
+		sizeBox = new JComboBox<>(SIZES);
+		tabBox = new JComboBox<>(WIDTHS);
 
 		JPanel selectPanel = createPanel("Source");
 		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
@@ -94,13 +98,15 @@ public class FormatView extends AbstractBase {
 		selectPanel.add(srcBox);
 		selectPanel.add(new JLabel("    Font: "));
 		selectPanel.add(fontBox);
-		selectPanel.add(new JLabel("    Size: "));
+		selectPanel.add(new JLabel("    Font Size: "));
 		selectPanel.add(sizeBox);
+		selectPanel.add(new JLabel("    Tab Width: "));
+		selectPanel.add(tabBox);
 
 		// ------------------------------------------------------------
 
-		diffPanel = new DiffPanel(400, 400, fontBox, sizeBox, "Original Source", "Formatted Source");
-		diffPanel.addPropertyChangeListener(DiffPanel.CLICK1_LEFT, new PropertyChangeListener() {
+		contentPanel = new ContentPanel(400, 400, fontBox, sizeBox, tabBox, "Original Source", "Formatted Source");
+		contentPanel.addPropertyChangeListener(ContentPanel.CLICK1_LEFT, new PropertyChangeListener() {
 
 			@Override
 			public void propertyChange(PropertyChangeEvent e) {
@@ -117,18 +123,25 @@ public class FormatView extends AbstractBase {
 		// ------------------------------------------------------------
 
 		content.add(selectPanel, BorderLayout.NORTH);
-		content.add(diffPanel, BorderLayout.CENTER);
+		content.add(contentPanel, BorderLayout.CENTER);
 		content.add(fPanel, BorderLayout.SOUTH);
 
 		setLocation();
 		frame.setVisible(true);
+
+		Integer fontsize = prefs.getInt(KEY_FONT_SIZE, 12);
+		sizeBox.setSelectedItem(fontsize);
+
+		Integer width = prefs.getInt(KEY_TAB_WIDTH, 4);
+		tabBox.setSelectedItem(width);
 	}
 
 	@Override
 	protected void saveWindowClosingPrefs(Preferences prefs) {
 		Font font = (Font) fontBox.getSelectedItem();
 		prefs.put(KEY_FONT_NAME, font.getName());
-		prefs.putInt(KEY_FONT_SIZE, font.getSize());
+		prefs.putInt(KEY_FONT_SIZE, (int) sizeBox.getSelectedItem());
+		prefs.putInt(KEY_TAB_WIDTH, (int) tabBox.getSelectedItem());
 	}
 
 	protected void selectFeatureData(Point loc) {
@@ -180,53 +193,51 @@ public class FormatView extends AbstractBase {
 
 	private class Formatter extends SwingWorker<String, Object> {
 
-		private String original;
-		private String formatted;
-		private boolean valid;
-
 		@Override
 		protected String doInBackground() throws Exception {
 			try {
 				SourceListModel model = (SourceListModel) srcBox.getModel();
 				String pathname = model.getSelectedPathname();
-				original = loadContent(pathname);
+				sourceContent = loadContent(pathname);
 				tool.setSourceFiles(pathname);
-				tool.setTabWidth(4);
 				tool.execute();
-				formatted = tool.getFormatted();
-				valid = true;
 			} catch (Exception e) {
 				Log.error(this, "Error in format execution", e);
 				throw e;
 			}
-			return formatted;
+			return null;
 		}
 
 		@Override
 		protected void done() {
-			if (valid) {
-				ProcessMgr mgr = tool.getMgr();
-				int srcWidth = mgr.getDocModel().getDocument().getTabWidth();
-				int fmtWidth = Tool.settings.tabWidth;
-				diffPanel.setTabStops(srcWidth, fmtWidth);
-				diffPanel.load(original, formatted);
-				formatPanel.load(tool.getPerfData());
+			displayResults();
+		}
+	}
 
-				// create line/features index
-				index = new HashMap<>();
-				List<Feature> features = tool.getMgr().getDocModel().getFeatures();
-				for (Feature feature : features) {
-					Integer line = feature.getLine();
-					TreeSet<Feature> lfs = index.get(line);
-					if (lfs == null) {
-						lfs = sortedSet();
-						index.put(line, lfs);
-					}
-					lfs.add(feature);
+	protected void displayResults() {
+		contentPanel.clear();
+		formatPanel.clearAll();
+
+		String formatted = tool.getFormatted();
+		if (formatted != null && !formatted.isEmpty()) {
+			ProcessMgr mgr = tool.getMgr();
+			int width = mgr.getDocModel().getDocument().getTabWidth();
+			contentPanel.setTabStops(width);
+
+			contentPanel.load(sourceContent, formatted);
+			formatPanel.load(tool.getPerfData());
+
+			// create line/features index
+			index = new HashMap<>();
+			List<Feature> features = tool.getMgr().getDocModel().getFeatures();
+			for (Feature feature : features) {
+				Integer line = feature.getLine();
+				TreeSet<Feature> lfs = index.get(line);
+				if (lfs == null) {
+					lfs = sortedSet();
+					index.put(line, lfs);
 				}
-			} else {
-				diffPanel.clear();
-				formatPanel.clearAll();
+				lfs.add(feature);
 			}
 		}
 	}

@@ -62,9 +62,8 @@ public class Builder extends ParseData {
 		String aspect = parser.getRuleNames()[rule];
 		int length = ruleLength(start, stop);
 		int visCol = tokenVisOffsetIndex.get(ctx.start);
-		Format format = new Format(this, ctx);
 		Feature feature = Feature.create(mgr, Kind.RULE, aspect, doc.getDocId(), type, start, stop, length, visCol,
-				format, false, false);
+				null, false, false);
 		contextFeatureIndex.put(ctx, feature);
 		tokenRuleIndex.put(start, ctx);
 		typeSet.add(type);

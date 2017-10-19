@@ -243,7 +243,7 @@ public class Feature implements Comparable<Feature> {
 		return text;
 	}
 
-	/** Returns the combined type of the feature */
+	/** Returns the combined (rule/terminal) type of the feature */
 	public int getType() {
 		return type;
 	}
@@ -263,14 +263,17 @@ public class Feature implements Comparable<Feature> {
 		return length;
 	}
 
+	/** Returns the column in the current line (0..n) */
 	public int getCol() {
 		return col;
 	}
 
+	/** Returns the visual column in the current line (0..n) */
 	public int getVisCol() {
 		return visCol;
 	}
 
+	/** Returns the line (0..n) */
 	public int getLine() {
 		return line;
 	}
@@ -312,7 +315,7 @@ public class Feature implements Comparable<Feature> {
 	}
 
 	public boolean isAligned() {
-		return format.alignAbove || format.alignBelow;
+		return format.alignedAbove || format.alignedBelow;
 	}
 
 	public boolean isRule() {
@@ -402,7 +405,7 @@ public class Feature implements Comparable<Feature> {
 
 	public double weightSimilarity(Feature other) {
 		return Math.max(getEquivalentWeight(), other.getEquivalentWeight())
-				/ (double) mgr.getCorpusModel().getMaxEquivs();
+				/ (double) mgr.getCorpusModel().getMaxEquivs(other.getType());
 	}
 
 	// ===============================================================================================

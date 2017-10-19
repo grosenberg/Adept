@@ -3,6 +3,7 @@ package net.certiv.adept.model;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,8 @@ import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.parser.Builder;
 import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.model.tune.Boosts;
-import net.certiv.adept.model.util.CorpusAnalyzer;
 import net.certiv.adept.model.util.Chunk;
+import net.certiv.adept.model.util.CorpusAnalyzer;
 import net.certiv.adept.model.util.DamerauAlignment;
 import net.certiv.adept.model.util.Factor;
 import net.certiv.adept.model.util.Kind;
@@ -40,7 +41,8 @@ public class CorpusModel {
 	// boost values set
 	@Expose private Boosts boosts;
 	// maximum number of equivalent features found in corpus
-	@Expose private int maxEquivs;
+	// key=type; value=max number of equivs
+	@Expose private Map<Integer, Integer> maxEquivs;
 
 	// corpus manager
 	private ProcessMgr mgr;
@@ -55,9 +57,9 @@ public class CorpusModel {
 	private boolean consistent; // current state of model
 
 	public CorpusModel() {
-		super();
 		pathnames = new LinkedHashMap<>();
 		boosts = new Boosts();
+		maxEquivs = new HashMap<>();
 		features = new ArrayList<>();
 		docFeatures = new LinkedHashMap<>();
 		index = ArrayListMultimap.create();
@@ -157,7 +159,10 @@ public class CorpusModel {
 			if (unique.equivalentTo(next)) {
 				unique.mergeEquivalent(next);
 				next.setEquivalent(true);
-				if (unique.getEquivalentWeight() > maxEquivs) maxEquivs = unique.getEquivalentWeight();
+				int type = unique.getType();
+				if (unique.getEquivalentWeight() > getMaxEquivs(type)) {
+					maxEquivs.put(type, unique.getEquivalentWeight());
+				}
 				return false;
 			}
 		}
@@ -173,15 +178,9 @@ public class CorpusModel {
 	/** Perform operations to finalize the rebuilt corpus. */
 	public void finalizeBuild() {
 		getFeatureIndex();
+		CorpusAnalyzer analyzer = new CorpusAnalyzer();
 		for (int type : index.keySet()) {
-			List<Feature> tfs = index.get(type);
-			CorpusAnalyzer ana = new CorpusAnalyzer();
-			for (Feature tf : tfs) {
-				ana.accum(tf);
-			}
-			for (Feature tf : tfs) {
-				ana.apply(tf);
-			}
+			analyzer.process(index.get(type));
 		}
 		consistent = true;
 	}
@@ -303,8 +302,9 @@ public class CorpusModel {
 		this.consistent = consistent;
 	}
 
-	public int getMaxEquivs() {
-		return maxEquivs;
+	public int getMaxEquivs(int type) {
+		Integer equivs = maxEquivs.get(type);
+		return equivs != null ? equivs : 1;
 	}
 
 	public void clear() {

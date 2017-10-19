@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
@@ -21,27 +22,24 @@ import javax.swing.ListCellRenderer;
 
 public class FontChoiceBox extends JComboBox<Font> {
 
+	private static final Pattern NON_REGULAR = Pattern.compile(
+			".*?(bold|italic|black|condensed|light|heavy|oblique|drawing|typographic|symbols|multinational).*?");
+
 	private final Set<Component> components = new LinkedHashSet<>();
 
 	private Font defaultFont;
+	private int style;
 	private boolean mono = true;
 
 	public FontChoiceBox(String fontname, int style, boolean mono) {
 		super();
-		this.defaultFont = new Font(fontname, style, 1);
+		this.style = style;
 		this.mono = mono;
+		this.defaultFont = new Font(fontname, style, 1);
 
 		setRenderer(new FontCellRenderer());
 		loadFonts();
 		setSelectedItem(defaultFont);
-	}
-
-	private void loadFonts() {
-		for (Font font : getFonts(mono)) {
-			if (font.canDisplayUpTo(font.getName()) == -1) {
-				addItem(font);
-			}
-		}
 	}
 
 	public void addComponent(Component... components) {
@@ -51,7 +49,13 @@ public class FontChoiceBox extends JComboBox<Font> {
 		fireItemStateChanged(new ItemEvent(this, idx, font, ItemEvent.SELECTED));
 	}
 
-	private List<Font> getFonts(boolean mono) {
+	private void loadFonts() {
+		for (Font font : getFonts()) {
+			addItem(font);
+		}
+	}
+
+	private List<Font> getFonts() {
 		Font fonts[] = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
 		Arrays.sort(fonts, new Comparator<Font>() {
 
@@ -62,9 +66,14 @@ public class FontChoiceBox extends JComboBox<Font> {
 		});
 		List<Font> allFonts = new ArrayList<>();
 		for (Font font : fonts) {
-			if (font.getFontName().matches("[a-zA-Z ]+")) {
-				allFonts.add(font);
-			}
+			String name = font.getFontName();
+			if (font.getStyle() != style) continue;
+			if (Character.UnicodeBlock.of('a') != Character.UnicodeBlock.BASIC_LATIN) continue;
+			if (font.canDisplayUpTo(name) != -1) continue;
+			if (!name.matches("[a-zA-Z ]+")) continue;
+			if (NON_REGULAR.matcher(name.toLowerCase()).matches()) continue;
+
+			allFonts.add(font);
 		}
 
 		if (!mono) return allFonts;
@@ -92,8 +101,8 @@ public class FontChoiceBox extends JComboBox<Font> {
 
 			Component result = renderer.getListCellRendererComponent(list, font.getName(), index, isSelected,
 					cellHasFocus);
-			float size = result.getFont().getSize();
-			result.setFont(font.deriveFont(size));
+			//			float size = result.getFont().getSize();
+			result.setFont(font.deriveFont((float) 12));
 			return result;
 		}
 	}

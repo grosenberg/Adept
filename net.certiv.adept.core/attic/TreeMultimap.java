@@ -6,16 +6,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
- * Multimap implemented as a TreeMap with ArraySet instance values
+ * Multimap implemented as a TreeMap with TreeSet instance values
  *
  * @param <K>
  * @param <V>
  */
 public class TreeMultimap<K, V> {
 
-	private final TreeMap<K, ArraySet<V>> map;
+	private final TreeMap<K, Set<V>> map;
 	private final Comparator<? super V> valComp;
 
 	public TreeMultimap() {
@@ -32,7 +33,7 @@ public class TreeMultimap<K, V> {
 	}
 
 	/** Get as set. */
-	public ArraySet<V> get(K key) {
+	public Set<V> get(K key) {
 		return map.get(key);
 	}
 
@@ -42,18 +43,18 @@ public class TreeMultimap<K, V> {
 	}
 
 	public boolean put(K key, V value) {
-		ArraySet<V> set = map.get(key);
+		TreeSet<V> set = (TreeSet<V>) map.get(key);
 		if (set == null) {
-			set = new ArraySet<>(valComp);
+			set = new TreeSet<>(valComp);
 			map.put(key, set);
 		}
 		return set.add(value);
 	}
 
 	public boolean put(K key, Collection<V> values) {
-		ArraySet<V> set = map.get(key);
+		TreeSet<V> set = (TreeSet<V>) map.get(key);
 		if (set == null) {
-			set = new ArraySet<>(valComp);
+			set = new TreeSet<>(valComp);
 			map.put(key, set);
 		}
 		return set.addAll(values);
@@ -88,7 +89,7 @@ public class TreeMultimap<K, V> {
 	}
 
 	public Set<V> values() {
-		Set<V> results = new ArraySet<>(valComp);
+		Set<V> results = new TreeSet<>(valComp);
 		for (Set<V> set : map.values()) {
 			results.addAll(set);
 		}

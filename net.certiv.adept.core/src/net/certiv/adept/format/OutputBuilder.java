@@ -1,20 +1,26 @@
 package net.certiv.adept.format;
 
+import org.antlr.v4.runtime.Token;
+
 import net.certiv.adept.util.Strings;
 
 public class OutputBuilder {
 
-	private StringBuilder sb = new StringBuilder();
+	private final StringBuilder sb = new StringBuilder();
 
-	public OutputBuilder() {
-		super();
+	public OutputBuilder() {}
+
+	public void add(Token token) {
+		sb.append(token.getText());
 	}
 
 	public void add(String text) {
 		sb.append(text);
 	}
 
-	public void ensureLastLineTerminated() {
+	public void flush() {}
+
+	public void ensureEndEol() {
 		int dot = sb.lastIndexOf(Strings.EOL);
 		dot = Math.max(dot, 0);
 		String last = sb.substring(dot).trim();

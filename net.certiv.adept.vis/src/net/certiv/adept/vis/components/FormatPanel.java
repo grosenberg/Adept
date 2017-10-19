@@ -330,7 +330,7 @@ public class FormatPanel extends JPanel {
 			Path pathname = Paths.get(corpusDocName);
 			txtMatName.setText(pathname.getFileName().toString());
 
-			Format mergedFormat = new Format(docFormat, matchedFormat);
+			Format mergedFormat = Format.merge(docFormat, matchedFormat);
 			txtMerged.setText(mergedFormat.toString());
 
 		} else {
