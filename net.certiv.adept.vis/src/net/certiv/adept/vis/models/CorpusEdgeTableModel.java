@@ -8,23 +8,23 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.model.util.Location;
+import net.certiv.adept.util.ArraySet;
+import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusEdgeTableModel extends AbstractTableModel {
 
 	private final String[] columnNames = { "Index", "Relation", "Leaf", "Type", "Location", "Text", "Metric" };
 	private Object[][] rowData;
 
-	public CorpusEdgeTableModel(ProcessMgr mgr, ArrayListMultimap<Integer, Feature> typeIndex, ISourceParser lang,
-			int key, int idx) {
+	public CorpusEdgeTableModel(ProcessMgr mgr, TreeMultimap<Integer, Feature> typeIndex, ISourceParser lang, int key,
+			int idx) {
 
-		List<Feature> features = typeIndex.get(key);
+		ArraySet<Feature> features = typeIndex.get(key);
 		Feature feature = features.get(idx);
 		Collection<Edge> edges = feature.getEdgeSet().getEdges();
 

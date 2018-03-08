@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 
+/** ArraySet is an ArrayList that effectively implements the Set interface. */
 public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 
 	private final List<E> elements = new ArrayList<>();
@@ -37,6 +38,7 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 	 * @return {@code true}if this set is modified, {@code false} otherwise.
 	 * @throws ClassCastException when the class of the object is inappropriate for this set.
 	 */
+	@Override
 	public boolean add(E e) {
 		if (elements.contains(e)) return false;
 		boolean result = elements.add(e);
@@ -53,11 +55,12 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 	 * @return {@code true}if this set is modified, {@code false} otherwise.
 	 * @throws ClassCastException when the class of the object is inappropriate for this set.
 	 */
+	@Override
 	public boolean addAll(Collection<? extends E> c) {
 		boolean result = false;
 		for (E o : c) {
 			if (!elements.contains(o)) {
-				result = result || elements.add(o);
+				result = elements.add(o) || result;
 			}
 		}
 		if (result && comp != null) elements.sort(comp);
@@ -86,14 +89,17 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 		return elements.lastIndexOf(o);
 	}
 
+	@Override
 	public boolean contains(Object o) {
 		return elements.contains(o);
 	}
 
+	@Override
 	public boolean containsAll(Collection<?> c) {
 		return elements.containsAll(c);
 	}
 
+	@Override
 	public boolean retainAll(Collection<?> c) {
 		return elements.retainAll(c);
 	}
@@ -124,10 +130,12 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 		return elements.remove(index);
 	}
 
+	@Override
 	public boolean remove(Object o) {
 		return elements.remove(o);
 	}
 
+	@Override
 	public boolean removeAll(Collection<?> c) {
 		return elements.removeAll(c);
 	}
@@ -137,6 +145,7 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 		return elements.iterator();
 	}
 
+	@Override
 	public boolean isEmpty() {
 		return elements.isEmpty();
 	}
@@ -146,6 +155,7 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 		return elements.size();
 	}
 
+	@Override
 	public void clear() {
 		elements.clear();
 	}
@@ -155,10 +165,12 @@ public class ArraySet<E> extends AbstractSet<E> implements SortedSet<E> {
 		return comp;
 	}
 
+	@Override
 	public Object[] toArray() {
 		return elements.toArray();
 	}
 
+	@Override
 	public <T> T[] toArray(T[] a) {
 		return elements.toArray(a);
 	}

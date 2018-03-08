@@ -1,43 +1,6 @@
 package net.certiv.adept.lang.java.parser;
 
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.AND_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.BLOCKCOMMENT;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.COLON;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.COMMA;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.DIV_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.EQ;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.ERRCHAR;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.GE;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.GT;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.HWS;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.ID;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LBRACE;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LBRACK;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LE;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LEFT_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LINECOMMENT;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LPAREN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.LT;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.L_AND;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.L_OR;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.MINUS_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.MOD_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.MULT_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.NEQ;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.NUM;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.OR_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.PLUS_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.QID;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.RARROW;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.RBRACE;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.RBRACK;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.RIGHT_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.RPAREN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.SEMI;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.STRING;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.UR_ASSIGN;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.VWS;
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.XOR_ASSIGN;
+import static net.certiv.adept.lang.java.parser.gen.JavaLexer.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,14 +15,14 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.lang.AdeptTokenFactory;
+import net.certiv.adept.lang.Builder;
+import net.certiv.adept.lang.ISourceParser;
+import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.ParserErrorListener;
 import net.certiv.adept.lang.java.parser.gen.JavaLexer;
 import net.certiv.adept.lang.java.parser.gen.JavaParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.parser.AdeptTokenFactory;
-import net.certiv.adept.model.parser.Builder;
-import net.certiv.adept.model.parser.ISourceParser;
-import net.certiv.adept.model.parser.ParseData;
-import net.certiv.adept.model.parser.ParserErrorListener;
 import net.certiv.adept.tool.ErrorType;
 
 public class JavaSourceParser implements ISourceParser {
@@ -74,7 +37,7 @@ public class JavaSourceParser implements ISourceParser {
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(builder.charStream);
+		AdeptTokenFactory factory = new AdeptTokenFactory();
 		builder.lexer.setTokenFactory(factory);
 		builder.parser.setTokenFactory(factory);
 		builder.parser.removeErrorListeners();
@@ -96,12 +59,12 @@ public class JavaSourceParser implements ISourceParser {
 		builder.VARS = new int[] { ID, NUM, STRING, QID };
 		builder.BLOCKCOMMENT = BLOCKCOMMENT;
 		builder.LINECOMMENT = LINECOMMENT;
-		builder.ALIGN_SAME = new int[] { ID, QID, NUM, STRING, BLOCKCOMMENT, LINECOMMENT };
-		builder.ALIGN_ANY = new int[] { COLON, SEMI, COMMA, LT, GT, EQ, LE, GE, NEQ, L_AND, L_OR, LPAREN, RPAREN,
-				LBRACE, RBRACE, LBRACK, RBRACK, RARROW, PLUS_ASSIGN, MINUS_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, AND_ASSIGN,
-				OR_ASSIGN, XOR_ASSIGN, MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
+		builder.ALIGN_IDENT = new int[] { BLOCKCOMMENT, LINECOMMENT, ID, QID, NUM, STRING, LT, GT, EQ, LE, GE, NEQ,
+				L_AND, L_OR, PLUS_ASSIGN, MINUS_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, AND_ASSIGN, OR_ASSIGN, XOR_ASSIGN,
+				MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
+		// builder.ALIGN_PAIR = new int[][] { {} };
 		builder.ERR_TOKEN = ERRCHAR;
-		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 32;
+		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 16;
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
 		builder.parser = new JavaParser(builder.tokenStream);
 	}
@@ -135,7 +98,7 @@ public class JavaSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public ParseData getParseData() {
+	public ParseRecord getParseData() {
 		return builder;
 	}
 

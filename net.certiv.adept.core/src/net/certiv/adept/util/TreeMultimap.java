@@ -87,8 +87,8 @@ public class TreeMultimap<K, V> {
 		return map.keySet();
 	}
 
-	public Set<V> values() {
-		Set<V> results = new ArraySet<>(valComp);
+	public ArraySet<V> values() {
+		ArraySet<V> results = new ArraySet<>(valComp);
 		for (Set<V> set : map.values()) {
 			results.addAll(set);
 		}
@@ -113,5 +113,14 @@ public class TreeMultimap<K, V> {
 
 	public void clear() {
 		map.clear();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		builder.append(map.toString());
+		builder.append("]");
+		return builder.toString();
 	}
 }

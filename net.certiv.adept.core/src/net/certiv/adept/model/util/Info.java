@@ -26,7 +26,7 @@ public class Info {
 		blank = text == null || text.isEmpty();
 		if (blank) return;
 
-		beg = Strings.firstNonWS(text);
+		beg = Strings.firstNonHWS(text);
 		len = text.length();
 		end = len - 1;
 

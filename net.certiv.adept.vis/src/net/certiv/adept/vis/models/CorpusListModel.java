@@ -4,10 +4,10 @@ import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Kind;
+import net.certiv.adept.util.ArraySet;
+import net.certiv.adept.util.TreeMultimap;
 import net.certiv.adept.vis.models.CorpusListModel.FeatureListItem;
 
 public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
@@ -35,7 +35,7 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 
 	private List<String> ruleNames;
 	private List<String> tokenNames;
-	private ArrayListMultimap<Integer, Feature> typeIndex;
+	private TreeMultimap<Integer, Feature> typeIndex;
 
 	public CorpusListModel(List<String> ruleNames, List<String> tokenNames) {
 		super();
@@ -43,12 +43,12 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 		this.tokenNames = tokenNames;
 	}
 
-	public void addElements(ArrayListMultimap<Integer, Feature> typeIndex) {
+	public void addElements(TreeMultimap<Integer, Feature> typeIndex) {
 		this.typeIndex = typeIndex;
 
 		int line = 1;
 		for (Integer key : typeIndex.keySet()) {
-			List<Feature> features = typeIndex.get(key);
+			ArraySet<Feature> features = typeIndex.get(key);
 
 			int type = key;
 			String name;
@@ -68,7 +68,7 @@ public class CorpusListModel extends DefaultComboBoxModel<FeatureListItem> {
 		setSelectedItem(getElementAt(0));
 	}
 
-	public List<Feature> getSelectedFeatures() {
+	public ArraySet<Feature> getSelectedFeatures() {
 		FeatureListItem item = (FeatureListItem) super.getSelectedItem();
 		return typeIndex.get(item.type);
 	}

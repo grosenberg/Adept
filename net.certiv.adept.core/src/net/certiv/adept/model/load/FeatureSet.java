@@ -1,18 +1,10 @@
 package net.certiv.adept.model.load;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.core.ProcessMgr;
-import net.certiv.adept.model.Edge;
-import net.certiv.adept.model.EdgeSet;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.util.Kind;
-import net.certiv.adept.util.Log;
 
 /**
  * Functions only as the persistance root for the storage of a feature set. Not used as part of the
@@ -26,7 +18,7 @@ public class FeatureSet {
 
 	/**
 	 * Collection of features.
-	 * 
+	 *
 	 * @param docId the id of the document that originated these features
 	 * @param pathname the pathname of the document that originated these features
 	 * @param features the list of features identified in the document
@@ -49,36 +41,36 @@ public class FeatureSet {
 		return features;
 	}
 
-	public List<Feature> getReducedFeatures() {
-		List<Feature> result = new ArrayList<>();
-		for (Feature feature : features) {
-			if (feature.getKind() == Kind.RULE) continue;
-			if (feature.isEquivalent()) continue;
-			result.add(feature);
-		}
-		return result;
-	}
+	// public List<Feature> getReducedFeatures() {
+	// List<Feature> result = new ArrayList<>();
+	// for (Feature feature : features) {
+	// if (feature.getKind() == Kind.RULE) continue;
+	// if (feature.isEquivalent()) continue;
+	// result.add(feature);
+	// }
+	// return result;
+	// }
 
-	/**
-	 * Restore feature objects to edgeSet using the persisted indicies
-	 * 
-	 * @param mgr
-	 */
-	public void fixEdgeRefs(ProcessMgr mgr) {
-		Map<Long, Feature> cache = new HashMap<>();
-		for (Feature feature : features) {
-			feature.setMgr(mgr);
-			cache.put(feature.getId(), feature);
-		}
-		for (Feature feature : features) {
-			EdgeSet edgeSet = feature.getEdgeSet();
-			for (Edge edge : edgeSet.getEdges()) {
-				edge.root = cache.get(edge.rootId);
-				edge.leaf = cache.get(edge.leafId);
-				if (edge.root == null || edge.leaf == null) {
-					Log.error(this, "EdgeRef fixup failed.");
-				}
-			}
-		}
-	}
+	// /**
+	// * Restore feature objects to edgeSet using the persisted indicies
+	// *
+	// * @param mgr
+	// */
+	// public void fixEdgeRefs(CoreMgr mgr) {
+	// Map<Long, Feature> cache = new HashMap<>();
+	// for (Feature feature : features) {
+	// feature.setMgr(mgr);
+	// cache.put(feature.getId(), feature);
+	// }
+	// for (Feature feature : features) {
+	// EdgeSet edgeSet = feature.getEdgeSet();
+	// for (Edge edge : edgeSet.getEdges()) {
+	// edge.root = cache.get(edge.rootId);
+	// edge.leaf = cache.get(edge.leafId);
+	// if (edge.root == null || edge.leaf == null) {
+	// Log.error(this, "EdgeRef fixup failed.");
+	// }
+	// }
+	// }
+	// }
 }

@@ -1,10 +1,9 @@
 package net.certiv.adept.format;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.format.align.AlignBuffer;
+import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.parser.ParseData;
 
 /**
  * Document stream formatter. Sequentially examines token spans
@@ -16,21 +15,21 @@ import net.certiv.adept.model.parser.ParseData;
  * <p>
  * Possibly switch to an incremental formatter. See,
  * https://github.com/eclipse/eclipse.platform.text/blob/master/org.eclipse.text/src/org/eclipse/text/edits/TextEdit.java
+ * <p>
+ * https://github.com/eclipse/eclipse.jdt.core/blob/master/org.eclipse.jdt.core/formatter/org/eclipse/jdt/internal/formatter/linewrap/FieldAligner.java
  */
 public class Formatter {
 
 	private Document doc;
-	private ParseData data;
+	private ParseRecord data;
 	private Settings settings;
 	private OutputBuilder builder;
-	private AlignBuffer buffer;
 
 	public Formatter(DocModel model, Settings settings) {
 		this.doc = model.getDocument();
 		this.data = doc.getParseData();
 		this.settings = settings;
-		this.builder = new OutputBuilder();
-		this.buffer = new AlignBuffer(builder, doc.getTabWidth());
+		this.builder = new OutputBuilder(doc.getTabWidth(), settings);
 
 	}
 
@@ -40,22 +39,17 @@ public class Formatter {
 			for (int idx = 0; !span.done; idx = span.end) {
 				span = span.next(idx);
 				if (span.isAligned()) {
-					buffer.addAligned(span.lhs, span.visCol());
+					builder.aligned(span.lhs, span.visCol(), span.numWs());
 				} else {
-					buffer.add(span.lhs);
+					builder.add(span.lhs);
 				}
 				if (span.breaks()) {
-					buffer.add(span.trailingWs());
-					buffer.add(span.eols());
-					buffer.add(span.indents());
+					builder.eol(span.trailingWs(), span.eols(), span.indents());
 				} else {
-					buffer.add(span.getGapWs());
+					builder.add(span.getGapWs());
 				}
 			}
 			builder.flush();
-			if (settings.forceLastLineBlank) {
-				builder.ensureEndEol();
-			}
 		}
 		return builder;
 	}

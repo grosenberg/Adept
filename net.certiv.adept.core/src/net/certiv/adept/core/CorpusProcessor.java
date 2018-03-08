@@ -1,18 +1,17 @@
 package net.certiv.adept.core;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Document;
+import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Time;
 
 public class CorpusProcessor extends ParseProcessor {
 
@@ -21,7 +20,7 @@ public class CorpusProcessor extends ParseProcessor {
 
 	private CorpusModel corModel;
 
-	public CorpusProcessor(ProcessMgr mgr, Settings settings, List<String> pathnames) {
+	public CorpusProcessor(CoreMgr mgr, Settings settings, List<String> pathnames) {
 		super(mgr, settings);
 
 		if (pathnames == null || pathnames.isEmpty()) {
@@ -56,16 +55,15 @@ public class CorpusProcessor extends ParseProcessor {
 		CorpusData.removeData(settings.corpusDir);
 		corModel = new CorpusModel(settings.corpusDir);
 
-		Instant start = Time.start();
 		List<Document> documents = CorpusDocs.readDocuments(settings.corpusDir, settings.corpusExt, settings.tabWidth);
 		for (Document doc : documents) {
 			if (pathnames.contains(doc.getPathname())) {
+				Feature.clearNextId();
 				parseDocument(doc, false);
 				corModel.merge(builder);
 			}
 		}
-		corModel.finalizeBuild();	// post-build operations
-		mgr.perfData.rebuild = Time.end(start);
+		corModel.finalizeBuild(builder);	// post-build operations
 
 		Thread t = new Thread(new SaveOp(corModel, settings.corpusDir));
 		t.start();

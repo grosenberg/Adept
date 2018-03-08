@@ -11,10 +11,12 @@ parser grammar XVisitorParser;
 
 options {
 	tokenVocab = XVisitorLexer	;
+//	TokenLabelType = AdeptToken ;
 }
 
 @header {
 	package net.certiv.adept.lang.xvisitor.parser.gen;
+	import net.certiv.adept.lang.AdeptToken;
 }
 
 grammarSpec
@@ -45,7 +47,7 @@ optionValue
     ;
 
 action
-	:	AT ID actionBlock 
+	:	AT name=ID actionBlock
 	;
 
 xmain

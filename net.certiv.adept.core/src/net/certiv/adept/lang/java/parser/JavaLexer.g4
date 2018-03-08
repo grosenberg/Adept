@@ -6,7 +6,7 @@ options {
 
 @header {
 	package net.certiv.adept.lang.java.parser.gen;
-	import net.certiv.adept.model.parser.LexerErrorStrategy;
+	import net.certiv.adept.lang.LexerErrorStrategy;
 }
 
 BLOCKCOMMENT
@@ -101,7 +101,7 @@ RBRACK		: ']'		;
 RARROW		: '->'		;
 BANG		: '!'		;
 QMARK		: '?'		;
-STAR		: '*'		;
+// STAR		: '*'		;
 PLUS		: '+'		;
 MINUS		: '-'		;
 MULT		: '*'		;

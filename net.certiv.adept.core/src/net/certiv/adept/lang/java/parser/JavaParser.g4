@@ -2,6 +2,7 @@ parser grammar JavaParser;
 
 options {
     tokenVocab = JavaLexer;
+	TokenLabelType = AdeptToken ;
 }
 
 @header {

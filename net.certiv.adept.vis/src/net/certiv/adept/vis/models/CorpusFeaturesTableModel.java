@@ -5,23 +5,23 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Kind;
+import net.certiv.adept.util.ArraySet;
+import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusFeaturesTableModel extends AbstractTableModel {
 
 	private final String[] columnNames = { "Index", "Kind", "Type", "Name", "Instances" };
 	private Object[][] rowData;
 
-	public CorpusFeaturesTableModel(ArrayListMultimap<Integer, Feature> typeIndex, List<String> ruleNames,
+	public CorpusFeaturesTableModel(TreeMultimap<Integer, Feature> typeIndex, List<String> ruleNames,
 			List<String> tokenNames) {
 
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
 		for (Integer key : typeIndex.keySet()) {
-			List<Feature> features = typeIndex.get(key);
+			ArraySet<Feature> features = typeIndex.get(key);
 			Feature feature = features.get(0);
 
 			String kind = feature.getKind().toString();

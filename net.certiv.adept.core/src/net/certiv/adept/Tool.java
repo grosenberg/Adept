@@ -6,8 +6,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-import net.certiv.adept.core.PerfData;
-import net.certiv.adept.core.ProcessMgr;
+import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.load.Config;
 import net.certiv.adept.tool.ErrorType;
@@ -61,7 +60,7 @@ public class Tool extends ToolBase {
 	// fields set by init/validate
 	public static Settings settings;
 
-	private ProcessMgr mgr;
+	private CoreMgr mgr;
 
 	private String version;
 	private List<String> sourceFiles;
@@ -87,7 +86,7 @@ public class Tool extends ToolBase {
 	/**
 	 * Creates an embedded instance of the tool configured using command-line styled arguments. The
 	 * options are validated and, if valid, the tool is executed.
-	 * 
+	 *
 	 * @param args command-line styled arguments
 	 */
 	public Tool(String[] args) {
@@ -109,12 +108,12 @@ public class Tool extends ToolBase {
 	 */
 	public Tool() {
 		super();
-		mgr = new ProcessMgr();
+		mgr = new CoreMgr();
 	}
 
 	/**
 	 * Configure the tool using command-line styled arguments.
-	 * 
+	 *
 	 * @param args command-line styled arguments
 	 * @return true iff all of the command-line styled arguments are recognized
 	 */
@@ -275,13 +274,10 @@ public class Tool extends ToolBase {
 	}
 
 	/**
-	 * Tool entry point processing one or more source documents.
-	 * 
-	 * If the tool is set for learning, the source documents are added to the corpus document repository
-	 * for subsequent inclusion into the corpus model.
-	 * 
-	 * Otherwise, each source document is parsed to create a document model containing a set of
-	 * features. Each such feature is matched against corpus model features to discern applicable
+	 * Tool entry point processing one or more source documents. If the tool is set for learning, the
+	 * source documents are added to the corpus document repository for subsequent inclusion into the
+	 * corpus model. Otherwise, each source document is parsed to create a document model containing a
+	 * set of features. Each such feature is matched against corpus model features to discern applicable
 	 * formatting attributes. If formatting is enabled, the attributes are applied to produce a revised
 	 * document that is written to disk.
 	 */
@@ -289,7 +285,7 @@ public class Tool extends ToolBase {
 		mgr.execute(settings, sourceFiles);
 	}
 
-	public ProcessMgr getMgr() {
+	public CoreMgr getMgr() {
 		return mgr;
 	}
 
@@ -302,10 +298,10 @@ public class Tool extends ToolBase {
 		return mgr.getDocModel().getDocument().getModified();
 	}
 
-	/** Returns the currently collected performance data */
-	public PerfData getPerfData() {
-		return mgr.perfData;
-	}
+	// /** Returns the currently collected performance data */
+	// public PerfData getPerfData() {
+	// return mgr.perfData;
+	// }
 
 	public Path getCorpusDir() {
 		return settings.corpusDir;

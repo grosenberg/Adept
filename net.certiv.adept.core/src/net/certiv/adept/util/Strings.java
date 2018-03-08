@@ -1,10 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2006, 2008 IBM Corporation and others. All rights reserved. This program and the
- * accompanying materials are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html Contributors: IBM Corporation - initial API and
- * implementation
- *******************************************************************************/
 package net.certiv.adept.util;
 
 import java.io.BufferedReader;
@@ -15,19 +8,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Helper class to provide String manipulation functions not available in standard JDK.
- */
+/** Helper class to provide String manipulation functions not available in standard JDK. */
 public class Strings {
 
-	public static final String SPACE_MARK = "\u00B7";
 	public static final String PARA_MARK = "\u00B6";
-	public static final String TAB_MARK = "\u21E5";
-	public static final String TAB_MARK1 = "\u2B7E";
+	public static final String SPACE_MARK = "\u00B7";
+	public static final String TAB_MARK = "\u00BB";
+	public static final String ELLIPSIS_MARK = "\u2026";
+	public static final String LARR_MARK = "\u2190";
+	public static final String RARR_MARK = "\u2192";
 
+	public static final char EOP = File.separatorChar;	// path
 	public static final String EOL = System.lineSeparator();
-	public static final char EOP = File.separatorChar; // path separator
-	public static final char SPACE = ' ';
+	public static final String SPACE = " ";
 	public static final char TAB = '\t';
 	public static final char DOT = '.';
 
@@ -228,7 +221,13 @@ public class Strings {
 		return buf.toString();
 	}
 
-	public static int firstNonWS(String str) {
+	/**
+	 * Returns the index of the first non-horizontal whitespace character in the given string.
+	 * 
+	 * @param str the string to check
+	 * @return index of the first non-whitespace character
+	 */
+	public static int firstNonHWS(String str) {
 		if (str == null || str.isEmpty()) return -1;
 
 		for (int col = 0; col < str.length(); col++) {
@@ -323,23 +322,33 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the visual length of a given given line subject to the given visual tab width.
+	 * Returns the visual width of a given given line.
 	 *
 	 * @param line the string to measure
-	 * @return the visual length of <code>line</code>
+	 * @param tabWidth the visual width of a tab
+	 * @return the visual width of <code>text</code>
 	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
 	 */
 	public static int measureVisualWidth(CharSequence line, int tabWidth) {
 		return measureVisualWidth(line, tabWidth, 0);
 	}
 
-	public static int measureVisualWidth(CharSequence line, int tabWidth, int from) {
-		if (line == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
+	/**
+	 * Returns the visual width of a given given line.
+	 *
+	 * @param text the string to measure
+	 * @param tabWidth the visual width of a tab
+	 * @param from the visual starting offset of the text
+	 * @return the visual width of <code>text</code>
+	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
+	 */
+	public static int measureVisualWidth(CharSequence text, int tabWidth, int from) {
+		if (text == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
 
 		int width = from;
-		int max = line.length();
-		for (int idx = 0; idx < max; idx++) {
-			if (line.charAt(idx) == '\t') {
+		int len = text.length();
+		for (int idx = 0; idx < len; idx++) {
+			if (text.charAt(idx) == '\t') {
 				if (tabWidth > 0) width += tabWidth - width % tabWidth;
 			} else {
 				width++;
@@ -348,9 +357,9 @@ public class Strings {
 		return width - from;
 	}
 
-	public static String createVisualHWs(int tabWidth, int from, int to) {
+	public static String createVisualWs(int tabWidth, int from, int to) {
 		if (tabWidth < 1) tabWidth = 1;
-		if (from < 0 || to < from) throw new IllegalArgumentException();
+		if (from < 0 || to < from) throw new IllegalArgumentException(String.format("from %s to %s", from, to));
 
 		StringBuilder sb = new StringBuilder();
 		int dot = from;
@@ -366,12 +375,36 @@ public class Strings {
 		return sb.toString();
 	}
 
+	public static String abbreviate(String in, int len) {
+		if (in.length() <= len) return in;
+		String out = in.substring(0, len - 3);
+		return out + ELLIPSIS_MARK;
+	}
+
 	public static String encodeWS(String in) {
-		String out = in;
-		out = out.replace(" ", SPACE_MARK);
-		out = out.replace("\t", TAB_MARK);
-		out = out.replaceAll("\\R", PARA_MARK);
-		return out;
+		StringBuilder sb = new StringBuilder();
+		for (int idx = 0; idx < in.length(); idx++) {
+			char c = in.charAt(idx);
+			switch (c) {
+				case ' ':
+					sb.append(SPACE_MARK);
+					break;
+				case '\t':
+					sb.append(TAB_MARK);
+					break;
+				case '\r':
+					if (idx + 1 == in.length() || in.charAt(idx + 1) != '\n') {
+						sb.append(PARA_MARK);
+					}
+					break;
+				case '\n':
+					sb.append(PARA_MARK);
+					break;
+				default:
+					sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 
 	public static int count(String text, String mark) {

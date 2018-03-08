@@ -2,12 +2,12 @@ package net.certiv.adept.format.align;
 
 public class Mark implements Comparable<Mark> {
 
-	public int visCol;
+	public int stopCol;
 	public int line;
 	public int group;
 
-	public Mark(int visCol, int line, int group) {
-		this.visCol = visCol;
+	public Mark(int stopCol, int line, int group) {
+		this.stopCol = stopCol;
 		this.line = line;
 		this.group = group;
 	}
@@ -19,5 +19,13 @@ public class Mark implements Comparable<Mark> {
 		if (group < o.group) return -1;
 		if (group > o.group) return 1;
 		return 0;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("@" + stopCol);
+		builder.append(" " + line + ":" + group);
+		return builder.toString();
 	}
 }

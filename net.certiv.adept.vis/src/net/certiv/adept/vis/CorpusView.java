@@ -15,14 +15,13 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.TreeMultimap;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.models.CorpusEdgeSetTableModel;
 import net.certiv.adept.vis.models.CorpusEdgeTableModel;
@@ -53,7 +52,7 @@ public class CorpusView extends AbstractBase {
 
 	private ProcessMgr mgr;
 	private ISourceParser lang;
-	private ArrayListMultimap<Integer, Feature> typeIndex;
+	private TreeMultimap<Integer, Feature> typeIndex;
 	private int typeKey;
 
 	public CorpusView() {

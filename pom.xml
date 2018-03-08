@@ -31,13 +31,15 @@
 	<modules>
 		<module>net.certiv.adept.core</module>
 		<!-- <module>net.certiv.adept.vis</module> -->
+		
+		<module>net.certiv.adept.fmt</module>
 	</modules>
 
 	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
+				<version>3.7.0</version>
 				<configuration>
 					<source>${jdk.version}</source>
 					<target>${jdk.version}</target>

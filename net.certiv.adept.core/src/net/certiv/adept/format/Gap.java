@@ -1,6 +1,9 @@
 package net.certiv.adept.format;
 
+import java.util.StringJoiner;
+
 import net.certiv.adept.model.Format;
+import net.certiv.adept.util.Log;
 
 public class Gap {
 
@@ -15,13 +18,9 @@ public class Gap {
 	public boolean multWs;			// has multiple ws
 	public int numWs;				// num ws
 
-	public boolean aligned;			// whether visually aligned to a node feature in a surrounding real line
-	public boolean alignedAbove;
-	public boolean alignedBelow;
+	public boolean alignedAbove;	// whether visually aligned to a node feature in the line above
 	public int visCol;				// align visual column
-
 	public boolean blankAbove;		// needs blank line above/below
-	public boolean blankBelow;
 
 	public boolean noFormat;		// retain existing
 
@@ -34,6 +33,12 @@ public class Gap {
 	public static Gap define(Format lhs, Format rhs) {
 		Gap gap = new Gap();
 
+		if (lhs == null || rhs == null) {
+			Log.error(Gap.class, "Gap encountered null format value.");
+			gap.noFormat = true;
+			return gap;
+		}
+
 		gap.join = lhs.joinAlways || rhs.joinAlways;
 		gap.lineBreak = lhs.atLineEnd || rhs.atLineBeg;
 
@@ -41,17 +46,17 @@ public class Gap {
 		gap.indents = rhs.indents;
 		gap.relDents = rhs.relDents;
 
-		gap.ws = lhs.wsAfter || rhs.wsAfter;
-		gap.multWs = lhs.multAfter || rhs.multBefore;
-		gap.numWs = Math.max(lhs.numAfter, rhs.numBefore);
-
-		gap.aligned = rhs.aligned;
 		gap.alignedAbove = rhs.alignedAbove;
-		gap.alignedBelow = rhs.alignedBelow;
+		gap.blankAbove = lhs.blankAbove && rhs.blankAbove;
 		gap.visCol = rhs.visCol;
 
-		gap.blankAbove = lhs.blankAbove && rhs.blankAbove;
-		gap.blankBelow = lhs.blankBelow && rhs.blankBelow;
+		gap.ws = lhs.wsAfter || rhs.wsAfter;
+		gap.multWs = lhs.multAfter || rhs.multBefore;
+		if (gap.multWs) {
+			gap.numWs = Math.max(lhs.widthAfter, rhs.widthBefore);
+		} else if (gap.ws) {
+			gap.numWs = 1;
+		}
 
 		gap.noFormat = lhs.noFormat || rhs.noFormat;
 
@@ -60,21 +65,15 @@ public class Gap {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		if (join) sb.append("join, ");
-		if (lineBreak) sb.append("lineBreak, ");
-		if (indented) sb.append("indented, ");
-		if (indents > 0) sb.append("indents=" + indents + ", ");
-		if (relDents > 0) sb.append("indents, ");
-		if (relDents < 0) sb.append("outdents, ");
-		if (ws) sb.append("ws, ");
-		if (multWs) sb.append("multWs=" + numWs + ", ");
-		if (aligned) sb.append("aligned=" + visCol + ", ");
-		if (blankAbove) sb.append("blankAbove, ");
-		if (blankBelow) sb.append("blankBelow, ");
-		if (noFormat) sb.append("noFormat, ");
-		int dot = sb.lastIndexOf(",");
-		if (dot > -1) sb.setLength(dot);
-		return sb.toString();
+		StringJoiner sj = new StringJoiner(", ");
+		if (join) sj.add("join");
+		if (lineBreak) sj.add("lineBreak");
+		if (indented) sj.add("indented=" + indents + " (" + relDents + ")");
+		if (ws) sj.add("ws");
+		if (multWs) sj.add("multWs=" + numWs + "");
+		if (alignedAbove) sj.add("aligned=" + visCol + "");
+		if (blankAbove) sj.add("blankAbove");
+		if (noFormat) sj.add("noFormat");
+		return sj.toString();
 	}
 }

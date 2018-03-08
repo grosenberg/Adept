@@ -67,9 +67,9 @@ public class Log extends ExtendedLoggerWrapper {
 	}
 
 	/**
-	 * Sets a log verbose as a default for a class type. In the absence of a class specific verbose,
-	 * the global default is applied. For a log message to be printed, the log verbose must be GTE
-	 * the log verbose set for the doc class.
+	 * Sets a log verbose as a default for a class type. In the absence of a class specific verbose, the
+	 * global default is applied. For a log message to be printed, the log verbose must be GTE the log
+	 * verbose set for the doc class.
 	 */
 	public static void defLevel(LogLevel level) {
 		setLevel(null, level);
@@ -164,6 +164,10 @@ public class Log extends ExtendedLoggerWrapper {
 
 	public static void debug(Object source, String message) {
 		log(source, LogLevel.Debug, message, null);
+	}
+
+	public static void debug(Object source, String format, Object... args) {
+		log(source, LogLevel.Debug, String.format(format, args), null);
 	}
 
 	public static void debug(Object source, String message, Throwable e) {

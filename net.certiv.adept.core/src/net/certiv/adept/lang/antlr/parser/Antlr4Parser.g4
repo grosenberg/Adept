@@ -2,7 +2,7 @@ parser grammar Antlr4Parser;
 
 options {
 	tokenVocab = Antlr4Lexer ;
-	TokenLabelType = AdeptToken ;
+	// TokenLabelType = AdeptToken ;
 	// contextSuperClass = RuleContextWithAltNum ;
 }
 
@@ -10,7 +10,7 @@ options {
 	package net.certiv.adept.lang.antlr.parser.gen;
 }
 
-adept
+antlr
 	:	( statement
 		| ruleSpec
 		| other
@@ -115,7 +115,7 @@ attrValue
 	;
 
 dottedID
-	: id ( DOT id )*
+	: x=id ( DOT id )*
 	;
 
 label

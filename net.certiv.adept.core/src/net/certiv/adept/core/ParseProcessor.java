@@ -4,19 +4,19 @@ import org.antlr.v4.runtime.RecognitionException;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
+import net.certiv.adept.lang.Builder;
+import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.parser.Builder;
-import net.certiv.adept.model.parser.ISourceParser;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
 
 public abstract class ParseProcessor {
 
-	protected ProcessMgr mgr;
+	protected CoreMgr mgr;
 	protected Settings settings;
 	protected Builder builder;
 
-	public ParseProcessor(ProcessMgr mgr, Settings settings) {
+	public ParseProcessor(CoreMgr mgr, Settings settings) {
 		this.mgr = mgr;
 		this.settings = settings;
 	}
@@ -42,6 +42,7 @@ public abstract class ParseProcessor {
 
 		if (check) return true;
 
+		builder.update();
 		builder.index();
 		try {
 			parser.extractFeatures(builder);
@@ -51,12 +52,11 @@ public abstract class ParseProcessor {
 			return false;
 		}
 
-		builder.annotateComments();
-		builder.genLocalEdges();
+		// builder.annotateComments();
 		return true;
 	}
 
-	public ProcessMgr getMgr() {
+	public CoreMgr getMgr() {
 		return mgr;
 	}
 

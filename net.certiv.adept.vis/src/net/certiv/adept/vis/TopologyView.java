@@ -42,6 +42,7 @@ import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Edge;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.parser.ISourceParser;
+import net.certiv.adept.util.ArraySet;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.Counter;
@@ -300,7 +301,7 @@ public class TopologyView extends AbstractBase {
 	protected int updateGraph() {
 		if (model != null) {
 			clearGraph();
-			List<Feature> features = model.getSelectedFeatures();
+			ArraySet<Feature> features = model.getSelectedFeatures();
 			createGraph(features);
 			reDrawGraph();
 			return features.size() - 1;
@@ -308,7 +309,7 @@ public class TopologyView extends AbstractBase {
 		return 0;
 	}
 
-	protected void createGraph(List<Feature> features) {
+	protected void createGraph(ArraySet<Feature> features) {
 		int idx = counter.getCount();
 		Feature feature = features.get(idx);
 		graph.addVertex(feature);

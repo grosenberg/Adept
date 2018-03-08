@@ -6,15 +6,15 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
 import net.certiv.adept.Settings;
+import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Format;
-import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class Span {
 
-	private ParseData data;
+	private ParseRecord data;
 	private Settings settings;
 	private List<Token> tokens;
 
@@ -30,7 +30,7 @@ public class Span {
 	private String trail;
 	private Gap gap;
 
-	public Span(ParseData data, Settings settings) {
+	public Span(ParseRecord data, Settings settings) {
 		this.data = data;
 		this.settings = settings;
 
@@ -46,7 +46,7 @@ public class Span {
 	 * Returns the next span starting at the token having the given index, nominally a real token, and
 	 * ending on the next real token. If the initial lhs is not real, fake a real by adjusting the lhs
 	 * index.
-	 * 
+	 *
 	 * <pre>
 	        |<-----     span     ----->|
 	    ... | lhs real | ws | rhs real | ...
@@ -74,14 +74,17 @@ public class Span {
 				Format formLhs = matchedFormat(lhs);
 				Format formRhs = matchedFormat(rhs);
 				gap = Gap.define(formLhs, formRhs);
-
-				String lhsText = lhs.getText();
-				String gapWs = Strings.encodeWS(getGapWs());
-				String rhsText = rhs != null ? rhs.getText() : "";
-				Log.debug(this, String.format("%s%s%s", lhsText, gapWs, rhsText));
+				dump();
 			}
 		}
 		return this;
+	}
+
+	protected void dump() {
+		String lhsText = lhs.getText();
+		String gapWs = Strings.encodeWS(getGapWs());
+		String rhsText = rhs != null ? rhs.getText() : "";
+		Log.debug(this, String.format("%s%s%s", lhsText, gapWs, rhsText));
 	}
 
 	// Returns the first non-WS token in the line after the given index, or <code>null</code>.
@@ -96,11 +99,11 @@ public class Span {
 
 	private Format matchedFormat(Token token) {
 		if (token != null && isReal(token)) {
-			Feature docFeature = data.tokenStartFeatureIndex.get(token.getTokenIndex());
+			Feature docFeature = data.tokenFeatureIndex.get(token);
 			if (docFeature != null) {
 				Feature matched = docFeature.getMatched();
 				if (matched != null) {
-					return Format.merge(docFeature.getFormat(), matched.getFormat());
+					return Format.merge(docFeature, matched);
 				}
 			}
 		}
@@ -113,14 +116,19 @@ public class Span {
 	}
 
 	public boolean isAligned() {
-		return gap.aligned;
+		return gap.alignedAbove;
 	}
 
 	public int visCol() {
 		return gap.visCol;
 	}
 
+	public int numWs() {
+		return gap.numWs;
+	}
+
 	public boolean breaks() {
+		Log.debug(this, gap.toString());
 		return !gap.noFormat && !gap.join && (gap.lineBreak || eols > 0);
 	}
 
@@ -150,7 +158,7 @@ public class Span {
 	}
 
 	public String indents() {
-		if (gap.indented && !gap.aligned) {
+		if (gap.indented && !gap.alignedAbove) {
 			indents = gap.indents;
 		} else if (gap.lineBreak) {
 			indents = 0;

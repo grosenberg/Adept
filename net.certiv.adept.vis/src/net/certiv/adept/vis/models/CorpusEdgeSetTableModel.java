@@ -5,16 +5,15 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusEdgeSetTableModel extends AbstractTableModel {
 
 	private final String[] columnNames = { "Index", "Leaf Types", "Edges" };
 	private Object[][] rowData;
 
-	public CorpusEdgeSetTableModel(ArrayListMultimap<Integer, Feature> typeIndex, int type) {
+	public CorpusEdgeSetTableModel(TreeMultimap<Integer, Feature> typeIndex, int type) {
 		List<Object[]> rows = new ArrayList<>();
 		int line = 1;
 		for (Feature feature : typeIndex.get(type)) {

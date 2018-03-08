@@ -1,18 +1,6 @@
 package net.certiv.adept.lang.xvisitor.parser;
 
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.BLOCK_COMMENT;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.COLON;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.COMMA;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.ERRCHAR;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.HORZ_WS;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.ID;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.LBRACE;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.LINE_COMMENT;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.LITERAL;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.OR;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.RBRACE;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.SEMI;
-import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.VERT_WS;
+import static net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,14 +15,14 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.lang.AdeptTokenFactory;
+import net.certiv.adept.lang.Builder;
+import net.certiv.adept.lang.ISourceParser;
+import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.ParserErrorListener;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.parser.AdeptTokenFactory;
-import net.certiv.adept.model.parser.Builder;
-import net.certiv.adept.model.parser.ISourceParser;
-import net.certiv.adept.model.parser.ParseData;
-import net.certiv.adept.model.parser.ParserErrorListener;
 import net.certiv.adept.tool.ErrorType;
 
 public class XVisitorSourceParser implements ISourceParser {
@@ -49,7 +37,7 @@ public class XVisitorSourceParser implements ISourceParser {
 		ParserErrorListener errors = new ParserErrorListener(this);
 		fillCollector(doc.getContent());
 
-		AdeptTokenFactory factory = new AdeptTokenFactory(builder.charStream);
+		AdeptTokenFactory factory = new AdeptTokenFactory();
 		builder.lexer.setTokenFactory(factory);
 		builder.parser.setTokenFactory(factory);
 		builder.parser.removeErrorListeners();
@@ -71,10 +59,11 @@ public class XVisitorSourceParser implements ISourceParser {
 		builder.BLOCKCOMMENT = BLOCK_COMMENT;
 		builder.LINECOMMENT = LINE_COMMENT;
 		builder.VARS = new int[] { ID, LITERAL };
-		builder.ALIGN_SAME = new int[] { ID, LITERAL, BLOCK_COMMENT, LINE_COMMENT };
-		builder.ALIGN_ANY = new int[] { COLON, OR, SEMI, COMMA, LBRACE, RBRACE, };
+		builder.ALIGN_IDENT = new int[] { BLOCK_COMMENT, LINE_COMMENT, COLON, OR, SEMI, COMMA, LBRACE, RBRACE,
+				LITERAL, };
+		builder.ALIGN_PAIR = new int[][] { { RBRACE, LBRACE }, { SEMI, COLON }, { OR, COLON }, { SEMI, OR }, };
 		builder.ERR_TOKEN = ERRCHAR;
-		// featureBuilder.ERR_RULE = XVisitorParser.RULE_other << 32;
+		// builder.ERR_RULE = XVisitorParser.RULE_other << 16;
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
 		builder.parser = new XVisitorParser(builder.tokenStream);
 	}
@@ -107,7 +96,7 @@ public class XVisitorSourceParser implements ISourceParser {
 	}
 
 	@Override
-	public ParseData getParseData() {
+	public ParseRecord getParseData() {
 		return builder;
 	}
 
