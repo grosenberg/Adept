@@ -3,7 +3,6 @@
 	<name>net.certiv.adept.vis</name>
 	<comment></comment>
 	<projects>
-		<project>net.certiv.adept.core</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -1,0 +1,21 @@
+{
+	"backup": "true",
+	"check": "false",
+	"format": "true",
+	"learn": "false",
+	"rebuild": "false",
+	"save": "false",
+	"corpusRoot": null,
+	"lang": null,
+	"output": null,
+	"trust": "3",
+	"verbose": "warn",
+	"tabWidth": "4",
+	"useTabs": "true",
+	"removeBlankLines": "true",
+	"keepBlankLines": "1",
+	"joinLines": "true",
+	"lineWidth": "120",
+	"commentWidth": "100",
+	"removeTrailingWS": "true"
+}

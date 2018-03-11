@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 
 	<groupId>net.certiv</groupId>
-	<artifactId>adept</artifactId>
+	<artifactId>adept.parent</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
 
 	<name>net.certiv.adept :: parent</name>
@@ -29,10 +29,8 @@
 	</properties>
 
 	<modules>
-		<module>net.certiv.adept.core</module>
+		<module>net.certiv.adept</module>
 		<!-- <module>net.certiv.adept.vis</module> -->
-		
-		<module>net.certiv.adept.fmt</module>
 	</modules>
 
 	<build>

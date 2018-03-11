@@ -10,7 +10,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry including="**/*.java" kind="src" output="target/classes" path="src">
+	<classpathentry excluding="net/certiv/adept/vis/" including="**/*.java" kind="src" output="target/classes" path="src">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -21,6 +21,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/net.certiv.adept.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/net.certiv.adept"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

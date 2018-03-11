@@ -29,13 +29,13 @@ import net.certiv.adept.core.ProcessMgr;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Kind;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.view.utils.Point;
 import net.certiv.adept.vis.components.AbstractBase;
 import net.certiv.adept.vis.components.ContentPanel;
 import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.components.FormatPanel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
-import net.certiv.adept.vis.utils.Point;
 
 public class FormatView extends AbstractBase {
 

@@ -21,7 +21,7 @@ import org.antlr.v4.runtime.tree.Tree;
 
 import com.google.common.collect.HashBasedTable;
 
-import net.certiv.adept.vis.utils.Point;
+import net.certiv.adept.view.utils.Point;
 
 public abstract class TreeViewerBase extends JComponent {
 

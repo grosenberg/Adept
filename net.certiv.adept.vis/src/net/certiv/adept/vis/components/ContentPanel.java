@@ -34,8 +34,8 @@ import difflib.DiffUtils;
 import difflib.Patch;
 import difflib.PatchFailedException;
 import net.certiv.adept.util.Strings;
-import net.certiv.adept.vis.utils.Point;
-import net.certiv.adept.vis.utils.TextUtils;
+import net.certiv.adept.view.utils.Point;
+import net.certiv.adept.view.utils.TextUtils;
 
 public class ContentPanel extends JPanel {
 

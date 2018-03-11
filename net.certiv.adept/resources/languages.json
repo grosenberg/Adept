@@ -1,0 +1,20 @@
+[
+    		{
+    			"name": "antlr",
+				"ext": "g4",
+				"corpusRoot": "corpus",
+				"tabWidth": "4"
+			},
+    		{
+    			"name": "java",
+				"ext": "java",
+				"corpusRoot": "corpus",
+				"tabWidth": "4"
+			},
+			{
+    			"name": "xvisitor",
+				"ext": "xv",
+				"corpusRoot": "corpus",
+				"tabWidth": "4"
+			}
+]

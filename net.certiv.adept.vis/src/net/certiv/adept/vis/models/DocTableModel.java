@@ -9,7 +9,7 @@ import javax.swing.table.AbstractTableModel;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.util.Kind;
-import net.certiv.adept.vis.utils.CollUtil;
+import net.certiv.adept.view.utils.CollUtil;
 
 public class DocTableModel extends AbstractTableModel {
 

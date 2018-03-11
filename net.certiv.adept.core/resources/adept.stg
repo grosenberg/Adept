@@ -1,7 +1,0 @@
-location(file, line, column) ::= "<file>:<line>:<column>:"
-
-message(id, text) ::= "(<id>) <text>"
-
-report(location, message, type) ::= "<type>(<message.id>): <location> <message.text>"
-
-wantsSingleLineMessage() ::= "false"
