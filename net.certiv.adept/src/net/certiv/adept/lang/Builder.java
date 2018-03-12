@@ -128,7 +128,8 @@ public class Builder extends ParseRecord {
 
 		Feature feature = Feature.create(mgr, doc.getDocId(), genPath(parents), token);
 
-		featureIndex.put(token, feature);
+		tokenFeatureIndex.put(token, feature);
+		featureIndex.put(feature.getId(), feature);
 		typeSet.add(type);
 	}
 

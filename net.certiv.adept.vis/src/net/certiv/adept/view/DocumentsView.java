@@ -5,7 +5,10 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -36,6 +39,7 @@ public class DocumentsView extends AbstractBase {
 	private ISourceParser lang;
 	private HashMultilist<Integer, Feature> docFeatures;
 	private JTable table;
+	protected int selectedSource;
 
 	public static void main(String[] args) {
 		try {
@@ -56,8 +60,8 @@ public class DocumentsView extends AbstractBase {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int idx = model.getIndexOfSelected();
-				showDocumentFeatures(idx);
+				selectedSource = model.getIndexOfSelected();
+				showDocumentFeatures();
 			}
 		});
 
@@ -70,14 +74,16 @@ public class DocumentsView extends AbstractBase {
 
 		table = createTable();
 		JPanel fsPanel = createScrollTable("Feature Set", table);
-		// table.addMouseListener(new MouseAdapter() {
-		//
-		// @Override
-		// public void mouseReleased(MouseEvent e) {
-		// int row = table.getSelectedRow();
-		// if (row >= 0) {}
-		// }
-		// });
+		table.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					int row = table.convertRowIndexToModel(table.getSelectedRow());
+					filterToRow(row);
+				}
+			}
+		});
 
 		content.add(selectPanel, BorderLayout.NORTH);
 		content.add(fsPanel, BorderLayout.CENTER);
@@ -112,13 +118,27 @@ public class DocumentsView extends AbstractBase {
 		model.configCols(table);
 	}
 
-	protected void showDocumentFeatures(int idx) {
+	protected void filterToRow(int row) {
+		FeatureTableModel model = (FeatureTableModel) table.getModel();
+		Feature feature = model.getFeature(row);
+		int type = feature.getType();
+
+		showDocumentFeatures(type);
+	}
+
+	protected void showDocumentFeatures() {
+		showDocumentFeatures(-1);
+	}
+
+	protected void showDocumentFeatures(int type) {
 		FeatureTableModel model = (FeatureTableModel) table.getModel();
 		model.removeAllRows();
 
-		Integer key = docFeatures.keyList().get(idx);
+		Integer key = docFeatures.keyList().get(selectedSource);
 		List<Feature> features = docFeatures.get(key);
-
+		if (type > 0) {
+			features = features.stream().filter(f -> f.getType() == type).collect(Collectors.toList());
+		}
 		model.addAll(features);
 	}
 }

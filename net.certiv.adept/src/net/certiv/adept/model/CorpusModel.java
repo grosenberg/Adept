@@ -41,21 +41,26 @@ public class CorpusModel {
 	private boolean consistent; // current state of model
 
 	// the corpus feature set
-	// key=typeKey; value=feature
+	// key=unique hash key; value=feature
 	private HashMap<Integer, Feature> corpus;
+
+	// the corpus feature set
+	// key=unique feature id; value=feature
+	private HashMap<Integer, Feature> idFeature;
 
 	// the document feature sets
 	// key = docId; value = feature list
 	private HashMultilist<Integer, Feature> sources;
 
-	// key = compare key; value = subset of corpus features
-	private TreeMultimap<Integer, Feature> index;
+	// key = compare hash key; value = subset of corpus features
+	private TreeMultimap<Integer, Feature> keyFeature;
 
 	public CorpusModel() {
 		pathnames = new LinkedHashMap<>();
 		corpus = new HashMap<>();
+		idFeature = new HashMap<>();
 		sources = new HashMultilist<>();
-		index = new TreeMultimap<>();
+		keyFeature = new TreeMultimap<>();
 	}
 
 	/** Constructor for creating a scratch corpus model. */
@@ -67,8 +72,9 @@ public class CorpusModel {
 	public void dispose() {
 		pathnames.clear();
 		corpus.clear();
+		idFeature.clear();
 		sources.clear();
-		index.clear();
+		keyFeature.clear();
 	}
 
 	/**
@@ -125,9 +131,10 @@ public class CorpusModel {
 		Map<Integer, Feature> uniques = reduce(features);
 		corpus.putAll(uniques);
 
-		// update the corpus comparision index
+		// update the corpus comparision keyFeature
 		for (Feature feature : uniques.values()) {
-			index.put(feature.getKey(), feature);
+			idFeature.put(feature.getId(), feature);
+			keyFeature.put(feature.getKey(), feature);
 		}
 
 		int docsize = features.size();					// unique features in document
@@ -147,9 +154,9 @@ public class CorpusModel {
 		Map<Integer, Feature> uniques = reduce(features);
 		corpus.putAll(uniques);
 
-		// update the corpus comparision index
+		// update the corpus comparision keyFeature
 		for (Feature feature : uniques.values()) {
-			index.put(feature.getKey(), feature);
+			keyFeature.put(feature.getKey(), feature);
 		}
 	}
 
@@ -195,11 +202,15 @@ public class CorpusModel {
 
 	/** Returns a map, keyed by feature type, of all features in the CorpusDocs model */
 	public TreeMultimap<Integer, Feature> getFeatureIndex() {
-		return index;
+		return keyFeature;
 	}
 
 	public HashMultilist<Integer, Feature> getDocFeatures() {
 		return sources;
+	}
+
+	public Feature getFeature(int id) {
+		return idFeature.get(id);
 	}
 
 	public String getPathname(int docId) {
@@ -216,7 +227,7 @@ public class CorpusModel {
 	 * Public for visualization use.
 	 */
 	public Feature match(Feature feature) {
-		ArraySet<Feature> comparables = index.get(feature.getKey());
+		ArraySet<Feature> comparables = keyFeature.get(feature.getKey());
 
 		// key=similarity, value=features
 		TreeMultimap<Double, Feature> scored = Matcher.score(comparables, feature);
@@ -243,7 +254,7 @@ public class CorpusModel {
 	}
 
 	private void clearIndex() {
-		index.clear();
+		keyFeature.clear();
 	}
 
 	private void clearFeatures() {

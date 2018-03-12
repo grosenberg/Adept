@@ -1,7 +1,10 @@
 package net.certiv.adept.view;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -24,6 +27,8 @@ public class CorpusView extends AbstractBase {
 	private CoreMgr mgr;
 	private ISourceParser lang;
 	private JTable table;
+	private boolean filtered;
+	private List<Feature> features;
 
 	public static void main(String[] args) {
 		try {
@@ -39,14 +44,21 @@ public class CorpusView extends AbstractBase {
 
 		table = createTable();
 		JPanel panel = createScrollTable("Feature Set", table);
-		// table.addMouseListener(new MouseAdapter() {
-		//
-		// @Override
-		// public void mouseReleased(MouseEvent e) {
-		// int row = table.getSelectedRow();
-		// if (row >= 0) {}
-		// }
-		// });
+		table.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					if (!filtered) {
+						int row = table.convertRowIndexToModel(table.getSelectedRow());
+						filterToRow(row);
+					} else {
+						showDocumentFeatures();
+					}
+					filtered = !filtered;
+				}
+			}
+		});
 
 		content.add(panel, BorderLayout.CENTER);
 		setLocation();
@@ -71,10 +83,34 @@ public class CorpusView extends AbstractBase {
 
 		mgr = tool.getMgr();
 		lang = mgr.getLanguageParser();
-		List<Feature> features = mgr.getCorpusModel().getCorpusFeatures();
+		features = mgr.getCorpusModel().getCorpusFeatures();
 
 		FeatureTableModel model = new FeatureTableModel(features, lang.getRuleNames(), lang.getTokenNames());
 		table.setModel(model);
 		model.configCols(table);
 	}
+
+	protected void filterToRow(int row) {
+		FeatureTableModel model = (FeatureTableModel) table.getModel();
+		Feature feature = model.getFeature(row);
+		int type = feature.getType();
+
+		showDocumentFeatures(type);
+	}
+
+	protected void showDocumentFeatures() {
+		showDocumentFeatures(-1);
+	}
+
+	protected void showDocumentFeatures(int type) {
+		FeatureTableModel model = (FeatureTableModel) table.getModel();
+		model.removeAllRows();
+
+		List<Feature> features = this.features;
+		if (type > 0) {
+			features = features.stream().filter(f -> f.getType() == type).collect(Collectors.toList());
+		}
+		model.addAll(features);
+	}
+
 }

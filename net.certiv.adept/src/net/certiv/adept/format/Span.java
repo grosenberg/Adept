@@ -99,7 +99,7 @@ public class Span {
 
 	private Format matchedFormat(Token token) {
 		if (token != null && isReal(token)) {
-			Feature docFeature = data.featureIndex.get(token);
+			Feature docFeature = data.tokenFeatureIndex.get(token);
 			if (docFeature != null) {
 				Feature matched = docFeature.getMatched();
 				if (matched != null) {

@@ -67,8 +67,8 @@ public class Feature implements Comparable<Feature> {
 		if (feature == null) {
 			feature = new Feature(mgr, docId, ancestors, token);
 			Pool.put(key, feature);
-		} else {
 			nextId++;
+		} else {
 			if (token.tokenLeft() != Token.INVALID_TYPE) feature.tokensLeft.add(token.tokenLeft());
 			if (token.tokenRight() != Token.INVALID_TYPE) feature.tokensRight.add(token.tokenRight());
 			feature.weight++;
@@ -88,10 +88,10 @@ public class Feature implements Comparable<Feature> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + docId;
-		result = prime * result + token.kind().hashCode();
+		result = prime * result + token.kind().ordinal();
 		result = prime * result + ancestors.hashCode();
 		result = prime * result + token.getType();
-		result = prime * result + token.bias().hashCode();
+		result = prime * result + token.bias().ordinal();
 		result = prime * result + token.spacingLeft().hashCode();
 		result = prime * result + token.spacingRight().hashCode();
 		return result;
@@ -110,7 +110,7 @@ public class Feature implements Comparable<Feature> {
 
 		this();
 		this.mgr = mgr;
-		this.id = nextId++;
+		this.id = nextId;
 		this.key = hashKey(1, ancestors, token);
 
 		this.docId = docId;
@@ -314,7 +314,9 @@ public class Feature implements Comparable<Feature> {
 		if (kind != other.kind) return false;
 		if (ancestors == null) {
 			if (other.ancestors != null) return false;
-		} else if (!ancestors.equals(other.ancestors)) return false;
+		} else if (!ancestors.equals(other.ancestors)) {
+			return false;
+		}
 		if (type != other.type) return false;
 		if (bias != other.bias) return false;
 		if (spacingRight != other.spacingRight) return false;

@@ -53,7 +53,10 @@ public class ParseRecord {
 	// ---------------------------------------------------------
 
 	// key=token; value=feature
-	public HashMap<Token, Feature> featureIndex;
+	public HashMap<Token, Feature> tokenFeatureIndex;
+
+	// key=feature id; value=feature
+	public HashMap<Integer, Feature> featureIndex;
 
 	// key=unique feature token types
 	public HashSet<Integer> typeSet;
@@ -84,6 +87,7 @@ public class ParseRecord {
 	public ParseRecord(Document doc) {
 		super();
 		this.doc = doc;
+		tokenFeatureIndex = new HashMap<>();
 		featureIndex = new HashMap<>();
 		typeSet = new HashSet<>();
 		lineTokensIndex = new HashMap<>();
@@ -154,6 +158,7 @@ public class ParseRecord {
 		return Arrays.asList(parser.getTokenNames());
 	}
 
+	/** Returns the unique features created for the parsed document. */
 	public List<Feature> getFeatures() {
 		return new ArrayList<>(featureIndex.values());
 	}
@@ -216,6 +221,7 @@ public class ParseRecord {
 	public void dispose() {
 		typeSet.clear();
 		featureIndex.clear();
+		tokenFeatureIndex.clear();
 		lineTokensIndex.clear();
 		tokenVisColIndex.clear();
 		blankLines.clear();
