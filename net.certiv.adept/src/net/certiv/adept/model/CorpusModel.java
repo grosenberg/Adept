@@ -222,18 +222,22 @@ public class CorpusModel {
 	}
 
 	/**
+	 * For the given document feature, returns the sets of best matching features from the corpus,
+	 * ordered by similarity.
+	 */
+	public TreeMultimap<Double, Feature> matches(Feature feature) {
+		ArraySet<Feature> comparables = keyFeature.get(feature.getKey());
+		return Matcher.score(comparables, feature);
+	}
+
+	/**
 	 * For the given document feature, returns the 'best' matching feature from the corpus.
-	 * <p>
-	 * Public for visualization use.
 	 */
 	public Feature match(Feature feature) {
-		ArraySet<Feature> comparables = keyFeature.get(feature.getKey());
-
 		// key=similarity, value=features
-		TreeMultimap<Double, Feature> scored = Matcher.score(comparables, feature);
+		TreeMultimap<Double, Feature> scored = matches(feature);
 		ArraySet<Feature> possibles = scored.get(scored.lastKey());
 		Feature best = Matcher.bestMatch(getCorpusFeatures(), possibles);
-
 		return best;
 	}
 

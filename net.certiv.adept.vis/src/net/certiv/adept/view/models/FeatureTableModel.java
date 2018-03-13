@@ -1,34 +1,20 @@
 package net.certiv.adept.view.models;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import org.antlr.runtime.Token;
 import org.antlr.v4.runtime.misc.Utils;
 
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.view.renderers.FeaturesCellRenderer;
 
-public class FeatureTableModel extends AbstractTableModel {
-
-	private static final Comparator<Number> NumComp = new Comparator<Number>() {
-
-		@Override
-		public int compare(Number o1, Number o2) {
-			if (o1.doubleValue() < o2.doubleValue()) return -1;
-			if (o1.doubleValue() > o2.doubleValue()) return 1;
-			return 0;
-		}
-	};
+public class FeatureTableModel extends BaseTableModel {
 
 	private final String[] columnNames = { "Line", "Feature", "Kind", "Ancestors", "Token", "Text", "Bias",
 			"SpacingLeft", "TokensLeft", "WsLeft", "SpacingRight", "TokensRight", "WsRight", "Weight" };
@@ -36,12 +22,8 @@ public class FeatureTableModel extends AbstractTableModel {
 	private List<Feature> features;
 	private Object[][] rowData;
 
-	private List<String> ruleNames;
-	private List<String> tokenNames;
-
 	public FeatureTableModel(List<Feature> features, List<String> ruleNames, List<String> tokenNames) {
-		this.ruleNames = ruleNames;
-		this.tokenNames = tokenNames;
+		super(ruleNames, tokenNames);
 
 		addAll(features);
 	}
@@ -59,8 +41,8 @@ public class FeatureTableModel extends AbstractTableModel {
 			String bias = feature.getBias().toString();
 			String spLeft = feature.getSpacingLeft().toString();
 			String spRight = feature.getSpacingRight().toString();
-			String tokLeft = evalTokens(feature.getTokensLeft());
-			String tokRight = evalTokens(feature.getTokensRight());
+			String tokLeft = evalTokens(feature.getTokensLeft(), true);
+			String tokRight = evalTokens(feature.getTokensRight(), true);
 			String wsLeft = Utils.escapeWhitespace(feature.getWsLeft(), true);
 			String wsRight = Utils.escapeWhitespace(feature.getWsRight(), true);
 			int weight = feature.getWeight();
@@ -72,26 +54,6 @@ public class FeatureTableModel extends AbstractTableModel {
 		}
 		this.rowData = rows.toArray(new Object[rows.size()][]);
 		fireTableRowsInserted(0, rowData.length - 1);
-	}
-
-	private String evalTokens(Set<Integer> indexes) {
-		StringBuilder sb = new StringBuilder();
-		for (int index : indexes) {
-			String name = index == Token.EOF ? "EOF" : tokenNames.get(index);
-			sb.append(String.format("%s [%s], ", name, index));
-		}
-		if (sb.length() > 1) sb.setLength(sb.length() - 2);
-		return sb.toString();
-	}
-
-	private String evalAncestors(List<Integer> ancestors) {
-		int[] rules = ancestors.stream().mapToInt(i -> i >>> 16).toArray();
-		StringBuilder sb = new StringBuilder();
-		for (int rule : rules) {
-			sb.append(ruleNames.get(rule) + ", ");
-		}
-		sb.setLength(sb.length() - 2);
-		return sb.toString();
 	}
 
 	public void removeAllRows() {

@@ -11,13 +11,15 @@ public class Matcher {
 
 	public static TreeMultimap<Double, Feature> score(ArraySet<Feature> comparables, Feature feature) {
 		TreeMultimap<Double, Feature> scored = new TreeMultimap<>();
-		List<Integer> ancestors = feature.getAncestors();
-		for (Feature comp : comparables) {
-			List<Integer> compAncestors = comp.getAncestors();
-			double dist = DamerauAlignment.distance(compAncestors, ancestors);
-			double score = DamerauAlignment.simularity(dist, compAncestors.size(), ancestors.size());
-			score += Spacing.simularity(comp.getSpacingRight(), feature.getSpacingRight());
-			scored.put(score / 2, comp);
+		if (comparables != null) {
+			List<Integer> ancestors = feature.getAncestors();
+			for (Feature comp : comparables) {
+				List<Integer> compAncestors = comp.getAncestors();
+				double dist = DamerauAlignment.distance(compAncestors, ancestors);
+				double score = DamerauAlignment.simularity(dist, compAncestors.size(), ancestors.size());
+				score += Spacing.simularity(comp.getSpacingRight(), feature.getSpacingRight());
+				scored.put(score / 2, comp);
+			}
 		}
 		return scored;
 	}

@@ -17,9 +17,11 @@ import net.certiv.adept.lang.xvisitor.parser.XVisitorSourceParser;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
+import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.TreeMultimap;
 
 public class CoreMgr {
 
@@ -66,7 +68,7 @@ public class CoreMgr {
 				if (dp.parseDocument(doc, settings.check)) {
 					docModel = dp.createDocModel();
 					dp.match(corModel);
-					dp.formatDocument();
+//					dp.formatDocument();
 				}
 			}
 		}
@@ -143,9 +145,15 @@ public class CoreMgr {
 		return settings.tabWidth;
 	}
 
-	// public TreeMultimap<Double, Feature> getMatches(Feature source) {
-	// return corModel.match(source);
-	// }
+	/** Returns the sets of best possible matches for the given feature, ordered by similarity. */
+	public TreeMultimap<Double, Feature> getMatches(Feature source) {
+		return corModel.matches(source);
+	}
+
+	/** Returns the one best match for the given feature. */
+	public Feature getBestMatch(Feature source) {
+		return corModel.match(source);
+	}
 
 	// ----
 
@@ -165,7 +173,7 @@ public class CoreMgr {
 		return getLanguageParser().excludedTypes();
 	}
 
-	public ThreadGroup getGroup() {
+	public ThreadGroup getThreadGroup() {
 		if (group == null) group = new ThreadGroup("Adept");
 		return group;
 	}

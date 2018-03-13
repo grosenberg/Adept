@@ -64,7 +64,7 @@ public class CorpusProcessor extends ParseProcessor {
 			}
 		}
 		corModel.finalizeBuild(builder);	// post-build operations
-		Thread t = new Thread(mgr.getGroup(), new SaveOp(corModel, settings.corpusDir));
+		Thread t = new Thread(mgr.getThreadGroup(), new SaveOp(corModel, settings.corpusDir));
 		t.start();
 	}
 

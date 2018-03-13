@@ -294,7 +294,7 @@ public class Tool extends ToolBase {
 		mgr.execute(settings, sourceFiles);
 
 		if (wait) {
-			for (int cnt = 0; mgr.getGroup().activeCount() > 0 && cnt < 20; cnt++) {
+			for (int cnt = 0; mgr.getThreadGroup().activeCount() > 0 && cnt < 20; cnt++) {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {}

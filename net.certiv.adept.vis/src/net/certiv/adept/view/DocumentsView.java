@@ -3,6 +3,7 @@ package net.certiv.adept.view;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -65,10 +66,10 @@ public class DocumentsView extends AbstractBase {
 			}
 		});
 
-		JPanel selectPanel = createPanel("Source");
-		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-		selectPanel.add(createLabel("Document: ", 300, SwingConstants.RIGHT));
-		selectPanel.add(srcBox);
+		JPanel select = createPanel("Source");
+		select.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 2));
+		select.add(createLabel("Document: ", 300, SwingConstants.RIGHT));
+		select.add(srcBox);
 
 		// ------------------------------------------------------------
 
@@ -78,14 +79,19 @@ public class DocumentsView extends AbstractBase {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
+				JTable table = (JTable) e.getSource();
+				Point point = e.getPoint();
+				int row = table.rowAtPoint(point);
+				if (row < 0) return;
+
 				if (e.getClickCount() == 2) {
-					int row = table.convertRowIndexToModel(table.getSelectedRow());
+					row = table.convertRowIndexToModel(table.getSelectedRow());
 					filterToRow(row);
 				}
 			}
 		});
 
-		content.add(selectPanel, BorderLayout.NORTH);
+		content.add(select, BorderLayout.NORTH);
 		content.add(fsPanel, BorderLayout.CENTER);
 		setLocation();
 		frame.setVisible(true);
