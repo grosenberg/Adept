@@ -27,11 +27,11 @@ public class CorpusAnalyzer {
 		// ArraySet<Feature> features = data.tokenTypeFeatureIndex.get(type);
 		// for (Feature feature : features) {
 		// Format format = feature.getFormat();
-		// int weight = feature.getEquivalentWeight();
-		// if (format.atLineBeg) atLineBeg += weight;
-		// if (format.atLineEnd) atLineEnd += weight;
-		// if (format.blankAbove) blankAbove += weight;
-		// total += weight;
+		// int rank = feature.getEquivalentWeight();
+		// if (format.atLineBeg) atLineBeg += rank;
+		// if (format.atLineEnd) atLineEnd += rank;
+		// if (format.blankAbove) blankAbove += rank;
+		// total += rank;
 		// }
 		//
 		// atLineBeg = atLineBeg * 100 / total;

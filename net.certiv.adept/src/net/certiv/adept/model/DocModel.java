@@ -1,10 +1,11 @@
 package net.certiv.adept.model;
 
 import java.util.List;
+import java.util.TreeMap;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Builder;
-import net.certiv.adept.util.ArrayMultilist;
 
 public class DocModel {
 
@@ -12,16 +13,16 @@ public class DocModel {
 	private Document doc;
 	private List<Feature> features;
 
-	// key = feature type; value = corresponding features
-	private final ArrayMultilist<Integer, Feature> index = new ArrayMultilist<>();
+	// key=token; value=unique feature
+	private TreeMap<AdeptToken, Feature> index;
 
 	/** Creates a nascent model for the given document. */
 	public DocModel(CoreMgr mgr, Builder builder) {
 		this.mgr = mgr;
 		this.features = builder.getFeatures();
-		doc = builder.getDocument();
+		this.index = builder.getIndex();
+		this.doc = builder.getDocument();
 		doc.setModel(this);
-		buildIndex();
 	}
 
 	public CoreMgr getMgr() {
@@ -40,15 +41,8 @@ public class DocModel {
 		return features;
 	}
 
-	/** Returns a map, keyed by feature type, of all features in the document model */
-	public ArrayMultilist<Integer, Feature> getFeatureIndex() {
-		if (index.isEmpty()) buildIndex();
+	/** Returns an orderd map, keyed by token/index, of the features in the document model. */
+	public TreeMap<AdeptToken, Feature> getIndex() {
 		return index;
-	}
-
-	private void buildIndex() {
-		for (Feature feature : features) {
-			index.add(feature.getType(), feature);
-		}
 	}
 }

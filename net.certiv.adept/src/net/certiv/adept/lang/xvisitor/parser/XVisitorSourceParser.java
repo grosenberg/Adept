@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
@@ -58,10 +60,6 @@ public class XVisitorSourceParser implements ISourceParser {
 		builder.HWS = HORZ_WS;
 		builder.BLOCKCOMMENT = BLOCK_COMMENT;
 		builder.LINECOMMENT = LINE_COMMENT;
-		builder.VARS = new int[] { ID, LITERAL };
-		builder.ALIGN_IDENT = new int[] { BLOCK_COMMENT, LINE_COMMENT, COLON, OR, SEMI, COMMA, LBRACE, RBRACE,
-				LITERAL, };
-		builder.ALIGN_PAIR = new int[][] { { RBRACE, LBRACE }, { SEMI, COLON }, { OR, COLON }, { SEMI, OR }, };
 		builder.ERR_TOKEN = ERRCHAR;
 		// builder.ERR_RULE = XVisitorParser.RULE_other << 16;
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
@@ -80,6 +78,12 @@ public class XVisitorSourceParser implements ISourceParser {
 		XVisitorVisitor visitor = new XVisitorVisitor(builder);
 		walker.walk(visitor, builder.tree);
 	}
+
+	@Override
+	public void defineIndentation(Indenter indenter) {}
+
+	@Override
+	public void locateAlignables(Aligner aligner) {}
 
 	@Override
 	public List<Integer> excludedTypes() {

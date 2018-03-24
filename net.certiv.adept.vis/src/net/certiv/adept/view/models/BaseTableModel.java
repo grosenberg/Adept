@@ -7,21 +7,11 @@ import java.util.Set;
 import javax.swing.table.AbstractTableModel;
 
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Utils;
 
-import net.certiv.adept.model.Bias;
-import net.certiv.adept.model.Spacing;
+import net.certiv.adept.format.align.Align;
+import net.certiv.adept.model.RefToken;
 
 public abstract class BaseTableModel extends AbstractTableModel {
-
-	private List<String> ruleNames;
-	private List<String> tokenNames;
-
-	public BaseTableModel(List<String> ruleNames, List<String> tokenNames) {
-		super();
-		this.ruleNames = ruleNames;
-		this.tokenNames = tokenNames;
-	}
 
 	protected static final Comparator<Number> NumComp = new Comparator<Number>() {
 
@@ -33,12 +23,63 @@ public abstract class BaseTableModel extends AbstractTableModel {
 		}
 	};
 
-	protected String evalTokenText(int type, String text) {
-		String name = type == Token.EOF ? "EOF" : tokenNames.get(type);
-		return String.format("%s [%s] %s", name, type, text);
+	private static List<String> ruleNames;
+	private static List<String> tokenNames;
+
+	public BaseTableModel(List<String> ruleNames, List<String> tokenNames) {
+		super();
+		BaseTableModel.ruleNames = ruleNames;
+		BaseTableModel.tokenNames = tokenNames;
 	}
 
-	protected String evalTokens(Set<Integer> indexes, boolean showType) {
+	protected static String tPlace(RefToken ref) {
+		String ret = ref.place.toString();
+		if (ref.place.atBOL()) ret += " (" + ref.indents + ")";
+		return ret;
+	}
+
+	protected static String tAlign(RefToken ref) {
+		if (ref.align == Align.NONE) return "None --";
+
+		String alMsg = "%s {%s}  %s:%s (%s)";
+		return String.format(alMsg, ref.align, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
+	}
+
+	protected static String tSpace(RefToken ref) {
+		String spMsg = "%s  %s  <  %s  >  %s  %s";
+		return String.format(spMsg, fType(ref.lType), ref.lSpacing, fType(ref.type), ref.rSpacing, fType(ref.rType));
+	}
+
+	protected static String tLocation(RefToken ref) {
+		String locMsg = "@%s:%s <%s>";
+		return String.format(locMsg, ref.line, ref.col, ref.visCol);
+	}
+
+	protected static String tText(int type, String text) {
+		return fType(type) + " " + text;
+	}
+
+	protected static String fType(int type) {
+		String name = type == Token.EOF ? "EOF" : tokenNames.get(type);
+		return String.format("%s (%s)", name, type);
+	}
+
+	protected static String sType(int type) {
+		String name = type == Token.EOF ? "EOF" : tokenNames.get(type);
+		return String.format("%s", name);
+	}
+
+	protected static String evalAncestors(List<Integer> ancestors) {
+		int[] rules = ancestors.stream().mapToInt(i -> i).toArray();
+		StringBuilder sb = new StringBuilder();
+		for (int rule : rules) {
+			sb.append(ruleNames.get(rule) + " > ");
+		}
+		sb.setLength(sb.length() - 3);
+		return sb.toString();
+	}
+
+	protected static String evalTokens(Set<Integer> indexes, boolean showType) {
 		StringBuilder sb = new StringBuilder();
 		for (int index : indexes) {
 			String name = "";
@@ -58,27 +99,5 @@ public abstract class BaseTableModel extends AbstractTableModel {
 		}
 		if (sb.length() > 1) sb.setLength(sb.length() - 3);
 		return sb.toString();
-	}
-
-	protected String evalAncestors(List<Integer> ancestors) {
-		int[] rules = ancestors.stream().mapToInt(i -> i >>> 16).toArray();
-		StringBuilder sb = new StringBuilder();
-		for (int rule : rules) {
-			sb.append(ruleNames.get(rule) + " > ");
-		}
-		sb.setLength(sb.length() - 3);
-		return sb.toString();
-	}
-
-	protected String evalSide(Spacing spacing, String ws, Set<Integer> tokens, Bias dir) {
-		String sp = spacing != Spacing.UNKNOWN ? spacing.toString().toLowerCase() : "";
-		String wsp = Utils.escapeWhitespace(ws, true);
-		String tok = evalTokens(tokens, false);
-
-		if (dir == Bias.LEFT) {
-			return String.format("{%s} %s[%s]", tok, sp, wsp);
-		} else {
-			return String.format("%s[%s] {%s}", sp, wsp, tok);
-		}
 	}
 }

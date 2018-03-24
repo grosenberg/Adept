@@ -2,7 +2,6 @@ package net.certiv.adept.model;
 
 public enum Kind {
 	TERMINAL("Terminal"),
-	VAR("Variable"),
 	BLOCKCOMMENT("Block Comment"),
 	LINECOMMENT("Line Comment");
 
@@ -15,5 +14,9 @@ public enum Kind {
 	@Override
 	public String toString() {
 		return kind;
+	}
+
+	public boolean isComment() {
+		return this == Kind.BLOCKCOMMENT || this == LINECOMMENT;
 	}
 }

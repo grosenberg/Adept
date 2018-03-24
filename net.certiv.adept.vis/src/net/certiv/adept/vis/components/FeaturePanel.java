@@ -17,7 +17,7 @@ import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Format;
+import net.certiv.adept.format.misc.Format;
 import net.certiv.adept.model.parser.ParseData;
 import net.certiv.adept.util.Strings;
 import javax.swing.JSeparator;

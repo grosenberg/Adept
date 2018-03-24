@@ -13,7 +13,7 @@ import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
 
-public class CorpusProcessor extends ParseProcessor {
+public class CorpusProcessor extends BaseProcessor {
 
 	private List<String> pathnames;
 	private boolean forceBuild;
@@ -58,9 +58,9 @@ public class CorpusProcessor extends ParseProcessor {
 		List<Document> documents = CorpusDocs.readDocuments(settings.corpusDir, settings.corpusExt, settings.tabWidth);
 		for (Document doc : documents) {
 			if (pathnames.contains(doc.getPathname())) {
-				Feature.clearNextId();
-				parseDocument(doc, false);
-				corModel.merge(builder);
+				Feature.clearPool();
+				processDocument(doc, false);
+				corModel.merge(builder);	// merge document features into the corpus
 			}
 		}
 		corModel.finalizeBuild(builder);	// post-build operations

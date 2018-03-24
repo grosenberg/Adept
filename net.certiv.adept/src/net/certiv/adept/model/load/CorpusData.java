@@ -112,8 +112,8 @@ public class CorpusData {
 				.disableHtmlEscaping() //
 				.enableComplexMapKeySerialization() //
 				.excludeFieldsWithoutExposeAnnotation() //
-				// .registerTypeAdapter(ArrayListMultimap.class, new MultimapAdapter<Long, Edge>()) //
-				// .registerTypeAdapter(HashTreeSet.class, new HashTreeAdapter<Long, Edge>()) //
+//				.registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Aspect>()) //
+//				.registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Adjunct>()) //
 				.serializeNulls() //
 				.setDateFormat(DateFormat.LONG) //
 				.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY) //
@@ -130,7 +130,7 @@ public class CorpusData {
 
 	/**
 	 * Saves the corpus model to a Json file in the given directory. Overwrites any existing file. Saves
-	 * in a compact form.
+	 * in a compact group.
 	 *
 	 * @param corpusDir directory to save to
 	 * @throws Exception if an existing file cannot be overwritten

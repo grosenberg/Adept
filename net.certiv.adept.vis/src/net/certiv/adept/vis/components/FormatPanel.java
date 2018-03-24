@@ -18,7 +18,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import net.certiv.adept.core.PerfData;
 import net.certiv.adept.core.PerfData.DocPerf;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.model.Format;
+import net.certiv.adept.format.misc.Format;
 
 public class FormatPanel extends JPanel {
 

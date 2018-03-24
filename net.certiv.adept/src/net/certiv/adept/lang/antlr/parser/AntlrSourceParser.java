@@ -17,6 +17,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
@@ -61,11 +63,6 @@ public class AntlrSourceParser implements ISourceParser {
 		builder.HWS = HWS;
 		builder.BLOCKCOMMENT = BLOCKCOMMENT;
 		builder.LINECOMMENT = LINECOMMENT;
-		builder.VARS = new int[] { ID, INT, SET, STRING };
-		builder.ALIGN_IDENT = new int[] { BLOCKCOMMENT, LINECOMMENT, COLON, OR, SEMI, COMMA, LPAREN, RPAREN, LBRACE,
-				RBRACE, LBRACK, RBRACK, RARROW, EQ, STRING, RANGE, };
-		builder.ALIGN_PAIR = new int[][] { { RPAREN, LPAREN }, { RBRACE, LBRACE }, { RBRACK, LBRACK }, { SEMI, COLON },
-				{ OR, COLON }, { SEMI, OR }, { OR, LPAREN }, { SEMI, RPAREN } };
 		builder.ERR_TOKEN = ERRCHAR;
 		builder.ERR_RULE = Antlr4Parser.RULE_other << 16;
 	}
@@ -79,7 +76,21 @@ public class AntlrSourceParser implements ISourceParser {
 	@Override
 	public void extractFeatures(Builder builder) {
 		ParseTreeWalker walker = new ParseTreeWalker();
-		AntlrVisitor visitor = new AntlrVisitor(builder);
+		FeatureVisitor visitor = new FeatureVisitor(builder);
+		walker.walk(visitor, builder.tree);
+	}
+
+	@Override
+	public void defineIndentation(Indenter indenter) {
+		ParseTreeWalker walker = new ParseTreeWalker();
+		IndentVisitor visitor = new IndentVisitor(indenter);
+		walker.walk(visitor, builder.tree);
+	}
+
+	@Override
+	public void locateAlignables(Aligner aligner) {
+		ParseTreeWalker walker = new ParseTreeWalker();
+		AlignVisitor visitor = new AlignVisitor(aligner);
 		walker.walk(visitor, builder.tree);
 	}
 

@@ -3,6 +3,7 @@
 	<name>net.certiv.adept.test</name>
 	<comment></comment>
 	<projects>
+		<project>net.certiv.adept</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

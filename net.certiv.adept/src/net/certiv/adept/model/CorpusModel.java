@@ -3,6 +3,7 @@ package net.certiv.adept.model;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,16 +17,14 @@ import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.util.CorpusAnalyzer;
-import net.certiv.adept.model.util.Matcher;
-import net.certiv.adept.util.ArraySet;
-import net.certiv.adept.util.HashMultilist;
+import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
-import net.certiv.adept.util.TreeMultimap;
 
 public class CorpusModel {
 
-	private static final String MSG = "%3s/%-4s (%2d%%) unique features: %s";
+	private static final String MSG = "%3s/%-3s (%3d%%) unique features: %s";
 	private static final long TIME_OUT = 500000;
 
 	@Expose private String corpusDirname;
@@ -44,23 +43,14 @@ public class CorpusModel {
 	// key=unique hash key; value=feature
 	private HashMap<Integer, Feature> corpus;
 
-	// the corpus feature set
-	// key=unique feature id; value=feature
-	private HashMap<Integer, Feature> idFeature;
-
 	// the document feature sets
 	// key = docId; value = feature list
 	private HashMultilist<Integer, Feature> sources;
 
-	// key = compare hash key; value = subset of corpus features
-	private TreeMultimap<Integer, Feature> keyFeature;
-
 	public CorpusModel() {
 		pathnames = new LinkedHashMap<>();
 		corpus = new HashMap<>();
-		idFeature = new HashMap<>();
 		sources = new HashMultilist<>();
-		keyFeature = new TreeMultimap<>();
 	}
 
 	/** Constructor for creating a scratch corpus model. */
@@ -72,9 +62,7 @@ public class CorpusModel {
 	public void dispose() {
 		pathnames.clear();
 		corpus.clear();
-		idFeature.clear();
 		sources.clear();
-		keyFeature.clear();
 	}
 
 	/**
@@ -131,16 +119,10 @@ public class CorpusModel {
 		Map<Integer, Feature> uniques = reduce(features);
 		corpus.putAll(uniques);
 
-		// update the corpus comparision keyFeature
-		for (Feature feature : uniques.values()) {
-			idFeature.put(feature.getId(), feature);
-			keyFeature.put(feature.getKey(), feature);
-		}
-
 		int docsize = features.size();					// unique features in document
-		int incsize = uniques.size();					// that are unique to corpus
-		int raise = incsize * 100 / docsize;
-		Log.debug(this, String.format(MSG, incsize, docsize, raise, doc.getFilename()));
+		int corsize = uniques.size();					// unique to corpus
+		int percent = corsize * 100 / docsize;
+		Log.debug(this, String.format(MSG, corsize, docsize, percent, doc.getFilename()));
 	}
 
 	/** Merge features as retrieved from persistant store into the corpus model. */
@@ -153,29 +135,50 @@ public class CorpusModel {
 		// update the corpus feature set
 		Map<Integer, Feature> uniques = reduce(features);
 		corpus.putAll(uniques);
-
-		// update the corpus comparision keyFeature
-		for (Feature feature : uniques.values()) {
-			keyFeature.put(feature.getKey(), feature);
-		}
 	}
 
-	/*
-	 * Reduces a document feature set to those unique relative to the current corpus feature set. For
-	 * non-unique document features, the equivalency weight of the corresponding corpus feature is
-	 * increased by the document feature token refs.
+	/**
+	 * Reduces the given feature set to those unique relative to the current corpus feature set.
+	 * <p>
+	 * For each unique feature, the set of feature token refs reduced in the feature.
+	 * <p>
+	 * For each non-unique feature, the set of feature token refs are reduced into the corresponding
+	 * corpus feature.
 	 */
 	private Map<Integer, Feature> reduce(List<Feature> features) {
-		// key=typeKey; value=feature
 		Map<Integer, Feature> uniques = new HashMap<>();
-
 		for (Feature feature : features) {
 			Feature existing = corpus.get(feature.getKey());
 			if (existing == null) {
-				uniques.put(feature.getKey(), feature);
+				uniques.put(feature.getKey(), feature.copy());
+
+				List<RefToken> refs = reduceRefs(new ArrayList<>(), feature.getRefs());
+				feature.setRefs(refs);
+
 			} else {
 				existing.addWeight(feature.getWeight());
+
+				List<RefToken> refs = reduceRefs(existing.getRefs(), feature.getRefs());
+				existing.setRefs(refs);
 			}
+		}
+		return uniques;
+	}
+
+	private List<RefToken> reduceRefs(List<RefToken> existing, List<RefToken> refs) {
+		List<RefToken> uniques = new ArrayList<>(refs);
+		for (RefToken ref : refs) {
+			for (RefToken exist : existing) {
+				if (exist.equivalentTo(ref)) {
+					exist.addRank(ref.getRank());
+					uniques.remove(ref);
+					break;
+				}
+			}
+		}
+
+		for (RefToken unique : uniques) {
+			existing.add(unique.clone());
 		}
 		return uniques;
 	}
@@ -200,17 +203,8 @@ public class CorpusModel {
 		return new ArrayList<>(corpus.values());
 	}
 
-	/** Returns a map, keyed by feature type, of all features in the CorpusDocs model */
-	public TreeMultimap<Integer, Feature> getFeatureIndex() {
-		return keyFeature;
-	}
-
 	public HashMultilist<Integer, Feature> getDocFeatures() {
 		return sources;
-	}
-
-	public Feature getFeature(int id) {
-		return idFeature.get(id);
 	}
 
 	public String getPathname(int docId) {
@@ -222,23 +216,40 @@ public class CorpusModel {
 	}
 
 	/**
-	 * For the given document feature, returns the sets of best matching features from the corpus,
-	 * ordered by similarity.
+	 * For the given document feature, match each contained ref token to a corresponding corpus 'best'
+	 * matching feature/ref token. The document ref tokens are update with the match found or
+	 * {@code null} if no suitable match is found in the corpus.
 	 */
-	public TreeMultimap<Double, Feature> matches(Feature feature) {
-		ArraySet<Feature> comparables = keyFeature.get(feature.getKey());
-		return Matcher.score(comparables, feature);
+	public void match(Feature feature) {
+		if (!feature.isMatchDone()) {
+			// corpus features that might contain a valid match
+			Feature matched = corpus.get(feature.getKey());
+			for (RefToken ref : feature.getRefs()) {
+
+				// key=similarity, value=match ref tokens; descending order
+				TreeMultiset<Double, RefToken> scored = matches(ref, matched);
+				ref.chooseBest(scored);
+			}
+			feature.setMatchDone(true);
+		}
 	}
 
-	/**
-	 * For the given document feature, returns the 'best' matching feature from the corpus.
-	 */
-	public Feature match(Feature feature) {
-		// key=similarity, value=features
-		TreeMultimap<Double, Feature> scored = matches(feature);
-		ArraySet<Feature> possibles = scored.get(scored.lastKey());
-		Feature best = Matcher.bestMatch(getCorpusFeatures(), possibles);
-		return best;
+	/** For visualization: find the refs that might be a match; results in descending order. */
+	public TreeMultiset<Double, RefToken> getScoredMatches(Feature feature, RefToken ref) {
+		Feature featMatch = corpus.get(feature.getKey());
+		return matches(ref, featMatch);
+	}
+
+	// scores the given token ref against each of the token refs of the given feature
+	// results are provided in a descending score keyed multiset
+	private TreeMultiset<Double, RefToken> matches(RefToken ref, Feature feature) {
+		TreeMultiset<Double, RefToken> scored = new TreeMultiset<>(Collections.reverseOrder());
+
+		int maxRank = feature.maxRank();
+		for (RefToken match : feature.getRefs()) {
+			scored.put(ref.score(match, maxRank), match);
+		}
+		return scored;
 	}
 
 	public boolean isConsistent() {
@@ -250,15 +261,10 @@ public class CorpusModel {
 	}
 
 	public void clear() {
-		clearIndex();
 		clearFeatures();
 		pathnames.clear();
 		lastModified = 0;
 		consistent = false;
-	}
-
-	private void clearIndex() {
-		keyFeature.clear();
 	}
 
 	private void clearFeatures() {

@@ -5,7 +5,7 @@
 	"learn": "false",
 	"rebuild": "false",
 	"save": "false",
-	"corpusRoot": "D:/DevFiles/Eclipse/Adept/net.certiv.adept.core/corpus",
+	"corpusRoot": "D:/DevFiles/Eclipse/Adept/net.certiv.adept/corpus",
 	"lang": "antlr",
 	"output": null,
 	"trust": "3",

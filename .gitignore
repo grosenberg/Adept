@@ -10,4 +10,7 @@
 /**/*.log
 /**/test.expected/
 /**/test-output/
-/net.certiv.adept.tool/
+
+/**/*.zip
+/**/*.gz
+

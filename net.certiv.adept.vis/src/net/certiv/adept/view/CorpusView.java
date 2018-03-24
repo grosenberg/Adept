@@ -1,14 +1,18 @@
 package net.certiv.adept.view;
 
 import java.awt.BorderLayout;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.UIManager;
+import javax.swing.table.TableModel;
 
 import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 
@@ -16,19 +20,25 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.RefToken;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.view.components.AbstractBase;
+import net.certiv.adept.view.components.AbstractViewBase;
 import net.certiv.adept.view.models.FeatureTableModel;
+import net.certiv.adept.view.models.RefsTableModel;
 
-public class CorpusView extends AbstractBase {
+public class CorpusView extends AbstractViewBase {
 
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 
 	private CoreMgr mgr;
 	private ISourceParser lang;
-	private JTable table;
-	private boolean filtered;
+
+	private JTable featTable;
+	private JTable refsTable;
+	private JSplitPane split;
+
 	private List<Feature> features;
+	private boolean filtered;
 
 	public static void main(String[] args) {
 		try {
@@ -42,27 +52,51 @@ public class CorpusView extends AbstractBase {
 	public CorpusView() {
 		super("Corpus Feature Analysis", "features.gif");
 
-		table = createTable();
-		JPanel panel = createScrollTable("Feature Set", table);
-		table.addMouseListener(new MouseAdapter() {
+		split = createSplitPane(VERT);
+		content.add(split, BorderLayout.CENTER);
+
+		createFeatureTable();
+		createRefTokensTable();
+
+		setLocation();
+		split.setDividerLocation(prefs.getInt(KEY_SPLIT_HORZ, 300));
+		frame.setVisible(true);
+	}
+
+	@Override
+	protected void saveWindowClosingPrefs(Preferences prefs) {
+		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
+	}
+
+	private void createFeatureTable() {
+		featTable = createTable();
+		JPanel panel = createScrollTable("Feature Set", featTable);
+		featTable.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getClickCount() == 2) {
-					if (!filtered) {
-						int row = table.convertRowIndexToModel(table.getSelectedRow());
-						filterToRow(row);
-					} else {
-						showDocumentFeatures();
+					int row = featTable.convertRowIndexToModel(featTable.getSelectedRow());
+					showTokenRefs(row);
+					if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
+						if (!filtered) {
+							filterToRow(row);
+						} else {
+							showUnFiltered();
+						}
+						filtered = !filtered;
 					}
-					filtered = !filtered;
 				}
 			}
 		});
 
-		content.add(panel, BorderLayout.CENTER);
-		setLocation();
-		frame.setVisible(true);
+		split.setLeftComponent(panel);
+	}
+
+	private void createRefTokensTable() {
+		refsTable = createTable();
+		JPanel panel = createScrollTable("Ref Tokens", refsTable);
+		split.setRightComponent(panel);
 	}
 
 	protected void createFeaturesData() {
@@ -86,24 +120,46 @@ public class CorpusView extends AbstractBase {
 		features = mgr.getCorpusModel().getCorpusFeatures();
 
 		FeatureTableModel model = new FeatureTableModel(features, lang.getRuleNames(), lang.getTokenNames());
-		table.setModel(model);
-		model.configCols(table);
+		featTable.setModel(model);
+		model.configCols(featTable);
+	}
+
+	protected void showTokenRefs(int row) {
+		FeatureTableModel model = (FeatureTableModel) featTable.getModel();
+		Feature feature = model.getFeature(row);
+		List<RefToken> refs = feature.getRefs();
+
+		TableModel baseModel = refsTable.getModel();
+		if (baseModel instanceof RefsTableModel) {
+			RefsTableModel refsModel = (RefsTableModel) baseModel;
+			refsModel.removeAllRows();
+			if (refs.isEmpty()) {
+				Log.error(this, "Has no refs: " + feature.toString());
+				return;
+			}
+			refsModel.addAll(refs);
+
+		} else {
+			RefsTableModel refsModel = new RefsTableModel(refs, lang.getRuleNames(), lang.getTokenNames());
+			refsTable.setModel(refsModel);
+			refsModel.configCols(refsTable);
+		}
 	}
 
 	protected void filterToRow(int row) {
-		FeatureTableModel model = (FeatureTableModel) table.getModel();
+		FeatureTableModel model = (FeatureTableModel) featTable.getModel();
 		Feature feature = model.getFeature(row);
 		int type = feature.getType();
 
-		showDocumentFeatures(type);
+		showFilteredFeatures(type);
 	}
 
-	protected void showDocumentFeatures() {
-		showDocumentFeatures(-1);
+	protected void showUnFiltered() {
+		showFilteredFeatures(-1);
 	}
 
-	protected void showDocumentFeatures(int type) {
-		FeatureTableModel model = (FeatureTableModel) table.getModel();
+	protected void showFilteredFeatures(int type) {
+		FeatureTableModel model = (FeatureTableModel) featTable.getModel();
 		model.removeAllRows();
 
 		List<Feature> features = this.features;

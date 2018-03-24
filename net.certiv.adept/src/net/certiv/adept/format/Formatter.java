@@ -1,56 +1,177 @@
 package net.certiv.adept.format;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeMap;
+
 import net.certiv.adept.Settings;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
+import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.RefToken;
+import net.certiv.adept.model.Spacing;
+import net.certiv.adept.util.Strings;
 
-/**
- * Document stream formatter. Sequentially examines token spans
- * ({@code LhsToken -- WS -- RhsToken}), emitting tokens and WS to a builder, until {@code RhsToken}
- * is {@code null}. The {@code Format} of each document real token is merged with that of its
- * matched corpus feature. In merging formats, precedence is selectively given to the matched
- * feature format. The merged formats of the lhs and rhs tokens are then mutually considered to
- * determine the gap Ws.
- * <p>
- * Possibly switch to an incremental formatter. See,
- * https://github.com/eclipse/eclipse.platform.text/blob/master/org.eclipse.text/src/org/eclipse/text/edits/TextEdit.java
- * <p>
- * https://github.com/eclipse/eclipse.jdt.core/blob/master/org.eclipse.jdt.core/formatter/org/eclipse/jdt/internal/formatter/linewrap/FieldAligner.java
- */
+/** Document stream formatter. */
 public class Formatter {
 
 	private Document doc;
 	private ParseRecord data;
 	private Settings settings;
-	private OutputBuilder builder;
+	private String spTab;
+
+	// the source text to format
+	private StringBuilder contents;
 
 	public Formatter(DocModel model, Settings settings) {
 		this.doc = model.getDocument();
-		this.data = doc.getParseData();
+		this.data = doc.getParseRecord();
 		this.settings = settings;
-		this.builder = new OutputBuilder(doc.getTabWidth(), settings);
+		this.spTab = Strings.getNSpaces(settings.tabWidth);
+
+		contents = new StringBuilder(data.getDocument().getContent());
+	}
+
+	// -------------------------------------------------------------------------
+
+	public boolean execute() {
+		List<TextEdit> edits = createEdits();
+		if (edits == null) return false;
+
+		return applyEdits(edits);
+	}
+
+	public List<TextEdit> createEdits() {
+		List<TextEdit> results = new ArrayList<>();
+		Space space = new Space();
+		List<AdeptToken> srcTokens = data.getTokens();
+
+		TreeMap<AdeptToken, Feature> index = doc.getModel().getIndex();
+		NavigableSet<AdeptToken> tokens = index.navigableKeySet();
+
+		for (AdeptToken token : tokens) {
+			Feature cur = index.get(token);
+			RefToken existing = cur.getRef(token.getTokenIndex());
+
+			RefToken matched = existing.matched;
+			if (matched != null) {
+				AdeptToken lToken = existing.lIndex > 0 ? srcTokens.get(existing.lIndex) : null;
+				Feature bef = lToken != null ? index.get(lToken) : null;
+
+				AdeptToken rToken = existing.rIndex > 0 ? srcTokens.get(existing.rIndex) : null;
+				Feature aft = rToken != null ? index.get(rToken) : null;
+
+				List<TextEdit> edits = createEdits(bef, cur, aft, matched);
+
+				for (TextEdit edit : edits) {
+					Region region = edit.getRegion();
+					if (space.overlaps(region)) throw new FormatterException(token, region, results);
+					results.add(edit);
+					space.add(region);
+				}
+
+			}
+		}
+
+		return results;
 
 	}
 
-	public OutputBuilder process() {
-		if (!doc.getContent().isEmpty()) {
-			Span span = new Span(data, settings);
-			for (int idx = 0; !span.done; idx = span.end) {
-				span = span.next(idx);
-				if (span.isAligned()) {
-					builder.aligned(span.lhs, span.visCol(), span.numWs());
-				} else {
-					builder.add(span.lhs);
-				}
-				if (span.breaks()) {
-					builder.eol(span.trailingWs(), span.eols(), span.indents());
-				} else {
-					builder.add(span.getGapWs());
-				}
-			}
-			builder.flush();
+	public boolean applyEdits(List<TextEdit> edits) {
+		Map<Integer, TextEdit> editSet = new HashMap<>();
+		for (TextEdit edit : edits) {
+			editSet.put(edit.left(), edit);
 		}
-		return builder;
+
+		List<AdeptToken> tokens = data.getTokens();
+		for (int idx = 0, len = tokens.size(); idx < len;) {
+			AdeptToken token = tokens.get(idx);
+			contents.append(token.getText());
+			TextEdit edit = editSet.get(token.getTokenIndex());
+			if (edit != null) {
+				contents.append(edit.replacement());
+				idx = edit.right();
+			} else {
+				idx++;
+			}
+		}
+
+		doc.setModified(contents.toString());
+		return true;
+	}
+
+	public String result() {
+		return contents.toString();
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * <pre>
+	 * ------|--------|--------|-------
+	 *
+	 * ... b.Idx    b.rIdx
+	 *     c.lIdx   c.Idx    c.rIdx
+	 *              a.lIdx   a.Idx  ...
+	 * </pre>
+	 */
+	private List<TextEdit> createEdits(Feature bef, Feature cur, Feature aft, RefToken matched) {
+		// TODO: indents
+		// TODO: aligns
+		// TODO: line breaks
+
+		List<TextEdit> results = new ArrayList<>();
+
+		if (bef.isComment() || cur.isComment()) {
+			String repl = eval(matched.lSpacing, matched.lActual);
+			TextEdit left = new TextEdit(matched.lIndex, matched.index, repl);
+			results.add(left);
+		}
+
+		if (!aft.isComment()) {
+			String repl = eval(matched.rSpacing, matched.rActual);
+			TextEdit right = new TextEdit(matched.index, matched.rIndex, repl);
+			results.add(right);
+		}
+
+		return results;
+	}
+
+	private String eval(Spacing spacing, String actual) {
+		switch (spacing) {
+			case HFLEX:
+				return horzFlex(actual);
+			case HSPACE:
+				return Strings.SPACE;
+			case NONE:
+				return "";
+			case VLINE:
+				return Strings.EOL;
+			case VFLEX:
+				return vertFlex(actual);
+			case UNKNOWN:
+			default:
+				return actual;
+		}
+	}
+
+	private String horzFlex(String actual) {
+		String result = actual.replace(spTab, "\\t");
+		return result.replaceAll("\\t[ ]+(?=\\t)", "\\t");
+	}
+
+	private String vertFlex(String actual) {
+		int lines = Math.min(countVert(actual), settings.keepBlankLines);
+		return Strings.getN(lines, Strings.EOL);
+	}
+
+	private int countVert(String txt) {
+		if (txt == null || txt.isEmpty()) return 0;
+		return txt.split("\\R", -1).length;
 	}
 }

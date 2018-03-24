@@ -20,9 +20,7 @@ public enum Spacing {
 		return value;
 	}
 
-	public static double simularity(Spacing a, Spacing b) {
-		double dist = Math.abs(a.value - b.value);
-		double norm = Math.min(5, dist) / 5;
-		return 1 - norm;
+	public boolean terminal() {
+		return value == VLINE.ordinal() || value == VFLEX.ordinal();
 	}
 }

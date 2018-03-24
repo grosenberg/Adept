@@ -26,12 +26,12 @@ import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.RefToken;
+import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.TreeMultimap;
-import net.certiv.adept.view.components.AbstractBase;
+import net.certiv.adept.view.components.AbstractViewBase;
 import net.certiv.adept.view.components.FeaturePanel;
 import net.certiv.adept.view.components.SimularityPanel;
 import net.certiv.adept.view.models.DocTableModel;
@@ -39,9 +39,8 @@ import net.certiv.adept.view.models.MatchesTableModel;
 import net.certiv.adept.view.models.SourceListModel;
 import net.certiv.adept.view.models.SourceListModel.Item;
 
-public class MatchView extends AbstractBase {
+public class MatchView extends AbstractViewBase {
 
-	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	private static final String name = "MatchAnalysis";
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
@@ -239,10 +238,10 @@ public class MatchView extends AbstractBase {
 		DocTableModel docModel = (DocTableModel) docTable.getModel();
 		Feature feature = docModel.getFeature(row);
 		Document doc = tool.getMgr().getDocModel().getDocument();
-		docInfo.load(doc.getParseData(), doc.getPathname(), feature);
+		docInfo.load(doc.getParseRecord(), doc.getPathname(), feature);
 
 		// find matched feature and update matched info
-		TreeMultimap<Double, Feature> matches = tool.getMgr().getMatches(feature);
+		TreeMultiset<Double, RefToken> matches = tool.getMgr().getMatches(feature, feature.getRef(0));
 		MatchesTableModel matModel = new MatchesTableModel(matches, ruleNames, tokenNames);
 		matchTable.setModel(matModel);
 		matModel.configCols(matchTable);
@@ -253,12 +252,12 @@ public class MatchView extends AbstractBase {
 
 	// clicked on the matched feature table
 	protected void handleMatchSelect(int docRow, int matchRow) {
-		MatchesTableModel matchModel = (MatchesTableModel) matchTable.getModel();
-		Feature matched = matchModel.getFeature(matchRow);
-
-		ParseRecord data = tool.getMgr().getDocModel().getDocument().getParseData();
-		String pathname = matched.getMgr().getCorpusModel().getPathname(matched.getDocId());
-		matchInfo.load(data, pathname, matched);
-		// simInfo.load(feature.getStats(matched));
+		// MatchesTableModel matchModel = (MatchesTableModel) matchTable.getModel();
+		// Feature matched = matchModel.getRef(matchRow);
+		//
+		// ParseRecord data = tool.getMgr().getDocModel().getDocument().getParseRecord();
+		// String pathname = matched.getMgr().getCorpusModel().getPathname(matched.getDocId());
+		// matchInfo.load(data, pathname, matched);
+		// // simInfo.load(feature.getStats(matched));
 	}
 }

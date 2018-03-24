@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
+import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
@@ -56,13 +58,8 @@ public class JavaSourceParser implements ISourceParser {
 		builder.lexer = new JavaLexer(builder.charStream);
 		builder.VWS = VWS;
 		builder.HWS = HWS;
-		builder.VARS = new int[] { ID, NUM, STRING, QID };
 		builder.BLOCKCOMMENT = BLOCKCOMMENT;
 		builder.LINECOMMENT = LINECOMMENT;
-		builder.ALIGN_IDENT = new int[] { BLOCKCOMMENT, LINECOMMENT, ID, QID, NUM, STRING, LT, GT, EQ, LE, GE, NEQ,
-				L_AND, L_OR, PLUS_ASSIGN, MINUS_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, AND_ASSIGN, OR_ASSIGN, XOR_ASSIGN,
-				MOD_ASSIGN, LEFT_ASSIGN, RIGHT_ASSIGN, UR_ASSIGN, };
-		// builder.ALIGN_PAIR = new int[][] { {} };
 		builder.ERR_TOKEN = ERRCHAR;
 		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 16;
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
@@ -80,8 +77,13 @@ public class JavaSourceParser implements ISourceParser {
 		ParseTreeWalker walker = new ParseTreeWalker();
 		JavaVisitor visitor = new JavaVisitor(model);
 		walker.walk(visitor, model.tree);
-
 	}
+
+	@Override
+	public void defineIndentation(Indenter indenter) {}
+
+	@Override
+	public void locateAlignables(Aligner aligner) {}
 
 	@Override
 	public List<Integer> excludedTypes() {

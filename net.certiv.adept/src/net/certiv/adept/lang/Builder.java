@@ -13,9 +13,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.align.Place;
+import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
+import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
@@ -35,17 +39,74 @@ public class Builder extends ParseRecord {
 		super(doc);
 		this.mgr = mgr;
 
-		if (doc != null) doc.setParseData(this);
+		if (doc != null) doc.setBuilder(this);
 		exTypes = mgr.excludedLangTypes();
 	}
+
+	// ---------------------------------------------------------------------
+
+	/** Build indexes prior to feature extraction. */
+	public void index() {
+		int tabWidth = doc.getTabWidth();
+		int line = -1;				// current line (0..n)
+		AdeptToken start = null;	// start of current line
+
+		// create line -> formattable tokens index
+		// create line -> comment tokens index
+		// create line -> blankline? index
+		for (AdeptToken token : getTokens()) {
+			int num = token.getLine();
+			if (num > line) {	// track line changes
+				line = num;
+				start = token;
+				blanklines.put(line, true);
+			}
+
+			int type = token.getType();
+			if (!isWhitespace(type)) {			// formattable only
+				token.setRefToken(new RefToken(token));
+				token.setVisCol(calcVisualColumn(start, token, tabWidth));
+
+				lineTokensIndex.put(line, token);
+				blanklines.put(line, false);	// correct assumption
+
+				if (isComment(type)) commentIndex.put(line, token);
+			}
+		}
+
+		for (List<AdeptToken> values : lineTokensIndex.valuesList()) {
+			if (values.size() == 1) {
+				values.get(0).setPlace(Place.SOLO);
+			} else {
+				int len = values.size();
+				values.get(0).setPlace(Place.BEG);
+				for (int idx = 1; idx < len - 2; idx++) {
+					values.get(idx).setPlace(Place.MID);
+				}
+				values.get(values.size() - 1).setPlace(Place.END);
+			}
+		}
+	}
+
+	// ---- Indent and aligner operations -----
+
+	public Indenter indenter() {
+		return indenter;
+	}
+
+	public Aligner aligner() {
+		return aligner;
+	}
+
+	// ---- Feature recognition operations -----
 
 	/**
 	 * Evaluates a rule context to build the corresponding set of features. Called from the parse-tree
 	 * walker.
 	 *
-	 * @param ctx rule context
+	 * @param ctx the current rule context
 	 */
-	public void evaluateRuleContext(ParserRuleContext ctx) {
+	public void extractFeatures(ParserRuleContext ctx) {
 		if (ctx.getChildCount() == 0) {
 			// glorious abundance of caution
 			String rule = getRuleName(ctx.getRuleIndex());
@@ -53,7 +114,7 @@ public class Builder extends ParseRecord {
 			return;
 		}
 
-		List<ParseTree> parents = getAncestors(ctx);
+		List<ParseTree> ancestors = getAncestors(ctx);
 		for (ParseTree child : ctx.children) {
 			if (child instanceof ErrorNode) {
 				String err = ((ErrorNode) child).getText();
@@ -63,14 +124,18 @@ public class Builder extends ParseRecord {
 			} else if (child instanceof TerminalNode) {
 				TerminalNode node = (TerminalNode) child;
 				AdeptToken token = (AdeptToken) node.getSymbol();
+				// token.setTerminal(node);
+
 				if (token.getType() == Token.EOF) continue;
 
-				defineFeature(parents, token);
+				// real feature
+				defineFeature(ancestors, token);
 
+				// comment features
 				AdeptToken left = findCommentLeft(token);
-				if (left != null) defineFeature(parents, left);
+				if (left != null) defineFeature(ancestors, left);
 				AdeptToken right = findCommentRight(token);
-				if (right != null) defineFeature(parents, right);
+				if (right != null) defineFeature(ancestors, right);
 			}
 		}
 	}
@@ -108,52 +173,48 @@ public class Builder extends ParseRecord {
 		}
 
 		token.setKind(evalKind(type));
-		token.setNodeName(lexer.getVocabulary().getDisplayName(type));
-		token.setVisCol(tokenVisColIndex.get(token));
+		token.setNodeName(getTokenName(type));
+		int tokenIdx = token.getTokenIndex();
+		token.setIndents(indenter.getIndents(tokenIdx));
 
-		int idx = token.getTokenIndex();
-		Token left = findRealLeft(idx);
+		RefToken ref = token.refToken();
+		AdeptToken left = findRealLeft(tokenIdx);
 		if (left != null) {
-			token.setTokenLeft(left.getType());
-			token.setSpacingLeft(evalSpacing(left.getTokenIndex(), idx));
-			token.setWsLeft(findWsLeft(idx));
+			String ws = findWsLeft(tokenIdx);
+			Spacing spacing = evalSpacing(left.getTokenIndex(), tokenIdx);
+			ref.setLeft(left, spacing, ws);
 		}
 
-		Token right = findRealRight(idx);
+		AdeptToken right = findRealRight(tokenIdx);
 		if (right != null) {
-			token.setTokenRight(right.getType());
-			token.setSpacingRight(evalSpacing(idx, right.getTokenIndex()));
-			token.setWsRight(findWsRight(idx));
+			String ws = findWsRight(tokenIdx);
+			Spacing spacing = evalSpacing(tokenIdx, right.getTokenIndex());
+			ref.setRight(right, spacing, ws);
 		}
 
-		Feature feature = Feature.create(mgr, doc.getDocId(), genPath(parents), token);
+		Feature feature = Feature.create(mgr, doc, genPath(parents), token);
 
-		tokenFeatureIndex.put(token, feature);
+		index.put(token, feature);
 		featureIndex.put(feature.getId(), feature);
 		typeSet.add(type);
 	}
 
-
-
 	// ---------------------------------------------------------------------
 
 	private AdeptToken findCommentLeft(AdeptToken token) {
-		List<Token> hidden = getHiddenTokensToLeft(token.getTokenIndex());
+		List<AdeptToken> hidden = getHiddenLeft(token.getTokenIndex());
 		Collections.reverse(hidden);
 		return findComment(hidden);
 	}
 
 	private AdeptToken findCommentRight(AdeptToken token) {
-		List<Token> hidden = getHiddenTokensToRight(token.getTokenIndex());
+		List<AdeptToken> hidden = getHiddenRight(token.getTokenIndex());
 		return findComment(hidden);
 	}
 
-	private AdeptToken findComment(List<Token> hidden) {
-		for (Token token : hidden) {
-			int type = token.getType();
-			if (type == BLOCKCOMMENT || type == LINECOMMENT) {
-				return (AdeptToken) token;
-			}
+	private AdeptToken findComment(List<AdeptToken> hidden) {
+		for (AdeptToken token : hidden) {
+			if (isComment(token.getType())) return token;
 		}
 		return null;
 	}
@@ -164,7 +225,7 @@ public class Builder extends ParseRecord {
 		} else if (type == LINECOMMENT) {
 			return Kind.LINECOMMENT;
 		} else {
-			return vars.contains(type) ? Kind.VAR : Kind.TERMINAL;
+			return Kind.TERMINAL;
 		}
 	}
 
@@ -193,17 +254,14 @@ public class Builder extends ParseRecord {
 		return Spacing.UNKNOWN;
 	}
 
-	private List<Integer> genPath(List<?>... nodesArray) {
+	// convert ancestor list to integers
+	private List<Integer> genPath(List<ParseTree> nodes) {
 		List<Integer> path = new ArrayList<>();
-		for (List<?> nodes : nodesArray) {
-			for (Object node : nodes) {
-				if (node instanceof ParserRuleContext) {
-					path.add(((ParserRuleContext) node).getRuleIndex() << 16);
-				} else if (node instanceof TerminalNode) {
-					path.add(((TerminalNode) node).getSymbol().getType());
-				} else if (node instanceof Token) {
-					path.add(((Token) node).getType());
-				}
+		for (ParseTree node : nodes) {
+			if (node instanceof ParserRuleContext) {
+				path.add(((ParserRuleContext) node).getRuleIndex());
+			} else {
+				throw new IllegalArgumentException("Ancestors must be rules.");
 			}
 		}
 		return path;
@@ -211,7 +269,7 @@ public class Builder extends ParseRecord {
 
 	private String findWsLeft(int idx) {
 		StringBuilder sb = new StringBuilder();
-		for (Token token : getHiddenTokensToLeft(idx)) {
+		for (Token token : getHiddenLeft(idx)) {
 			int type = token.getType();
 			if (type != BLOCKCOMMENT && type != LINECOMMENT) {
 				sb.append(token.getText());
@@ -222,7 +280,7 @@ public class Builder extends ParseRecord {
 
 	private String findWsRight(int idx) {
 		StringBuilder sb = new StringBuilder();
-		for (Token token : getHiddenTokensToRight(idx)) {
+		for (Token token : getHiddenRight(idx)) {
 			int type = token.getType();
 			if (type != BLOCKCOMMENT && type != LINECOMMENT) {
 				sb.append(token.getText());
@@ -231,48 +289,23 @@ public class Builder extends ParseRecord {
 		return sb.toString();
 	}
 
-	private Token findRealLeft(int idx) {
+	private AdeptToken findRealLeft(int idx) {
 		for (int jdx = idx - 1; jdx > -1; jdx--) {
-			Token left = tokenStream.get(jdx);
+			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
 			if (left.getChannel() == Token.DEFAULT_CHANNEL) return left;
 		}
 		return null;
 	}
 
-	private Token findRealRight(int idx) {
+	private AdeptToken findRealRight(int idx) {
 		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
-			Token right = tokenStream.get(jdx);
+			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
 			if (right.getChannel() == Token.DEFAULT_CHANNEL) return right;
 		}
 		return null;
 	}
 
 	// ---------------------------------------------------------------------
-
-	/** Builds a source line->visual offset->token index. Built prior to feature extraction. */
-	public void index() {
-		int tabWidth = doc.getTabWidth();
-		Token start = null; // at start of current line
-		int line = -1;		// current line (0..n)
-
-		for (Token token : getTokens()) {
-			int num = token.getLine() - 1;
-			if (num > line) {
-				line = num;
-				start = token;
-			}
-
-			List<Token> tokenList = lineTokensIndex.get(line);
-			if (tokenList == null) {
-				tokenList = new ArrayList<>();
-				lineTokensIndex.put(line, tokenList);
-			}
-			tokenList.add(token);
-
-			int visCol = getVisualColumn(start, token, tabWidth);
-			tokenVisColIndex.put(token, visCol);
-		}
-	}
 
 	// parents of given context, including the current context
 	// ordered from the current context to farthest parent context
@@ -286,7 +319,7 @@ public class Builder extends ParseRecord {
 		return parents;
 	}
 
-	private int getVisualColumn(Token start, Token mark, int tabWidth) {
+	private int calcVisualColumn(Token start, Token mark, int tabWidth) {
 		if (start == null || start == mark) return 0;
 
 		int beg = start.getStartIndex();

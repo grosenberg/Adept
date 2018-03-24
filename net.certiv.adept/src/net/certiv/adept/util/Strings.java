@@ -29,7 +29,7 @@ public class Strings {
 	/**
 	 * Returns a separator delimited string representation of the given values. The returned string will
 	 * not include a trailing separator.
-	 * 
+	 *
 	 * @param values ordered list of string values
 	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix to each list value,
 	 *            otherwise as a suffix
@@ -223,7 +223,7 @@ public class Strings {
 
 	/**
 	 * Returns the index of the first non-horizontal whitespace character in the given string.
-	 * 
+	 *
 	 * @param str the string to check
 	 * @return index of the first non-whitespace character
 	 */
@@ -375,9 +375,9 @@ public class Strings {
 		return sb.toString();
 	}
 
-	public static String abbreviate(String in, int len) {
+	public static String shorten(String in, int len) {
 		if (in.length() <= len) return in;
-		String out = in.substring(0, len - 3);
+		String out = encodeWS(in.substring(0, len - 3));
 		return out + ELLIPSIS_MARK;
 	}
 

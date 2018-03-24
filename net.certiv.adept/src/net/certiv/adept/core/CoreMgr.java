@@ -18,10 +18,11 @@ import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.TreeMultimap;
 
 public class CoreMgr {
 
@@ -64,11 +65,15 @@ public class CoreMgr {
 			if (settings.learn) {			// add document to corpus repo
 				CorpusDocs.writeDocument(settings.corpusDir, doc);
 			} else {
-				DocProcessor dp = new DocProcessor(this, doc, settings);
-				if (dp.parseDocument(doc, settings.check)) {
-					docModel = dp.createDocModel();
-					dp.match(corModel);
-//					dp.formatDocument();
+				DocProcessor proc = new DocProcessor(this, doc, settings);
+				if (proc.processDocument(doc, settings.check)) {
+					docModel = proc.createDocModel();
+					proc.match(corModel);
+
+					// ==========================
+					// proc.formatDocument(); TODO: enable
+					// ==========================
+
 				}
 			}
 		}
@@ -146,13 +151,8 @@ public class CoreMgr {
 	}
 
 	/** Returns the sets of best possible matches for the given feature, ordered by similarity. */
-	public TreeMultimap<Double, Feature> getMatches(Feature source) {
-		return corModel.matches(source);
-	}
-
-	/** Returns the one best match for the given feature. */
-	public Feature getBestMatch(Feature source) {
-		return corModel.match(source);
+	public TreeMultiset<Double, RefToken> getMatches(Feature source, RefToken ref) {
+		return corModel.getScoredMatches(source, ref);
 	}
 
 	// ----

@@ -35,7 +35,7 @@ public class Document {
 
 		infos = new ArrayList<>();
 		Info prior = null;
-		for (String text : content.split("\\r?\\n", -1)) {
+		for (String text : content.split("\\R", -1)) {
 			Info curr = new Info(text, tabWidth);
 			if (prior != null) {
 				curr.priorIndents = prior.indents;
@@ -55,11 +55,11 @@ public class Document {
 		this.model = model;
 	}
 
-	public ParseRecord getParseData() {
+	public ParseRecord getParseRecord() {
 		return data;
 	}
 
-	public void setParseData(ParseRecord data) {
+	public void setBuilder(ParseRecord data) {
 		this.data = data;
 	}
 

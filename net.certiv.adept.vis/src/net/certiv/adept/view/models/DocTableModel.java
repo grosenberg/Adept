@@ -11,14 +11,14 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.view.renderers.AlignCellRenderer;
 import net.certiv.adept.view.utils.CollUtil;
 
 public class DocTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Offset", "Line", "Col", "Left", "Token", "Right", "Weight" };
+	private final String[] columnNames = { "Num", "Ancestors", "Token", "Spacing", "Alignment", "Text", "Location",
+			"Feature Id" };
 
 	private Object[][] rowData;
 	private Map<Integer, Feature> index = new HashMap<>();
@@ -28,20 +28,21 @@ public class DocTableModel extends BaseTableModel {
 
 		CollUtil.sortLineCol(features);
 		List<Object[]> rows = new ArrayList<>();
-		int offset = 0;
+		int num = 0;
 		for (Feature feature : features) {
-			int line = feature.getLine();
-			int col = feature.getCol();
-			String left = evalSide(feature.getSpacingLeft(), feature.getWsLeft(), feature.getTokensLeft(), Bias.LEFT);
-			String token = evalTokenText(feature.getType(), feature.getText());
-			String right = evalSide(feature.getSpacingRight(), feature.getWsRight(), feature.getTokensRight(),
-					Bias.RIGHT);
-			int weight = feature.getWeight();
+			String ancestors = evalAncestors(feature.getAncestors());
+			String token = fType(feature.getType());
+			String space = tSpace(feature.getRef(0));
+			String align = tAlign(feature.getRef(0));
+			String text = feature.getText();
+			String location = tLocation(feature.getRef(0));
 
-			Object[] row = { offset, line, col, left, token, right, weight };
+			int id = feature.getId();
+
+			Object[] row = { num, ancestors, token, space, align, text, location, id };
 			rows.add(row);
-			index.put(offset, feature);
-			offset++;
+			index.put(num, feature);
+			num++;
 		}
 		this.rowData = rows.toArray(new Object[rows.size()][]);
 	}
@@ -49,25 +50,22 @@ public class DocTableModel extends BaseTableModel {
 	public void configCols(JTable table) {
 		table.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
-		table.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
-		table.getColumnModel().getColumn(2).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
-		table.getColumnModel().getColumn(6).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(7).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(this);
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
-		sorter.setComparator(1, NumComp);
-		sorter.setComparator(2, NumComp);
-		sorter.setComparator(6, NumComp);
+		sorter.setComparator(7, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
-		cols.getColumn(0).setPreferredWidth(20);
-		cols.getColumn(1).setPreferredWidth(20);
-		cols.getColumn(2).setPreferredWidth(20);
-		cols.getColumn(3).setPreferredWidth(200);
+		cols.getColumn(0).setPreferredWidth(10);
+		cols.getColumn(1).setPreferredWidth(200);
+		cols.getColumn(2).setPreferredWidth(80);
+		cols.getColumn(3).setPreferredWidth(150);
 		cols.getColumn(4).setPreferredWidth(150);
-		cols.getColumn(5).setPreferredWidth(200);
-		cols.getColumn(6).setPreferredWidth(20);
+		cols.getColumn(5).setPreferredWidth(100);
+		cols.getColumn(6).setPreferredWidth(80);
+		cols.getColumn(7).setPreferredWidth(20);
 	}
 
 	public Feature getFeature(int row) {

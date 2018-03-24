@@ -311,6 +311,7 @@ public class Tool extends ToolBase {
 		return documents;
 	}
 
+	/** Returns the formatted source of the last document parsed. */
 	public String getFormatted() {
 		return mgr.getDocModel().getDocument().getModified();
 	}

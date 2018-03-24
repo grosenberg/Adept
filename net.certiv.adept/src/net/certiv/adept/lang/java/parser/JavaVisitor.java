@@ -15,6 +15,6 @@ public class JavaVisitor extends JavaParserBaseListener {
 
 	@Override
 	public void enterEveryRule(ParserRuleContext ctx) {
-		builder.evaluateRuleContext(ctx);
+		builder.extractFeatures(ctx);
 	}
 }

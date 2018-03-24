@@ -15,6 +15,6 @@ public class XVisitorVisitor extends XVisitorParserBaseListener {
 
 	@Override
 	public void enterEveryRule(ParserRuleContext ctx) {
-		builder.evaluateRuleContext(ctx);
+		builder.extractFeatures(ctx);
 	}
 }

@@ -2,8 +2,15 @@ package net.certiv.adept.util;
 
 import java.lang.reflect.Array;
 import java.util.HashSet;
+import java.util.List;
+
+import net.certiv.adept.unit.HashMultilist;
 
 public class Collect {
+
+	public static boolean notEmpty(List<? extends Object> elems) {
+		return elems != null && !elems.isEmpty();
+	}
 
 	/** To initialize from an array {@code int[] { value1, value2, ...} } */
 	public static HashSet<Integer> toSet(int[] in) {
@@ -35,6 +42,14 @@ public class Collect {
 		T[] result = (T[]) Array.newInstance(a.getClass().getComponentType(), aLen + bLen);
 		System.arraycopy(a, 0, result, 0, aLen);
 		System.arraycopy(b, 0, result, aLen, bLen);
+		return result;
+	}
+
+	public static double[] toPrimitiveArray(final List<Double> values) {
+		double[] result = new double[values.size()];
+		for (int idx = 0; idx < result.length; idx++) {
+			result[idx] = values.get(idx).doubleValue();
+		}
 		return result;
 	}
 }

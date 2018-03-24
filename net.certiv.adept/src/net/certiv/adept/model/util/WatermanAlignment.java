@@ -3,7 +3,7 @@ package net.certiv.adept.model.util;
 import java.util.List;
 
 /**
- * Calculates the optimal alignment similarity between two arrays of values using the
+ * Calculates the optimal inLine similarity between two arrays of values using the
  * Smith-Waterman-Gotoh algorithm and a linear Gap penalty.
  *
  * @see <a href="https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm">Wikipedia -
@@ -50,7 +50,7 @@ public final class WatermanAlignment {
 			sim = max(sim, m0[j]);
 		}
 
-		// determine scored alignment similarity
+		// determine scored inLine similarity
 		for (int i = 1; i < s.length; i++) {
 			m1[0] = max(0, m0[0] + Gap, eval(s[i], t[0]));
 			sim = max(sim, m1[0]);

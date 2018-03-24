@@ -23,14 +23,14 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.util.HashMultilist;
+import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.view.components.AbstractBase;
+import net.certiv.adept.view.components.AbstractViewBase;
 import net.certiv.adept.view.models.FeatureTableModel;
 import net.certiv.adept.view.models.SourceListModel;
 import net.certiv.adept.view.models.SourceListModel.Item;
 
-public class DocumentsView extends AbstractBase {
+public class DocumentsView extends AbstractViewBase {
 
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 	private static final String rootDir = "../net.certiv.adept/corpus/antlr";
