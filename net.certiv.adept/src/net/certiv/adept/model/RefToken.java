@@ -177,14 +177,14 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	}
 
 	private RefToken derive(RefToken best) {
-		RefToken result = clone();
+		RefToken result = copy();
 		result.lSpacing = best.lSpacing;
 		result.rSpacing = best.rSpacing;
 		return result;
 	}
 
-	@Override
-	public RefToken clone() {
+	/** Deep clone. */
+	public RefToken copy() {
 		try {
 			return (RefToken) super.clone();
 		} catch (CloneNotSupportedException e) {

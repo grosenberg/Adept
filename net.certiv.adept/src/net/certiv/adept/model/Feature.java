@@ -164,6 +164,13 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		this.refs = refs;
 	}
 
+	public RefToken getEquiv(RefToken other) {
+		for (RefToken ref : refs) {
+			if (ref.equivalentTo(other)) return ref;
+		}
+		return null;
+	}
+
 	public int maxRank() {
 		int max = 0;
 		for (RefToken ref : refs) {
@@ -234,7 +241,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 			Feature copy = (Feature) super.clone();
 			copy.refs = new ArrayList<>();
 			for (RefToken ref : refs) {
-				copy.refs.add(ref.clone());
+				copy.refs.add(ref.copy());
 			}
 			return copy;
 		} catch (CloneNotSupportedException e) {

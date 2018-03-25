@@ -15,7 +15,7 @@ import net.certiv.adept.util.Log;
 
 public class CorpusTest {
 
-	private static final String corpusRoot = "corpus";
+	private static final String corpusRoot = "corpus/01";
 	private CoreMgr mgr;
 	@SuppressWarnings("unused") private ISourceParser lang;
 	@SuppressWarnings("unused") private List<Feature> features;
@@ -43,6 +43,11 @@ public class CorpusTest {
 
 	@Test
 	public void testCoord() {
+		// HashMultilist<Integer, AdeptToken> index = lang.getParseData().lineTokensIndex;
+		// for (Integer line : index.keyList()) {
+		// List<AdeptToken> tokens = index.get(line);
+		// System.out.println(String.format("%2s: %s", line, tokens));
+		// }
 		assertEquals(false, false);
 	}
 }

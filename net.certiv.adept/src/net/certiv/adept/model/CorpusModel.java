@@ -3,11 +3,14 @@ package net.certiv.adept.model;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.antlr.v4.runtime.misc.Pair;
 
 import com.google.gson.annotations.Expose;
 
@@ -24,8 +27,11 @@ import net.certiv.adept.util.Time;
 
 public class CorpusModel {
 
-	private static final String MSG = "%3s/%-3s (%3d%%) unique features: %s";
 	private static final long TIME_OUT = 500000;
+
+	private static final String DocMsg = "Merging  %3d:%5d --------- %s";
+	private static final String UnqMsg = "  Unique %3d:%5d %3d%%/%3d%%";
+	private static final String CorMsg = "  Corpus %3d:%5d %3d%%/%3d%%";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -111,18 +117,21 @@ public class CorpusModel {
 		Document doc = builder.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
 
-		// collect the document features
+		// obtain the document features
 		List<Feature> features = builder.getFeatures();
 		sources.put(doc.getDocId(), features);
+		Pair<Integer, Integer> dfr = reportDoc(features, doc.getFilename());
+
+		// identify the unique document features
+		// non-unique features are merged
+		Map<Integer, Feature> uniques = reduce(features);
+		reportUnq(dfr, uniques.values());
 
 		// update the corpus feature set
-		Map<Integer, Feature> uniques = reduce(features);
+		// add the unique features, including all of their ref tokens
+		Pair<Integer, Integer> cfr = featureSize(corpus.values());
 		corpus.putAll(uniques);
-
-		int docsize = features.size();					// unique features in document
-		int corsize = uniques.size();					// unique to corpus
-		int percent = corsize * 100 / docsize;
-		Log.debug(this, String.format(MSG, corsize, docsize, percent, doc.getFilename()));
+		reportCor(cfr, corpus.values());
 	}
 
 	/** Merge features as retrieved from persistant store into the corpus model. */
@@ -138,7 +147,7 @@ public class CorpusModel {
 	}
 
 	/**
-	 * Reduces the given feature set to those unique relative to the current corpus feature set.
+	 * Reduces the given internally unique feature set to those unique relative to the corpus.
 	 * <p>
 	 * For each unique feature, the set of feature token refs reduced in the feature.
 	 * <p>
@@ -147,40 +156,61 @@ public class CorpusModel {
 	 */
 	private Map<Integer, Feature> reduce(List<Feature> features) {
 		Map<Integer, Feature> uniques = new HashMap<>();
+
 		for (Feature feature : features) {
+			feature = reduceRefs(feature.copy());
+
 			Feature existing = corpus.get(feature.getKey());
 			if (existing == null) {
-				uniques.put(feature.getKey(), feature.copy());
-
-				List<RefToken> refs = reduceRefs(new ArrayList<>(), feature.getRefs());
-				feature.setRefs(refs);
+				uniques.put(feature.getKey(), feature);
 
 			} else {
 				existing.addWeight(feature.getWeight());
-
-				List<RefToken> refs = reduceRefs(existing.getRefs(), feature.getRefs());
-				existing.setRefs(refs);
+				reduceRefs(existing, feature);
 			}
 		}
 		return uniques;
 	}
 
-	private List<RefToken> reduceRefs(List<RefToken> existing, List<RefToken> refs) {
-		List<RefToken> uniques = new ArrayList<>(refs);
-		for (RefToken ref : refs) {
-			for (RefToken exist : existing) {
-				if (exist.equivalentTo(ref)) {
-					exist.addRank(ref.getRank());
-					uniques.remove(ref);
-					break;
-				}
+	// internal reduce equivalent duplicates, merging to self
+	private Feature reduceRefs(Feature feature) {
+		List<RefToken> results = new ArrayList<>();
+
+		for (RefToken ref : feature.getRefs()) {
+			RefToken equiv = findEqiv(results, ref);
+			if (equiv == null) {
+				results.add(ref);
+			} else {
+				equiv.addRank(ref.getRank());
 			}
 		}
 
-		for (RefToken unique : uniques) {
-			existing.add(unique.clone());
+		feature.setRefs(results);
+		return feature;
+	}
+
+	// mutually reduce equivalent duplicates, merging to dest
+	private Feature reduceRefs(Feature dest, Feature feature) {
+		List<RefToken> existing = new ArrayList<>(dest.getRefs());
+
+		for (RefToken ref : feature.getRefs()) {
+			RefToken equiv = findEqiv(existing, ref);
+			if (equiv == null) {
+				existing.add(ref);
+			} else {
+				equiv.addRank(ref.getRank());
+			}
 		}
-		return uniques;
+
+		dest.setRefs(existing);
+		return dest;
+	}
+
+	private RefToken findEqiv(List<RefToken> targets, RefToken ref) {
+		for (RefToken target : targets) {
+			if (ref.equivalentTo(target)) return ref;
+		}
+		return null;
 	}
 
 	/** Perform operations to finalize the (re)built corpus. */
@@ -269,5 +299,36 @@ public class CorpusModel {
 
 	private void clearFeatures() {
 		corpus.clear();
+	}
+
+	private Pair<Integer, Integer> reportDoc(List<Feature> features, String name) {
+		Pair<Integer, Integer> sizes = featureSize(features);
+		Log.debug(this, String.format(DocMsg, sizes.a, sizes.b, name));
+		return sizes;
+	}
+
+	private Pair<Integer, Integer> reportUnq(Pair<Integer, Integer> fr, Collection<Feature> features) {
+		Pair<Integer, Integer> sizes = featureSize(features);
+		int upercent = sizes.a * 100 / fr.a;
+		int rpercent = sizes.b * 100 / fr.b;
+
+		Log.debug(this, String.format(UnqMsg, sizes.a, sizes.b, upercent, rpercent));
+		return sizes;
+	}
+
+	private void reportCor(Pair<Integer, Integer> fr, Collection<Feature> features) {
+		Pair<Integer, Integer> sizes = featureSize(features);
+		int cpercent = (sizes.a - fr.a) * 100 / sizes.a;
+		int rpercent = (sizes.b - fr.b) * 100 / sizes.b;
+
+		Log.debug(this, String.format(CorMsg, sizes.a, sizes.b, cpercent, rpercent));
+	}
+
+	private Pair<Integer, Integer> featureSize(Collection<Feature> features) {
+		int refs = 0;
+		for (Feature feature : features) {
+			refs += feature.getRefs().size();
+		}
+		return new Pair<>(features.size(), refs);
 	}
 }
