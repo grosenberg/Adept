@@ -33,7 +33,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 	@Expose private List<RefToken> refs;		// all token refs specific to this feature
 
-	// for analysis
+	// for visualization
 	@Expose private String docName;				// originating document name
 	@Expose private int tokenIndex;				// originating token stuff
 	@Expose private int line;

@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
 import net.certiv.adept.format.align.Place;
+import net.certiv.adept.format.indent.Dent;
 import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;
@@ -89,12 +90,12 @@ public class AdeptToken extends CommonToken {
 		return ref.place == Place.SOLO || ref.place == Place.END;
 	}
 
-	public int indents() {
-		return ref.indents;
+	public Dent dent() {
+		return ref.dent;
 	}
 
-	public void setIndents(int indents) {
-		ref.indents = indents;
+	public void setDent(Dent dent) {
+		ref.dent = dent;
 	}
 
 	// -------------------------

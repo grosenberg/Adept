@@ -14,7 +14,7 @@ import net.certiv.adept.view.renderers.RefsCellRenderer;
 
 public class RefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Line", "Token", "Place", "Spacing", "Alignment", "Rank" };
+	private final String[] columnNames = { "Line", "Token", "Place", "Indents", "Spacing", "Alignment", "Rank" };
 
 	private List<RefToken> refs;
 	private Object[][] rowData;
@@ -32,12 +32,13 @@ public class RefsTableModel extends BaseTableModel {
 		for (RefToken ref : refs) {
 			String tokName = tText(ref.type, ref.text);
 			String place = tPlace(ref);
+			String dents = tIndent(ref);
 			String space = tSpace(ref);
 			String align = tAlign(ref);
 
 			int rank = ref.rank;
 
-			Object[] row = { line, tokName, place, space, align, rank };
+			Object[] row = { line, tokName, place, dents, space, align, rank };
 			rows.add(row);
 			line++;
 		}
@@ -61,15 +62,16 @@ public class RefsTableModel extends BaseTableModel {
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
-		sorter.setComparator(5, NumComp);
+		sorter.setComparator(6, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(60);
 		cols.getColumn(2).setPreferredWidth(60);
-		cols.getColumn(3).setPreferredWidth(200);
-		cols.getColumn(4).setPreferredWidth(100);
-		cols.getColumn(5).setPreferredWidth(30);
+		cols.getColumn(3).setPreferredWidth(60);
+		cols.getColumn(4).setPreferredWidth(300);
+		cols.getColumn(5).setPreferredWidth(100);
+		cols.getColumn(6).setPreferredWidth(30);
 	}
 
 	public RefToken getRef(int row) {

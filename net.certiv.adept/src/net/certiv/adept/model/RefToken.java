@@ -10,6 +10,7 @@ import com.google.gson.annotations.Expose;
 import net.certiv.adept.format.align.Align;
 import net.certiv.adept.format.align.Gap;
 import net.certiv.adept.format.align.Place;
+import net.certiv.adept.format.indent.Dent;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;
@@ -26,12 +27,11 @@ import net.certiv.adept.util.Strings;
 public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	private static final int TXTLIMIT = 16;
+	private static final double RankSignificance = 0.2;
 
 	private static final String LEFT = "%s[%s] %s(%s)";
 	private static final String MIDL = " > %s%s-%s[%s] > ";
 	private static final String RGHT = "%s(%s) %s[%s]";
-
-	private static final double RankSignificance = 0.2;
 
 	// derived from a corpus ref token
 	public RefToken matched;
@@ -49,9 +49,9 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	// feature token - computed
 	@Expose public String nodeName;
-	@Expose public Place place = Place.ANY;
-	@Expose public int indents;					// indent level
 	@Expose public int visCol;					// actual visual node column (0..n)
+	@Expose public Place place;
+	@Expose public Dent dent;					// indent level & hint
 
 	// aligns
 	@Expose public Align align = Align.NONE;	// type of align group

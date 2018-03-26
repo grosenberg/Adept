@@ -27,6 +27,7 @@ import net.certiv.adept.util.Strings;
 public class Builder extends ParseRecord {
 
 	private static final int LIMIT = 6; // ancestor path limit
+	private static final String LineMsg = "%3d: %2d > %s";
 
 	private CoreMgr mgr;
 	private List<Integer> exTypes;
@@ -80,12 +81,13 @@ public class Builder extends ParseRecord {
 			} else {
 				int len = values.size();
 				values.get(0).setPlace(Place.BEG);
-				for (int idx = 1; idx < len - 2; idx++) {
+				for (int idx = 1; idx < len - 1; idx++) {
 					values.get(idx).setPlace(Place.MID);
 				}
 				values.get(values.size() - 1).setPlace(Place.END);
 			}
 		}
+		// checkLineIndex();
 	}
 
 	// ---- Indent and aligner operations -----
@@ -175,7 +177,7 @@ public class Builder extends ParseRecord {
 		token.setKind(evalKind(type));
 		token.setNodeName(getTokenName(type));
 		int tokenIdx = token.getTokenIndex();
-		token.setIndents(indenter.getIndents(tokenIdx));
+		token.setDent(indenter.getDent(tokenIdx));
 
 		RefToken ref = token.refToken();
 		AdeptToken left = findRealLeft(tokenIdx);
@@ -326,5 +328,25 @@ public class Builder extends ParseRecord {
 		int end = mark.getStartIndex() - 1;
 		String text = mark.getInputStream().getText(new Interval(beg, end));
 		return Strings.measureVisualWidth(text, tabWidth);
+	}
+
+	// --------------------
+
+	protected void checkLineIndex() {
+		int lines = blanklines.size();
+		for (int line = 0; line < lines; line++) {
+			List<AdeptToken> tokens = lineTokensIndex.get(line);
+			if (tokens == null) {
+				String status = blanklines.get(line) ? "Blank" : "Does not agree with blanklines index";
+				Log.debug(this, String.format(LineMsg, line + 1, 0, status));
+
+			} else {
+				StringBuilder sb = new StringBuilder();
+				for (AdeptToken token : tokens) {
+					sb.append(String.format("%s(%s) ", token.place(), token.refToken().text));
+				}
+				Log.debug(this, String.format(LineMsg, line + 1, tokens.size(), sb.toString()));
+			}
+		}
 	}
 }

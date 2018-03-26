@@ -1,5 +1,6 @@
 package net.certiv.adept.model.load;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import com.google.gson.annotations.Expose;
@@ -37,40 +38,11 @@ public class FeatureSet {
 		return pathname;
 	}
 
+	public String getFilename() {
+		return Paths.get(pathname).getFileName().toString();
+	}
+
 	public List<Feature> getFeatures() {
 		return features;
 	}
-
-	// public List<Feature> getReducedFeatures() {
-	// List<Feature> result = new ArrayList<>();
-	// for (Feature feature : features) {
-	// if (feature.getKind() == Kind.RULE) continue;
-	// if (feature.isEquivalent()) continue;
-	// result.add(feature);
-	// }
-	// return result;
-	// }
-
-	// /**
-	// * Restore feature objects to edgeSet using the persisted indicies
-	// *
-	// * @param mgr
-	// */
-	// public void fixEdgeRefs(CoreMgr mgr) {
-	// Map<Long, Feature> cache = new HashMap<>();
-	// for (Feature feature : features) {
-	// feature.setMgr(mgr);
-	// cache.put(feature.getId(), feature);
-	// }
-	// for (Feature feature : features) {
-	// EdgeSet edgeSet = feature.getEdgeSet();
-	// for (Edge edge : edgeSet.getEdges()) {
-	// edge.root = cache.get(edge.rootId);
-	// edge.leaf = cache.get(edge.leafId);
-	// if (edge.root == null || edge.leaf == null) {
-	// Log.error(this, "EdgeRef fixup failed.");
-	// }
-	// }
-	// }
-	// }
 }

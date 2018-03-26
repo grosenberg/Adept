@@ -10,8 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.v4.runtime.misc.Pair;
-
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
@@ -21,6 +19,7 @@ import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.util.CorpusAnalyzer;
 import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.unit.Pair;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -29,9 +28,9 @@ public class CorpusModel {
 
 	private static final long TIME_OUT = 500000;
 
-	private static final String DocMsg = "Merging  %3d:%5d --------- %s";
-	private static final String UnqMsg = "  Unique %3d:%5d %3d%%/%3d%%";
-	private static final String CorMsg = "  Corpus %3d:%5d %3d%%/%3d%%";
+	private static final String DocMsg = "Merging  %3d/%5d --------- %s";
+	private static final String UnqMsg = "  Unique %3d/%5d %3d%%/%3d%%";
+	private static final String CorMsg = "  Corpus %3d/%5d %3d%%/%3d%%";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -116,43 +115,33 @@ public class CorpusModel {
 	public void merge(Builder builder) {
 		Document doc = builder.getDocument();
 		pathnames.put(doc.getDocId(), doc.getPathname());
+		merge(doc.getDocId(), doc.getFilename(), builder.getFeatures());
+	}
 
-		// obtain the document features
-		List<Feature> features = builder.getFeatures();
-		sources.put(doc.getDocId(), features);
-		Pair<Integer, Integer> dfr = reportDoc(features, doc.getFilename());
+	/** Merge features as retrieved from persistant store into the corpus model. */
+	public void merge(FeatureSet loader) {
+		merge(loader.getDocId(), loader.getFilename(), loader.getFeatures());
+	}
 
-		// identify the unique document features
-		// non-unique features are merged
+	private void merge(int docId, String name, List<Feature> features) {
+		// retain the document features
+		sources.put(docId, features);
+		Pair<Integer, Integer> dfr = reportDoc(features, name);
+
+		// identify the unique document features & merge non-unique
 		Map<Integer, Feature> uniques = reduce(features);
 		reportUnq(dfr, uniques.values());
 
-		// update the corpus feature set
-		// add the unique features, including all of their ref tokens
+		// merge unique features, implicitly including token refs
 		Pair<Integer, Integer> cfr = featureSize(corpus.values());
 		corpus.putAll(uniques);
 		reportCor(cfr, corpus.values());
 	}
 
-	/** Merge features as retrieved from persistant store into the corpus model. */
-	public void merge(FeatureSet loader) {
-
-		// collect the document features
-		List<Feature> features = loader.getFeatures();
-		sources.put(loader.getDocId(), features);
-
-		// update the corpus feature set
-		Map<Integer, Feature> uniques = reduce(features);
-		corpus.putAll(uniques);
-	}
-
-	/**
-	 * Reduces the given internally unique feature set to those unique relative to the corpus.
-	 * <p>
-	 * For each unique feature, the set of feature token refs reduced in the feature.
-	 * <p>
-	 * For each non-unique feature, the set of feature token refs are reduced into the corresponding
-	 * corpus feature.
+	/*
+	 * Reduces the given internally unique feature set to those unique relative to the corpus. For each
+	 * unique, the token refs are reduced in the feature. For each non-unique, the feature token refs
+	 * are reduced into the corpus feature.
 	 */
 	private Map<Integer, Feature> reduce(List<Feature> features) {
 		Map<Integer, Feature> uniques = new HashMap<>();
@@ -172,7 +161,7 @@ public class CorpusModel {
 		return uniques;
 	}
 
-	// internal reduce equivalent duplicates, merging to self
+	// internally reduce equivalent duplicates, merging to self
 	private Feature reduceRefs(Feature feature) {
 		List<RefToken> results = new ArrayList<>();
 
@@ -208,7 +197,7 @@ public class CorpusModel {
 
 	private RefToken findEqiv(List<RefToken> targets, RefToken ref) {
 		for (RefToken target : targets) {
-			if (ref.equivalentTo(target)) return ref;
+			if (ref.equivalentTo(target)) return target;
 		}
 		return null;
 	}

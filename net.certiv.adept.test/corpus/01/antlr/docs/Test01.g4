@@ -2,7 +2,9 @@ grammar Test01 ;
 
 query   	: term+ EOF ;
 term        : alphanum+ STAR alphanum* ;
-alphanum    : CHARACTER | NUM ;
+alphanum    : CHARACTER 
+			| NUM 
+			;
 
 WHITESPACE  : [ \t\r\n]+ -> skip;
 

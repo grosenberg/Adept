@@ -13,6 +13,11 @@ import net.certiv.adept.model.RefToken;
 
 public abstract class BaseTableModel extends AbstractTableModel {
 
+	private static final String DentMsg = "%s ($s) %s";
+	private static final String AlignMsg = "%s {%s}  %s:%s (%s)";
+	private static final String SpaceMsg = "%s  %s  <  %s  >  %s  %s";
+	private static final String LocMsg = "@%s:%s <%s>";
+
 	protected static final Comparator<Number> NumComp = new Comparator<Number>() {
 
 		@Override
@@ -33,26 +38,24 @@ public abstract class BaseTableModel extends AbstractTableModel {
 	}
 
 	protected static String tPlace(RefToken ref) {
-		String ret = ref.place.toString();
-		if (ref.place.atBOL()) ret += " (" + ref.indents + ")";
-		return ret;
+		return ref.place.toString();
+	}
+
+	protected static String tIndent(RefToken ref) {
+		return String.format(DentMsg, ref.dent.indents, ref.dent.bind, ref.dent.getIndents());
 	}
 
 	protected static String tAlign(RefToken ref) {
 		if (ref.align == Align.NONE) return "None --";
-
-		String alMsg = "%s {%s}  %s:%s (%s)";
-		return String.format(alMsg, ref.align, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
+		return String.format(AlignMsg, ref.align, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
 	}
 
 	protected static String tSpace(RefToken ref) {
-		String spMsg = "%s  %s  <  %s  >  %s  %s";
-		return String.format(spMsg, fType(ref.lType), ref.lSpacing, fType(ref.type), ref.rSpacing, fType(ref.rType));
+		return String.format(SpaceMsg, fType(ref.lType), ref.lSpacing, fType(ref.type), ref.rSpacing, fType(ref.rType));
 	}
 
 	protected static String tLocation(RefToken ref) {
-		String locMsg = "@%s:%s <%s>";
-		return String.format(locMsg, ref.line, ref.col, ref.visCol);
+		return String.format(LocMsg, ref.line, ref.col, ref.visCol);
 	}
 
 	protected static String tText(int type, String text) {

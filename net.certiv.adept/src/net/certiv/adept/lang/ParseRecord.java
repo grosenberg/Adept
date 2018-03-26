@@ -100,6 +100,17 @@ public class ParseRecord {
 		aligner = new Aligner(this);
 	}
 
+	public void dispose() {
+		typeSet.clear();
+		featureIndex.clear();
+		index.clear();
+		lineTokensIndex.clear();
+		blanklines.clear();
+		commentIndex.clear();
+		fieldIndex.clear();
+		indenter.clear();
+	}
+
 	public Document getDocument() {
 		return doc;
 	}
@@ -131,6 +142,11 @@ public class ParseRecord {
 	/** Returns a list of the tokens in the given token index range, inclusive. */
 	public List<Token> getTokenInterval(int begIndex, int endIndex) {
 		return tokenStream.get(begIndex, endIndex);
+	}
+
+	/** Returns the token at the given token index . */
+	public AdeptToken getToken(int index) {
+		return (AdeptToken) tokenStream.getTokens().get(index);
 	}
 
 	/** Protect against null */
@@ -220,16 +236,5 @@ public class ParseRecord {
 	public boolean isBlankLine(int line) {
 		if (line < 0 && line >= blanklines.size()) return true;
 		return blanklines.get(line);
-	}
-
-	public void dispose() {
-		typeSet.clear();
-		featureIndex.clear();
-		index.clear();
-		lineTokensIndex.clear();
-		blanklines.clear();
-		commentIndex.clear();
-		fieldIndex.clear();
-		indenter.clear();
 	}
 }

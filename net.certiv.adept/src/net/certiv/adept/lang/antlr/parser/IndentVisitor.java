@@ -1,14 +1,15 @@
 package net.certiv.adept.lang.antlr.parser;
 
+import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.ActionContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltBlockContext;
+import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AntlrContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AtBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.BodyContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.CmdBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.PrimaryContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleSpecContext;
-import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4ParserBaseListener;
 
 public class IndentVisitor extends Antlr4ParserBaseListener {
@@ -38,7 +39,7 @@ public class IndentVisitor extends Antlr4ParserBaseListener {
 
 	@Override
 	public void enterRuleSpec(RuleSpecContext ctx) {
-		indenter.statement(indenter.first(ctx.prefix(), ctx.id()), indenter.first(ctx.ruleBlock()));
+		indenter.statement(indenter.first(ctx.prefix(), ctx.id()), indenter.before(ctx.ruleBlock()));
 	}
 
 	// ---- Bodies ----
@@ -61,5 +62,12 @@ public class IndentVisitor extends Antlr4ParserBaseListener {
 	@Override
 	public void enterAction(ActionContext ctx) {
 		indenter.indent(ctx.BEG_ACTION(), ctx.END_ACTION());
+	}
+
+	// ---- Done ----
+
+	@Override
+	public void exitAntlr(AntlrContext ctx) {
+		indenter.finalize(ctx);
 	}
 }
