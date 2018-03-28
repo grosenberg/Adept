@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
-import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
@@ -15,6 +13,7 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /** Document stream formatter. */
@@ -49,35 +48,31 @@ public class Formatter {
 	public List<TextEdit> createEdits() {
 		List<TextEdit> results = new ArrayList<>();
 		Space space = new Space();
-		List<AdeptToken> srcTokens = data.getTokens();
 
-		TreeMap<AdeptToken, Feature> index = doc.getModel().getIndex();
-		NavigableSet<AdeptToken> tokens = index.navigableKeySet();
+		for (AdeptToken token : data.index.keySet()) {
+			RefToken present = fromFeature(token.getTokenIndex());
 
-		for (AdeptToken token : tokens) {
-			Feature cur = index.get(token);
-			RefToken existing = cur.getRef(token.getTokenIndex());
+			if (present != null) {
+				RefToken matched = present.matched;
 
-			RefToken matched = existing.matched;
-			if (matched != null) {
-				AdeptToken lToken = existing.lIndex > 0 ? srcTokens.get(existing.lIndex) : null;
-				Feature bef = lToken != null ? index.get(lToken) : null;
+				if (matched != null) {
+					RefToken prior = fromFeature(present.lIndex);
+					RefToken next = fromFeature(present.rIndex);
 
-				AdeptToken rToken = existing.rIndex > 0 ? srcTokens.get(existing.rIndex) : null;
-				Feature aft = rToken != null ? index.get(rToken) : null;
-
-				List<TextEdit> edits = createEdits(bef, cur, aft, matched);
-
-				for (TextEdit edit : edits) {
-					Region region = edit.getRegion();
-					if (space.overlaps(region)) throw new FormatterException(token, region, results);
-					results.add(edit);
-					space.add(region);
+					try {
+						List<TextEdit> edits = createEdits(prior, present, next, matched);
+						space.addAll(edits);
+						results.addAll(edits);
+					} catch (FormatException e) {
+						Log.error(this, "Formatter Err: " + e.getMessage(), e);
+					} catch (Exception e) {
+						Log.error(this, "Unexpected Err: " + e.getMessage(), e);
+					}
 				}
-
 			}
 		}
 
+		space.dispose();
 		return results;
 
 	}
@@ -111,6 +106,13 @@ public class Formatter {
 
 	// -------------------------------------------------------------------------
 
+	// translate a token index to a known good feature ref token
+	private RefToken fromFeature(int index) {
+		AdeptToken token = index > -1 ? data.tokenIndex.get(index) : null;
+		Feature feature = token != null ? data.index.get(token) : null;
+		return feature != null ? feature.getRefFor(token.getTokenIndex()) : null;
+	}
+
 	/**
 	 * <pre>
 	 * ------|--------|--------|-------
@@ -119,30 +121,54 @@ public class Formatter {
 	 *     c.lIdx   c.Idx    c.rIdx
 	 *              a.lIdx   a.Idx  ...
 	 * </pre>
+	 *
+	 * TODO: aligns <br>
+	 * TODO: line breaks
 	 */
-	private List<TextEdit> createEdits(Feature bef, Feature cur, Feature aft, RefToken matched) {
-		// TODO: indents
-		// TODO: aligns
-		// TODO: line breaks
+	private List<TextEdit> createEdits(RefToken prior, RefToken now, RefToken next, RefToken matched)
+			throws FormatException {
 
 		List<TextEdit> results = new ArrayList<>();
 
-		if (bef.isComment() || cur.isComment()) {
-			String repl = eval(matched.lSpacing, matched.lActual);
-			TextEdit left = new TextEdit(matched.lIndex, matched.index, repl);
+		// handle left
+		if (matched.atBol()) {
+			// force new line and create full indent
+			String repl = evalIndent(matched.lActual, now.dent.getIndents());
+			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
+			results.add(left);
+
+		} else if (now.atBol()) {
+			// preserve new line and create full indent
+			String repl = evalIndent(now.lActual, now.dent.getIndents());
+			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
+			results.add(left);
+
+		} else if ((prior != null && prior.isComment()) || now.isComment()) {
+			// use cur left
+			String repl = evalSpacing(matched.lSpacing, matched.lActual);
+			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
 			results.add(left);
 		}
 
-		if (!aft.isComment()) {
-			String repl = eval(matched.rSpacing, matched.rActual);
-			TextEdit right = new TextEdit(matched.index, matched.rIndex, repl);
+		// handle right
+		if (next == null || !next.isComment()) {
+			// use cur right
+			String repl = evalSpacing(matched.rSpacing, matched.rActual);
+			TextEdit right = new TextEdit(now.index, now.rIndex, repl);
 			results.add(right);
 		}
 
 		return results;
 	}
 
-	private String eval(Spacing spacing, String actual) {
+	// produce replacement string including any leading newlines
+	private String evalIndent(String text, int indents) {
+		String indentStr = vertFlex(text);
+		indentStr += Strings.getN(indents, '\t');
+		return indentStr;
+	}
+
+	private String evalSpacing(Spacing spacing, String actual) {
 		switch (spacing) {
 			case HFLEX:
 				return horzFlex(actual);
@@ -165,13 +191,11 @@ public class Formatter {
 		return result.replaceAll("\\t[ ]+(?=\\t)", "\\t");
 	}
 
-	private String vertFlex(String actual) {
-		int lines = Math.min(countVert(actual), settings.keepBlankLines);
+	private String vertFlex(String text) {
+		int lines = Strings.countLines(text);
+		if (settings.removeBlankLines) {
+			lines = Math.min(lines, settings.keepBlankLines);
+		}
 		return Strings.getN(lines, Strings.EOL);
-	}
-
-	private int countVert(String txt) {
-		if (txt == null || txt.isEmpty()) return 0;
-		return txt.split("\\R", -1).length;
 	}
 }

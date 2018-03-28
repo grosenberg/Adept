@@ -411,4 +411,9 @@ public class Strings {
 		if (text == null || text.isEmpty()) return 0;
 		return text.split(Pattern.quote(mark), -1).length - 1;
 	}
+
+	public static int countLines(String txt) {
+		if (txt == null || txt.isEmpty()) return 0;
+		return txt.split("\\R", -1).length;
+	}
 }

@@ -46,21 +46,25 @@ public class Builder extends ParseRecord {
 
 	// ---------------------------------------------------------------------
 
-	/** Build indexes prior to feature extraction. */
+	/**
+	 * Build indexes prior to feature extraction.
+	 * <ul>
+	 * <li>tokenIndex: token index -> formattable token
+	 * <li>lineTokensIndex: line# -> formattable tokens
+	 * <li>commentIndex: line# -> comment tokens
+	 * <li>blanklines: line# -> blankline?
+	 */
 	public void index() {
 		int tabWidth = doc.getTabWidth();
 		int line = -1;				// current line (0..n)
 		AdeptToken start = null;	// start of current line
 
-		// create line -> formattable tokens index
-		// create line -> comment tokens index
-		// create line -> blankline? index
 		for (AdeptToken token : getTokens()) {
 			int num = token.getLine();
 			if (num > line) {	// track line changes
 				line = num;
 				start = token;
-				blanklines.put(line, true);
+				blanklines.put(line, true);		// assume blank
 			}
 
 			int type = token.getType();
@@ -68,9 +72,9 @@ public class Builder extends ParseRecord {
 				token.setRefToken(new RefToken(token));
 				token.setVisCol(calcVisualColumn(start, token, tabWidth));
 
+				tokenIndex.put(token.getTokenIndex(), token);
 				lineTokensIndex.put(line, token);
 				blanklines.put(line, false);	// correct assumption
-
 				if (isComment(type)) commentIndex.put(line, token);
 			}
 		}

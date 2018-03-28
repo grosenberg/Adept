@@ -40,12 +40,6 @@ import net.certiv.adept.view.utils.Point;
 
 public class FormatView extends AbstractViewBase {
 
-	private static final String KEY_FONT_NAME = "font_name";
-	private static final String KEY_FONT_SIZE = "font_size";
-	private static final String KEY_TAB_WIDTH = "tab_width";
-	private static final Integer[] SIZES = { 8, 11, 12, 14, 16, 18, 20, 24 };
-	private static final Integer[] WIDTHS = { 2, 4, 6, 8 };
-
 	private static final String name = "FormatView";
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
@@ -74,9 +68,11 @@ public class FormatView extends AbstractViewBase {
 	public FormatView() {
 		super(name, "format.png");
 
-		SourceListModel model = new SourceListModel(rootDir, srcExt);
-		srcBox = new JComboBox<>(model);
-		srcBox.setSize(250, 32);
+		JPanel selectPanel = createPanel("Source");
+		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 2));
+
+		srcBox = new JComboBox<>(new SourceListModel(rootDir, srcExt));
+		srcBox.setSize(300, 32);
 		srcBox.addActionListener(new ActionListener() {
 
 			@Override
@@ -84,22 +80,20 @@ public class FormatView extends AbstractViewBase {
 				process();
 			}
 		});
+		selectPanel.add(new JLabel("Document: "));
+		selectPanel.add(srcBox);
 
 		// "Droid Sans Mono", "DejaVu Sans Mono", "Oxygen Mono", "NanumGothicCoding"
 		String fontname = prefs.get(KEY_FONT_NAME, "Droid Sans Mono");
 		fontBox = new FontChoiceBox(fontname, Font.PLAIN, true);
+		selectPanel.add(new JLabel("Font: "));
+		selectPanel.add(fontBox);
 
 		sizeBox = new JComboBox<>(SIZES);
-		tabBox = new JComboBox<>(WIDTHS);
-
-		JPanel selectPanel = createPanel("Source");
-		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-		selectPanel.add(new JLabel("    Document: "));
-		selectPanel.add(srcBox);
-		selectPanel.add(new JLabel("    Font: "));
-		selectPanel.add(fontBox);
 		selectPanel.add(new JLabel("    Font Size: "));
 		selectPanel.add(sizeBox);
+
+		tabBox = new JComboBox<>(WIDTHS);
 		selectPanel.add(new JLabel("    Tab Width: "));
 		selectPanel.add(tabBox);
 

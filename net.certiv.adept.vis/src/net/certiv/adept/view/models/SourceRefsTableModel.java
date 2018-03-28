@@ -11,39 +11,46 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import org.antlr.runtime.Token;
+
+import net.certiv.adept.lang.AdeptToken;
+import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Maths;
 import net.certiv.adept.view.renderers.AlignCellRenderer;
 
-public class MatchesTableModel extends BaseTableModel {
+/** RefTokens for a source document. */
+public class SourceRefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Num", "Similarity", "Token", "Place", "Indents", "Spacing", "Alignment",
-			"Rank" };
+	private final String[] columnNames = { "Num", "Index", "Ancestors", "Token", "Place", "Indents", "Spacing",
+			"Alignment", "Location", "Feature Id" };
 
 	private Object[][] rowData;
-	private Map<Integer, RefToken> index = new HashMap<>();
+	private Map<Integer, RefToken> refIndex = new HashMap<>();
 
-	public MatchesTableModel(TreeMultiset<Double, RefToken> matches, List<String> ruleNames, List<String> tokenNames) {
+	public SourceRefsTableModel(ParseRecord data, List<String> ruleNames, List<String> tokenNames) {
 		super(ruleNames, tokenNames);
 
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
+		for (AdeptToken token : data.tokenIndex.values()) {
+			RefToken ref = token.refToken();
+			if (ref.type > Token.EOF) {
+				Feature feature = data.index.get(token);
 
-		List<Double> sims = new ArrayList<>(matches.keySet());
-		for (Double sim : sims) {
-			for (RefToken ref : matches.get(sim)) {
-
-				String token = tText(ref.type, ref.text);
+				int tIndex = ref.index;
+				String ancestors = evalAncestors(feature.getAncestors());
+				String tname = tText(ref.type, ref.text);
 				String place = tPlace(ref);
 				String dents = tIndent(ref);
 				String space = tSpace(ref);
 				String align = tAlign(ref);
-				int rank = ref.rank;
+				String location = tLocation(ref);
+				int id = feature.getId();
 
-				Object[] row = { num, Maths.round(sim, 6), token, place, dents, space, align, rank };
+				Object[] row = { num, tIndex, ancestors, tname, place, dents, space, align, location, id };
 				rows.add(row);
-				index.put(num, ref);
+				refIndex.put(num, ref);
 				num++;
 			}
 		}
@@ -54,27 +61,29 @@ public class MatchesTableModel extends BaseTableModel {
 		table.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
 		table.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
-		table.getColumnModel().getColumn(7).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(9).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(this);
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
 		sorter.setComparator(1, NumComp);
-		sorter.setComparator(7, NumComp);
+		sorter.setComparator(9, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
-		cols.getColumn(1).setPreferredWidth(60);
-		cols.getColumn(2).setPreferredWidth(100);
-		cols.getColumn(3).setPreferredWidth(60);
-		cols.getColumn(4).setPreferredWidth(80);
-		cols.getColumn(5).setPreferredWidth(300);
-		cols.getColumn(6).setPreferredWidth(200);
-		cols.getColumn(7).setPreferredWidth(20);
+		cols.getColumn(1).setPreferredWidth(20);
+		cols.getColumn(2).setPreferredWidth(300);
+		cols.getColumn(3).setPreferredWidth(150);
+		cols.getColumn(4).setPreferredWidth(60);
+		cols.getColumn(5).setPreferredWidth(80);
+		cols.getColumn(6).setPreferredWidth(250);
+		cols.getColumn(7).setPreferredWidth(150);
+		cols.getColumn(8).setPreferredWidth(60);
+		cols.getColumn(9).setPreferredWidth(20);
 	}
 
-	public RefToken getRef(int row) {
-		return index.get(row);
+	public RefToken getRefToken(int row) {
+		return refIndex.get(row);
 	}
 
 	@Override

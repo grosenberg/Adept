@@ -12,14 +12,15 @@ import javax.swing.table.TableRowSorter;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.view.renderers.RefsCellRenderer;
 
-public class RefsTableModel extends BaseTableModel {
+/** RefTokens for a corpus document. */
+public class CorpusRefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Line", "Token", "Place", "Indents", "Spacing", "Alignment", "Rank" };
+	private final String[] columnNames = { "Num", "Token", "Place", "Indents", "Spacing", "Alignment", "Rank" };
 
 	private List<RefToken> refs;
 	private Object[][] rowData;
 
-	public RefsTableModel(List<RefToken> refs, List<String> ruleNames, List<String> tokenNames) {
+	public CorpusRefsTableModel(List<RefToken> refs, List<String> ruleNames, List<String> tokenNames) {
 		super(ruleNames, tokenNames);
 
 		addAll(refs);

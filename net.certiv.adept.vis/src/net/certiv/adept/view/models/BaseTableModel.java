@@ -13,7 +13,7 @@ import net.certiv.adept.model.RefToken;
 
 public abstract class BaseTableModel extends AbstractTableModel {
 
-	private static final String DentMsg = "%s ($s) %s";
+	private static final String DentMsg = "%s (%s: %s)";
 	private static final String AlignMsg = "%s {%s}  %s:%s (%s)";
 	private static final String SpaceMsg = "%s  %s  <  %s  >  %s  %s";
 	private static final String LocMsg = "@%s:%s <%s>";
@@ -42,7 +42,7 @@ public abstract class BaseTableModel extends AbstractTableModel {
 	}
 
 	protected static String tIndent(RefToken ref) {
-		return String.format(DentMsg, ref.dent.indents, ref.dent.bind, ref.dent.getIndents());
+		return String.format(DentMsg, ref.dent.getIndents(), ref.dent.indents, ref.dent.bind);
 	}
 
 	protected static String tAlign(RefToken ref) {

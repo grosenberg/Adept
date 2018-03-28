@@ -1,10 +1,19 @@
 package net.certiv.adept.format;
 
+import java.util.List;
 import java.util.TreeSet;
 
 public class Space {
 
-	TreeSet<Region> subSpaces = new TreeSet<>();
+	private final TreeSet<Region> subSpaces = new TreeSet<>();
+
+	public void addAll(List<TextEdit> edits) throws FormatException {
+		for (TextEdit edit : edits) {
+			Region region = edit.getRegion();
+			if (overlaps(region)) throw new FormatException("Overlap", edit);
+			add(region);
+		}
+	}
 
 	public void add(Region region) {
 		Region lower = subSpaces.floor(region);
@@ -46,9 +55,12 @@ public class Space {
 		return false;
 	}
 
+	public void dispose() {
+		subSpaces.clear();
+	}
+
 	@Override
 	public String toString() {
 		return subSpaces.toString();
 	}
-
 }

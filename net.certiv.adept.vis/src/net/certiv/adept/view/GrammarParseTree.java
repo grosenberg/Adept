@@ -34,13 +34,13 @@ import net.certiv.adept.view.components.TextLineNumber;
 import net.certiv.adept.view.components.TreeViewer;
 import net.certiv.adept.view.models.TokenTableModel;
 
-public class ParseTreeView extends AbstractViewBase {
+public class GrammarParseTree extends AbstractViewBase {
 
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(new Plastic3DLookAndFeel());
 		} catch (Exception e) {}
-		new ParseTreeView();
+		new GrammarParseTree();
 	}
 
 	private static final String name = "ParseTree";
@@ -57,7 +57,7 @@ public class ParseTreeView extends AbstractViewBase {
 
 	private int level;
 
-	public ParseTreeView() {
+	public GrammarParseTree() {
 		super("ParseData tree visiualization", "tree.gif");
 
 		viewer = new TreeViewer();

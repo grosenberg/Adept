@@ -146,7 +146,8 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		return nodeName;
 	}
 
-	public RefToken getRef(int index) {
+	/** Returns the RefToken having the given token index. */
+	public RefToken getRefFor(int index) {
 		if (refIndex == null) {
 			refIndex = new HashMap<>();
 			for (RefToken ref : refs) {

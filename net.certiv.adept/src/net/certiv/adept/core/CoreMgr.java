@@ -69,11 +69,7 @@ public class CoreMgr {
 				if (proc.processDocument(doc, settings.check)) {
 					docModel = proc.createDocModel();
 					proc.match(corModel);
-
-					// ==========================
-					// proc.formatDocument(); TODO: enable
-					// ==========================
-
+					proc.formatDocument();
 				}
 			}
 		}

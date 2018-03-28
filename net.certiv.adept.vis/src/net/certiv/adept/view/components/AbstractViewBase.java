@@ -51,12 +51,18 @@ public abstract class AbstractViewBase {
 	protected static final Dimension minDim = new Dimension(100, 100);
 	protected static final int VERT = JSplitPane.VERTICAL_SPLIT;
 	protected static final int HORZ = JSplitPane.HORIZONTAL_SPLIT;
+
 	protected static final String KEY_WIDTH = "frame_width";
 	protected static final String KEY_HEIGHT = "frame_height";
 	protected static final String KEY_X = "frame_x";
 	protected static final String KEY_Y = "frame_y";
 	protected static final String KEY_SPLIT_HORZ = "frame_split_horz";
 	protected static final String KEY_SPLIT_VERT = "frame_split_vert";
+	protected static final String KEY_FONT_NAME = "font_name";
+	protected static final String KEY_FONT_SIZE = "font_size";
+	protected static final String KEY_TAB_WIDTH = "tab_width";
+	protected static final Integer[] SIZES = { 8, 11, 12, 14, 16, 18, 20, 24 };
+	protected static final Integer[] WIDTHS = { 2, 4, 6, 8 };
 
 	protected static final Comparator<Number> NumComp = new Comparator<Number>() {
 

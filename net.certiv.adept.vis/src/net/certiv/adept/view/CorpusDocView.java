@@ -1,6 +1,10 @@
 package net.certiv.adept.view;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -8,9 +12,11 @@ import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.TableModel;
 
@@ -21,38 +27,49 @@ import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
+import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.view.components.AbstractViewBase;
+import net.certiv.adept.view.models.CorpusRefsTableModel;
 import net.certiv.adept.view.models.FeatureTableModel;
-import net.certiv.adept.view.models.RefsTableModel;
+import net.certiv.adept.view.models.SourceListModel;
+import net.certiv.adept.view.models.SourceListModel.Item;
 
-public class CorpusView extends AbstractViewBase {
+/**
+ * View the features present in any of the individual documents present within the set of corpus
+ * documents.
+ */
+public class CorpusDocView extends AbstractViewBase {
 
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
+	private static final String rootDir = "../net.certiv.adept/corpus/antlr";
+	private static final String srcExt = ".g4";
 
 	private CoreMgr mgr;
 	private ISourceParser lang;
 
+	private int selectedSource;
+	private JSplitPane split;
 	private JTable featTable;
 	private JTable refsTable;
-	private JSplitPane split;
 
-	private List<Feature> features;
-	private boolean filtered;
+	private HashMultilist<Integer, Feature> docFeatures;
 
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(new Plastic3DLookAndFeel());
 		} catch (Exception e) {}
 
-		CorpusView view = new CorpusView();
-		view.createFeaturesData();
+		CorpusDocView view = new CorpusDocView();
+		view.createFeatureData();
 	}
 
-	public CorpusView() {
-		super("Corpus Feature Analysis", "features.gif");
+	public CorpusDocView() {
+		super("Corpus Documents Analysis", "features.gif");
 
+		JPanel select = createSelectPanel();
 		split = createSplitPane(VERT);
+		content.add(select, BorderLayout.NORTH);
 		content.add(split, BorderLayout.CENTER);
 
 		createFeatureTable();
@@ -68,10 +85,32 @@ public class CorpusView extends AbstractViewBase {
 		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
 	}
 
+	private JPanel createSelectPanel() {
+		SourceListModel model = new SourceListModel(rootDir, srcExt);
+		JComboBox<Item> srcBox = new JComboBox<>(model);
+		srcBox.setMinimumSize(new Dimension(300, 0));
+		srcBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectedSource = model.getIndexOfSelected();
+				showUnfiltered();
+			}
+		});
+
+		JPanel selectPanel = createPanel("Source");
+		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 2));
+		selectPanel.add(createLabel("Document: ", 300, SwingConstants.RIGHT));
+		selectPanel.add(srcBox);
+		return selectPanel;
+	}
+
 	private void createFeatureTable() {
 		featTable = createTable();
 		JPanel panel = createScrollTable("Feature Set", featTable);
 		featTable.addMouseListener(new MouseAdapter() {
+
+			private boolean filtered;
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -82,7 +121,7 @@ public class CorpusView extends AbstractViewBase {
 						if (!filtered) {
 							filterToRow(row);
 						} else {
-							showUnFiltered();
+							showUnfiltered();
 						}
 						filtered = !filtered;
 					}
@@ -99,9 +138,8 @@ public class CorpusView extends AbstractViewBase {
 		split.setRightComponent(panel);
 	}
 
-	protected void createFeaturesData() {
+	protected void createFeatureData() {
 		Tool tool = new Tool();
-		tool.setCheck(true);
 		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
@@ -117,7 +155,9 @@ public class CorpusView extends AbstractViewBase {
 
 		mgr = tool.getMgr();
 		lang = mgr.getLanguageParser();
-		features = mgr.getCorpusModel().getCorpusFeatures();
+		docFeatures = mgr.getCorpusModel().getDocFeatures();
+		Integer key = docFeatures.keyList().get(0);
+		List<Feature> features = docFeatures.get(key);
 
 		FeatureTableModel model = new FeatureTableModel(features, lang.getRuleNames(), lang.getTokenNames());
 		featTable.setModel(model);
@@ -130,8 +170,8 @@ public class CorpusView extends AbstractViewBase {
 		List<RefToken> refs = feature.getRefs();
 
 		TableModel baseModel = refsTable.getModel();
-		if (baseModel instanceof RefsTableModel) {
-			RefsTableModel refsModel = (RefsTableModel) baseModel;
+		if (baseModel instanceof CorpusRefsTableModel) {
+			CorpusRefsTableModel refsModel = (CorpusRefsTableModel) baseModel;
 			refsModel.removeAllRows();
 			if (refs.isEmpty()) {
 				Log.error(this, "Has no refs: " + feature.toString());
@@ -140,7 +180,7 @@ public class CorpusView extends AbstractViewBase {
 			refsModel.addAll(refs);
 
 		} else {
-			RefsTableModel refsModel = new RefsTableModel(refs, lang.getRuleNames(), lang.getTokenNames());
+			CorpusRefsTableModel refsModel = new CorpusRefsTableModel(refs, lang.getRuleNames(), lang.getTokenNames());
 			refsTable.setModel(refsModel);
 			refsModel.configCols(refsTable);
 		}
@@ -154,7 +194,7 @@ public class CorpusView extends AbstractViewBase {
 		showFilteredFeatures(type);
 	}
 
-	protected void showUnFiltered() {
+	protected void showUnfiltered() {
 		showFilteredFeatures(-1);
 	}
 
@@ -162,11 +202,11 @@ public class CorpusView extends AbstractViewBase {
 		FeatureTableModel model = (FeatureTableModel) featTable.getModel();
 		model.removeAllRows();
 
-		List<Feature> features = this.features;
+		Integer key = docFeatures.keyList().get(selectedSource);
+		List<Feature> features = docFeatures.get(key);
 		if (type > 0) {
 			features = features.stream().filter(f -> f.getType() == type).collect(Collectors.toList());
 		}
 		model.addAll(features);
 	}
-
 }

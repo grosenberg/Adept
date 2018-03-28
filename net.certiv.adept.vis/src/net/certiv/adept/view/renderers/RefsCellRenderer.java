@@ -6,11 +6,11 @@ import java.awt.Component;
 import javax.swing.JTable;
 
 import net.certiv.adept.view.models.BaseTableModel;
-import net.certiv.adept.view.models.RefsTableModel;
+import net.certiv.adept.view.models.CorpusRefsTableModel;
 
 public class RefsCellRenderer extends BaseCellRenderer {
 
-	public RefsCellRenderer(RefsTableModel model, int alignment) {
+	public RefsCellRenderer(CorpusRefsTableModel model, int alignment) {
 		super(model, alignment);
 	}
 

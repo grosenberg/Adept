@@ -20,11 +20,11 @@ public class TextEdit implements Comparator<TextEdit> {
 	 * @param right token index to the right
 	 * @param replace replacement string
 	 */
-	public TextEdit(int left, int right, String replace) {
+	public TextEdit(int left, int right, String replace) throws FormatException {
 		this.left = left;
 		this.right = right;
 		this.replace = replace;
-		if (left < 0 || right < 0 || replace == null) throw new FormatterException(this);
+		if (left < 0 || right < 0 || replace == null) throw new FormatException("Malformed", this);
 	}
 
 	public Region getRegion() {

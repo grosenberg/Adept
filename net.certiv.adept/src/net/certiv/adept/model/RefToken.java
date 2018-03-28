@@ -43,6 +43,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	// feature token - intrinsic
 	@Expose public int type;
 	@Expose public int index;
+	@Expose public boolean isComment;
 	@Expose public int line;			// node line (0..n)
 	@Expose public int col;				// node column (0..n)
 	@Expose public String text;			// node content
@@ -75,6 +76,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	public RefToken(AdeptToken token) {
 		this.type = token.getType();
 		this.index = token.getTokenIndex();
+		this.isComment = token.isComment();
 		this.line = token.getLine();
 		this.col = token.getCharPositionInLine();
 		this.text = Strings.shorten(token.getText(), TXTLIMIT);
@@ -125,6 +127,22 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	public void setRank(int rank) {
 		this.rank = rank;
 	}
+
+	// ---- Formatter support ----
+
+	public boolean isComment() {
+		return isComment;
+	}
+
+	public boolean atBol() {
+		return place == Place.SOLO || place == Place.BEG;
+	}
+
+	public boolean atEol() {
+		return place == Place.SOLO || place == Place.END;
+	}
+
+	// ---- Match support ----
 
 	/**
 	 * Score the similarity between this ref token and the given, possibly matching ref token. The

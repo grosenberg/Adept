@@ -2,7 +2,6 @@ package net.certiv.adept.lang;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,20 +19,11 @@ import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.unit.TokenComp;
 import net.certiv.adept.unit.TreeMultiset;
 
 /** Record of the information generated through the parsing of a single Document. */
 public class ParseRecord {
-
-	private static final Comparator<AdeptToken> TokenComp = new Comparator<AdeptToken>() {
-
-		@Override
-		public int compare(AdeptToken o1, AdeptToken o2) {
-			if (o1.getTokenIndex() < o2.getTokenIndex()) return -1;
-			if (o1.getTokenIndex() > o2.getTokenIndex()) return 1;
-			return 0;
-		}
-	};
 
 	public Document doc;
 
@@ -58,6 +48,9 @@ public class ParseRecord {
 	/** Primary index of a parsed document. Ordered by token index. */
 	// key=token; value=feature
 	public TreeMap<AdeptToken, Feature> index;
+
+	// key=token index; value=token
+	public TreeMap<Integer, AdeptToken> tokenIndex;
 
 	// key=feature id; value=feature
 	public HashMap<Integer, Feature> featureIndex;
@@ -88,7 +81,8 @@ public class ParseRecord {
 	public ParseRecord(Document doc) {
 		super();
 		this.doc = doc;
-		index = new TreeMap<>(TokenComp);
+		index = new TreeMap<>(TokenComp.Instance);
+		tokenIndex = new TreeMap<>();
 		featureIndex = new HashMap<>();
 		typeSet = new HashSet<>();
 		lineTokensIndex = new HashMultilist<>();
@@ -101,14 +95,17 @@ public class ParseRecord {
 	}
 
 	public void dispose() {
-		typeSet.clear();
-		featureIndex.clear();
 		index.clear();
+		tokenIndex.clear();
+		featureIndex.clear();
+		typeSet.clear();
 		lineTokensIndex.clear();
 		blanklines.clear();
 		commentIndex.clear();
 		fieldIndex.clear();
+
 		indenter.clear();
+		aligner.clear();
 	}
 
 	public Document getDocument() {
@@ -194,7 +191,7 @@ public class ParseRecord {
 
 	/** Returns the token feature map for the document, ordered by token index. */
 	public TreeMap<AdeptToken, Feature> getIndex() {
-		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(TokenComp);
+		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(TokenComp.Instance);
 		clone.putAll(index);
 		return clone;
 	}

@@ -18,6 +18,7 @@ public class AdeptToken extends CommonToken {
 	// for transfer to Feature/RefToken
 	private Kind kind = Kind.TERMINAL;
 	private Bias bias = Bias.RIGHT;
+
 	private RefToken ref;
 
 	public AdeptToken(int type, String text) {
@@ -49,6 +50,10 @@ public class AdeptToken extends CommonToken {
 	public void setKind(Kind kind) {
 		this.kind = kind;
 		this.bias = kind == Kind.LINECOMMENT ? Bias.LEFT : Bias.RIGHT;
+	}
+
+	public boolean isComment() {
+		return kind == Kind.LINECOMMENT || kind == Kind.BLOCKCOMMENT;
 	}
 
 	// -------------------------
