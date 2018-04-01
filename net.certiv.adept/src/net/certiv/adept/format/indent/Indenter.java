@@ -18,7 +18,9 @@ import net.certiv.adept.util.Strings;
 
 public class Indenter {
 
-	private static final String IndMsg = "%3d %s %s %s";
+	private static final String ProfileMsg = "%s \t @%d:%d";
+	private static final String IndentMsg = "%3d %s %s %s";
+
 	private static final Comparator<ParseTree> PtComp = new Comparator<ParseTree>() {
 
 		@Override
@@ -56,30 +58,27 @@ public class Indenter {
 		this.data = data;
 
 		// initialize profile
-		new Mark(null, Op.ROOT);
+		Mark.init(profile, data);
 	}
 
-	// ----------------------------------------------------
+	// ---- Access methods --------------------
 
 	/**
-	 * Returns the default caculated indentation level at the given token index.
+	 * Returns a {@code Dent} characterizing the caculated indentation level at the given token index.
 	 *
 	 * @param index token index
 	 * @return indentation level & affect hint
 	 */
 	public Dent getDent(int index) {
 		Mark mark = profile.floorEntry(index).getValue();
-		if (mark.index < index && mark.op == Op.BEG) {
-			return new Dent(mark.indents, Bind.WRAP);	// in wrappable statement
-		}
-		return mark;
+		return mark.createDent(index);
 	}
 
 	public void clear() {
 		profile.clear();
 	}
 
-	// ---- Indentation definition operations -------------
+	// ---- Indentation definition -------------
 
 	/**
 	 * Define the span of a statement, inclusive of the statement begin and end tokens and exclusive of
@@ -87,24 +86,57 @@ public class Indenter {
 	 */
 	public void statement(TerminalNode beg, TerminalNode end) {
 		if (beg.getSymbol().getTokenIndex() != end.getSymbol().getTokenIndex()) {
-			new Mark((AdeptToken) beg.getSymbol(), Op.BEG);
-			new Mark((AdeptToken) end.getSymbol(), Op.END);
+			Mark.create(profile, (AdeptToken) beg.getSymbol(), Op.BEG);
+			Mark.create(profile, (AdeptToken) end.getSymbol(), Op.END);
 		}
 	}
 
 	/**
 	 * Define the span of an indentation block, typically a statement body -- inclusive of the block
-	 * guards. Default is set for the indentation change to be applied {@code Bind.AFTER} the indent
-	 * block guard and {@code Bind.BEFORE} the outdent block guard.
+	 * guards. Default is that the indentation change is naively applied {@code Bind.BEFORE} both the
+	 * indent and outdent block guards: adjusted during finalize.
 	 */
 	public void indent(TerminalNode beg, TerminalNode end) {
 		if (beg.getSymbol().getTokenIndex() != end.getSymbol().getTokenIndex()) {
-			new Mark((AdeptToken) beg.getSymbol(), Op.IN);
-			new Mark((AdeptToken) end.getSymbol(), Op.OUT);
+			AdeptToken in = (AdeptToken) beg.getSymbol();
+			AdeptToken out = (AdeptToken) end.getSymbol();
+			Bind[] binds = calcBinds(in, out);
+
+			Mark.create(profile, in, Op.IN, binds[0]);
+			Mark.create(profile, out, Op.OUT, binds[1]);
 		}
 	}
 
-	// ---- Indentation support operations -----
+	private Bind[] calcBinds(AdeptToken beg, AdeptToken end) {
+		Bind[] binds = new Bind[] { Bind.AFTER, Bind.BEFORE };
+
+		int pLine = beg.getLine();
+		if (beg.atBol() && !data.blanklines.get(beg.getLine() - 1)) {
+			pLine--;	// key to prior line bol
+		}
+		AdeptToken first = data.lineTokensIndex.get(pLine).get(0);
+		int pOff = first.visCol();
+
+		if (pLine == beg.getLine()) {
+			binds[0] = Bind.AFTER;
+		} else if (beg.atBol() && beg.visCol() < pOff) {
+			binds[0] = Bind.AFTER;
+		} else {
+			binds[0] = Bind.BEFORE;
+		}
+
+		if (beg.getLine() == end.getLine()) {
+			binds[1] = Bind.BEFORE;
+		} else if (end.atBol() && end.visCol() < beg.visCol()) {
+			binds[1] = Bind.BEFORE;
+		} else {
+			binds[1] = Bind.AFTER;
+		}
+
+		return binds;
+	}
+
+	// ---- Indentation support -----
 
 	/** Returns the non-null TerminalNode prior to the given context. */
 	public TerminalNode before(ParserRuleContext ctx) {
@@ -156,20 +188,20 @@ public class Indenter {
 		return flat;
 	}
 
-	// ---- Indentation finalize operations -----
+	// ---- Indentation finalize -----
 
 	public void finalize(ParserRuleContext ctx) {
+		// Log.debug(this, "Profile");
 		// checkProfile();
-		// checkIndents() ;
+		// Log.debug(this, "Indents");
+		// checkIndents();
 	}
 
-	private static final String ProMsg = "@%d:%d <%d> %s";
-
-	@SuppressWarnings("unused")
-	private void checkProfile() {
+	void checkProfile() {
 		for (Entry<Integer, Mark> entry : profile.entrySet()) {
 			int index = entry.getKey();
-			String dent = entry.getValue().toString();
+			Mark mark = entry.getValue();
+			String dent = mark.createDent(index).toString();
 			int line = 0;
 			int col = 0;
 			if (index > -1) {
@@ -177,12 +209,11 @@ public class Indenter {
 				line = token.getLine() + 1;
 				col = token.getCharPositionInLine() + 1;
 			}
-			Log.debug(this, String.format(ProMsg, line, col, index, dent));
+			Log.debug(this, String.format(ProfileMsg, dent, line, col));
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void checkIndents() {
+	void checkIndents() {
 		int len = data.blanklines.size();
 
 		for (int line = 0; line < len; line++) {
@@ -193,99 +224,11 @@ public class Indenter {
 				String range = String.format("<%s..%s>", tIndex, lIndex);
 				Dent dent = getDent(tIndex);
 				String indents = dent.toString();
-				String graphic = Strings.getN(dent.getIndents(), "--");
-				Log.debug(this, String.format(IndMsg, line + 1, indents, range, graphic));
+				String graphic = Strings.getN(dent.indents, "--");
+				Log.debug(this, String.format(IndentMsg, line + 1, indents, range, graphic));
 			} else {
-				Log.debug(this, String.format(IndMsg, line + 1, "", "", "Blank"));
+				Log.debug(this, String.format(IndentMsg, line + 1, "", "", "Blank"));
 			}
 		}
-	}
-
-	// -------------------------------------------------------
-
-	private class Mark extends Dent implements Comparator<Mark> {
-
-		Op op;
-		int index;
-
-		public Mark(AdeptToken token, Op op) {
-			super(0, Bind.BEFORE);
-			this.op = op;
-			index = token != null ? token.getTokenIndex() : -1;
-			profile.put(index, this);
-
-			if (token != null) {
-				Entry<Integer, Mark> pEntry = profile.lowerEntry(index);
-				if (pEntry == null) throw new IllegalStateException("Invalid token index for indenter.");
-
-				Mark prior = pEntry.getValue();
-				for (Mark current : profile.tailMap(index).values()) {
-					switch (current.op) {
-						case ROOT:
-							current.indents = 0;
-							break;
-						case IN:
-							current.indents = prior.indents + 1;
-							current.bind = Bind.AFTER;
-							break;
-						case OUT:
-							current.indents = Math.max(0, prior.indents - 1);
-							break;
-						default:
-							current.indents = prior.indents;
-					}
-					prior = current;
-				}
-			}
-		}
-
-		@Override
-		public int compare(Mark o1, Mark o2) {
-			if (o1.index < o2.index) return -1;
-			if (o1.index > o2.index) return 1;
-			return 0;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((op == null) ? 0 : op.hashCode());
-			result = prime * result + ((bind == null) ? 0 : bind.hashCode());
-			result = prime * result + index;
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) return true;
-			if (obj == null) return false;
-			if (getClass() != obj.getClass()) return false;
-			Mark other = (Mark) obj;
-			if (op != other.op) return false;
-			if (bind != other.bind) return false;
-			if (index != other.index) return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			String text = "ROOT";
-			if (index > -1) {
-				text = data.getTokenInterval(index, index).get(0).getText();
-			}
-			return String.format("%s %s:%s '%s'", super.toString(), op, index, text);
-		}
-	}
-
-	// Mark operations
-	private enum Op {
-		ROOT,	// 0 indent level (force)
-
-		IN,		// indent
-		OUT,	// dedent
-
-		BEG,	// wrappable statement
-		END;
 	}
 }

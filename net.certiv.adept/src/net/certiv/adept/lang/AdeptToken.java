@@ -2,6 +2,7 @@ package net.certiv.adept.lang;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
@@ -14,6 +15,8 @@ import net.certiv.adept.model.RefToken;
 public class AdeptToken extends CommonToken {
 
 	private static final String Msg = "[@%s, <%s:%s> (%s) %s='%s', %s, %s:%s:%s]";
+
+	public static final int BOF = Token.EOF;
 
 	// for transfer to Feature/RefToken
 	private Kind kind = Kind.TERMINAL;
@@ -111,7 +114,12 @@ public class AdeptToken extends CommonToken {
 		if (channel == 0) chanStr = "chan=Def";
 		if (channel == 1) chanStr = "chan=Hid";
 
-		return String.format(Msg, index, start, stop, ref.nodeName, type, ref.text, chanStr, ref.line, ref.col,
-				ref.place);
+		if (ref == null) {
+			return String.format(Msg, index, start, stop, "", type, getText(), chanStr, getLine(),
+					getCharPositionInLine(), Place.ANY);
+		} else {
+			return String.format(Msg, index, start, stop, ref.nodeName, type, ref.text, chanStr, ref.line, ref.col,
+					ref.place);
+		}
 	}
 }

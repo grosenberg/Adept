@@ -54,4 +54,12 @@ public class DocModel {
 	public TreeMap<AdeptToken, Feature> getIndex() {
 		return index;
 	}
+
+	public int getFeaturesCount() {
+		return features.size();
+	}
+
+	public int getTokenRefsCount() {
+		return index.size();
+	}
 }

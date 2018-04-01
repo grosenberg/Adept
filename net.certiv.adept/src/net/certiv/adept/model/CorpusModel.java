@@ -217,13 +217,25 @@ public class CorpusModel {
 		consistent = true;
 	}
 
+	public HashMultilist<Integer, Feature> getDocFeatures() {
+		return sources;
+	}
+
 	/** Returns all features in the CorpusDocs model */
 	public List<Feature> getCorpusFeatures() {
 		return new ArrayList<>(corpus.values());
 	}
 
-	public HashMultilist<Integer, Feature> getDocFeatures() {
-		return sources;
+	public int getCorpusFeaturesCount() {
+		return corpus.size();
+	}
+
+	public int getCorpusRefTokensCount() {
+		int cnt = 0;
+		for (Feature feature : corpus.values()) {
+			cnt += feature.getRefs().size();
+		}
+		return cnt;
 	}
 
 	public String getPathname(int docId) {
@@ -244,7 +256,6 @@ public class CorpusModel {
 			// corpus features that might contain a valid match
 			Feature matched = corpus.get(feature.getKey());
 			for (RefToken ref : feature.getRefs()) {
-
 				// key=similarity, value=match ref tokens; descending order
 				TreeMultiset<Double, RefToken> scored = matches(ref, matched);
 				ref.chooseBest(scored);
@@ -263,7 +274,6 @@ public class CorpusModel {
 	// results are provided in a descending score keyed multiset
 	private TreeMultiset<Double, RefToken> matches(RefToken ref, Feature feature) {
 		TreeMultiset<Double, RefToken> scored = new TreeMultiset<>(Collections.reverseOrder());
-
 		int maxRank = feature.maxRank();
 		for (RefToken match : feature.getRefs()) {
 			scored.put(ref.score(match, maxRank), match);

@@ -22,7 +22,9 @@ import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.util.Facet;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Time;
 
 public class CoreMgr {
 
@@ -59,6 +61,7 @@ public class CoreMgr {
 	 * @param pathnames identifies the documents to be evaluated
 	 */
 	public void execute(Settings settings, List<String> pathnames) {
+		Time.start(Facet.EXECUTE);
 		documents = loadDocuments(pathnames);
 		Log.info(this, documents.size() + " source documents to process.");
 		for (Document doc : documents.values()) {
@@ -73,6 +76,7 @@ public class CoreMgr {
 				}
 			}
 		}
+		Time.stop(Facet.EXECUTE);
 	}
 
 	private Map<Integer, Document> loadDocuments(List<String> pathnames) {
@@ -142,8 +146,12 @@ public class CoreMgr {
 		return corModel;
 	}
 
-	public int getCorpusTabWidth() {
+	public int getTabWidth() {
 		return settings.tabWidth;
+	}
+
+	public int getCorpusTabWidth() {
+		return settings.corpusTabWidth;
 	}
 
 	/** Returns the sets of best possible matches for the given feature, ordered by similarity. */

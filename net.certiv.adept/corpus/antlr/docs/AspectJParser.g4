@@ -41,7 +41,7 @@
   */
 
 
-parser grammar AspectJParser;
+parser grammar AspectJParser ;
 
 options {
 	tokenVocab=AspectJLexer;

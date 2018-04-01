@@ -58,7 +58,7 @@ public class CorpusRefsTableModel extends BaseTableModel {
 	public void configCols(JTable table) {
 		table.setDefaultRenderer(Object.class, new RefsCellRenderer(this, SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new RefsCellRenderer(this, SwingConstants.CENTER));
-		table.getColumnModel().getColumn(5).setCellRenderer(new RefsCellRenderer(this, SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(6).setCellRenderer(new RefsCellRenderer(this, SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
 		table.setRowSorter(sorter);

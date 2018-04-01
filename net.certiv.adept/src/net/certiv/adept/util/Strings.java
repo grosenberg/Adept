@@ -13,7 +13,7 @@ public class Strings {
 
 	public static final String PARA_MARK = "\u00B6";
 	public static final String SPACE_MARK = "\u00B7";
-	public static final String TAB_MARK = "\u00BB";
+	public static final String TAB_MARK = "\u1E6F";		// double left arrow: "\u00BB";
 	public static final String ELLIPSIS_MARK = "\u2026";
 	public static final String LARR_MARK = "\u2190";
 	public static final String RARR_MARK = "\u2192";
@@ -200,7 +200,7 @@ public class Strings {
 
 	/** Returns a string containing {@code count} spaces. */
 	public static String getNSpaces(int count) {
-		return getN(count, ' ');
+		return getN(count, SPACE);
 	}
 
 	/** Returns a string containing {@code count} sequential copies of the given character. */
@@ -219,6 +219,17 @@ public class Strings {
 			buf.append(text);
 		}
 		return buf.toString();
+	}
+
+	/**
+	 * Returns any leading HWS from the given string.
+	 *
+	 * @param str the string to check
+	 * @return the leading HWS
+	 */
+	public static String leadHWS(String str) {
+		int idx = firstNonHWS(str);
+		return idx > -1 ? str.substring(0, idx) : "";
 	}
 
 	/**
@@ -309,7 +320,7 @@ public class Strings {
 		int max = line.length();
 		for (int i = 0; i < max; i++) {
 			char ch = line.charAt(i);
-			if (ch == '\t') {
+			if (ch == TAB) {
 				int reminder = length % tabWidth;
 				length += tabWidth - reminder;
 			} else if (isIndentChar(ch)) {
@@ -348,7 +359,7 @@ public class Strings {
 		int width = from;
 		int len = text.length();
 		for (int idx = 0; idx < len; idx++) {
-			if (text.charAt(idx) == '\t') {
+			if (text.charAt(idx) == TAB) {
 				if (tabWidth > 0) width += tabWidth - width % tabWidth;
 			} else {
 				width++;
@@ -389,7 +400,7 @@ public class Strings {
 				case ' ':
 					sb.append(SPACE_MARK);
 					break;
-				case '\t':
+				case TAB:
 					sb.append(TAB_MARK);
 					break;
 				case '\r':

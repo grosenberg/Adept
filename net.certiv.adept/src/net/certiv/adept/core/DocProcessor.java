@@ -6,6 +6,8 @@ import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.util.Facet;
+import net.certiv.adept.util.Time;
 
 public class DocProcessor extends BaseProcessor {
 
@@ -32,6 +34,7 @@ public class DocProcessor extends BaseProcessor {
 	 * feature.
 	 */
 	public void match(CorpusModel corModel) {
+		Time.start(Facet.MATCH);
 		for (Feature feature : docModel.getFeatures()) {
 			switch (feature.getKind()) {
 				case BLOCKCOMMENT:
@@ -40,10 +43,12 @@ public class DocProcessor extends BaseProcessor {
 					corModel.match(feature);
 			}
 		}
+		Time.stop(Facet.MATCH);
 	}
 
 	/** Applies the docModel to format the doc content. */
 	public void formatDocument() {
+		Time.start(Facet.FORMAT);
 		if (settings.format) {
 			Formatter formatter = new Formatter(docModel, settings);
 			if (formatter.execute()) {
@@ -51,5 +56,6 @@ public class DocProcessor extends BaseProcessor {
 				if (settings.save) doc.saveModified(settings.backup);
 			}
 		}
+		Time.stop(Facet.FORMAT);
 	}
 }

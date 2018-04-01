@@ -18,8 +18,8 @@ import net.certiv.adept.format.align.Aligner;
 import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.unit.HashMultilist;
-import net.certiv.adept.unit.TokenComp;
+import net.certiv.adept.unit.AdeptComp;
+import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.unit.TreeMultiset;
 
 /** Record of the information generated through the parsing of a single Document. */
@@ -59,7 +59,10 @@ public class ParseRecord {
 	public HashSet<Integer> typeSet;
 
 	// key=line number; value=list of tokens
-	public HashMultilist<Integer, AdeptToken> lineTokensIndex;
+	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
+
+	// key=line number; value=bol char offset
+	public HashMap<Integer, Integer> lineStartIndex;
 
 	// key=line number; value=blank?
 	public HashMap<Integer, Boolean> blanklines;
@@ -81,11 +84,12 @@ public class ParseRecord {
 	public ParseRecord(Document doc) {
 		super();
 		this.doc = doc;
-		index = new TreeMap<>(TokenComp.Instance);
+		index = new TreeMap<>(AdeptComp.Instance);
 		tokenIndex = new TreeMap<>();
 		featureIndex = new HashMap<>();
 		typeSet = new HashSet<>();
-		lineTokensIndex = new HashMultilist<>();
+		lineTokensIndex = new TreeMultilist<>(null, AdeptComp.Instance);
+		lineStartIndex = new HashMap<>();
 		blanklines = new HashMap<>();
 		commentIndex = new TreeMultiset<>();
 		fieldIndex = new TreeMultiset<>();
@@ -100,6 +104,7 @@ public class ParseRecord {
 		featureIndex.clear();
 		typeSet.clear();
 		lineTokensIndex.clear();
+		lineStartIndex.clear();
 		blanklines.clear();
 		commentIndex.clear();
 		fieldIndex.clear();
@@ -191,23 +196,31 @@ public class ParseRecord {
 
 	/** Returns the token feature map for the document, ordered by token index. */
 	public TreeMap<AdeptToken, Feature> getIndex() {
-		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(TokenComp.Instance);
+		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(AdeptComp.Instance);
 		clone.putAll(index);
 		return clone;
 	}
 
+	public Feature getFeature(AdeptToken token) {
+		return index.get(token);
+	}
+
 	/**
-	 * Returns the token on the given line (0..n) at the given visual column. Returns {@code null} if no
-	 * matching token is found.
+	 * Returns the token on the given line (0..n) that includes the given visual column.
 	 */
-	public AdeptToken getVisualToken(int line, int visCol) {
-		for (AdeptToken token : lineTokensIndex.get(line)) {
-			int tokCol = token.visCol();
-			if (tokCol < visCol) continue;
-			if (tokCol > visCol) break;
-			if (tokCol == visCol) return token;
+	public AdeptToken getVisualToken(int line, int vcol) {
+		List<AdeptToken> tokens = lineTokensIndex.get(line);
+		if (tokens == null || tokens.isEmpty()) return null;
+		if (tokens.size() == 1) return tokens.get(0);
+
+		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
+			int beg = tokens.get(idx).visCol();
+			int end = tokens.get(idx + 1).visCol() - 1;
+
+			if (idx == 0 && vcol < beg) return tokens.get(idx);
+			if (beg <= vcol && vcol < end) return tokens.get(idx);
 		}
-		return null;
+		return tokens.get(tokens.size() - 1);
 	}
 
 	public boolean isWhitespace(int type) {

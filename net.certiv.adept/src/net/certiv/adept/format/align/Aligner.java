@@ -317,10 +317,10 @@ public class Aligner {
 	// if (count > 1) {
 	// num = (int) Math.round((double) num / count);
 	// if (num % tabWidth == 0) return num;
-	// return Strings.measureVisualWidth("\\t", tabWidth, num) + num;
+	// return Strings.measureVisualWidth("\t", tabWidth, num) + num;
 	// }
 	//
 	// // 4) the stopCol tab aligned greater than the viable limit
-	// return Strings.measureVisualWidth("\\t", tabWidth, minEndCol) + minEndCol;
+	// return Strings.measureVisualWidth("\t", tabWidth, minEndCol) + minEndCol;
 	// }
 }

@@ -16,7 +16,7 @@ import java.util.TreeMap;
  */
 public class TreeMultilist<K, V> {
 
-	private final TreeMap<K, ArrayList<V>> map;
+	private final TreeMap<K, List<V>> map;
 	private Comparator<? super K> keyComp;
 	private Comparator<? super V> valComp;
 
@@ -40,13 +40,13 @@ public class TreeMultilist<K, V> {
 
 	/** Get the values for the given key. Sort the values if the value comparator is not null. */
 	public List<V> get(K key) {
-		ArrayList<V> values = map.get(key);
+		List<V> values = map.get(key);
 		if (values != null && valComp != null) values.sort(valComp);
 		return values;
 	}
 
 	public boolean put(K key, V value) {
-		ArrayList<V> list = map.get(key);
+		List<V> list = map.get(key);
 		if (list == null) {
 			list = new ArrayList<>();
 			map.put(key, list);
@@ -55,7 +55,7 @@ public class TreeMultilist<K, V> {
 	}
 
 	public boolean put(K key, Collection<V> values) {
-		ArrayList<V> list = map.get(key);
+		List<V> list = map.get(key);
 		if (list == null) {
 			list = new ArrayList<>();
 			map.put(key, list);
@@ -96,7 +96,7 @@ public class TreeMultilist<K, V> {
 		return map.get(key).contains(value);
 	}
 
-	public Set<Entry<K, ArrayList<V>>> entrySet() {
+	public Set<Entry<K, List<V>>> entrySet() {
 		return map.entrySet();
 	}
 
@@ -126,7 +126,7 @@ public class TreeMultilist<K, V> {
 	 */
 	public List<V> values() {
 		ArrayList<V> results = new ArrayList<>();
-		for (ArrayList<V> list : map.values()) {
+		for (List<V> list : map.values()) {
 			results.addAll(list);
 		}
 		if (valComp != null) results.sort(valComp);
@@ -139,7 +139,7 @@ public class TreeMultilist<K, V> {
 
 	public int valuesSize() {
 		int cnt = 0;
-		for (ArrayList<V> set : map.values()) {
+		for (List<V> set : map.values()) {
 			cnt += set.size();
 		}
 		return cnt;

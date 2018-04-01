@@ -35,7 +35,7 @@ import net.certiv.adept.view.models.SourceListModel;
 import net.certiv.adept.view.models.SourceListModel.Item;
 import net.certiv.adept.view.models.SourceRefsTableModel;
 
-public class SourceMatchView extends AbstractViewBase {
+public class MatchView extends AbstractViewBase {
 
 	private static final String name = "MatchAnalysis";
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
@@ -55,11 +55,11 @@ public class SourceMatchView extends AbstractViewBase {
 			UIManager.setLookAndFeel(new Plastic3DLookAndFeel());
 		} catch (Exception e) {}
 
-		SourceMatchView view = new SourceMatchView();
+		MatchView view = new MatchView();
 		view.loadTool();
 	}
 
-	public SourceMatchView() {
+	public MatchView() {
 		super(name, "features.gif");
 
 		split = createSplitPane(VERT);
@@ -202,7 +202,7 @@ public class SourceMatchView extends AbstractViewBase {
 		sourceTable.setModel(model);
 		model.configCols(sourceTable);
 		sourceTable.changeSelection(0, 0, false, false);
-		// handleSrcRefSelect(0);
+		handleSrcRefSelect(0);
 	}
 
 	// clicked on the document feature table
@@ -211,12 +211,21 @@ public class SourceMatchView extends AbstractViewBase {
 		RefToken ref = srcModel.getRefToken(row);
 		AdeptToken token = data.tokenIndex.get(ref.index);
 		Feature feature = data.index.get(token);
-
 		TreeMultiset<Double, RefToken> matches = tool.getMgr().getMatches(feature, ref);
 
-		MatchesTableModel matModel = new MatchesTableModel(matches, data.getRuleNames(), data.getTokenNames());
-		matchTable.setModel(matModel);
-		matModel.configCols(matchTable);
+		if (!(matchTable.getModel() instanceof MatchesTableModel)) {
+			MatchesTableModel matModel = new MatchesTableModel(data.getRuleNames(), data.getTokenNames());
+			matchTable.setModel(matModel);
+			matModel.configCols(matchTable);
+		}
+
+		MatchesTableModel matModel = (MatchesTableModel) matchTable.getModel();
+		if (matches.isEmpty()) {
+			matModel.removeAllRows();
+		} else {
+			matModel.addAll(matches);
+		}
+
 		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
 	}
 

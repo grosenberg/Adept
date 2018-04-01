@@ -3,6 +3,7 @@ package net.certiv.adept.lang;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -26,8 +27,10 @@ import net.certiv.adept.util.Strings;
 
 public class Builder extends ParseRecord {
 
-	private static final int LIMIT = 6; // ancestor path limit
 	private static final String LineMsg = "%3d: %2d > %s";
+
+	private static final int AncesLimit = 6; // ancestor path limit; TODO: tune parameter
+	private static final int AssocLimit = 3; // associated token limit; TODO: tune parameter
 
 	private CoreMgr mgr;
 	private List<Integer> exTypes;
@@ -56,15 +59,16 @@ public class Builder extends ParseRecord {
 	 */
 	public void index() {
 		int tabWidth = doc.getTabWidth();
-		int line = -1;				// current line (0..n)
+		int current = -1;			// current line (0..n)
 		AdeptToken start = null;	// start of current line
 
 		for (AdeptToken token : getTokens()) {
-			int num = token.getLine();
-			if (num > line) {	// track line changes
-				line = num;
+			int line = token.getLine();
+			if (line > current) {	// track line changes
+				current = line;
 				start = token;
-				blanklines.put(line, true);		// assume blank
+				lineStartIndex.put(current, token.getStartIndex());
+				blanklines.put(current, true);	// assume blank
 			}
 
 			int type = token.getType();
@@ -73,22 +77,23 @@ public class Builder extends ParseRecord {
 				token.setVisCol(calcVisualColumn(start, token, tabWidth));
 
 				tokenIndex.put(token.getTokenIndex(), token);
-				lineTokensIndex.put(line, token);
-				blanklines.put(line, false);	// correct assumption
-				if (isComment(type)) commentIndex.put(line, token);
+				lineTokensIndex.put(current, token);
+				blanklines.put(current, false);	// correct assumption
+				if (isComment(type)) commentIndex.put(current, token);
 			}
 		}
 
-		for (List<AdeptToken> values : lineTokensIndex.valuesList()) {
-			if (values.size() == 1) {
-				values.get(0).setPlace(Place.SOLO);
+		for (Entry<Integer, List<AdeptToken>> entry : lineTokensIndex.entrySet()) {
+			List<AdeptToken> tokens = entry.getValue();
+			if (tokens.size() == 1) {
+				tokens.get(0).setPlace(Place.SOLO);
 			} else {
-				int len = values.size();
-				values.get(0).setPlace(Place.BEG);
+				int len = tokens.size();
+				tokens.get(0).setPlace(Place.BEG);
 				for (int idx = 1; idx < len - 1; idx++) {
-					values.get(idx).setPlace(Place.MID);
+					tokens.get(idx).setPlace(Place.MID);
 				}
-				values.get(values.size() - 1).setPlace(Place.END);
+				tokens.get(tokens.size() - 1).setPlace(Place.END);
 			}
 		}
 		// checkLineIndex();
@@ -188,14 +193,14 @@ public class Builder extends ParseRecord {
 		if (left != null) {
 			String ws = findWsLeft(tokenIdx);
 			Spacing spacing = evalSpacing(left.getTokenIndex(), tokenIdx);
-			ref.setLeft(left, spacing, ws);
+			ref.setLeft(left, spacing, ws, leftAssociates(token));
 		}
 
 		AdeptToken right = findRealRight(tokenIdx);
 		if (right != null) {
 			String ws = findWsRight(tokenIdx);
 			Spacing spacing = evalSpacing(tokenIdx, right.getTokenIndex());
-			ref.setRight(right, spacing, ws);
+			ref.setRight(right, spacing, ws, rightAssociates(token));
 		}
 
 		Feature feature = Feature.create(mgr, doc, genPath(parents), token);
@@ -295,6 +300,51 @@ public class Builder extends ParseRecord {
 		return sb.toString();
 	}
 
+	private List<Integer> leftAssociates(AdeptToken token) {
+		int line = token.getLine();
+		List<AdeptToken> tokens = new ArrayList<>(lineTokensIndex.get(line));
+		int idx = tokens.indexOf(token);
+		try {
+			tokens.subList(idx, tokens.size()).clear();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		while (tokens.size() < AssocLimit && line > 0) {
+			line--;
+			List<AdeptToken> prior = lineTokensIndex.get(line);
+			if (prior != null) tokens.addAll(0, prior);
+		}
+		Collections.reverse(tokens);
+
+		tokens.subList(Math.min(AssocLimit + 1, tokens.size()), tokens.size()).clear();
+		return ttypes(tokens);
+	}
+
+	private List<Integer> rightAssociates(AdeptToken token) {
+		int line = token.getLine();
+		List<AdeptToken> tokens = new ArrayList<>(lineTokensIndex.get(line));
+		int idx = tokens.indexOf(token);
+		tokens.subList(0, idx + 1).clear();
+
+		while (tokens.size() < AssocLimit && line < lineTokensIndex.size() - 1) {
+			line++;
+			List<AdeptToken> next = lineTokensIndex.get(line);
+			if (next != null) tokens.addAll(next);
+		}
+
+		tokens.subList(Math.min(AssocLimit + 1, tokens.size()), tokens.size()).clear();
+		return ttypes(tokens);
+	}
+
+	private List<Integer> ttypes(List<AdeptToken> tokens) {
+		List<Integer> ttypes = new ArrayList<>();
+		for (AdeptToken token : tokens) {
+			ttypes.add(token.getType());
+		}
+		return ttypes;
+	}
+
 	private AdeptToken findRealLeft(int idx) {
 		for (int jdx = idx - 1; jdx > -1; jdx--) {
 			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
@@ -318,20 +368,21 @@ public class Builder extends ParseRecord {
 	private List<ParseTree> getAncestors(ParserRuleContext ctx) {
 		List<ParseTree> parents = new ArrayList<>();
 		ParserRuleContext parent = ctx;
-		for (int idx = 0; parent != null && idx < LIMIT; idx++) {
+		for (int idx = 0; parent != null && idx < AncesLimit; idx++) {
 			parents.add(parent);
 			parent = parent.getParent();
 		}
 		return parents;
 	}
 
+	/* 'start' is token at BOL; result is in range 1..n */
 	private int calcVisualColumn(Token start, Token mark, int tabWidth) {
 		if (start == null || start == mark) return 0;
 
 		int beg = start.getStartIndex();
 		int end = mark.getStartIndex() - 1;
 		String text = mark.getInputStream().getText(new Interval(beg, end));
-		return Strings.measureVisualWidth(text, tabWidth);
+		return Strings.measureVisualWidth(text, tabWidth) + 1;
 	}
 
 	// --------------------

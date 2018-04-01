@@ -21,12 +21,14 @@ public class MatchesTableModel extends BaseTableModel {
 	private final String[] columnNames = { "Num", "Similarity", "Token", "Place", "Indents", "Spacing", "Alignment",
 			"Rank" };
 
-	private Object[][] rowData;
+	private Object[][] rowData = new Object[0][];
 	private Map<Integer, RefToken> index = new HashMap<>();
 
-	public MatchesTableModel(TreeMultiset<Double, RefToken> matches, List<String> ruleNames, List<String> tokenNames) {
+	public MatchesTableModel(List<String> ruleNames, List<String> tokenNames) {
 		super(ruleNames, tokenNames);
+	}
 
+	public void addAll(TreeMultiset<Double, RefToken> matches) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 
@@ -47,7 +49,8 @@ public class MatchesTableModel extends BaseTableModel {
 				num++;
 			}
 		}
-		this.rowData = rows.toArray(new Object[rows.size()][]);
+		rowData = rows.toArray(new Object[rows.size()][]);
+		fireTableRowsInserted(0, rowData.length - 1);
 	}
 
 	public void configCols(JTable table) {
@@ -75,6 +78,14 @@ public class MatchesTableModel extends BaseTableModel {
 
 	public RefToken getRef(int row) {
 		return index.get(row);
+	}
+
+	public void removeAllRows() {
+		int cnt = getRowCount();
+		if (cnt > 0) {
+			rowData = new Object[0][0];
+			fireTableRowsDeleted(0, cnt - 1);
+		}
 	}
 
 	@Override

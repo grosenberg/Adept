@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DamerauAlignment implements the unrestricted edit distance group of Damerau-Levenshtein. The
+ * Damerau implements the unrestricted edit distance group of Damerau-Levenshtein. The
  * computed distance represents the number of edits neccessary to make the input integer sequences
  * equal. Each edit is counted as an insertion, deletion, substitution of a single element, or a
  * transposition of adjacent elements. The greater the edit distance, the lower the similarity.
  */
-public class DamerauAlignment {
+public class Damerau {
 
 	public static double simularity(double dist, int srcLen, int tgtLen) {
 		int mLen = Math.max(srcLen, tgtLen);

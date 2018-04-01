@@ -8,7 +8,9 @@ import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.util.Facet;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Time;
 
 public abstract class BaseProcessor {
 
@@ -39,6 +41,7 @@ public abstract class BaseProcessor {
 	 * @return {@code true} on success
 	 */
 	public boolean processDocument(Document doc, boolean check) {
+		Time.start(Facet.PARSE);
 		ISourceParser parser = mgr.getLanguageParser();
 		builder = new Builder(mgr, doc);
 		try {
@@ -67,6 +70,7 @@ public abstract class BaseProcessor {
 			return false;
 		}
 
+		Time.stop(Facet.PARSE);
 		return true;
 	}
 

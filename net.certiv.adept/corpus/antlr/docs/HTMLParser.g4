@@ -26,7 +26,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-parser grammar HTMLParser;
+parser grammar HTMLParser ;
 
 options {
     tokenVocab=HTMLLexer;

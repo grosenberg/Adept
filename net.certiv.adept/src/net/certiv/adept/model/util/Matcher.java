@@ -17,8 +17,8 @@ public class Matcher {
 			List<Integer> ancestors = feature.getAncestors();
 			for (Feature comp : comparables) {
 				List<Integer> compAncestors = comp.getAncestors();
-				double dist = DamerauAlignment.distance(compAncestors, ancestors);
-				double score = DamerauAlignment.simularity(dist, compAncestors.size(), ancestors.size());
+				double dist = Damerau.distance(compAncestors, ancestors);
+				double score = Damerau.simularity(dist, compAncestors.size(), ancestors.size());
 				score += simularity(comp, feature);
 				scored.put(score / 2, comp);
 			}

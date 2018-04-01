@@ -12,6 +12,7 @@ import net.certiv.adept.format.align.Gap;
 import net.certiv.adept.format.align.Place;
 import net.certiv.adept.format.indent.Dent;
 import net.certiv.adept.lang.AdeptToken;
+import net.certiv.adept.model.util.Damerau;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Strings;
@@ -27,11 +28,12 @@ import net.certiv.adept.util.Strings;
 public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	private static final int TXTLIMIT = 16;
-	private static final double RankSignificance = 0.2;
-
 	private static final String LEFT = "%s[%s] %s(%s)";
 	private static final String MIDL = " > %s%s-%s[%s] > ";
 	private static final String RGHT = "%s(%s) %s[%s]";
+
+	private static final double RankSignificance = 0.2;		// TODO: tune parameter
+	private static final double AssocSignificance = 0.2;	// TODO: tune parameter
 
 	// derived from a corpus ref token
 	public RefToken matched;
@@ -66,12 +68,14 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public int lType = Token.INVALID_TYPE;
 	@Expose public Spacing lSpacing = Spacing.UNKNOWN;
 	@Expose public String lActual = "";
+	@Expose public List<Integer> lAssocs;
 
 	// right adjunct
 	@Expose public int rIndex = -1;
 	@Expose public int rType = Token.INVALID_TYPE;
 	@Expose public Spacing rSpacing = Spacing.UNKNOWN;
 	@Expose public String rActual = "";
+	@Expose public List<Integer> rAssocs;
 
 	public RefToken(AdeptToken token) {
 		this.type = token.getType();
@@ -90,18 +94,20 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		this.grpTotal = grpTotal;
 	}
 
-	public void setLeft(AdeptToken left, Spacing lSpacing, String lActual) {
+	public void setLeft(AdeptToken left, Spacing lSpacing, String lActual, List<Integer> lAssocs) {
 		this.lIndex = left.getTokenIndex();
 		this.lType = left.getType();
 		this.lSpacing = lSpacing;
 		this.lActual = lActual;
+		this.lAssocs = lAssocs;
 	}
 
-	public void setRight(AdeptToken right, Spacing rSpacing, String rActual) {
+	public void setRight(AdeptToken right, Spacing rSpacing, String rActual, List<Integer> rAssocs) {
 		this.rIndex = right.getTokenIndex();
 		this.rType = right.getType();
 		this.rSpacing = rSpacing;
 		this.rActual = rActual;
+		this.rAssocs = rAssocs;
 	}
 
 	@Override
@@ -157,7 +163,8 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 */
 	public double score(RefToken matchable, double maxRank) {
 		double score = 0;
-		double cnt = 8;
+		double cnt = 10;
+
 		if (place == matchable.place) score++;
 		if (lType == matchable.lType) score++;
 		if (lType == matchable.lType) score++;
@@ -166,16 +173,25 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (lSpacing == matchable.lSpacing) score++;
 		if (rSpacing == matchable.rSpacing) score++;
 		if (align == matchable.align) score++;
-
 		if (align != Align.NONE) {
 			if (gap != matchable.gap) score++;
 			if (inGroup != matchable.inGroup) score++;
 			if (inLine != matchable.inLine) score++;
 			cnt += 3;
 		}
-
+		score += dent.score(matchable.dent);
 		score += rank / maxRank;
-		cnt += cnt * RankSignificance;
+
+		if (lAssocs != null && matchable.lAssocs != null) {
+			double lDist = Damerau.distance(lAssocs, matchable.lAssocs);
+			score += Damerau.simularity(lDist, lAssocs.size(), matchable.lAssocs.size());
+		}
+		if (rAssocs != null && matchable.rAssocs != null) {
+			double rDist = Damerau.distance(rAssocs, matchable.rAssocs);
+			score += Damerau.simularity(rDist, rAssocs.size(), matchable.rAssocs.size());
+		}
+
+		cnt += cnt * RankSignificance + cnt * AssocSignificance;
 
 		return score / cnt;
 	}
@@ -210,14 +226,26 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		}
 	}
 
+	/** Comparison for merging; defined using moderate equivalency. */
 	public boolean equivalentTo(RefToken ref) {
-		return compare(this, ref) == 0;
+		if (ref == null) return false;
+		if (compare(this, ref) != 0) return false;
+		if (lAssocs == null ^ ref.lAssocs == null) return false;
+		if (lAssocs != null && ref.lAssocs != null) {
+			if (!lAssocs.equals(ref.lAssocs)) return false;
+		}
+		if (rAssocs == null ^ ref.rAssocs == null) return false;
+		if (rAssocs != null && ref.rAssocs != null) {
+			if (!rAssocs.equals(ref.rAssocs)) return false;
+		}
+		return true;
 	}
 
-	/** Commparison for sorting based on 'equivalency'; intended for merging. */
+	/** Comparison for sorting; defined using weak equivalency. */
 	@Override
 	public int compare(RefToken r1, RefToken r2) {
 		if (r1.place != r2.place) return r1.place.compareTo(r2.place);
+		if (r1.dent.compareTo(r2.dent) != 0) return r1.dent.compareTo(r2.dent);
 		if (r1.lType < r2.lType) return -1;
 		if (r1.lType > r2.lType) return 1;
 		if (r1.rType < r2.rType) return -1;
@@ -237,17 +265,23 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((dent == null) ? 0 : dent.hashCode());
+		result = prime * result + ((dent == null) ? 0 : dent.indents);
 		result = prime * result + ((place == null) ? 0 : place.hashCode());
-		result = prime * result + lType;
-		result = prime * result + rType;
-		result = prime * result + ((lSpacing == null) ? 0 : lSpacing.hashCode());
-		result = prime * result + ((rSpacing == null) ? 0 : rSpacing.hashCode());
-		result = prime * result + ((lActual == null) ? 0 : lActual.hashCode());
-		result = prime * result + ((rActual == null) ? 0 : rActual.hashCode());
-		result = prime * result + ((align == null) ? 0 : align.hashCode());
-		result = prime * result + ((gap == null) ? 0 : gap.hashCode());
 		result = prime * result + ((inGroup == null) ? 0 : inGroup.hashCode());
 		result = prime * result + ((inLine == null) ? 0 : inLine.hashCode());
+		result = prime * result + ((align == null) ? 0 : align.hashCode());
+		result = prime * result + ((gap == null) ? 0 : gap.hashCode());
+		result = prime * result + lType;
+		result = prime * result + lIndex;
+		result = prime * result + ((lAssocs == null) ? 0 : lAssocs.hashCode());
+		result = prime * result + ((lSpacing == null) ? 0 : lSpacing.hashCode());
+		result = prime * result + ((lActual == null) ? 0 : lActual.hashCode());
+		result = prime * result + rType;
+		result = prime * result + rIndex;
+		result = prime * result + ((rAssocs == null) ? 0 : rAssocs.hashCode());
+		result = prime * result + ((rSpacing == null) ? 0 : rSpacing.hashCode());
+		result = prime * result + ((rActual == null) ? 0 : rActual.hashCode());
 		return result;
 	}
 
@@ -257,16 +291,45 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		RefToken other = (RefToken) obj;
+		if (dent == null) {
+			if (other.dent != null) return false;
+		} else if (!dent.equals(other.dent)) {
+			return false;
+		} else if (dent.indents != other.dent.indents) {
+			return false;
+		}
 		if (place != other.place) return false;
-		if (lType != other.lType) return false;
-		if (rType != other.rType) return false;
-		if (lSpacing != other.lSpacing) return false;
-		if (rSpacing != other.rSpacing) return false;
-		if (!rActual.equals(other.rActual)) return false;
-		if (align != other.align) return false;
-		if (gap != other.gap) return false;
 		if (inGroup != other.inGroup) return false;
 		if (inLine != other.inLine) return false;
+		if (align != other.align) return false;
+		if (gap != other.gap) return false;
+
+		if (lType != other.lType) return false;
+		if (lIndex != other.lIndex) return false;
+		if (lAssocs == null) {
+			if (other.lAssocs != null) return false;
+		} else if (!lAssocs.equals(other.lAssocs)) {
+			return false;
+		}
+		if (lSpacing != other.lSpacing) return false;
+		if (lActual == null) {
+			if (other.lActual != null) return false;
+		} else if (!lActual.equals(other.lActual)) {
+			return false;
+		}
+		if (rType != other.rType) return false;
+		if (rIndex != other.rIndex) return false;
+		if (rAssocs == null) {
+			if (other.rAssocs != null) return false;
+		} else if (!rAssocs.equals(other.rAssocs)) {
+			return false;
+		}
+		if (rSpacing != other.rSpacing) return false;
+		if (rActual == null) {
+			if (other.rActual != null) return false;
+		} else if (!rActual.equals(other.rActual)) {
+			return false;
+		}
 		return true;
 	}
 

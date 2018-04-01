@@ -29,7 +29,7 @@ import net.certiv.adept.view.models.FeatureTableModel;
 /**
  * View the combined set of features present in the corpus documents.
  */
-public class CorpusCombinedView extends AbstractViewBase {
+public class CorpusView extends AbstractViewBase {
 
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 
@@ -48,11 +48,11 @@ public class CorpusCombinedView extends AbstractViewBase {
 			UIManager.setLookAndFeel(new Plastic3DLookAndFeel());
 		} catch (Exception e) {}
 
-		CorpusCombinedView view = new CorpusCombinedView();
+		CorpusView view = new CorpusView();
 		view.createFeaturesData();
 	}
 
-	public CorpusCombinedView() {
+	public CorpusView() {
 		super("Corpus Feature Analysis", "features.gif");
 
 		split = createSplitPane(VERT);

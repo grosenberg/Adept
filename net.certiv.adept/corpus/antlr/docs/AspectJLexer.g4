@@ -40,7 +40,7 @@
 	you need to break Java.g4 into Separate Lexer (JavaLexer.g4) and Parser (JavaParser.g4) grammars.
   */
 
-lexer grammar AspectJLexer;
+lexer grammar AspectJLexer ;
 
 import JavaLexer;
 

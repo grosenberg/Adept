@@ -13,6 +13,6 @@ public class RegionException extends RuntimeException {
 
 	@Override
 	public String getMessage() {
-		return String.format("%s: %s <> %s", super.getMessage(), o1, o2);
+		return String.format("%s: %s %s", super.getMessage(), o1, o2);
 	}
 }

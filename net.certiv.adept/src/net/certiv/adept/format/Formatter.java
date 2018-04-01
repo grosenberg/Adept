@@ -22,7 +22,7 @@ public class Formatter {
 	private Document doc;
 	private ParseRecord data;
 	private Settings settings;
-	private String spTab;
+	private String tabEquiv;
 
 	// the source text to format
 	private StringBuilder contents;
@@ -31,9 +31,9 @@ public class Formatter {
 		this.doc = model.getDocument();
 		this.data = doc.getParseRecord();
 		this.settings = settings;
-		this.spTab = Strings.getNSpaces(settings.tabWidth);
+		this.tabEquiv = Strings.getNSpaces(settings.tabWidth);
 
-		contents = new StringBuilder(data.getDocument().getContent());
+		contents = new StringBuilder();
 	}
 
 	// -------------------------------------------------------------------------
@@ -60,11 +60,15 @@ public class Formatter {
 					RefToken next = fromFeature(present.rIndex);
 
 					try {
-						List<TextEdit> edits = createEdits(prior, present, next, matched);
-						space.addAll(edits);
-						results.addAll(edits);
+						Map<Region, TextEdit> edits = createEdits(prior, present, next, matched);
+						if (!edits.isEmpty()) {
+							space.add(edits);
+							results.addAll(edits.values());
+						}
 					} catch (FormatException e) {
-						Log.error(this, "Formatter Err: " + e.getMessage(), e);
+						Log.error(this, "Formatter Err: " + e.getMessage());
+					} catch (RegionException e) {
+						Log.error(this, "Region Err: " + e.getMessage());
 					} catch (Exception e) {
 						Log.error(this, "Unexpected Err: " + e.getMessage(), e);
 					}
@@ -80,17 +84,17 @@ public class Formatter {
 	public boolean applyEdits(List<TextEdit> edits) {
 		Map<Integer, TextEdit> editSet = new HashMap<>();
 		for (TextEdit edit : edits) {
-			editSet.put(edit.left(), edit);
+			editSet.put(edit.leftIndex(), edit);
 		}
 
 		List<AdeptToken> tokens = data.getTokens();
-		for (int idx = 0, len = tokens.size(); idx < len;) {
+		for (int idx = 0, len = tokens.size() - 1; idx < len;) {
 			AdeptToken token = tokens.get(idx);
 			contents.append(token.getText());
 			TextEdit edit = editSet.get(token.getTokenIndex());
 			if (edit != null) {
 				contents.append(edit.replacement());
-				idx = edit.right();
+				idx = edit.rightIndex();
 			} else {
 				idx++;
 			}
@@ -106,7 +110,7 @@ public class Formatter {
 
 	// -------------------------------------------------------------------------
 
-	// translate a token index to a known good feature ref token
+	// converts a token index to a known good feature ref token
 	private RefToken fromFeature(int index) {
 		AdeptToken token = index > -1 ? data.tokenIndex.get(index) : null;
 		Feature feature = token != null ? data.index.get(token) : null;
@@ -114,64 +118,83 @@ public class Formatter {
 	}
 
 	/**
+	 * Create the edits implementing the consequences of the matched RefTokens.
+	 * <p>
+	 * Edit conditions are prioritized: {@code <1>...<n>} (low to high)
+	 * <ol>
+	 * <li>impose current matched spacing on left edge of current
+	 * <li>impose current matched spacing on right edge of current
+	 * <li>when current is comment, impose current matched spacing on the left edge of current
+	 * <li>when current (existing or matched) is Bol, impose current matched spacing/dent (blank lines,
+	 * new line, and indent) on left edge of current (retain initial, i.e., prior line trailing, HWs
+	 * depending on settings)
+	 * <li>TODO: aligns
+	 * <li>TODO: long-line breaks
+	 * </ol>
+	 *
 	 * <pre>
 	 * ------|--------|--------|-------
 	 *
-	 * ... b.Idx    b.rIdx
+	 * ... p.Idx    p.rIdx
 	 *     c.lIdx   c.Idx    c.rIdx
-	 *              a.lIdx   a.Idx  ...
+	 *              n.lIdx   n.Idx  ...
 	 * </pre>
 	 *
-	 * TODO: aligns <br>
-	 * TODO: line breaks
+	 * @param prior existing prior RefToken
+	 * @param current existing current RefToken
+	 * @param next existing next RefToken
+	 * @param matched for existing current RefToken
+	 * @return list of implementing edits
+	 * @throws FormatException
 	 */
-	private List<TextEdit> createEdits(RefToken prior, RefToken now, RefToken next, RefToken matched)
+	private Map<Region, TextEdit> createEdits(RefToken prior, RefToken current, RefToken next, RefToken matched)
 			throws FormatException {
 
-		List<TextEdit> results = new ArrayList<>();
+		Map<Region, TextEdit> edits = new HashMap<>();
 
-		// handle left
-		if (matched.atBol()) {
-			// force new line and create full indent
-			String repl = evalIndent(matched.lActual, now.dent.getIndents());
-			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
-			results.add(left);
-
-		} else if (now.atBol()) {
-			// preserve new line and create full indent
-			String repl = evalIndent(now.lActual, now.dent.getIndents());
-			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
-			results.add(left);
-
-		} else if ((prior != null && prior.isComment()) || now.isComment()) {
-			// use cur left
+		// priority 1: left nominal
+		if (current.lIndex > AdeptToken.BOF) {
 			String repl = evalSpacing(matched.lSpacing, matched.lActual);
-			TextEdit left = new TextEdit(now.lIndex, now.index, repl);
-			results.add(left);
+			if (!repl.equals(current.lActual)) {
+				TextEdit edit = new TextEdit(current.lIndex, current.index, repl);
+				edits.put(edit.getRegion(), edit);
+			}
 		}
 
-		// handle right
-		if (next == null || !next.isComment()) {
-			// use cur right
+		// priority 2: right nominal
+		if (current.index > AdeptToken.EOF) {
 			String repl = evalSpacing(matched.rSpacing, matched.rActual);
-			TextEdit right = new TextEdit(now.index, now.rIndex, repl);
-			results.add(right);
+			if (!repl.equals(current.rActual)) {
+				TextEdit edit = new TextEdit(current.index, current.rIndex, repl);
+				edits.put(edit.getRegion(), edit);
+			}
 		}
 
-		return results;
+		// priority 3: comments
+		if ((prior != null && prior.isComment()) || current.isComment()) {
+			String repl = evalSpacing(matched.lSpacing, matched.lActual);
+			if (!repl.equals(current.lActual)) {
+				TextEdit edit = new TextEdit(current.lIndex, current.index, repl);
+				edits.put(edit.getRegion(), edit);
+			}
+		}
+
+		// priority 4: bol
+		if (matched.atBol() || current.atBol()) {
+			String repl = evalIndent(current.lActual, matched.lActual, current.dent.indents);
+			if (!repl.equals(current.lActual)) {
+				TextEdit edit = new TextEdit(current.lIndex, current.index, repl);
+				edits.put(edit.getRegion(), edit);
+			}
+		}
+
+		return edits;
 	}
 
-	// produce replacement string including any leading newlines
-	private String evalIndent(String text, int indents) {
-		String indentStr = vertFlex(text);
-		indentStr += Strings.getN(indents, '\t');
-		return indentStr;
-	}
-
-	private String evalSpacing(Spacing spacing, String actual) {
+	private String evalSpacing(Spacing spacing, String existing) {
 		switch (spacing) {
 			case HFLEX:
-				return horzFlex(actual);
+				return horzFlex(existing);
 			case HSPACE:
 				return Strings.SPACE;
 			case NONE:
@@ -179,23 +202,39 @@ public class Formatter {
 			case VLINE:
 				return Strings.EOL;
 			case VFLEX:
-				return vertFlex(actual);
-			case UNKNOWN:
+				return vertFlex(existing);
 			default:
-				return actual;
+				return existing;
 		}
 	}
 
-	private String horzFlex(String actual) {
-		String result = actual.replace(spTab, "\\t");
-		return result.replaceAll("\\t[ ]+(?=\\t)", "\\t");
+	// produce replacement indent string including any leading newlines
+	private String evalIndent(String existing, String matched, int indents) {
+		String indentStr = "";
+		if (!settings.removeTrailingWS) {
+			indentStr += Strings.leadHWS(existing);
+		}
+		int lines = Math.max(vertCount(existing), vertCount(matched));
+		indentStr += Strings.getN(lines, Strings.EOL);
+		indentStr += Strings.createIndent(settings.tabWidth, settings.useTabs, indents);
+		return indentStr;
+	}
+
+	private int vertCount(String text) {
+		int lines = Strings.countLines(text);
+		if (settings.removeBlankLines) {
+			lines = Math.min(lines, settings.keepBlankLines + 1);
+		}
+		return lines;
 	}
 
 	private String vertFlex(String text) {
-		int lines = Strings.countLines(text);
-		if (settings.removeBlankLines) {
-			lines = Math.min(lines, settings.keepBlankLines);
-		}
+		int lines = vertCount(text);
 		return Strings.getN(lines, Strings.EOL);
+	}
+
+	private String horzFlex(String actual) {
+		String result = actual.replace(tabEquiv, "\t");
+		return result.replaceAll("\\t[ ]+(?=\\t)", "\t");
 	}
 }

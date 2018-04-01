@@ -1,4 +1,4 @@
-lexer grammar MySQLLexer;
+lexer grammar MySQLLexer ;
 
 @header {
 }

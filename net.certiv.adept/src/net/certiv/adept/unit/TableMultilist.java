@@ -97,7 +97,7 @@ public class TableMultilist<K, N, V> {
 		return Collections.emptyList();
 	}
 
-	public Set<Entry<N, ArrayList<V>>> entrySet(K key) {
+	public Set<Entry<N, List<V>>> entrySet(K key) {
 		TreeMultilist<N, V> keyMap = map.get(key);
 		if (keyMap != null) return keyMap.entrySet();
 
@@ -109,7 +109,7 @@ public class TableMultilist<K, N, V> {
 		List<V> values = new ArrayList<>();
 		for (K key : map.keySet()) {
 			TreeMultilist<N, V> indexLists = map.get(key);
-			for (Entry<N, ArrayList<V>> entry : indexLists.entrySet()) {
+			for (Entry<N, List<V>> entry : indexLists.entrySet()) {
 				values.addAll(entry.getValue());
 			}
 		}

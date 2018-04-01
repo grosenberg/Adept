@@ -2,25 +2,32 @@ package net.certiv.adept.model;
 
 public enum Spacing {
 
-	HFLEX(1),
-	HSPACE(2),
-	NONE(3),
-	VLINE(4),
-	VFLEX(5),
+	HFLEX("HFlex", 1),
+	HSPACE("HSpace", 2),
+	NONE("None", 3),
+	VLINE("VLine", 4),
+	VFLEX("VFlex", 5),
 
-	UNKNOWN(99);
+	UNKNOWN("", 99);
 
-	private final int value;
+	private final String _name;
+	private final int _id;
 
-	private Spacing(int id) {
-		value = id;
+	private Spacing(String name, int id) {
+		_name = name;
+		_id = id;
 	}
 
 	public int id() {
-		return value;
+		return _id;
 	}
 
 	public boolean terminal() {
-		return value == VLINE.ordinal() || value == VFLEX.ordinal();
+		return this == VLINE || this == VFLEX;
+	}
+
+	@Override
+	public String toString() {
+		return _name;
 	}
 }

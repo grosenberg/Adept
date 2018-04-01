@@ -4,6 +4,8 @@ import java.util.Comparator;
 
 import org.antlr.v4.runtime.Token;
 
+import net.certiv.adept.util.Strings;
+
 public class TextEdit implements Comparator<TextEdit> {
 
 	private static final String Msg = "@%s:%s '%s'";
@@ -31,11 +33,11 @@ public class TextEdit implements Comparator<TextEdit> {
 		return new Region(left, right);
 	}
 
-	public int left() {
+	public int leftIndex() {
 		return left;
 	}
 
-	public int right() {
+	public int rightIndex() {
 		return right;
 	}
 
@@ -82,6 +84,6 @@ public class TextEdit implements Comparator<TextEdit> {
 
 	@Override
 	public String toString() {
-		return String.format(Msg, left, right, replace);
+		return String.format(Msg, left, right, Strings.encodeWS(replace));
 	}
 }

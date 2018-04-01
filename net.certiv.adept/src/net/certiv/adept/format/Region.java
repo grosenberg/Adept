@@ -2,7 +2,7 @@ package net.certiv.adept.format;
 
 import java.util.Comparator;
 
-public class Region implements Comparator<Region> {
+public class Region implements Comparator<Region>, Comparable<Region> {
 
 	public final int min;
 	public final int max;
@@ -18,7 +18,9 @@ public class Region implements Comparator<Region> {
 	}
 
 	public boolean overlaps(Region region) {
-		return max > region.min || min < region.max ? true : false;
+		if (max > region.min && max < region.max) return true;
+		if (min > region.min && min < region.max) return true;
+		return false;
 	}
 
 	public boolean contains(Region region) {
@@ -34,7 +36,12 @@ public class Region implements Comparator<Region> {
 	}
 
 	@Override
-	public int compare(Region o1, Region o2) throws RegionException {
+	public int compareTo(Region o) {
+		return compare(this, o);
+	}
+
+	@Override
+	public int compare(Region o1, Region o2) {
 		if (o1.min == o2.min && o1.max == o2.max) return 0;
 		if (o1.max <= o2.min) return -1;
 		if (o1.min >= o2.max) return 1;

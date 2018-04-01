@@ -26,7 +26,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-parser grammar ScssParser;
+parser grammar ScssParser ;
 
 options {
 	tokenVocab=ScssLexer;

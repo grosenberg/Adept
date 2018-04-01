@@ -9,7 +9,7 @@ import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.model.util.DamerauAlignment;
+import net.certiv.adept.model.util.Damerau;
 
 public class Feature implements Comparable<Feature>, Cloneable {
 
@@ -157,6 +157,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		return refIndex.get(index);
 	}
 
+	/** Get all ref tokens associated with this feature. */
 	public List<RefToken> getRefs() {
 		return refs;
 	}
@@ -230,8 +231,8 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 	public double ancestorSimilarity(Feature other) {
 		List<Integer> opath = other.getAncestors();
-		double dist = DamerauAlignment.distance(ancestors, opath);
-		return DamerauAlignment.simularity(dist, ancestors.size(), opath.size());
+		double dist = Damerau.distance(ancestors, opath);
+		return Damerau.simularity(dist, ancestors.size(), opath.size());
 	}
 
 	// ===============================================================================================

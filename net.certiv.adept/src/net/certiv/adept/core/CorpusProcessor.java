@@ -12,6 +12,8 @@ import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Facet;
+import net.certiv.adept.util.Time;
 
 public class CorpusProcessor extends BaseProcessor {
 
@@ -33,6 +35,7 @@ public class CorpusProcessor extends BaseProcessor {
 	}
 
 	public void loadModel() {
+		Time.start(Facet.LOAD);
 		if (settings.rebuild || forceBuild) {
 			buildCorpusModel();
 		} else {
@@ -47,9 +50,11 @@ public class CorpusProcessor extends BaseProcessor {
 				buildCorpusModel();
 			}
 		}
+		Time.stop(Facet.LOAD);
 	}
 
 	public void buildCorpusModel() {
+		Time.start(Facet.BUILD);
 		Log.info(this, "Building corpus model ...");
 
 		CorpusData.removeDataFiles(settings.corpusDir);
@@ -66,6 +71,7 @@ public class CorpusProcessor extends BaseProcessor {
 		corModel.finalizeBuild(builder);	// post-build operations
 		Thread t = new Thread(mgr.getThreadGroup(), new SaveOp(corModel, settings.corpusDir));
 		t.start();
+		Time.stop(Facet.BUILD);
 	}
 
 	public CorpusModel getCorpusModel() {
@@ -97,6 +103,5 @@ public class CorpusProcessor extends BaseProcessor {
 				Log.error(this, "Cannot write file(s): ", e);
 			}
 		}
-
 	}
 }
