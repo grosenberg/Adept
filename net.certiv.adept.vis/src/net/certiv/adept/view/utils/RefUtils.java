@@ -1,7 +1,9 @@
 package net.certiv.adept.view.utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
 
@@ -68,8 +70,27 @@ public class RefUtils {
 		return String.format("%s", name);
 	}
 
-	public static String evalAncestors(List<Integer> ancestors) {
-		int[] rules = ancestors.stream().mapToInt(i -> i).toArray();
+	public static String tAssoc(RefToken ref) {
+		StringBuilder sb = new StringBuilder();
+		if (ref.lAssocs != null) {
+			List<Integer> lAssocs = new ArrayList<>(ref.lAssocs);
+			Collections.reverse(lAssocs);
+			sb.append(evalTokens(lAssocs, false));
+		} else {
+			sb.append("BOF");
+		}
+
+		sb.append(" > " + sType(ref.type) + " > ");
+
+		if (ref.rAssocs != null) {
+			sb.append(evalTokens(ref.rAssocs, false));
+		} else {
+			sb.append("EOF");
+		}
+		return sb.toString();
+	}
+
+	public static String evalAncestors(List<Integer> rules) {
 		StringBuilder sb = new StringBuilder();
 		for (int rule : rules) {
 			sb.append(_ruleNames.get(rule) + " > ");
@@ -78,7 +99,7 @@ public class RefUtils {
 		return sb.toString();
 	}
 
-	public static String evalTokens(Set<Integer> indexes, boolean showType) {
+	public static String evalTokens(Collection<Integer> indexes, boolean showType) {
 		StringBuilder sb = new StringBuilder();
 		for (int index : indexes) {
 			String name = "";

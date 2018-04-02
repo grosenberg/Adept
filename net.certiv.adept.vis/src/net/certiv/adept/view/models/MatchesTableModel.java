@@ -18,8 +18,8 @@ import net.certiv.adept.view.renderers.AlignCellRenderer;
 
 public class MatchesTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Num", "Similarity", "Token", "Place", "Indents", "Spacing", "Alignment",
-			"Rank" };
+	private final String[] columnNames = { "Num", "Similarity", "Rank", "Token", "Place", "Indents", "Associates",
+			"Spacing", "Alignment" };
 
 	private Object[][] rowData = new Object[0][];
 	private Map<Integer, RefToken> index = new HashMap<>();
@@ -39,11 +39,12 @@ public class MatchesTableModel extends BaseTableModel {
 				String token = tText(ref.type, ref.text);
 				String place = tPlace(ref);
 				String dents = tIndent(ref);
+				String assoc = tAssoc(ref);
 				String space = tSpace(ref);
 				String align = tAlign(ref);
 				int rank = ref.rank;
 
-				Object[] row = { num, Maths.round(sim, 6), token, place, dents, space, align, rank };
+				Object[] row = { num, Maths.round(sim, 6), rank, token, place, dents, assoc, space, align };
 				rows.add(row);
 				index.put(num, ref);
 				num++;
@@ -57,23 +58,24 @@ public class MatchesTableModel extends BaseTableModel {
 		table.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
 		table.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
-		table.getColumnModel().getColumn(7).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(2).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(this);
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
 		sorter.setComparator(1, NumComp);
-		sorter.setComparator(7, NumComp);
+		sorter.setComparator(2, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(60);
-		cols.getColumn(2).setPreferredWidth(100);
-		cols.getColumn(3).setPreferredWidth(60);
-		cols.getColumn(4).setPreferredWidth(80);
-		cols.getColumn(5).setPreferredWidth(300);
-		cols.getColumn(6).setPreferredWidth(200);
-		cols.getColumn(7).setPreferredWidth(20);
+		cols.getColumn(2).setPreferredWidth(10);
+		cols.getColumn(3).setPreferredWidth(80);
+		cols.getColumn(4).setPreferredWidth(60);
+		cols.getColumn(5).setPreferredWidth(80);
+		cols.getColumn(6).setPreferredWidth(300);
+		cols.getColumn(7).setPreferredWidth(300);
+		cols.getColumn(8).setPreferredWidth(200);
 	}
 
 	public RefToken getRef(int row) {

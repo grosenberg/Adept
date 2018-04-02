@@ -22,8 +22,8 @@ import net.certiv.adept.view.renderers.AlignCellRenderer;
 /** RefTokens for a source document. */
 public class SourceRefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Num", "Index", "Ancestors", "Token", "Place", "Indents", "Spacing",
-			"Alignment", "Location", "Feature Id" };
+	private final String[] columnNames = { "Num", "Ancestors", "Token", "Place", "Indents", "Associates", "Spacing",
+			"Alignment", "Location", "Index" };
 
 	private Object[][] rowData;
 	private Map<Integer, RefToken> refIndex = new HashMap<>();
@@ -38,17 +38,17 @@ public class SourceRefsTableModel extends BaseTableModel {
 			if (ref.type > Token.EOF) {
 				Feature feature = data.index.get(token);
 
-				int tIndex = ref.index;
 				String ancestors = evalAncestors(feature.getAncestors());
 				String tname = tText(ref.type, ref.text);
 				String place = tPlace(ref);
 				String dents = tIndent(ref);
+				String assoc = tAssoc(ref);
 				String space = tSpace(ref);
 				String align = tAlign(ref);
 				String location = tLocation(ref);
-				int id = feature.getId();
+				int tIndex = ref.index;
 
-				Object[] row = { num, tIndex, ancestors, tname, place, dents, space, align, location, id };
+				Object[] row = { num, ancestors, tname, place, dents, assoc, space, align, location, tIndex };
 				rows.add(row);
 				refIndex.put(num, ref);
 				num++;
@@ -60,22 +60,20 @@ public class SourceRefsTableModel extends BaseTableModel {
 	public void configCols(JTable table) {
 		table.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
-		table.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 		table.getColumnModel().getColumn(9).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(this);
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
-		sorter.setComparator(1, NumComp);
 		sorter.setComparator(9, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
-		cols.getColumn(1).setPreferredWidth(20);
-		cols.getColumn(2).setPreferredWidth(300);
-		cols.getColumn(3).setPreferredWidth(150);
-		cols.getColumn(4).setPreferredWidth(60);
-		cols.getColumn(5).setPreferredWidth(80);
+		cols.getColumn(1).setPreferredWidth(300);
+		cols.getColumn(2).setPreferredWidth(150);
+		cols.getColumn(3).setPreferredWidth(60);
+		cols.getColumn(4).setPreferredWidth(80);
+		cols.getColumn(5).setPreferredWidth(250);
 		cols.getColumn(6).setPreferredWidth(250);
 		cols.getColumn(7).setPreferredWidth(150);
 		cols.getColumn(8).setPreferredWidth(60);

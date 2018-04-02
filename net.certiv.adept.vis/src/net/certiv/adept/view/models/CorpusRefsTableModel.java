@@ -15,7 +15,8 @@ import net.certiv.adept.view.renderers.RefsCellRenderer;
 /** RefTokens for a corpus document. */
 public class CorpusRefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Num", "Token", "Place", "Indents", "Spacing", "Alignment", "Rank" };
+	private final String[] columnNames = { "Num", "Token", "Place", "Indents", "Associates", "Spacing", "Alignment",
+			"Rank" };
 
 	private List<RefToken> refs;
 	private Object[][] rowData;
@@ -34,12 +35,12 @@ public class CorpusRefsTableModel extends BaseTableModel {
 			String tokName = tText(ref.type, ref.text);
 			String place = tPlace(ref);
 			String dents = tIndent(ref);
+			String assoc = tAssoc(ref);
 			String space = tSpace(ref);
 			String align = tAlign(ref);
-
 			int rank = ref.rank;
 
-			Object[] row = { line, tokName, place, dents, space, align, rank };
+			Object[] row = { line, tokName, place, dents, assoc, space, align, rank };
 			rows.add(row);
 			line++;
 		}
@@ -58,21 +59,22 @@ public class CorpusRefsTableModel extends BaseTableModel {
 	public void configCols(JTable table) {
 		table.setDefaultRenderer(Object.class, new RefsCellRenderer(this, SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new RefsCellRenderer(this, SwingConstants.CENTER));
-		table.getColumnModel().getColumn(6).setCellRenderer(new RefsCellRenderer(this, SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(7).setCellRenderer(new RefsCellRenderer(this, SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
-		sorter.setComparator(6, NumComp);
+		sorter.setComparator(7, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
 		cols.getColumn(1).setPreferredWidth(60);
-		cols.getColumn(2).setPreferredWidth(60);
-		cols.getColumn(3).setPreferredWidth(60);
+		cols.getColumn(2).setPreferredWidth(40);
+		cols.getColumn(3).setPreferredWidth(80);
 		cols.getColumn(4).setPreferredWidth(300);
-		cols.getColumn(5).setPreferredWidth(100);
-		cols.getColumn(6).setPreferredWidth(30);
+		cols.getColumn(5).setPreferredWidth(300);
+		cols.getColumn(6).setPreferredWidth(200);
+		cols.getColumn(7).setPreferredWidth(20);
 	}
 
 	public RefToken getRef(int row) {

@@ -98,7 +98,7 @@ public class MatchView extends AbstractViewBase {
 	// ---- Top: source table ----
 	private void createSourceTable() {
 		sourceTable = createTable();
-		JPanel source = createScrollTable("Source Token Refs", sourceTable);
+		JPanel source = createScrollTable("Source RefTokens", sourceTable);
 		split.setTopComponent(source);
 		sourceTable.addMouseListener(new MouseAdapter() {
 
@@ -128,7 +128,7 @@ public class MatchView extends AbstractViewBase {
 	// ---- Bottom: matched table ----
 	private void createMatchTable() {
 		matchTable = createTable();
-		JPanel match = createScrollTable("Matched Features", matchTable);
+		JPanel match = createScrollTable("Matched RefTokens", matchTable);
 		split.setBottomComponent(match);
 
 		// matchTable.addMouseListener(new MouseAdapter() {

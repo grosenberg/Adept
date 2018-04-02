@@ -6,10 +6,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Helper class to provide String manipulation functions not available in standard JDK. */
 public class Strings {
+
+	private static final Pattern nl = Pattern.compile(".*?(\\R)");
 
 	public static final String PARA_MARK = "\u00B6";
 	public static final String SPACE_MARK = "\u00B7";
@@ -423,8 +426,14 @@ public class Strings {
 		return text.split(Pattern.quote(mark), -1).length - 1;
 	}
 
-	public static int countLines(String txt) {
+	public static int countVWS(String txt) {
 		if (txt == null || txt.isEmpty()) return 0;
-		return txt.split("\\R", -1).length;
+
+		int cnt = 0;
+		Matcher m = nl.matcher(txt);
+		while (m.find()) {
+			cnt++;
+		}
+		return cnt;
 	}
 }

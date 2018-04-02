@@ -285,8 +285,8 @@ public class Tool extends ToolBase {
 	}
 
 	/**
-	 * Execute and optionally wait for the corpus save thread to complete before exiting the
-	 * application.
+	 * Execute and optionally wait (max 10 secs) for the corpus save thread to complete before exiting
+	 * the application.
 	 *
 	 * @param wait for save to complete
 	 */
@@ -316,10 +316,13 @@ public class Tool extends ToolBase {
 		return mgr.getDocModel().getDocument().getModified();
 	}
 
-	// /** Returns the currently collected performance data */
-	// public PerfData getPerfData() {
-	// return mgr.perfData;
-	// }
+	/**
+	 * Returns a list of {@code ITextEdit} that can be used to apply the formatting changes created for
+	 * the last document parsed.
+	 */
+	public List<ITextEdit> getFormatEdits() {
+		return mgr.getDocModel().getDocument().getEdits();
+	}
 
 	public Path getCorpusDir() {
 		return settings.corpusDir;

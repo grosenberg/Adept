@@ -12,22 +12,17 @@ public class Space {
 
 	public void add(Map<Region, TextEdit> edits) throws FormatException {
 		for (Entry<Region, TextEdit> entry : edits.entrySet()) {
-			Log.debug(this, "Adding: " + entry.getValue().toString());
-			if (overlaps(entry.getKey())) throw new FormatException("Overlap", entry.getValue());
-			add(entry.getKey());
+			Region region = entry.getKey();
+			TextEdit edit = entry.getValue();
+
+			try {
+				add(region);
+				Log.debug(this, "A: " + edit.toString());
+			} catch (RegionException e) {
+				Log.error(this, "I: " + edit.toString());
+			}
 		}
 	}
-
-	// public void addAll(List<TextEdit> edits) throws FormatException {
-	// for (TextEdit edit : edits) {
-	// Log.debug(this, "Adding: " + edit.toString());
-	// Region region = edit.getRegion();
-	// if (overlaps(region)) {
-	// throw new FormatException("Overlap", edit);
-	// }
-	// add(region);
-	// }
-	// }
 
 	private void add(Region region) {
 		Region lower = subSpaces.floor(region);
@@ -58,7 +53,7 @@ public class Space {
 		subSpaces.add(new Region(lower, upper));
 	}
 
-	private boolean overlaps(Region region) {
+	protected boolean overlaps(Region region) {
 		Region lower = subSpaces.floor(region);
 		if (lower != null && lower.overlaps(region)) return true;
 

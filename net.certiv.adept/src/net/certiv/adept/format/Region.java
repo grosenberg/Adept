@@ -7,14 +7,22 @@ public class Region implements Comparator<Region>, Comparable<Region> {
 	public final int min;
 	public final int max;
 
-	public Region(int a, int b) {
-		this.min = Math.min(a, b);
-		this.max = Math.max(a, b);
+	public Region(TextEdit edit) {
+		this.min = edit.begIndex();
+		this.max = edit.endIndex();
 	}
 
 	public Region(Region lower, Region upper) {
 		this.min = Math.min(lower.min, upper.min);
 		this.max = Math.max(lower.max, upper.max);
+	}
+
+	public Region larger(Region lower, Region upper) {
+		return (upper.max - upper.min) > (lower.max - lower.min) ? upper : lower;
+	}
+
+	public Region smaller(Region lower, Region upper) {
+		return (upper.max - upper.min) < (lower.max - lower.min) ? upper : lower;
 	}
 
 	public boolean overlaps(Region region) {
@@ -70,6 +78,6 @@ public class Region implements Comparator<Region>, Comparable<Region> {
 
 	@Override
 	public String toString() {
-		return String.format("<%s:%s>", min, max);
+		return String.format("{%s:%s}", min, max);
 	}
 }

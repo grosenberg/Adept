@@ -3,9 +3,8 @@ grammar    ARule;
 
 
 rule
-	: A
-
-	| B 
-	;
+	:A
+		|     B 
+			;
 
 

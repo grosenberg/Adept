@@ -52,7 +52,8 @@ public class DocProcessor extends BaseProcessor {
 		if (settings.format) {
 			Formatter formatter = new Formatter(docModel, settings);
 			if (formatter.execute()) {
-				doc.setModified(formatter.result());
+				doc.setEdits(formatter.getTextEdits());
+				doc.setModified(formatter.getFormattedContents());
 				if (settings.save) doc.saveModified(settings.backup);
 			}
 		}

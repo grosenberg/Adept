@@ -151,6 +151,18 @@ public class ParseRecord {
 		return (AdeptToken) tokenStream.getTokens().get(index);
 	}
 
+	/** Returns the text of the tokens in the given token index range, exclusive. */
+	public String getTextBetween(int begIndex, int endIndex) {
+		List<Token> tokens = getTokenInterval(begIndex, endIndex);
+		if (tokens == null || tokens.size() < 3) return "";
+
+		StringBuilder sb = new StringBuilder();
+		for (Token token : tokens.subList(1, tokens.size() - 1)) {
+			sb.append(token.getText());
+		}
+		return sb.toString();
+	}
+
 	/** Protect against null */
 	public List<AdeptToken> getHiddenLeft(int tokenIndex) {
 		return convert(tokenStream.getHiddenTokensToLeft(tokenIndex));

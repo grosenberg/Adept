@@ -19,7 +19,6 @@ import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.model.util.CorpusAnalyzer;
 import net.certiv.adept.unit.HashMultilist;
-import net.certiv.adept.unit.Pair;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
@@ -28,9 +27,9 @@ public class CorpusModel {
 
 	private static final long TIME_OUT = 500000;
 
-	private static final String DocMsg = "Merging  %3d/%5d --------- %s";
-	private static final String UnqMsg = "  Unique %3d/%5d %3d%%/%3d%%";
-	private static final String CorMsg = "  Corpus %3d/%5d %3d%%/%3d%%";
+	private static final String DocMsg = "Merging  %3d %5d ------------------- %s";
+	private static final String UnqMsg = "  Unique %3d %5d %7.2f%% %9.4f%%";
+	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%\n";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -126,16 +125,16 @@ public class CorpusModel {
 	private void merge(int docId, String name, List<Feature> features) {
 		// retain the document features
 		sources.put(docId, features);
-		Pair<Integer, Integer> dfr = reportDoc(features, name);
+		int[] docCnt = reportDoc(featureSetSize(features), name);
 
 		// identify the unique document features & merge non-unique
 		Map<Integer, Feature> uniques = reduce(features);
-		reportUnq(dfr, uniques.values());
+		reportUnq(docCnt, featureSetSize(uniques.values()));
 
 		// merge unique features, implicitly including token refs
-		Pair<Integer, Integer> cfr = featureSize(corpus.values());
+		int[] before = featureSetSize(corpus.values());
 		corpus.putAll(uniques);
-		reportCor(cfr, corpus.values());
+		reportCor(before, featureSetSize(corpus.values()));
 	}
 
 	/*
@@ -300,34 +299,29 @@ public class CorpusModel {
 		corpus.clear();
 	}
 
-	private Pair<Integer, Integer> reportDoc(List<Feature> features, String name) {
-		Pair<Integer, Integer> sizes = featureSize(features);
-		Log.debug(this, String.format(DocMsg, sizes.a, sizes.b, name));
-		return sizes;
+	private int[] reportDoc(int[] docCnt, String name) {
+		Log.debug(this, String.format(DocMsg, docCnt[0], docCnt[1], name));
+		return docCnt;
 	}
 
-	private Pair<Integer, Integer> reportUnq(Pair<Integer, Integer> fr, Collection<Feature> features) {
-		Pair<Integer, Integer> sizes = featureSize(features);
-		int upercent = sizes.a * 100 / fr.a;
-		int rpercent = sizes.b * 100 / fr.b;
+	private void reportUnq(int[] docCnt, int[] unqCnt) {
+		double upercent = unqCnt[0] * 100.0 / docCnt[0];
+		double rpercent = unqCnt[1] * 100.0 / docCnt[1];
 
-		Log.debug(this, String.format(UnqMsg, sizes.a, sizes.b, upercent, rpercent));
-		return sizes;
+		Log.debug(this, String.format(UnqMsg, unqCnt[0], unqCnt[1], upercent, rpercent));
 	}
 
-	private void reportCor(Pair<Integer, Integer> fr, Collection<Feature> features) {
-		Pair<Integer, Integer> sizes = featureSize(features);
-		int cpercent = (sizes.a - fr.a) * 100 / sizes.a;
-		int rpercent = (sizes.b - fr.b) * 100 / sizes.b;
-
-		Log.debug(this, String.format(CorMsg, sizes.a, sizes.b, cpercent, rpercent));
+	private void reportCor(int[] before, int[] after) {
+		double chgFeatures = (after[0] - before[0]) * 100.0 / after[0];
+		double chgRefs = (after[1] - before[1]) * 100.0 / after[1];
+		Log.debug(this, String.format(CorMsg, after[0], after[1], chgFeatures, chgRefs));
 	}
 
-	private Pair<Integer, Integer> featureSize(Collection<Feature> features) {
+	private int[] featureSetSize(Collection<Feature> features) {
 		int refs = 0;
 		for (Feature feature : features) {
 			refs += feature.getRefs().size();
 		}
-		return new Pair<>(features.size(), refs);
+		return new int[] { features.size(), refs };
 	}
 }

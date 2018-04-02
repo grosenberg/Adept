@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.certiv.adept.ITextEdit;
 import net.certiv.adept.Tool;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.util.Info;
@@ -26,6 +27,7 @@ public class Document {
 	private String modified;
 
 	private List<Info> infos;
+	private List<ITextEdit> edits;
 
 	public Document(String pathname, int tabWidth, String content) {
 		this.pathname = pathname;
@@ -87,6 +89,14 @@ public class Document {
 	/** Returns the Info at the given document line number (0..n) */
 	public Info getInfo(int line) {
 		return infos.get(line);
+	}
+
+	public List<ITextEdit> getEdits() {
+		return edits;
+	}
+
+	public void setEdits(List<ITextEdit> edits) {
+		this.edits = edits;
 	}
 
 	public String getModified() {

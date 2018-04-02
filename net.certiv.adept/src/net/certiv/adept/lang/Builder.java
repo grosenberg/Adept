@@ -317,7 +317,7 @@ public class Builder extends ParseRecord {
 		}
 		Collections.reverse(tokens);
 
-		tokens.subList(Math.min(AssocLimit + 1, tokens.size()), tokens.size()).clear();
+		tokens.subList(Math.min(AssocLimit, tokens.size()), tokens.size()).clear();
 		return ttypes(tokens);
 	}
 
@@ -333,7 +333,7 @@ public class Builder extends ParseRecord {
 			if (next != null) tokens.addAll(next);
 		}
 
-		tokens.subList(Math.min(AssocLimit + 1, tokens.size()), tokens.size()).clear();
+		tokens.subList(Math.min(AssocLimit, tokens.size()), tokens.size()).clear();
 		return ttypes(tokens);
 	}
 
