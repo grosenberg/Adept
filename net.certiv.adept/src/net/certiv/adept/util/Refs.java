@@ -1,4 +1,4 @@
-package net.certiv.adept.view.utils;
+package net.certiv.adept.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,9 +8,10 @@ import java.util.List;
 import org.antlr.v4.runtime.Token;
 
 import net.certiv.adept.format.align.Align;
+import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 
-public class RefUtils {
+public class Refs {
 
 	private static final String DentMsg = "%s (%s: %s)";
 	private static final String AlignMsg = "%s {%s}  %s:%s (%s)";
@@ -20,7 +21,7 @@ public class RefUtils {
 	private static List<String> _ruleNames;
 	private static List<String> _tokenNames;
 
-	public static void set(List<String> ruleNames, List<String> tokenNames) {
+	public static void setup(List<String> ruleNames, List<String> tokenNames) {
 		_ruleNames = ruleNames;
 		_tokenNames = tokenNames;
 	}
@@ -70,22 +71,24 @@ public class RefUtils {
 		return String.format("%s", name);
 	}
 
-	public static String tAssoc(RefToken ref) {
+	public static String tAssoc(int type, Context context) {
+		if (context == null) return "No match!";
+
 		StringBuilder sb = new StringBuilder();
-		if (ref.lAssocs != null) {
-			List<Integer> lAssocs = new ArrayList<>(ref.lAssocs);
+		if (context.lAssocs.isEmpty()) {
+			sb.append("BOF");
+		} else {
+			List<Integer> lAssocs = new ArrayList<>(context.lAssocs);
 			Collections.reverse(lAssocs);
 			sb.append(evalTokens(lAssocs, false));
-		} else {
-			sb.append("BOF");
 		}
 
-		sb.append(" > " + sType(ref.type) + " > ");
+		sb.append(" > " + sType(type) + " > ");
 
-		if (ref.rAssocs != null) {
-			sb.append(evalTokens(ref.rAssocs, false));
-		} else {
+		if (context.rAssocs.isEmpty()) {
 			sb.append("EOF");
+		} else {
+			sb.append(evalTokens(context.rAssocs, false));
 		}
 		return sb.toString();
 	}

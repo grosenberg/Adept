@@ -223,7 +223,7 @@ public class MatchView extends AbstractViewBase {
 		if (matches.isEmpty()) {
 			matModel.removeAllRows();
 		} else {
-			matModel.addAll(matches);
+			matModel.addAll(ref, matches);
 		}
 
 		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));

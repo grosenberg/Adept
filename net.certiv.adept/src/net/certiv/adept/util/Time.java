@@ -45,8 +45,7 @@ public class Time {
 	}
 
 	public static <E extends Enum<E>> String elapsed(E id, String format) {
-		double time = elapsed(id);
-		return String.format(format, time);
+		return String.format(format, elapsed(id));
 	}
 
 	public static <E extends Enum<E>> void clear(E id) {
@@ -72,5 +71,4 @@ public class Time {
 			return 0;
 		}
 	}
-
 }

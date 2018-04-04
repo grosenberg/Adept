@@ -189,22 +189,23 @@ public class Builder extends ParseRecord {
 		token.setDent(indenter.getDent(tokenIdx));
 
 		RefToken ref = token.refToken();
+		ref.createContext(leftAssociates(token), rightAssociates(token));
+
 		AdeptToken left = findRealLeft(tokenIdx);
 		if (left != null) {
 			String ws = findWsLeft(tokenIdx);
 			Spacing spacing = evalSpacing(left.getTokenIndex(), tokenIdx);
-			ref.setLeft(left, spacing, ws, leftAssociates(token));
+			ref.setLeft(left, spacing, ws);
 		}
 
 		AdeptToken right = findRealRight(tokenIdx);
 		if (right != null) {
 			String ws = findWsRight(tokenIdx);
 			Spacing spacing = evalSpacing(tokenIdx, right.getTokenIndex());
-			ref.setRight(right, spacing, ws, rightAssociates(token));
+			ref.setRight(right, spacing, ws);
 		}
 
 		Feature feature = Feature.create(mgr, doc, genPath(parents), token);
-
 		index.put(token, feature);
 		featureIndex.put(feature.getId(), feature);
 		typeSet.add(type);
@@ -327,7 +328,8 @@ public class Builder extends ParseRecord {
 		int idx = tokens.indexOf(token);
 		tokens.subList(0, idx + 1).clear();
 
-		while (tokens.size() < AssocLimit && line < lineTokensIndex.size() - 1) {
+		int lines = blanklines.size(); // records all lines
+		while (tokens.size() < AssocLimit && line < lines) {
 			line++;
 			List<AdeptToken> next = lineTokensIndex.get(line);
 			if (next != null) tokens.addAll(next);

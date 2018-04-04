@@ -17,7 +17,7 @@ import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
-import net.certiv.adept.model.util.CorpusAnalyzer;
+import net.certiv.adept.model.util.Analyzer;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
@@ -160,7 +160,7 @@ public class CorpusModel {
 		return uniques;
 	}
 
-	// internally reduce equivalent duplicates, merging to self
+	// reduce equivalent duplicates, merging to self
 	private Feature reduceRefs(Feature feature) {
 		List<RefToken> results = new ArrayList<>();
 
@@ -169,6 +169,7 @@ public class CorpusModel {
 			if (equiv == null) {
 				results.add(ref);
 			} else {
+				equiv.mergeContexts(ref.contexts);
 				equiv.addRank(ref.getRank());
 			}
 		}
@@ -177,7 +178,7 @@ public class CorpusModel {
 		return feature;
 	}
 
-	// mutually reduce equivalent duplicates, merging to dest
+	// reduce equivalent duplicates, merging to dest
 	private Feature reduceRefs(Feature dest, Feature feature) {
 		List<RefToken> existing = new ArrayList<>(dest.getRefs());
 
@@ -186,6 +187,7 @@ public class CorpusModel {
 			if (equiv == null) {
 				existing.add(ref);
 			} else {
+				equiv.mergeContexts(ref.contexts);
 				equiv.addRank(ref.getRank());
 			}
 		}
@@ -204,8 +206,7 @@ public class CorpusModel {
 	/** Perform operations to finalize the (re)built corpus. */
 	public void finalizeBuild(ParseRecord data) {
 		Feature.clearPool();
-		CorpusAnalyzer analyzer = new CorpusAnalyzer(data);
-		analyzer.execute();
+		Analyzer.evaluate(data, getCorpusFeatures());
 		consistent = true;
 	}
 
@@ -273,7 +274,7 @@ public class CorpusModel {
 	// results are provided in a descending score keyed multiset
 	private TreeMultiset<Double, RefToken> matches(RefToken ref, Feature feature) {
 		TreeMultiset<Double, RefToken> scored = new TreeMultiset<>(Collections.reverseOrder());
-		int maxRank = feature.maxRank();
+		double[] maxRank = feature.maxRank();
 		for (RefToken match : feature.getRefs()) {
 			scored.put(ref.score(match, maxRank), match);
 		}

@@ -11,6 +11,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Maths;
@@ -28,25 +29,26 @@ public class MatchesTableModel extends BaseTableModel {
 		super(ruleNames, tokenNames);
 	}
 
-	public void addAll(TreeMultiset<Double, RefToken> matches) {
+	public void addAll(RefToken srcRef, TreeMultiset<Double, RefToken> matches) {
+		Context srcContext = srcRef.contexts.get(0);
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 
-		List<Double> sims = new ArrayList<>(matches.keySet());
-		for (Double sim : sims) {
-			for (RefToken ref : matches.get(sim)) {
+		for (Double sim : matches.keySet()) {
+			for (RefToken matRef : matches.get(sim)) {
+				Context matContext = Context.find(matRef.contexts, srcContext);
 
-				String token = tText(ref.type, ref.text);
-				String place = tPlace(ref);
-				String dents = tIndent(ref);
-				String assoc = tAssoc(ref);
-				String space = tSpace(ref);
-				String align = tAlign(ref);
-				int rank = ref.rank;
+				String token = tText(matRef.type, matRef.text);
+				String place = tPlace(matRef);
+				String dents = tIndent(matRef);
+				String assoc = tAssoc(matRef.type, matContext);
+				String space = tSpace(matRef);
+				String align = tAlign(matRef);
+				int rank = matRef.rank;
 
 				Object[] row = { num, Maths.round(sim, 6), rank, token, place, dents, assoc, space, align };
 				rows.add(row);
-				index.put(num, ref);
+				index.put(num, matRef);
 				num++;
 			}
 		}

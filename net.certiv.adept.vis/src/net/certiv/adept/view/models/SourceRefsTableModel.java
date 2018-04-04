@@ -42,7 +42,7 @@ public class SourceRefsTableModel extends BaseTableModel {
 				String tname = tText(ref.type, ref.text);
 				String place = tPlace(ref);
 				String dents = tIndent(ref);
-				String assoc = tAssoc(ref);
+				String assoc = tAssoc(ref.type, ref.contexts.get(0));
 				String space = tSpace(ref);
 				String align = tAlign(ref);
 				String location = tLocation(ref);

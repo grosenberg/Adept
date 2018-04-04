@@ -6,13 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.certiv.adept.ITextEdit;
 import net.certiv.adept.Tool;
 import net.certiv.adept.lang.ParseRecord;
-import net.certiv.adept.model.util.Info;
 import net.certiv.adept.tool.ErrorType;
 
 public class Document {
@@ -24,29 +23,15 @@ public class Document {
 	private int docId;
 	private int tabWidth;
 	private String content;
-	private String modified;
 
-	private List<Info> infos;
-	private List<ITextEdit> edits;
+	private String modified;
+	private List<ITextEdit> edits = Collections.emptyList();
 
 	public Document(String pathname, int tabWidth, String content) {
 		this.pathname = pathname;
 		this.docId = pathname.hashCode();
 		this.tabWidth = tabWidth;
 		this.content = content;
-
-		infos = new ArrayList<>();
-		Info prior = null;
-		for (String text : content.split("\\R", -1)) {
-			Info curr = new Info(text, tabWidth);
-			if (prior != null) {
-				curr.priorIndents = prior.indents;
-				curr.blankAbove = prior.blank;
-				prior.blankBelow = curr.blank;
-			}
-			prior = curr;
-			infos.add(curr);
-		}
 	}
 
 	public DocModel getModel() {
@@ -86,11 +71,6 @@ public class Document {
 		return content;
 	}
 
-	/** Returns the Info at the given document line number (0..n) */
-	public Info getInfo(int line) {
-		return infos.get(line);
-	}
-
 	public List<ITextEdit> getEdits() {
 		return edits;
 	}
@@ -110,11 +90,11 @@ public class Document {
 	public boolean saveModified(boolean overwrite) {
 		Path path = Paths.get(pathname);
 		if (!overwrite) {
-			Path bak = Paths.get(pathname + ".bak");
+			Path backup = Paths.get(pathname + ".bak");
 			try {
-				Files.copy(path, bak, StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
-				Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e, bak.toString());
+				Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e, backup.toString());
 				return false;
 			}
 		}

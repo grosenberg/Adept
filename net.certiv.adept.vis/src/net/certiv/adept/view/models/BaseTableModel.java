@@ -6,8 +6,9 @@ import java.util.Set;
 
 import javax.swing.table.AbstractTableModel;
 
+import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.view.utils.RefUtils;
+import net.certiv.adept.util.Refs;
 
 public abstract class BaseTableModel extends AbstractTableModel {
 
@@ -31,7 +32,7 @@ public abstract class BaseTableModel extends AbstractTableModel {
 
 	public BaseTableModel(List<String> ruleNames, List<String> tokenNames) {
 		super();
-		RefUtils.set(ruleNames, tokenNames);
+		Refs.setup(ruleNames, tokenNames);
 		// BaseTableModel.ruleNames = ruleNames;
 		// BaseTableModel.tokenNames = tokenNames;
 	}
@@ -40,39 +41,39 @@ public abstract class BaseTableModel extends AbstractTableModel {
 		return ref.place.toString();
 	}
 
-	protected static String tAssoc(RefToken ref) {
-		return RefUtils.tAssoc(ref);
+	protected static String tAssoc(int type, Context context) {
+		return Refs.tAssoc(type, context);
 	}
 
 	protected static String tIndent(RefToken ref) {
-		return RefUtils.tIndent(ref);
+		return Refs.tIndent(ref);
 		// return String.format(DentMsg, ref.dent.indents, ref.dent.op, ref.dent.bind);
 	}
 
 	protected static String tAlign(RefToken ref) {
-		return RefUtils.tAlign(ref);
+		return Refs.tAlign(ref);
 		// if (ref.align == Align.NONE) return "None --";
 		// return String.format(AlignMsg, ref.align, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
 	}
 
 	protected static String tSpace(RefToken ref) {
-		return RefUtils.tSpace(ref);
+		return Refs.tSpace(ref);
 		// return String.format(SpaceMsg, fType(ref.lType), ref.lSpacing, fType(ref.type), ref.rSpacing,
 		// fType(ref.rType));
 	}
 
 	protected static String tLocation(RefToken ref) {
-		return RefUtils.tLocation(ref);
+		return Refs.tLocation(ref);
 		// return String.format(LocMsg, ref.line, ref.col, ref.visCol);
 	}
 
 	protected static String tText(int type, String text) {
-		return RefUtils.fType(type);
+		return Refs.fType(type);
 		// return fType(type) + " " + text;
 	}
 
 	protected static String fType(int type) {
-		return RefUtils.fType(type);
+		return Refs.fType(type);
 		// String name = "";
 		// switch (type) {
 		// case 0:
@@ -88,13 +89,13 @@ public abstract class BaseTableModel extends AbstractTableModel {
 	}
 
 	protected static String sType(int type) {
-		return RefUtils.sType(type);
+		return Refs.sType(type);
 		// String name = type == Token.EOF ? "EOF" : tokenNames.get(type);
 		// return String.format("%s", name);
 	}
 
 	protected static String evalAncestors(List<Integer> ancestors) {
-		return RefUtils.evalAncestors(ancestors);
+		return Refs.evalAncestors(ancestors);
 		// int[] rules = ancestors.stream().mapToInt(i -> i).toArray();
 		// StringBuilder sb = new StringBuilder();
 		// for (int rule : rules) {
@@ -105,7 +106,7 @@ public abstract class BaseTableModel extends AbstractTableModel {
 	}
 
 	protected static String evalTokens(Set<Integer> indexes, boolean showType) {
-		return RefUtils.evalTokens(indexes, showType);
+		return Refs.evalTokens(indexes, showType);
 		// StringBuilder sb = new StringBuilder();
 		// for (int index : indexes) {
 		// String name = "";

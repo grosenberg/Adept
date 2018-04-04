@@ -17,11 +17,11 @@ import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
+import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Facet;
 import net.certiv.adept.util.Maths;
+import net.certiv.adept.util.Refs;
 import net.certiv.adept.util.Time;
-import net.certiv.adept.view.utils.RefUtils;
 
 public class FormatInfoPanel extends JPanel {
 
@@ -297,7 +297,7 @@ public class FormatInfoPanel extends JPanel {
 
 	public void loadPerfData(CoreMgr mgr) {
 		ParseRecord rec = mgr.getDocModel().getParseRecord();
-		RefUtils.set(rec.getRuleNames(), rec.getTokenNames());
+		Refs.setup(rec.getRuleNames(), rec.getTokenNames());
 
 		txtLoad.setText(Time.elapsed(Facet.LOAD, MsFmt));
 		txtBuild.setText(Time.elapsed(Facet.BUILD, MsFmt));
@@ -321,20 +321,20 @@ public class FormatInfoPanel extends JPanel {
 		txtCol.setText(String.valueOf(ref.col + 1));
 		txtVisCol.setText(String.valueOf(ref.visCol));
 
-		txtPlace.setText(RefUtils.tPlace(ref));
+		txtPlace.setText(Refs.tPlace(ref));
 		txtDent.setText(ref.dent.toString());
-		txtAncestors.setText(RefUtils.evalAncestors(feature.getAncestors()));
-		txtToken.setText(RefUtils.fType(ref.type));
-		txtAlignment.setText(RefUtils.tAlign(ref));
-		txtSpacing.setText(RefUtils.tSpace(ref));
+		txtAncestors.setText(Refs.evalAncestors(feature.getAncestors()));
+		txtToken.setText(Refs.fType(ref.type));
+		txtAlignment.setText(Refs.tAlign(ref));
+		txtSpacing.setText(Refs.tSpace(ref));
 
 		RefToken matched = ref.matched;
 		if (matched != null) {
-			txtMPlace.setText(RefUtils.tPlace(matched));
+			txtMPlace.setText(Refs.tPlace(matched));
 			txtMDent.setText(matched.dent.toString());
-			txtMToken.setText(RefUtils.fType(matched.type));
-			txtMAlignment.setText(RefUtils.tAlign(matched));
-			txtMSpacing.setText(RefUtils.tSpace(matched));
+			txtMToken.setText(Refs.fType(matched.type));
+			txtMAlignment.setText(Refs.tAlign(matched));
+			txtMSpacing.setText(Refs.tSpace(matched));
 			txtMSimularity.setText(String.valueOf(sim));
 		} else {
 			clearMatched();

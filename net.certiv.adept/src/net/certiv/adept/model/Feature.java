@@ -173,10 +173,13 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		return null;
 	}
 
-	public int maxRank() {
-		int max = 0;
+	public double[] maxRank() {
+		double[] max = { 0, 0 };
 		for (RefToken ref : refs) {
-			max = Math.max(max, ref.rank);
+			max[0] = Math.max(max[0], ref.rank);
+			for (Context context : ref.contexts) {
+				max[1] = Math.max(max[1], context.rank);
+			}
 		}
 		return max;
 	}

@@ -9,13 +9,13 @@ import java.util.List;
  * @see <a href="https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm">Wikipedia -
  *      Smith-Waterman algorithm</a>
  */
-public final class WatermanAlignment {
+public final class Waterman {
 
 	private static final double Match = 1.0f;
 	private static final double Miss = -2.0f;
 	private static final double Gap = -0.5f;
 
-	private WatermanAlignment() {}
+	private Waterman() {}
 
 	/**
 	 * Returns the effective degree of similary between the given source and target sequences of values.

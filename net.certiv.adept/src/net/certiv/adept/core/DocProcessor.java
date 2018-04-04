@@ -6,7 +6,7 @@ import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.util.Facet;
+import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.util.Time;
 
 public class DocProcessor extends BaseProcessor {

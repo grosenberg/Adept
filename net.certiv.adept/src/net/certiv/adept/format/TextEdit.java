@@ -101,7 +101,11 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		return replacement;
 	}
 
-	@Override
+	/**
+	 * Returns the priority of this edit. Valued 1 (low) ... n (high). Identifies the internal rule that
+	 * created this edit. Hint for diferentiating between multiple edits that occur at the same
+	 * location.
+	 */
 	public int priority() {
 		return priority;
 	}
