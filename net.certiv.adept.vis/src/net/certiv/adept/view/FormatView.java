@@ -96,7 +96,7 @@ public class FormatView extends AbstractViewBase {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Time.clearAll();
+				Time.clear();
 				process();
 			}
 		});

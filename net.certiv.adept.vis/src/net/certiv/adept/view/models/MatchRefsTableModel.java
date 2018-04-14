@@ -11,42 +11,39 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Maths;
 import net.certiv.adept.view.renderers.AlignCellRenderer;
 
-public class MatchesTableModel extends BaseTableModel {
+public class MatchRefsTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Num", "Similarity", "Rank", "Token", "Place", "Indents", "Associates",
-			"Spacing", "Alignment" };
+	private final String[] columnNames = { "Num", "Similarity", "Token", "Place", "Indents", "Spacing", "Alignment",
+			"Rank" };
+
+	private final int[] colWidths = { 10, 60, 80, 60, 60, 300, 300, 20 };
 
 	private Object[][] rowData = new Object[0][];
 	private Map<Integer, RefToken> index = new HashMap<>();
 
-	public MatchesTableModel(List<String> ruleNames, List<String> tokenNames) {
+	public MatchRefsTableModel(List<String> ruleNames, List<String> tokenNames) {
 		super(ruleNames, tokenNames);
 	}
 
-	public void addAll(RefToken srcRef, TreeMultiset<Double, RefToken> matches) {
-		Context srcContext = srcRef.contexts.get(0);
+	public void addAll(RefToken srcRef, TreeMultiset<Double, RefToken> matches, double[] maxRanks) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 
 		for (Double sim : matches.keySet()) {
 			for (RefToken matRef : matches.get(sim)) {
-				Context matContext = Context.find(matRef.contexts, srcContext);
-
 				String token = tText(matRef.type, matRef.text);
 				String place = tPlace(matRef);
 				String dents = tIndent(matRef);
-				String assoc = tAssoc(matRef.type, matContext);
 				String space = tSpace(matRef);
 				String align = tAlign(matRef);
 				int rank = matRef.rank;
 
-				Object[] row = { num, Maths.round(sim, 6), rank, token, place, dents, assoc, space, align };
+				Object[] row = { num, Maths.round(sim, 6), token, place, dents, space, align, rank };
 				rows.add(row);
 				index.put(num, matRef);
 				num++;
@@ -60,24 +57,16 @@ public class MatchesTableModel extends BaseTableModel {
 		table.setDefaultRenderer(Object.class, new AlignCellRenderer(SwingConstants.LEFT));
 		table.getColumnModel().getColumn(0).setCellRenderer(new AlignCellRenderer(SwingConstants.CENTER));
 		table.getColumnModel().getColumn(1).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
-		table.getColumnModel().getColumn(2).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
+		table.getColumnModel().getColumn(7).setCellRenderer(new AlignCellRenderer(SwingConstants.RIGHT));
 
 		TableRowSorter<TableModel> sorter = new TableRowSorter<>(this);
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
 		sorter.setComparator(1, NumComp);
-		sorter.setComparator(2, NumComp);
+		sorter.setComparator(7, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
-		cols.getColumn(0).setPreferredWidth(10);
-		cols.getColumn(1).setPreferredWidth(60);
-		cols.getColumn(2).setPreferredWidth(10);
-		cols.getColumn(3).setPreferredWidth(80);
-		cols.getColumn(4).setPreferredWidth(60);
-		cols.getColumn(5).setPreferredWidth(80);
-		cols.getColumn(6).setPreferredWidth(300);
-		cols.getColumn(7).setPreferredWidth(300);
-		cols.getColumn(8).setPreferredWidth(200);
+		setColWidths(cols, colWidths);
 	}
 
 	public RefToken getRef(int row) {

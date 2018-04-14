@@ -6,9 +6,12 @@ import java.util.List;
 
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.Ranked;
 
 public class Context implements Ranked, Comparable<Context>, Cloneable {
+
+	public static double RankFactor = 1.0 / ParseRecord.AssocLimit / 2;
 
 	// context frequency
 	@Expose public int rank = 1;
@@ -27,9 +30,47 @@ public class Context implements Ranked, Comparable<Context>, Cloneable {
 		return null;
 	}
 
+	/**
+	 * Returns the score for the closest one of the given matchables list of contexts to the given
+	 * source context.
+	 */
 	public static double score(Context source, List<Context> matchables, double maxRank) {
-		Context matched = find(matchables, source);
-		return matched != null ? 1 + matched.rank / maxRank : 0;
+		Context found = find(matchables, source);
+		if (found != null) return 1;
+
+		double max = 0;
+		for (Context matchable : matchables) {
+			double score = 0;
+			score += score(source.lAssocs, matchable.lAssocs) / 2;
+			score += score(source.rAssocs, matchable.rAssocs) / 2;
+			score += RankFactor * matchable.rank / maxRank;
+			max = Math.max(max, score);
+		}
+		return max - RankFactor;
+	}
+
+	/** For visualization */
+	public static double[] score(Context source, Context matchable, double maxRank) {
+		double[] score = new double[4];
+		score[0] = score(source.lAssocs, matchable.lAssocs) / 2;
+		score[1] = score(source.rAssocs, matchable.rAssocs) / 2;
+		score[2] = RankFactor * matchable.rank / maxRank;
+		score[3] = RankFactor * -1;
+		return score;
+	}
+
+	public static double score(List<Integer> src, List<Integer> mat) {
+		int min = Math.min(src.size(), mat.size());
+		if (min == 0) return 1;
+
+		int max = Math.max(src.size(), mat.size());
+		int rel = 1 + max - min;
+
+		double score = 0;
+		for (int idx = 0; idx < min && src.get(idx) == mat.get(idx); idx++) {
+			score++;
+		}
+		return score / max / rel;
 	}
 
 	public void addRank(int rank) {

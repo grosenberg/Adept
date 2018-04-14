@@ -1,12 +1,18 @@
 package net.certiv.adept.util;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
 import net.certiv.adept.unit.HashMultilist;
 
-public class Collect {
+public class Utils {
 
 	public static boolean notEmpty(List<? extends Object> elems) {
 		return elems != null && !elems.isEmpty();
@@ -15,8 +21,8 @@ public class Collect {
 	/** To initialize from an array {@code int[] { value1, value2, ...} } */
 	public static HashSet<Integer> toSet(int[] in) {
 		HashSet<Integer> set = new HashSet<>();
-		for (int idx = 0; idx < in.length; idx++) {
-			set.add(in[idx]);
+		for (int element : in) {
+			set.add(element);
 		}
 		return set;
 	}
@@ -24,10 +30,10 @@ public class Collect {
 	/** To initialize from an array {@code int[][] { { key, value1, value2, ...}, ... } } */
 	public static HashMultilist<Integer, Integer> toMap(int[][] in) {
 		HashMultilist<Integer, Integer> map = new HashMultilist<>();
-		for (int idx = 0; idx < in.length; idx++) {
-			int key = in[idx][0];
-			for (int jdx = 1; jdx < in[idx].length; jdx++) {
-				map.put(key, in[idx][jdx]);
+		for (int[] element : in) {
+			int key = element[0];
+			for (int jdx = 1; jdx < element.length; jdx++) {
+				map.put(key, element[jdx]);
 			}
 		}
 		return map;
@@ -51,5 +57,21 @@ public class Collect {
 			result[idx] = values.get(idx).doubleValue();
 		}
 		return result;
+	}
+
+	// ------------------------------------------------
+	// For file modification checking
+
+	public static long now() {
+		return Date.from(Instant.now()).getTime();
+	}
+
+	public static long getLastModified(Path path) {
+		try {
+			FileTime time = Files.getLastModifiedTime(path);
+			return Date.from(time.toInstant()).getTime();
+		} catch (IOException e) {
+			return 0;
+		}
 	}
 }

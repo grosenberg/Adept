@@ -72,10 +72,12 @@ public class TreeMultilist<K, V> {
 		return ok;
 	}
 
+	/** @throws NoSuchElementException */
 	public K firstKey() {
 		return map.firstKey();
 	}
 
+	/** @throws NoSuchElementException */
 	public K lastKey() {
 		return map.lastKey();
 	}
@@ -100,6 +102,10 @@ public class TreeMultilist<K, V> {
 		return map.entrySet();
 	}
 
+	public Entry<K, List<V>> lastEntry() {
+		return map.lastEntry();
+	}
+
 	public Set<K> keySet() {
 		return map.keySet();
 	}
@@ -108,10 +114,12 @@ public class TreeMultilist<K, V> {
 		return new ArrayList<>(map.keySet());
 	}
 
+	@Deprecated
 	public K keyFirst() {
 		return map.firstKey();
 	}
 
+	@Deprecated
 	public K keyLast() {
 		return map.lastKey();
 	}
@@ -121,10 +129,18 @@ public class TreeMultilist<K, V> {
 	}
 
 	/**
-	 * Returns a map of all of the values present in this map instance. Sorts the values if the value
-	 * comparator is not null.
+	 * Returns the collection of lists of the values present in this map instance.
 	 */
-	public List<V> values() {
+	@SuppressWarnings("unchecked")
+	public <C extends Collection<List<V>>> C values() {
+		return (C) map.values();
+	}
+
+	/**
+	 * Returns a consolidated list of all of the values present in this map instance. Sorts the values
+	 * if the value comparator is not null.
+	 */
+	public List<V> valuesAll() {
 		ArrayList<V> results = new ArrayList<>();
 		for (List<V> list : map.values()) {
 			results.addAll(list);
@@ -135,6 +151,12 @@ public class TreeMultilist<K, V> {
 
 	public int size() {
 		return map.size();
+	}
+
+	/** Size of the last list of values. */
+	public int lastSize() {
+		if (map.isEmpty()) return 0;
+		return map.get(map.lastKey()).size();
 	}
 
 	public int valuesSize() {

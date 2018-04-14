@@ -4,18 +4,17 @@ import java.util.Comparator;
 
 import net.certiv.adept.ITextEdit;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.util.Strings;
 
 public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 
-	private static ParseRecord _data;
+	private static final String Msg = "%6s @%s:%s [%s-%s] %s:%s '%s' -> '%s'";
 
 	private int begIndex;			// beg token index exclusive
 	private int endIndex;			// end token index exclusive
 
-	private String existing = "";		// existing text to be replaced
-	private String replacement = "";	// the replacement text
+	private String existing;		// existing text to be replaced
+	private String replacement;		// the replacement text
 
 	private int priority;			// edit priority level
 
@@ -26,61 +25,42 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 
 	private String msg;				// edit type message
 
-	public static void init(ParseRecord data) {
-		_data = data;
-	}
-
 	/**
 	 * Define an edit to replacement the existing text (should be ws only) between the given token
 	 * indexes (exclusive) with the new given string value.
+	 * <p>
+	 * If a document starts with whitespace, beg could be null; if it ends with whitespace end will be
+	 * EOF.
 	 *
 	 * @param begIndex left token index
 	 * @param endIndex right token index
 	 * @param existing existing text
 	 * @param replacement replacement text
-	 * @param data parse record data
 	 * @param priority relative edit priority
 	 * @param msg edit description
-	 * @throws FormatException
 	 */
-	public static TextEdit create(int begIndex, int endIndex, String existing, String replacement, int priority,
-			String msg) throws FormatException {
-
-		return new TextEdit(begIndex, endIndex, existing, replacement, priority, msg);
-	}
-
-	private TextEdit(int begIndex, int endIndex, String existing, String replacement, int priority, String msg)
-			throws FormatException {
-
-		this.begIndex = begIndex;
-		this.endIndex = endIndex;
+	public TextEdit(AdeptToken beg, AdeptToken end, String existing, String replacement, int priority, String msg) {
 		this.existing = existing;
 		this.replacement = replacement;
 		this.priority = priority;
-		this.msg = msg != null ? msg : "";
+		this.msg = msg;
 
-		AdeptToken beg = null;
-		AdeptToken end = null;
-		if (begIndex > -1) {
-			beg = _data.getToken(begIndex);
-			if (beg != null) {
-				replOffset = beg.getStopIndex() + 1;
-				replLine = beg.getLine();
-				replCol = beg.getCharPositionInLine();
-			}
+		begIndex = beg != null ? beg.getTokenIndex() : 0;
+		endIndex = end.getTokenIndex();
+		if (beg != null) {
+			replOffset = beg.getStopIndex() + 1;
+			replLine = beg.getLine();
+			replCol = beg.getCharPositionInLine();
 		}
-		if (endIndex > -1) {
-			end = _data.getToken(endIndex);
-			replLen = end != null ? end.getStartIndex() - replOffset : 0;
-		}
-
-		if (beg == null || end == null || replacement == null) {
-			throw new FormatException("Malformed", this);
-		}
+		replLen = end.getStartIndex() - replOffset;
 	}
 
 	public Region getRegion() {
 		return new Region(this);
+	}
+
+	public boolean changesSomething() {
+		return !existing.equals(replacement);
 	}
 
 	public int begIndex() {
@@ -130,6 +110,30 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		return replCol;
 	}
 
+	/** Trims upto n spaces from the end of the replacement string. */
+	public void replTrimTailWidth(int nSpaces) {
+		StringBuilder sb = new StringBuilder(replacement);
+		int len = sb.length();
+		int end = len - nSpaces;
+		for (int idx = len - 1; idx > -1 && idx > end; idx--) {
+			if (sb.charAt(idx) != Strings.SPC) break;
+			sb.deleteCharAt(idx);
+		}
+		replacement = sb.toString();
+	}
+
+	public void replAppend(String text) {
+		replacement += text;
+	}
+
+	public void replAppend(char c) {
+		replacement += c;
+	}
+
+	public void replUpdate(String replacement) {
+		this.replacement = replacement;
+	}
+
 	@Override
 	public int compare(TextEdit e1, TextEdit e2) {
 		if (e1.begIndex < e2.begIndex) return -1;
@@ -162,8 +166,6 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		if (endIndex != other.endIndex) return false;
 		return true;
 	}
-
-	private static final String Msg = "%6s @%s:%s [%s-%s] %s:%s '%s' -> '%s'";
 
 	@Override
 	public String toString() {

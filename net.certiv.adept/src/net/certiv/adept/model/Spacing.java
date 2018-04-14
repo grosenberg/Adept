@@ -11,19 +11,22 @@ public enum Spacing {
 	UNKNOWN("", 99);
 
 	private final String _name;
-	private final int _id;
+	private final int _div;
 
-	private Spacing(String name, int id) {
+	private Spacing(String name, int div) {
 		_name = name;
-		_id = id;
-	}
-
-	public int id() {
-		return _id;
+		_div = div;
 	}
 
 	public boolean terminal() {
 		return this == VLINE || this == VFLEX;
+	}
+
+	public static double score(Spacing a, Spacing b) {
+		if (a == UNKNOWN || b == UNKNOWN) return 0;
+
+		double dist = 4 - Math.abs(a._div - b._div);
+		return dist / 4;
 	}
 
 	@Override

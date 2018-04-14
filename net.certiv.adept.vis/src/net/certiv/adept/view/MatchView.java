@@ -30,7 +30,8 @@ import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.view.components.AbstractViewBase;
-import net.certiv.adept.view.models.MatchesTableModel;
+import net.certiv.adept.view.models.ContextsTableModel;
+import net.certiv.adept.view.models.MatchRefsTableModel;
 import net.certiv.adept.view.models.SourceListModel;
 import net.certiv.adept.view.models.SourceListModel.Item;
 import net.certiv.adept.view.models.SourceRefsTableModel;
@@ -43,12 +44,27 @@ public class MatchView extends AbstractViewBase {
 	private static final String srcExt = ".g4";
 
 	private Tool tool;
-	private JComboBox<Item> srcBox;
-
-	private JSplitPane split;
-	private JTable sourceTable;
-	private JTable matchTable;
 	private ParseRecord data;
+
+	private JComboBox<Item> srcBox;
+	private JSplitPane split;
+	private JSplitPane split2;
+
+	private JTable srcTable;
+	private SourceRefsTableModel srcModel;
+
+	private JTable refTable;
+	private MatchRefsTableModel refModel;
+
+	private JTable ctxTable;
+	private ContextsTableModel ctxModel;
+
+	// current source selections
+	private RefToken ref;
+	private AdeptToken token;
+	private Feature feature;
+	private TreeMultiset<Double, RefToken> matches;
+	private double[] maxRanks;
 
 	public static void main(String[] args) {
 		try {
@@ -62,15 +78,19 @@ public class MatchView extends AbstractViewBase {
 	public MatchView() {
 		super(name, "features.gif");
 
+		createSelectPanel();
+
 		split = createSplitPane(VERT);
 		content.add(split, BorderLayout.CENTER);
-
-		createSelectPanel();
 		createSourceTable();
+
+		split2 = createSplitPane(VERT);
+		split.setBottomComponent(split2);
 		createMatchTable();
 
 		setLocation();
 		split.setDividerLocation(prefs.getInt(KEY_SPLIT_VERT, 300));
+		split2.setDividerLocation(prefs.getInt(KEY_SPLIT_VERT + "2", 300));
 		frame.setVisible(true);
 	}
 
@@ -97,10 +117,10 @@ public class MatchView extends AbstractViewBase {
 
 	// ---- Top: source table ----
 	private void createSourceTable() {
-		sourceTable = createTable();
-		JPanel source = createScrollTable("Source RefTokens", sourceTable);
+		srcTable = createTable();
+		JPanel source = createScrollTable("Source RefTokens", srcTable);
 		split.setTopComponent(source);
-		sourceTable.addMouseListener(new MouseAdapter() {
+		srcTable.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -109,16 +129,16 @@ public class MatchView extends AbstractViewBase {
 				int row = table.rowAtPoint(point);
 				if (row < 0) return;
 
-				row = sourceTable.convertRowIndexToModel(sourceTable.getSelectedRow());
-				handleSrcRefSelect(row);
+				row = srcTable.convertRowIndexToModel(srcTable.getSelectedRow());
+				handleSrcSelect(row);
 			}
 		});
-		sourceTable.addKeyListener(new KeyAdapter() {
+		srcTable.addKeyListener(new KeyAdapter() {
 
 			@Override
 			public void keyReleased(KeyEvent e) {
-				int row = sourceTable.convertRowIndexToModel(sourceTable.getSelectedRow());
-				handleSrcRefSelect(row);
+				int row = srcTable.convertRowIndexToModel(srcTable.getSelectedRow());
+				handleSrcSelect(row);
 			}
 
 		});
@@ -127,30 +147,40 @@ public class MatchView extends AbstractViewBase {
 
 	// ---- Bottom: matched table ----
 	private void createMatchTable() {
-		matchTable = createTable();
-		JPanel match = createScrollTable("Matched RefTokens", matchTable);
-		split.setBottomComponent(match);
+		refTable = createTable();
+		JPanel refs = createScrollTable("RefTokens", refTable);
+		split2.setTopComponent(refs);
+		refTable.addMouseListener(new MouseAdapter() {
 
-		// matchTable.addMouseListener(new MouseAdapter() {
-		//
-		// @Override
-		// public void mouseReleased(MouseEvent e) {
-		// handleMatchSelect(sourceTable.getSelectedRow(), matchTable.getSelectedRow());
-		// }
-		// });
-		// matchTable.addKeyListener(new KeyAdapter() {
-		//
-		// @Override
-		// public void keyReleased(KeyEvent e) {
-		// handleMatchSelect(sourceTable.getSelectedRow(), matchTable.getSelectedRow());
-		// }
-		//
-		// });
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				JTable table = (JTable) e.getSource();
+				Point point = e.getPoint();
+				int row = table.rowAtPoint(point);
+				if (row < 0) return;
+
+				row = refTable.convertRowIndexToModel(refTable.getSelectedRow());
+				handleMatSelect(row);
+			}
+		});
+		refTable.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				int row = refTable.convertRowIndexToModel(refTable.getSelectedRow());
+				handleMatSelect(row);
+			}
+		});
+
+		ctxTable = createTable();
+		JPanel contexts = createScrollTable("Contexts", ctxTable);
+		split2.setBottomComponent(contexts);
 	}
 
 	@Override
 	protected void saveWindowClosingPrefs(Preferences prefs) {
-		prefs.putInt(KEY_SPLIT_HORZ, split.getDividerLocation());
+		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
+		prefs.putInt(KEY_SPLIT_VERT + "2", split2.getDividerLocation());
 	}
 
 	private void loadTool() {
@@ -189,65 +219,56 @@ public class MatchView extends AbstractViewBase {
 
 		@Override
 		protected void done() {
+			data = tool.getMgr().getDocModel().getParseRecord();
+			installModels();
 			createSrcRefsList();
 		}
+	}
+
+	protected void installModels() {
+		srcModel = new SourceRefsTableModel(data.getRuleNames(), data.getTokenNames());
+		srcTable.setModel(srcModel);
+		srcModel.configCols(srcTable);
+
+		refModel = new MatchRefsTableModel(data.getRuleNames(), data.getTokenNames());
+		refTable.setModel(refModel);
+		refModel.configCols(refTable);
+
+		ctxModel = new ContextsTableModel(data.getRuleNames(), data.getTokenNames());
+		ctxTable.setModel(ctxModel);
+		ctxModel.configCols(ctxTable);
 	}
 
 	// after combo selected document has been parsed
 	// display table of all formattable tokens, nominally ordered by token index
 	protected void createSrcRefsList() {
-		data = tool.getMgr().getDocModel().getParseRecord();
-
-		SourceRefsTableModel model = new SourceRefsTableModel(data, data.getRuleNames(), data.getTokenNames());
-		sourceTable.setModel(model);
-		model.configCols(sourceTable);
-		sourceTable.changeSelection(0, 0, false, false);
-		handleSrcRefSelect(0);
+		srcModel.addAll(data);
+		srcTable.changeSelection(0, 0, false, false);
+		handleSrcSelect(0);
 	}
 
 	// clicked on the document feature table
-	protected void handleSrcRefSelect(int row) {
-		SourceRefsTableModel srcModel = (SourceRefsTableModel) sourceTable.getModel();
-		RefToken ref = srcModel.getRefToken(row);
-		AdeptToken token = data.tokenIndex.get(ref.index);
-		Feature feature = data.index.get(token);
-		TreeMultiset<Double, RefToken> matches = tool.getMgr().getMatches(feature, ref);
+	protected void handleSrcSelect(int row) {
+		ref = srcModel.getRefToken(row);
+		token = data.tokenIndex.get(ref.index);
+		feature = data.index.get(token);
+		matches = tool.getMgr().getMatches(feature, ref);
+		maxRanks = tool.getMgr().getMatchingFeature(feature).maxRank();
 
-		if (!(matchTable.getModel() instanceof MatchesTableModel)) {
-			MatchesTableModel matModel = new MatchesTableModel(data.getRuleNames(), data.getTokenNames());
-			matchTable.setModel(matModel);
-			matModel.configCols(matchTable);
-		}
-
-		MatchesTableModel matModel = (MatchesTableModel) matchTable.getModel();
 		if (matches.isEmpty()) {
-			matModel.removeAllRows();
+			refModel.removeAllRows();
+			ctxModel.removeAllRows();
 		} else {
-			matModel.addAll(ref, matches);
+			refModel.addAll(ref, matches, maxRanks);
+			refTable.scrollRectToVisible(refTable.getCellRect(0, 0, true));
+			handleMatSelect(0);
 		}
-
-		matchTable.scrollRectToVisible(matchTable.getCellRect(0, 0, true));
 	}
 
-	// // ---- Bottom: info panels ----
-	// private void createInfoTable() {
-	//
-	// JSplitPane splitPane = createSplitPane(VERT);
-	//
-	// JPanel docPanel = createPanel("Document RefToken");
-	// JPanel matchPanel = createPanel("Matched RefTokens");
-	// infoPanel.add(docPanel);
-	// infoPanel.add(matchPanel);
-	//
-	// docInfo = new FeaturePanel(null);
-	// docPanel.add(docInfo);
-	//
-	// simInfo = new SimularityPanel(null);
-	// matchInfo = new FeaturePanel(null);
-	//
-	// matchPanel.add(matchInfo, BorderLayout.NORTH);
-	// matchPanel.add(simInfo, BorderLayout.CENTER);
-	//
-	// content.add(matchPanel, BorderLayout.SOUTH);
-	// }
+	// clicked on the matched ref token table
+	protected void handleMatSelect(int row) {
+		RefToken matRef = refModel.getRef(row);
+		ctxModel.addAll(ref, matRef, maxRanks);
+		ctxTable.scrollRectToVisible(ctxTable.getCellRect(0, 0, true));
+	}
 }

@@ -9,8 +9,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 
-import net.certiv.adept.ITextEdit;
 import net.certiv.adept.Tool;
+import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.tool.ErrorType;
 
@@ -25,7 +25,7 @@ public class Document {
 	private String content;
 
 	private String modified;
-	private List<ITextEdit> edits = Collections.emptyList();
+	private List<TextEdit> edits = Collections.emptyList();
 
 	public Document(String pathname, int tabWidth, String content) {
 		this.pathname = pathname;
@@ -71,12 +71,12 @@ public class Document {
 		return content;
 	}
 
-	public List<ITextEdit> getEdits() {
+	public List<TextEdit> getEdits() {
 		return edits;
 	}
 
-	public void setEdits(List<ITextEdit> edits) {
-		this.edits = edits;
+	public void setEdits(List<TextEdit> list) {
+		this.edits = list;
 	}
 
 	public String getModified() {

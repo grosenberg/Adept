@@ -1,4 +1,4 @@
-package net.certiv.adept.model.util;
+package net.certiv.adept.util;
 
 import java.util.Arrays;
 import java.util.HashMap;

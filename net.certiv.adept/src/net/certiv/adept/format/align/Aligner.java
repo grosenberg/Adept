@@ -13,23 +13,43 @@ import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.util.Collect;
 import net.certiv.adept.util.Maths;
+import net.certiv.adept.util.Utils;
 
 public class Aligner {
 
-	private final Map<ParserRuleContext, Group> groups = new HashMap<>();
 	private ParseRecord data;
+	private Group lastCmtGroup;
+
+	// key=owning context of group; value=group
+	private final Map<ParserRuleContext, Group> groups = new HashMap<>();
 
 	public Aligner(ParseRecord data) {
 		this.data = data;
 	}
 
+	// --------------------------------------------------------------------
+
+	/** Add an alignable comment to a contiguous group. Will be added in comment token index order. */
+	public void comment(int line, AdeptToken token) {
+		if (lastCmtGroup != null) {
+			if (lastCmtGroup.contiguous(Align.COMMENT, line)) {
+				lastCmtGroup.addGroupMembers(Align.COMMENT, line, token);
+				return;
+			}
+		}
+
+		lastCmtGroup = new Group(Align.COMMENT, line, token);
+		data.groupIndex.add(lastCmtGroup);
+	}
+
+	// --------------------------------------------------------------------
+
 	public void groupBeg(ParserRuleContext ctx) {
 		Group group = groups.get(ctx);
 		if (group != null) throw new IllegalStateException("Invalid inLine group parentage.");
 
-		groups.put(ctx, new Group(ctx));
+		groups.put(ctx, new Group());
 	}
 
 	/**
@@ -76,13 +96,14 @@ public class Aligner {
 		Group group = groups.get(ctx);
 		if (group == null) throw new IllegalStateException("Non-existant inLine group.");
 
+		data.groupIndex.add(group);
 		TableMultilist<Align, Integer, AdeptToken> members = group.getMembers();
 
 		for (Align align : members.keySet()) {
 			TreeMultilist<Integer, AdeptToken> lines = members.get(align);
 			Gap gap = findGap(lines);
 			int total = lines.valuesSize();
-			for (AdeptToken token : lines.values()) {
+			for (AdeptToken token : lines.valuesAll()) {
 				Place[] place = findPlace(lines, token);
 				token.refToken().setAlign(align, gap, place, total);
 			}
@@ -92,6 +113,7 @@ public class Aligner {
 
 	public void clear() {
 		groups.clear();
+		lastCmtGroup = null;
 	}
 
 	// --------------------------------------------------------------------
@@ -117,7 +139,7 @@ public class Aligner {
 			}
 		}
 
-		double[] vector = Collect.toPrimitiveArray(reals);
+		double[] vector = Utils.toPrimitiveArray(reals);
 		if (Maths.stdDeviation(vector) > 2) return Gap.VARIABLE;
 
 		double mean = Maths.mean(vector);

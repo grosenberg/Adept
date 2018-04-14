@@ -14,10 +14,10 @@ import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Refs;

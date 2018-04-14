@@ -1,112 +1,60 @@
 package net.certiv.adept.format;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
-import net.certiv.adept.ITextEdit;
 import net.certiv.adept.Settings;
+import net.certiv.adept.format.align.Align;
+import net.certiv.adept.format.align.Group;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
-import net.certiv.adept.model.Document;
-import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.model.Spacing;
+import net.certiv.adept.unit.TableMultilist;
+import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Strings;
 
-/** Document stream formatter. */
-public class Formatter {
+/** Document formatter. */
+public class Formatter extends FormatterBase {
 
-	private Document doc;
-	private ParseRecord data;
-	private Settings settings;
-	private String tabEquiv;
-
+	private FormatMgr fMgr;
 	private StringBuilder contents;				// the formatted source text
-	private TreeMap<Region, TextEdit> edits;	// the implementing edits
+	private CommentProcessor cmtFormatter;
 
 	public Formatter(DocModel model, Settings settings) {
-		this.doc = model.getDocument();
-		this.data = doc.getParseRecord();
-		this.settings = settings;
-		this.tabEquiv = Strings.getNSpaces(settings.tabWidth);
+		super(model, settings);
 
+		fMgr = new FormatMgr(data, settings);
+		cmtFormatter = new CommentProcessor(settings);
 		contents = new StringBuilder();
-
-		TextEdit.init(data);
 	}
 
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Executes the formatter. The final results is then accessible from the {@code modified} field of
+	 * the document.
+	 *
+	 * @return {@code true} if the source document is modified by formatting.
+	 */
 	public boolean execute() {
 		List<TextEdit> edits = createEdits();
-		if (edits == null) return false;
+		if (edits.isEmpty()) return false;
 
 		return applyEdits(edits);
 	}
 
 	public List<TextEdit> createEdits() {
-		edits = new TreeMap<>();
-
-		for (AdeptToken token : data.index.keySet()) {
-			RefToken present = srcRefFor(token.getTokenIndex());
-
-			if (present != null) {
-				RefToken prior = srcRefFor(present.lIndex);
-				RefToken next = srcRefFor(present.rIndex);
-				RefToken matched = present.matched;
-				showWhere(prior, next, matched);
-
-				if (matched != null) {
-					try {
-						Map<Region, TextEdit> editSet = createEdits(prior, present, next, matched);
-						if (!editSet.isEmpty()) {
-							for (Entry<Region, TextEdit> entry : editSet.entrySet()) {
-								Region region = entry.getKey();
-								TextEdit edit = entry.getValue();
-
-								if (edits.containsKey(region)) {
-									TextEdit existing = edits.get(region);
-									if (existing.priority() > edit.priority()) {
-										Log.debug(this, "P: " + existing.toString());	// priority/presesrve
-									} else {
-										Log.debug(this, "R: " + edit.toString());		// remove/replace
-										if (edit.existing().equals(edit.replacement())) {
-											edits.remove(region);
-										} else {
-											edits.put(region, edit);
-										}
-									}
-								} else {
-									if (!edit.existing().equals(edit.replacement())) {
-										Log.debug(this, "A: " + edit.toString());		// add
-										edits.put(region, edit);
-									}
-								}
-							}
-						}
-					} catch (FormatException e) {
-						Log.error(this, "Formatter Err: " + e.getMessage());
-					} catch (Exception e) {
-						Log.error(this, "Unexpected Err: " + e.getMessage(), e);
-					}
-				}
-			}
+		if (settings.format) {
+			adjustLineSpacing();
+			if (settings.breakLongLines) breakLongLines();
+			if (settings.alignFields) alignFields();
+			if (settings.alignComments) alignComments();
+			if (settings.formatComments) formatComments();
 		}
 
-		return new ArrayList<>(edits.values());
-	}
-
-	private void showWhere(RefToken prior, RefToken next, RefToken matched) {
-		String pname = prior != null ? data.getTokenName(prior.type) : "Null";
-		String mname = matched != null ? data.getTokenName(matched.type) : "Null";
-		String nname = next != null ? data.getTokenName(next.type) : "Null";
-		Log.debug(this, "   %s > %s >%s", pname, mname, nname);
+		return fMgr.getTextEdits();
 	}
 
 	public boolean applyEdits(List<TextEdit> edits) {
@@ -132,8 +80,8 @@ public class Formatter {
 		return true;
 	}
 
-	public List<ITextEdit> getTextEdits() {
-		return new ArrayList<>(edits.values());
+	public List<TextEdit> getTextEdits() {
+		return fMgr.getTextEdits();
 	}
 
 	public String getFormattedContents() {
@@ -142,11 +90,56 @@ public class Formatter {
 
 	// -------------------------------------------------------------------------
 
-	// converts a token index to a known good feature ref token
-	private RefToken srcRefFor(int index) {
-		AdeptToken token = index > -1 ? data.tokenIndex.get(index) : null;
-		Feature feature = token != null ? data.index.get(token) : null;
-		return feature != null ? feature.getRefFor(token.getTokenIndex()) : null;
+	// initial TextEdit creation pass; also creates
+	// the initial modified line/token index in the FormatMgr
+	private void adjustLineSpacing() {
+		for (AdeptToken token : data.index.keySet()) { // visible tokens
+			RefToken present = srcRefFor(token.getTokenIndex());
+
+			if (present != null) {
+				RefToken prior = srcRefFor(present.lIndex);
+				RefToken next = srcRefFor(present.rIndex);
+				RefToken matched = present.matched;
+				showWhere(prior, next, matched);
+
+				if (matched != null) {
+					try {
+						Map<Region, TextEdit> editSet = adjustLineSpacing(prior, present, next, matched);
+						if (!editSet.isEmpty()) {
+							for (Entry<Region, TextEdit> entry : editSet.entrySet()) {
+								Region region = entry.getKey();
+								TextEdit edit = entry.getValue();
+
+								if (fMgr.edits().containsKey(region)) {
+									TextEdit existing = fMgr.edits().get(region);
+									if (existing.priority() > edit.priority()) {
+										Log.debug(this, "P: " + existing.toString());	// priority/presesrve
+									} else {
+										Log.debug(this, "R: " + edit.toString());		// remove/replace
+										if (edit.existing().equals(edit.replacement())) {
+											fMgr.edits().remove(region);
+										} else {
+											fMgr.edits().put(region, edit);
+										}
+									}
+								} else {
+									if (!edit.existing().equals(edit.replacement())) {
+										Log.debug(this, "A: " + edit.toString());		// add
+										fMgr.edits().put(region, edit);
+									}
+								}
+							}
+						}
+					} catch (FormatException e) {
+						Log.error(this, "Formatter Err: " + e.getMessage());
+					} catch (Exception e) {
+						Log.error(this, "Unexpected Err: " + e.getMessage(), e);
+					}
+				}
+			}
+
+			fMgr.append(token);
+		}
 	}
 
 	/**
@@ -158,8 +151,6 @@ public class Formatter {
 	 * <li>impose current matched spacing on right edge of current
 	 * <li>when current is comment, impose current matched spacing & dent on left edge of current
 	 * <li>when current actual or matched is BOL, apply matched spacing & dent on left edge of current
-	 * <li>TODO: aligns
-	 * <li>TODO: long-line breaks
 	 * </ol>
 	 *
 	 * <pre>
@@ -177,85 +168,88 @@ public class Formatter {
 	 * @return list of implementing edits
 	 * @throws FormatException
 	 */
-	private Map<Region, TextEdit> createEdits(RefToken prior, RefToken current, RefToken next, RefToken matched)
+	private Map<Region, TextEdit> adjustLineSpacing(RefToken prior, RefToken current, RefToken next, RefToken matched)
 			throws FormatException {
 
 		Map<Region, TextEdit> edits = new HashMap<>();
 
 		// priority 1: left nominal
 		if (current.lIndex > AdeptToken.BOF) {
-			String repl = applySpacing(matched.lSpacing, matched.lActual, matched.dent.indents);
-			TextEdit edit = TextEdit.create(current.lIndex, current.index, current.lActual, repl, 1, "L Nom");
+			String repl = calcSpacing(matched.lSpacing, matched.lActual, matched.dent.indents);
+			TextEdit edit = fMgr.create(current.lIndex, current.index, current.lActual, repl, 1, "L Nom");
 			edits.put(edit.getRegion(), edit);
 		}
 
 		// priority 2: right nominal
 		if (current.index > AdeptToken.EOF) {
-			String repl = applySpacing(matched.rSpacing, matched.rActual, matched.dent.indents);
-			TextEdit edit = TextEdit.create(current.index, current.rIndex, current.rActual, repl, 2, "R Nom");
+			String repl = calcSpacing(matched.rSpacing, matched.rActual, matched.dent.indents);
+			TextEdit edit = fMgr.create(current.index, current.rIndex, current.rActual, repl, 2, "R Nom");
 			edits.put(edit.getRegion(), edit);
 		}
 
 		// priority 3: comments
 		if ((prior != null && prior.isComment()) || current.isComment()) {
-			String repl = applySpacing(matched.lSpacing, matched.lActual, matched.dent.indents);
-			TextEdit edit = TextEdit.create(current.lIndex, current.index, current.lActual, repl, 3, "L Cmt");
+			String repl = calcSpacing(matched.lSpacing, matched.lActual, matched.dent.indents);
+			TextEdit edit = fMgr.create(current.lIndex, current.index, current.lActual, repl, 3, "L Cmt");
 			edits.put(edit.getRegion(), edit);
 		}
 
 		// priority 4: bol
 		if (current.lIndex > AdeptToken.BOF && (matched.atBol() || current.atBol())) {
-			String repl = applyBolIndent(current.lActual, matched.lActual, current.dent.indents);
-			TextEdit edit = TextEdit.create(current.lIndex, current.index, current.lActual, repl, 4, "L Bol");
+			String repl = calcIndent(current.lActual, matched.lActual, current.dent.indents);
+			TextEdit edit = fMgr.create(current.lIndex, current.index, current.lActual, repl, 4, "L Bol");
 			edits.put(edit.getRegion(), edit);
 		}
 
 		return edits;
 	}
 
-	private String applySpacing(Spacing spacing, String existing, int indents) {
-		switch (spacing) {
-			case HFLEX:				// TODO: visCol?
-				String hflex = existing.replace(tabEquiv, "\t");
-				return hflex.replaceAll("\\t[ ]+(?=\\t)", "\t");
+	// -------------------------------------------------------------------------
+	// subsequent/optional formatting phases
 
-			case HSPACE:
-				return Strings.SPACE;
+	private void breakLongLines() {
+		// TODO
+	}
 
-			case NONE:
-				return "";
+	private void alignFields() {
+		for (Group group : data.groupIndex) {
+			TableMultilist<Align, Integer, AdeptToken> members = group.getMembers();
+			for (Align align : members.keySet()) {
+				TreeMultilist<Integer, AdeptToken> lines = members.get(align);
+				switch (align) {
+					case PAIR:
+						fMgr.handlePairAlign(lines);
+						break;
 
-			case VLINE:
-				return Strings.EOL + Strings.createIndent(settings.tabWidth, settings.useTabs, indents);
+					case LIST:
+					case GROUP:
+						fMgr.handleListAlign(lines);
+						break;
 
-			case VFLEX:
-				String vflex = Strings.getN(vertCount(existing), Strings.EOL);
-				return vflex + Strings.createIndent(settings.tabWidth, settings.useTabs, indents);
-
-			default:
-				return existing;
+					default:
+						break;
+				}
+			}
 		}
 	}
 
-	// produce replacement indent string including any leading newlines for BOL
-	private String applyBolIndent(String existing, String matched, int indents) {
-		String indentStr = "";
-		if (!settings.removeTrailingWS) {
-			indentStr += Strings.leadHWS(existing);
+	private void alignComments() {
+		for (Group group : data.groupIndex) {
+			TreeMultilist<Integer, AdeptToken> lines = group.get(Align.COMMENT);
+			if (lines != null) {
+				fMgr.handleListAlign(lines);
+			}
 		}
-		int eline = vertCount(existing);
-		int mline = vertCount(matched);
-		int lines = Math.max(eline, mline);
-		indentStr += Strings.getN(lines, Strings.EOL);
-		indentStr += Strings.createIndent(settings.tabWidth, settings.useTabs, indents);
-		return indentStr;
 	}
 
-	private int vertCount(String text) {
-		int lines = Strings.countVWS(text);
-		if (settings.removeBlankLines) {
-			lines = Math.min(lines, settings.keepBlankLines + 1);
+	private void formatComments() {
+		int firstTokenIndex = data.index.firstKey().getTokenIndex(); // header, if present
+		for (AdeptToken comment : data.commentIndex) {
+			if (comment.getTokenIndex() == firstTokenIndex && !settings.formatHdrComment) continue;
+
+			if (cmtFormatter.process(comment)) {
+				comment.setText(cmtFormatter.getResult());
+			}
 		}
-		return lines;
 	}
 }

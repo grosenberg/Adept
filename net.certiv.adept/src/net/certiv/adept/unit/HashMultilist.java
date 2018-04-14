@@ -50,12 +50,8 @@ public class HashMultilist<K, V> {
 		return list.addAll(values);
 	}
 
-	public HashMultilist<K, V> sort(Comparator<V> comp) {
-		HashMultilist<K, V> sorted = new HashMultilist<>(keyMap);
-		for (K key : sorted.keySet()) {
-			Collections.sort(sorted.get(key), comp);
-		}
-		return sorted;
+	public void removeKey(K key) {
+		keyMap.remove(key);
 	}
 
 	public boolean containsKey(K key) {
@@ -88,6 +84,14 @@ public class HashMultilist<K, V> {
 			values.addAll(subList);
 		}
 		return values;
+	}
+
+	public HashMultilist<K, V> sort(Comparator<V> comp) {
+		HashMultilist<K, V> sorted = new HashMultilist<>(keyMap);
+		for (K key : sorted.keySet()) {
+			Collections.sort(sorted.get(key), comp);
+		}
+		return sorted;
 	}
 
 	public boolean isEmpty() {

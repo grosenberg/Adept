@@ -24,7 +24,10 @@ public class Strings {
 	public static final char EOP = File.separatorChar;	// path
 	public static final String EOL = System.lineSeparator();
 	public static final String SPACE = " ";
+	public static final char SPC = ' ';
 	public static final char TAB = '\t';
+	public static final char RET = '\r';
+	public static final char NLC = '\n';
 	public static final char DOT = '.';
 
 	private Strings() {}
@@ -109,7 +112,7 @@ public class Strings {
 		if (indents < 1) return "";
 
 		StringBuilder sb = new StringBuilder();
-		String indent = useTabs ? "\t" : getNSpaces(tabWidth);
+		String indent = useTabs ? "\t" : spaces(tabWidth);
 		for (int i = 0; i < indents; i++) {
 			sb.append(indent);
 		}
@@ -202,7 +205,7 @@ public class Strings {
 	}
 
 	/** Returns a string containing {@code count} spaces. */
-	public static String getNSpaces(int count) {
+	public static String spaces(int count) {
 		return getN(count, SPACE);
 	}
 
@@ -315,17 +318,13 @@ public class Strings {
 	 *                </ul>
 	 */
 	public static int measureIndentInSpaces(CharSequence line, int tabWidth) {
-		if (tabWidth < 0 || line == null) {
-			throw new IllegalArgumentException();
-		}
+		if (tabWidth < 0 || line == null) throw new IllegalArgumentException();
 
 		int length = 0;
-		int max = line.length();
-		for (int i = 0; i < max; i++) {
-			char ch = line.charAt(i);
+		for (int idx = 0, max = line.length(); idx < max; idx++) {
+			char ch = line.charAt(idx);
 			if (ch == TAB) {
-				int reminder = length % tabWidth;
-				length += tabWidth - reminder;
+				length += tabWidth - (length % tabWidth);
 			} else if (isIndentChar(ch)) {
 				length++;
 			} else {
@@ -347,25 +346,56 @@ public class Strings {
 		return measureVisualWidth(line, tabWidth, 0);
 	}
 
+	// /**
+	// * Returns the visual width of a given given line.
+	// *
+	// * @param text the string to measure
+	// * @param tabWidth the visual width of a tab
+	// * @param from the visual starting offset of the text
+	// * @return the visual width of <code>text</code>
+	// * @see
+	// https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
+	// */
+	// public static int measureVisualWidth(CharSequence text, int tabWidth, int from) {
+	// if (text == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
+	//
+	// int width = from;
+	// int len = text.length();
+	// for (int idx = 0; idx < len; idx++) {
+	// if (text.charAt(idx) == TAB) {
+	// if (tabWidth > 0) width += tabWidth - width % tabWidth;
+	// } else {
+	// width++;
+	// }
+	// }
+	// return width - from;
+	// }
+
 	/**
-	 * Returns the visual width of a given given line.
+	 * Returns the visual width of a given line. Width is reset if a line separator is encountered.
 	 *
 	 * @param text the string to measure
 	 * @param tabWidth the visual width of a tab
 	 * @param from the visual starting offset of the text
 	 * @return the visual width of <code>text</code>
-	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
+	 * @see org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
 	 */
 	public static int measureVisualWidth(CharSequence text, int tabWidth, int from) {
 		if (text == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
 
 		int width = from;
-		int len = text.length();
-		for (int idx = 0; idx < len; idx++) {
-			if (text.charAt(idx) == TAB) {
-				if (tabWidth > 0) width += tabWidth - width % tabWidth;
-			} else {
-				width++;
+		for (int idx = 0, len = text.length(); idx < len; idx++) {
+			switch (text.charAt(idx)) {
+				case TAB:
+					if (tabWidth > 0) width += tabWidth - width % tabWidth;
+					break;
+				case RET:
+				case NLC:
+					width = 0;
+					from = 0;
+					break;
+				default:
+					width++;
 			}
 		}
 		return width - from;
@@ -419,6 +449,11 @@ public class Strings {
 			}
 		}
 		return sb.toString();
+	}
+
+	/** Split all lines, preserving blank last line, if any. */
+	public static String[] splitLines(String text) {
+		return text.split("\\R", -1);
 	}
 
 	public static int count(String text, String mark) {

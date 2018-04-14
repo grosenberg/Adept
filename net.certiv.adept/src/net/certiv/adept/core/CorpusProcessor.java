@@ -5,13 +5,15 @@ import java.util.List;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.CorpusDocs;
-import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.util.Calc;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
@@ -54,6 +56,9 @@ public class CorpusProcessor extends BaseProcessor {
 	}
 
 	public void buildCorpusModel() {
+		Time.clear();
+		Calc.clear();
+
 		Time.start(Facet.BUILD);
 		Log.info(this, "Building corpus model ...");
 
@@ -61,14 +66,18 @@ public class CorpusProcessor extends BaseProcessor {
 		corModel = new CorpusModel(settings.corpusDir);
 
 		List<Document> documents = CorpusDocs.readDocuments(settings.corpusDir, settings.corpusExt, settings.tabWidth);
+		// documents.subList(3, documents.size()).clear();
+
 		for (Document doc : documents) {
 			if (pathnames.contains(doc.getPathname())) {
+				Calc.inc(Form.DOCS);
 				Feature.clearPool();
 				processDocument(doc, false);
+				Calc.delta(Form.TOKS, doc.getParseRecord().tokenStream.size());
 				corModel.merge(builder);	// merge document features into the corpus
 			}
 		}
-		corModel.finalizeBuild(builder);	// post-build operations
+		corModel.postBuild(builder);
 		Thread t = new Thread(mgr.getThreadGroup(), new SaveOp(corModel, settings.corpusDir));
 		t.start();
 		Time.stop(Facet.BUILD);

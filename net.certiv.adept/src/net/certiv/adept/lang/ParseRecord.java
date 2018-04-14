@@ -3,7 +3,6 @@ package net.certiv.adept.lang;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -13,8 +12,10 @@ import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 
 import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.align.Group;
 import net.certiv.adept.format.indent.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
@@ -24,6 +25,9 @@ import net.certiv.adept.unit.TreeMultiset;
 
 /** Record of the information generated through the parsing of a single Document. */
 public class ParseRecord {
+
+	public static final int AncesLimit = 6; // ancestor path limit; TODO: tune parameter
+	public static final int AssocLimit = 3; // associated token limit; TODO: tune parameter
 
 	public Document doc;
 
@@ -45,18 +49,26 @@ public class ParseRecord {
 
 	// ---------------------------------------------------------
 
+	public Indenter indenter;
+	public Aligner aligner;
+
+	// ---------------------------------------------------------
+
 	/** Primary index of a parsed document. Ordered by token index. */
-	// key=token; value=feature
+	// key=visible token; value=feature
 	public TreeMap<AdeptToken, Feature> index;
 
-	// key=token index; value=token
+	// key=visible token index; value=token
 	public TreeMap<Integer, AdeptToken> tokenIndex;
 
 	// key=feature id; value=feature
 	public HashMap<Integer, Feature> featureIndex;
 
-	// key=unique feature token types
-	public HashSet<Integer> typeSet;
+	// alignment groups
+	public List<Group> groupIndex;
+
+	// // key=first line of group; value=comment group
+	// public TreeMap<Integer, Group> comments = new TreeMap<>();
 
 	// key=line number; value=list of tokens
 	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
@@ -67,17 +79,11 @@ public class ParseRecord {
 	// key=line number; value=blank?
 	public HashMap<Integer, Boolean> blanklines;
 
-	// key=line number; value=list of comments
-	public TreeMultiset<Integer, AdeptToken> commentIndex;
+	// value=list of block comments
+	public List<AdeptToken> commentIndex;
 
 	// key=line number; value=list of fields
 	public TreeMultiset<Integer, AdeptToken> fieldIndex;
-
-	// effective: key=token index; value=indentation level
-	protected Indenter indenter;
-
-	// effective: key=token index; value=indentation level
-	protected Aligner aligner;
 
 	// ---------------------------------------------------------
 
@@ -87,11 +93,10 @@ public class ParseRecord {
 		index = new TreeMap<>(AdeptComp.Instance);
 		tokenIndex = new TreeMap<>();
 		featureIndex = new HashMap<>();
-		typeSet = new HashSet<>();
 		lineTokensIndex = new TreeMultilist<>(null, AdeptComp.Instance);
 		lineStartIndex = new HashMap<>();
 		blanklines = new HashMap<>();
-		commentIndex = new TreeMultiset<>();
+		commentIndex = new ArrayList<>();
 		fieldIndex = new TreeMultiset<>();
 
 		indenter = new Indenter(this);
@@ -102,7 +107,6 @@ public class ParseRecord {
 		index.clear();
 		tokenIndex.clear();
 		featureIndex.clear();
-		typeSet.clear();
 		lineTokensIndex.clear();
 		lineStartIndex.clear();
 		blanklines.clear();
@@ -161,6 +165,14 @@ public class ParseRecord {
 			sb.append(token.getText());
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Returns the text in the character stream between {@code beg} character index (inclusive) and
+	 * {@code end} character index (exclusive).
+	 */
+	public String textSpan(int beg, int end) {
+		return charStream.getText(new Interval(beg, end - 1));
 	}
 
 	/** Protect against null */
@@ -226,8 +238,8 @@ public class ParseRecord {
 		if (tokens.size() == 1) return tokens.get(0);
 
 		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
-			int beg = tokens.get(idx).visCol();
-			int end = tokens.get(idx + 1).visCol() - 1;
+			int beg = tokens.get(idx).visCol(true);
+			int end = tokens.get(idx + 1).visCol(true) - 1;
 
 			if (idx == 0 && vcol < beg) return tokens.get(idx);
 			if (beg <= vcol && vcol < end) return tokens.get(idx);
@@ -251,6 +263,14 @@ public class ParseRecord {
 		return type == BLOCKCOMMENT || type == LINECOMMENT;
 	}
 
+	public boolean isBlockComment(int type) {
+		return type == BLOCKCOMMENT;
+	}
+
+	public boolean isLineComment(int type) {
+		return type == LINECOMMENT;
+	}
+
 	public boolean isWsOrComment(int type) {
 		return type == VWS || type == HWS || type == BLOCKCOMMENT || type == LINECOMMENT;
 	}
@@ -259,4 +279,33 @@ public class ParseRecord {
 		if (line < 0 && line >= blanklines.size()) return true;
 		return blanklines.get(line);
 	}
+
+	// --------------------------------------
+
+	public AdeptToken findRealLeft(int idx) {
+		for (int jdx = idx - 1; jdx > -1; jdx--) {
+			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
+			if (left.getChannel() == Token.DEFAULT_CHANNEL) return left;
+		}
+		return null;
+	}
+
+	public AdeptToken findRealRight(int idx) {
+		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
+			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
+			if (right.getChannel() == Token.DEFAULT_CHANNEL) return right;
+		}
+		return null;
+	}
+
+	public int findMinAlignCol(AdeptToken token) {
+		return 0;
+	}
+
+	public AdeptToken findBOL(AdeptToken token, boolean b) {
+		return null;
+	}
+
+	// --------------------------------------
+
 }

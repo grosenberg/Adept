@@ -4,10 +4,10 @@ import org.antlr.v4.runtime.RecognitionException;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;

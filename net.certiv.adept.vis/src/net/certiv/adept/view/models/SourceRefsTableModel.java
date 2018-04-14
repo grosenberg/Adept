@@ -22,15 +22,18 @@ import net.certiv.adept.view.renderers.AlignCellRenderer;
 /** RefTokens for a source document. */
 public class SourceRefsTableModel extends BaseTableModel {
 
+	private static final int[] ColWidths = { 10, 300, 150, 60, 80, 250, 250, 150, 60, 20, };
 	private final String[] columnNames = { "Num", "Ancestors", "Token", "Place", "Indents", "Associates", "Spacing",
 			"Alignment", "Location", "Index" };
 
-	private Object[][] rowData;
+	private Object[][] rowData = new Object[0][];
 	private Map<Integer, RefToken> refIndex = new HashMap<>();
 
-	public SourceRefsTableModel(ParseRecord data, List<String> ruleNames, List<String> tokenNames) {
+	public SourceRefsTableModel(List<String> ruleNames, List<String> tokenNames) {
 		super(ruleNames, tokenNames);
+	}
 
+	public void addAll(ParseRecord data) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 		for (AdeptToken token : data.tokenIndex.values()) {
@@ -68,16 +71,7 @@ public class SourceRefsTableModel extends BaseTableModel {
 		sorter.setComparator(9, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
-		cols.getColumn(0).setPreferredWidth(10);
-		cols.getColumn(1).setPreferredWidth(300);
-		cols.getColumn(2).setPreferredWidth(150);
-		cols.getColumn(3).setPreferredWidth(60);
-		cols.getColumn(4).setPreferredWidth(80);
-		cols.getColumn(5).setPreferredWidth(250);
-		cols.getColumn(6).setPreferredWidth(250);
-		cols.getColumn(7).setPreferredWidth(150);
-		cols.getColumn(8).setPreferredWidth(60);
-		cols.getColumn(9).setPreferredWidth(20);
+		setColWidths(cols, ColWidths);
 	}
 
 	public RefToken getRefToken(int row) {

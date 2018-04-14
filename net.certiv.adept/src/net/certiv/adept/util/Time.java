@@ -1,21 +1,14 @@
 package net.certiv.adept.util;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import net.certiv.adept.unit.Pair;
 
+/** For keeping running measurements of 'time'. */
 public class Time {
-
-	// ------------------------------------------------
-	// For measuring process times
 
 	private static final Map<Enum<?>, Pair<Instant, Instant>> times = new HashMap<>();
 
@@ -52,23 +45,7 @@ public class Time {
 		times.remove(id);
 	}
 
-	public static void clearAll() {
+	public static void clear() {
 		times.clear();
-	}
-
-	// ------------------------------------------------
-	// For file modification checking
-
-	public static long now() {
-		return Date.from(Instant.now()).getTime();
-	}
-
-	public static long getLastModified(Path path) {
-		try {
-			FileTime time = Files.getLastModifiedTime(path);
-			return Date.from(time.toInstant()).getTime();
-		} catch (IOException e) {
-			return 0;
-		}
 	}
 }

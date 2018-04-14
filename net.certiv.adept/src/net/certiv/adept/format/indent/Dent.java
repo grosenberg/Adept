@@ -15,11 +15,11 @@ public class Dent implements Comparable<Dent> {
 		bind = mark.bind;
 	}
 
-	public double score(Dent matchable) {
+	public static double score(Dent a, Dent b) {
 		int score = 0;
-		if (op == matchable.op) score++;
-		if (bind == matchable.bind) score++;
-		return score;
+		if (a.op == b.op) score++;
+		if (a.bind == b.bind) score++;
+		return score / 2;
 	}
 
 	@Override

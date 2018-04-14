@@ -29,9 +29,6 @@ public class Builder extends ParseRecord {
 
 	private static final String LineMsg = "%3d: %2d > %s";
 
-	private static final int AncesLimit = 6; // ancestor path limit; TODO: tune parameter
-	private static final int AssocLimit = 3; // associated token limit; TODO: tune parameter
-
 	private CoreMgr mgr;
 	private List<Integer> exTypes;
 
@@ -54,7 +51,7 @@ public class Builder extends ParseRecord {
 	 * <ul>
 	 * <li>tokenIndex: token index -> formattable token
 	 * <li>lineTokensIndex: line# -> formattable tokens
-	 * <li>commentIndex: line# -> comment tokens
+	 * <li>commentIndex: line# -> block comment tokens
 	 * <li>blanklines: line# -> blankline?
 	 */
 	public void index() {
@@ -79,7 +76,9 @@ public class Builder extends ParseRecord {
 				tokenIndex.put(token.getTokenIndex(), token);
 				lineTokensIndex.put(current, token);
 				blanklines.put(current, false);	// correct assumption
-				if (isComment(type)) commentIndex.put(current, token);
+
+				if (isBlockComment(type)) commentIndex.add(token);
+				if (isLineComment(type)) aligner.comment(current, token);
 			}
 		}
 
@@ -189,7 +188,9 @@ public class Builder extends ParseRecord {
 		token.setDent(indenter.getDent(tokenIdx));
 
 		RefToken ref = token.refToken();
-		ref.createContext(leftAssociates(token), rightAssociates(token));
+		List<Integer> lAssocs = leftAssociates(token);
+		List<Integer> rAssocs = rightAssociates(token);
+		ref.createContext(lAssocs, rAssocs);
 
 		AdeptToken left = findRealLeft(tokenIdx);
 		if (left != null) {
@@ -208,7 +209,6 @@ public class Builder extends ParseRecord {
 		Feature feature = Feature.create(mgr, doc, genPath(parents), token);
 		index.put(token, feature);
 		featureIndex.put(feature.getId(), feature);
-		typeSet.add(type);
 	}
 
 	// ---------------------------------------------------------------------
@@ -328,7 +328,7 @@ public class Builder extends ParseRecord {
 		int idx = tokens.indexOf(token);
 		tokens.subList(0, idx + 1).clear();
 
-		int lines = blanklines.size(); // records all lines
+		int lines = Collections.max(lineTokensIndex.keySet());
 		while (tokens.size() < AssocLimit && line < lines) {
 			line++;
 			List<AdeptToken> next = lineTokensIndex.get(line);
@@ -345,22 +345,6 @@ public class Builder extends ParseRecord {
 			ttypes.add(token.getType());
 		}
 		return ttypes;
-	}
-
-	private AdeptToken findRealLeft(int idx) {
-		for (int jdx = idx - 1; jdx > -1; jdx--) {
-			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
-			if (left.getChannel() == Token.DEFAULT_CHANNEL) return left;
-		}
-		return null;
-	}
-
-	private AdeptToken findRealRight(int idx) {
-		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
-			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
-			if (right.getChannel() == Token.DEFAULT_CHANNEL) return right;
-		}
-		return null;
 	}
 
 	// ---------------------------------------------------------------------

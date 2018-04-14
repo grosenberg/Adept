@@ -9,7 +9,7 @@ import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.model.util.Damerau;
+import net.certiv.adept.util.Damerau;
 
 public class Feature implements Comparable<Feature>, Cloneable {
 

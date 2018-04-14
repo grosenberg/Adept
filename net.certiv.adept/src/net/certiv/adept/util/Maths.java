@@ -16,8 +16,8 @@ public class Maths {
 	 */
 	public static int sum(int[] ints) {
 		int sum = 0;
-		for (int i = 0; i < ints.length; i++) {
-			sum += ints[i];
+		for (int j : ints) {
+			sum += j;
 		}
 		return sum;
 	}
@@ -25,8 +25,8 @@ public class Maths {
 	/** Returns the sum of the given values. */
 	public static double sum(double[] vals) {
 		double sum = 0;
-		for (int idx = 0; idx < vals.length; idx++) {
-			sum += vals[idx];
+		for (double val : vals) {
+			sum += val;
 		}
 		return sum;
 	}
@@ -38,8 +38,8 @@ public class Maths {
 		if (maxVal == minVal) return vals.length;
 
 		double sum = 0;
-		for (int idx = 0; idx < vals.length; idx++) {
-			sum += (vals[idx] - minVal) / (maxVal - minVal);
+		for (double val : vals) {
+			sum += (val - minVal) / (maxVal - minVal);
 		}
 		return sum;
 	}
@@ -59,10 +59,24 @@ public class Maths {
 		double sum = 0;
 		if (vector.length == 0) return 0;
 
-		for (int i = 0; i < vector.length; i++) {
-			sum += vector[i];
+		for (double element : vector) {
+			sum += element;
 		}
 		return sum / vector.length;
+	}
+
+	/**
+	 * Computes the median for an array of doubles.
+	 *
+	 * @param vector the array
+	 * @return the median
+	 */
+	public static double median(double[] vector) {
+		if (vector.length == 0) return 0;
+
+		int mid = vector.length / 2;
+		if (vector.length % 2 != 0) return vector[mid];
+		return (vector[mid - 1] + vector[mid]) / 2;
 	}
 
 	/**
@@ -84,9 +98,9 @@ public class Maths {
 	public static double variance(double[] vector) {
 		double sum = 0, sumSquared = 0;
 		if (vector.length <= 1) return 0;
-		for (int i = 0; i < vector.length; i++) {
-			sum += vector[i];
-			sumSquared += (vector[i] * vector[i]);
+		for (double element : vector) {
+			sum += element;
+			sumSquared += (element * element);
 		}
 		double result = (sumSquared - (sum * sum / vector.length)) / (vector.length - 1);
 
@@ -101,8 +115,8 @@ public class Maths {
 	 */
 	public static void normalize(double[] doubles) {
 		double sum = 0;
-		for (int i = 0; i < doubles.length; i++) {
-			sum += doubles[i];
+		for (double d : doubles) {
+			sum += d;
 		}
 		normalize(doubles, sum);
 	}
@@ -168,9 +182,9 @@ public class Maths {
 	public static double entropy(int counts[]) {
 		int total = 0;
 		double x = 0;
-		for (int j = 0; j < counts.length; j++) {
-			x -= xlogx(counts[j]);
-			total += counts[j];
+		for (int count : counts) {
+			x -= xlogx(count);
+			total += count;
 		}
 		return x + xlogx(total);
 	}

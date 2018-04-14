@@ -15,6 +15,7 @@ import net.certiv.adept.format.indent.Dent;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -32,12 +33,8 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	private static final String MIDL = " > %s%s-%s[%s] > ";
 	private static final String RGHT = "%s(%s) %s[%s]";
 
-	// private static final double RankSignificance = 0.2; // TO DO: tune parameter
-	// private static final double AssocSignificance = 0.2; // TO DO: tune parameter
-
 	// derived from a corpus ref token
 	public RefToken matched;
-	public TreeMultiset<Double, RefToken> scored;
 
 	// corpus frequency
 	@Expose public int rank = 1;
@@ -137,13 +134,12 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	}
 
 	public void mergeContexts(List<Context> assocs) {
-		for (Context context : assocs) {
-			int idx = contexts.indexOf(context);
-			if (idx > -1) {
-				Context existing = contexts.get(idx);
-				existing.addRank(context.getRank());
+		for (Context assoc : assocs) {
+			Context existing = Context.find(contexts, assoc);
+			if (existing != null) {
+				existing.addRank(assoc.getRank());
 			} else {
-				contexts.add(context.copy());
+				contexts.add(assoc.copy());
 			}
 		}
 	}
@@ -177,50 +173,52 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 */
 	public double score(RefToken matchable, double[] maxRank) {
 		double score = 0;
-		double cnt = 13;
+		double cnt = 10;
 
+		score += Place.score(place, matchable.place);
+		score += Dent.score(dent, matchable.dent);
+		score += Spacing.score(lSpacing, matchable.lSpacing);
+		score += Spacing.score(rSpacing, matchable.rSpacing);
 		score += Context.score(contexts.get(0), matchable.contexts, maxRank[1]);
-		score += dent.score(matchable.dent);
-		score += rank / maxRank[0];
 
-		if (place == matchable.place) score++;
 		if (lType == matchable.lType) score++;
 		if (lType == matchable.lType) score++;
 		if (rType == matchable.rType) score++;
 		if (rType == matchable.rType) score++;
-		if (lSpacing == matchable.lSpacing) score++;
-		if (rSpacing == matchable.rSpacing) score++;
 		if (align == matchable.align) score++;
 
-		if (align != Align.NONE) {
-			if (gap != matchable.gap) score++;
-			if (inGroup != matchable.inGroup) score++;
-			if (inLine != matchable.inLine) score++;
-			cnt += 3;
+		if (align != Align.NONE) {	// TODO: refine
+			double aligns = 0;
+			if (gap != matchable.gap) aligns++;
+			if (inGroup != matchable.inGroup) aligns++;
+			if (inLine != matchable.inLine) aligns++;
+			score += aligns / 3;
+			cnt++;
 		}
 
-		// cnt += cnt * RankSignificance + cnt * AssocSignificance;
-		return score / cnt;
+		score += rank / maxRank[0] / cnt;
+		return (score - 1) / cnt;
 	}
 
 	/**
-	 * Assign the 'best' choice to {@code matched}. Selects from the given descending score key multiset
-	 * of possible choices.
+	 * Assign the 'best' choice to {@code matched}. Selects the highest scored corpus ref token from the
+	 * set of possible choices.
 	 *
-	 * @param scored descending key multiset of possible choices
+	 * @param scored descending valued key multiset of possible choices
 	 */
 	public void chooseBest(TreeMultiset<Double, RefToken> scored) {
-		this.scored = scored;			// save scored for visualization
-		List<RefToken> highest = scored.getList(scored.firstKey());
 
-		// TODO: DON'T PUNT -----------
+		// choose highest scored set of corpus ref tokens
+		List<RefToken> highest = scored.getList(scored.firstKey());
+		if (highest.size() > 1) {
+			Log.info(this, "Multiple identically scored choices!");
+		}
 		RefToken best = highest.get(0);
-		// ----------------------------
 
 		// keep indexes and types, etc.
 		this.matched = copy();
 
-		// correct for spacing
+		// correct for desired spacing
 		matched.lSpacing = best.lSpacing;
 		matched.lActual = best.lActual;
 		matched.rSpacing = best.rSpacing;

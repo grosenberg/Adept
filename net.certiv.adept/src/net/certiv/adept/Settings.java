@@ -11,7 +11,6 @@ public class Settings {
 
 	@Expose public Boolean backup = true;
 	@Expose public Boolean check;						// limit to checking parse operations
-	@Expose public Boolean format = true;
 	@Expose public Boolean learn;						// store document to corpus
 	@Expose public Boolean rebuild;						// force parsing of corpus documents
 	@Expose public Boolean save;
@@ -22,22 +21,31 @@ public class Settings {
 	@Expose public String verbose;
 	@Expose public Integer tabWidth = 4;
 
-	// settings to use when generating formatted settings
+	// settings that control formatting
 
-	@Expose public boolean useTabs = true;
-	@Expose public boolean removeTrailingWS = true;
-	@Expose public boolean removeBlankLines = true;		// remove blank lines
-	@Expose public int keepBlankLines = 1;				// but keep at least this number
-	@Expose public boolean forceLastLineBlank = true;	// file must end with blank line
+	@Expose public Boolean format = true;
+	@Expose public Boolean breakLongLines = true;
+	@Expose public Boolean alignFields = true;
+	@Expose public Boolean alignComments = true;
 
-	@Expose public boolean joinLines = true;			// allow if indicated by feature match
+	@Expose public Boolean formatComments = true;
+	@Expose public Boolean formatHdrComment = true;
+	@Expose public Boolean removeBlankLinesComment = true;
 
-	@Expose public int lineWidth = 120;					// target formatted width of lines
-	@Expose public int commentWidth = 100;				// ... that end with a comment
+	@Expose public Boolean useTabs = true;
+	@Expose public Boolean removeBlankLines = true;		// remove blank lines in code
+	@Expose public Integer keepNumBlankLines = 1;		// but keep at least this number
+	@Expose public Boolean removeTrailingWS = true;
+	@Expose public Boolean forceLastLineBlank = true;	// file must end with blank line
+
+	@Expose public Boolean joinLines = true;			// allow if indicated by feature match
+
+	@Expose public Integer lineWidth = 120;				// target formatted width of lines
+	@Expose public Integer commentWidth = 100;			// ... that end with a comment
 
 	// dynamic settings not persisted
 
 	public Path corpusDir;								// root dir + lang
 	public String corpusExt;							// lang extention
-	public int corpusTabWidth = 4;
+	public Integer corpusTabWidth = 4;
 }

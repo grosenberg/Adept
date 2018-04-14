@@ -13,15 +13,15 @@ import java.util.Map;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.lang.Analyzer;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
-import net.certiv.adept.model.util.Analyzer;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Time;
+import net.certiv.adept.util.Utils;
 
 public class CorpusModel {
 
@@ -29,7 +29,7 @@ public class CorpusModel {
 
 	private static final String DocMsg = "Merging  %3d %5d ------------------- %s";
 	private static final String UnqMsg = "  Unique %3d %5d %7.2f%% %9.4f%%";
-	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%\n";
+	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -82,7 +82,7 @@ public class CorpusModel {
 		List<String> docnames = new ArrayList<>();
 		for (Document doc : corpusDocs) {
 			String docname = doc.getPathname();
-			if (Time.getLastModified(Paths.get(docname)) > lastModified + TIME_OUT) {
+			if (Utils.getLastModified(Paths.get(docname)) > lastModified + TIME_OUT) {
 				Log.info(this, "Model invalid: later modified document " + docname);
 				return false;
 			}
@@ -204,16 +204,16 @@ public class CorpusModel {
 	}
 
 	/** Perform operations to finalize the (re)built corpus. */
-	public void finalizeBuild(ParseRecord data) {
+	public void postBuild(ParseRecord data) {
 		Feature.clearPool();
 		Analyzer.evaluate(data, getCorpusFeatures());
 		consistent = true;
 	}
 
 	public void save(Path corpusDir) throws Exception {
-		lastModified = Time.now();
+		lastModified = Utils.now();
 		CorpusData.save(corpusDir, this);
-		lastModified = Time.getLastModified(corpusDir);
+		lastModified = Utils.getLastModified(corpusDir);
 		consistent = true;
 	}
 
@@ -264,6 +264,11 @@ public class CorpusModel {
 		}
 	}
 
+	/** For visualization: find the corpus feature matching the given document feature. */
+	public Feature getMatchingFeature(Feature srcFeature) {
+		return corpus.get(srcFeature.getKey());
+	}
+
 	/** For visualization: find the refs that might be a match; results in descending order. */
 	public TreeMultiset<Double, RefToken> getScoredMatches(Feature feature, RefToken ref) {
 		Feature featMatch = corpus.get(feature.getKey());
@@ -301,6 +306,7 @@ public class CorpusModel {
 	}
 
 	private int[] reportDoc(int[] docCnt, String name) {
+		Log.info(this, "=============================================================================");
 		Log.debug(this, String.format(DocMsg, docCnt[0], docCnt[1], name));
 		return docCnt;
 	}

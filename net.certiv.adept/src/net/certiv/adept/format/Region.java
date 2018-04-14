@@ -2,10 +2,29 @@ package net.certiv.adept.format;
 
 import java.util.Comparator;
 
+import net.certiv.adept.lang.AdeptToken;
+
 public class Region implements Comparator<Region>, Comparable<Region> {
 
 	public final int min;
 	public final int max;
+
+	public static Region key(AdeptToken token) {
+		return key(token.getTokenIndex());
+	}
+
+	public static Region key(int idx) {
+		return key(idx, idx);
+	}
+
+	public static Region key(int idx1, int idx2) {
+		return new Region(idx1, idx2);
+	}
+
+	private Region(int idx1, int idx2) {
+		min = idx1;
+		max = idx2;
+	}
 
 	public Region(TextEdit edit) {
 		this.min = edit.begIndex();

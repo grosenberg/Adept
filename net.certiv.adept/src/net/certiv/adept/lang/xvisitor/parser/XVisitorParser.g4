@@ -16,7 +16,7 @@ options {
 
 @header {
 	package net.certiv.adept.lang.xvisitor.parser.gen;
-	import net.certiv.adept.lang.AdeptToken;
+//	import net.certiv.adept.lang.AdeptToken;
 }
 
 grammarSpec

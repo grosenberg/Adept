@@ -28,5 +28,10 @@ public enum Align {
 	 * <li>the PAIR elements must be the first and last elements, by token index
 	 * <li>the LIST elements align with each other and any PAIR element on consecutive lines
 	 */
-	GROUP;
+	GROUP,
+
+	/**
+	 * Describes a line comment.
+	 */
+	COMMENT;
 }

@@ -24,6 +24,10 @@ public class AdeptToken extends CommonToken {
 
 	private RefToken ref;
 
+	// for formatter use only
+	private int alignCol;
+	private int visCol = -1;		// as parsed
+
 	public AdeptToken(int type, String text) {
 		super(type, text);
 	}
@@ -59,6 +63,10 @@ public class AdeptToken extends CommonToken {
 		return kind == Kind.LINECOMMENT || kind == Kind.BLOCKCOMMENT;
 	}
 
+	public boolean isLineComment() {
+		return kind == Kind.LINECOMMENT;
+	}
+
 	// -------------------------
 	// --- Ref Token delgates --
 
@@ -74,12 +82,26 @@ public class AdeptToken extends CommonToken {
 		ref.nodeName = name;
 	}
 
+	public int visCol(boolean asParsed) {
+		if (asParsed) return this.visCol;
+		return visCol();
+	}
+
 	public int visCol() {
 		return ref.visCol;
 	}
 
 	public void setVisCol(int visCol) {
 		ref.visCol = visCol;
+		if (this.visCol == -1) this.visCol = visCol;
+	}
+
+	public int alignCol() {
+		return alignCol;
+	}
+
+	public void setAlignCol(int alignCol) {
+		this.alignCol = alignCol;
 	}
 
 	public Place place() {

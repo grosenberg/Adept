@@ -10,6 +10,7 @@ import java.util.Map;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
+import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;
@@ -20,7 +21,6 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
-import net.certiv.adept.model.util.Facet;
 import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
@@ -157,6 +157,10 @@ public class CoreMgr {
 	/** Returns the sets of best possible matches for the given feature, ordered by similarity. */
 	public TreeMultiset<Double, RefToken> getMatches(Feature source, RefToken ref) {
 		return corModel.getScoredMatches(source, ref);
+	}
+
+	public Feature getMatchingFeature(Feature source) {
+		return corModel.getMatchingFeature(source);
 	}
 
 	// ----

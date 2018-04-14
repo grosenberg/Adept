@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.load.ConfigMgr;
 import net.certiv.adept.tool.ErrorType;
@@ -320,7 +321,7 @@ public class Tool extends ToolBase {
 	 * Returns a list of {@code ITextEdit} that can be used to apply the formatting changes created for
 	 * the last document parsed.
 	 */
-	public List<ITextEdit> getFormatEdits() {
+	public List<TextEdit> getFormatEdits() {
 		return mgr.getDocModel().getDocument().getEdits();
 	}
 
