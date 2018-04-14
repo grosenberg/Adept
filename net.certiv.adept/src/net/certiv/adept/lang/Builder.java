@@ -14,9 +14,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.format.align.Aligner;
-import net.certiv.adept.format.align.Place;
-import net.certiv.adept.format.indent.Indenter;
+import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.format.plan.enums.Place;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
@@ -245,23 +245,7 @@ public class Builder extends ParseRecord {
 	private Spacing evalSpacing(int from, int to) {
 		if (from < to) {
 			if (from + 1 == to) return Spacing.NONE;
-
-			int hws = 0;
-			int vws = 0;
-			int tabWidth = doc.getTabWidth();
-			for (Token token : tokenStream.get(from + 1, to - 1)) {
-				int type = token.getType();
-				if (type == HWS) {
-					hws += Strings.measureVisualWidth(token.getText(), tabWidth);
-				} else if (type == VWS) {
-					vws++;
-				}
-			}
-
-			if (vws > 1) return Spacing.VFLEX;
-			if (vws == 1) return Spacing.VLINE;
-			if (hws > 1) return Spacing.HFLEX;
-			if (hws == 1) return Spacing.HSPACE;
+			return Spacing.characterize(getTextBetween(from, to), doc.getTabWidth());
 		}
 		return Spacing.UNKNOWN;
 	}

@@ -1,4 +1,4 @@
-package net.certiv.adept.format.indent;
+package net.certiv.adept.format.plan.enums;
 
 // Indent binding relative to index
 public enum Bind {

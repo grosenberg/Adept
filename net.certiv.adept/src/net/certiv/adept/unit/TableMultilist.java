@@ -64,6 +64,15 @@ public class TableMultilist<K, N, V> {
 		return keyMap.put(name, values);
 	}
 
+	public boolean put(K key, TreeMultilist<N, V> valueList) {
+		TreeMultilist<N, V> keyMap = map.get(key);
+		if (keyMap == null) {
+			keyMap = new TreeMultilist<>(idxComp, valComp);
+			map.put(key, keyMap);
+		}
+		return keyMap.put(valueList);
+	}
+
 	/**
 	 * Copies all of the mappings from the specified map to this map. These mappings replace any
 	 * mappings that this map had for any of the keys currently in the specified map.
@@ -72,7 +81,7 @@ public class TableMultilist<K, N, V> {
 	 */
 	public void put(TableMultilist<K, N, V> other) {
 		for (K key : other.keySet()) {
-			this.map.put(key, other.get(key));
+			map.put(key, other.get(key));
 		}
 	}
 

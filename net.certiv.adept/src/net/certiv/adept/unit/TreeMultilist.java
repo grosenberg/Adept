@@ -63,6 +63,15 @@ public class TreeMultilist<K, V> {
 		return list.addAll(values);
 	}
 
+	public boolean put(TreeMultilist<K, V> map) {
+		boolean ok = true;
+		for (K key : map.keySet()) {
+			List<V> val = map.get(key);
+			ok &= put(key, val);
+		}
+		return ok;
+	}
+
 	public boolean put(TreeMultiset<K, V> map) {
 		boolean ok = true;
 		for (K key : map.keySet()) {

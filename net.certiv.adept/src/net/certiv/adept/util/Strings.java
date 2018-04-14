@@ -471,4 +471,15 @@ public class Strings {
 		}
 		return cnt;
 	}
+
+	public static int nextTabCol(int col, int tabWidth) {
+		int rem = col % tabWidth;
+		return col + tabWidth - rem;
+	}
+
+	public static int nearestTabCol(int col, int tabWidth) {
+		int rem = col % tabWidth;
+		if (rem / 2 >= tabWidth / 2) return col + tabWidth - rem;
+		return col - rem;
+	}
 }

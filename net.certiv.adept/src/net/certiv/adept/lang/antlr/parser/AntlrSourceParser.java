@@ -17,8 +17,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.format.align.Aligner;
-import net.certiv.adept.format.indent.Indenter;
+import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;

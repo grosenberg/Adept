@@ -1,4 +1,4 @@
-package net.certiv.adept.format.indent;
+package net.certiv.adept.format.plan;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,6 +11,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.certiv.adept.format.plan.enums.Bind;
+import net.certiv.adept.format.plan.enums.Op;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.util.Log;

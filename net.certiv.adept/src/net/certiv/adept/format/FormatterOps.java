@@ -1,7 +1,5 @@
-package net.certiv.adept.format.render;
+package net.certiv.adept.format;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -10,17 +8,20 @@ import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.format.Region;
-import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.model.DocModel;
+import net.certiv.adept.model.Document;
+import net.certiv.adept.model.RefToken;
+import net.certiv.adept.model.Spacing;
 import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
-public class FormatOps {
+public class FormatterOps {
 
+	Document doc;
 	ParseRecord data;
 	Settings settings;
 	String tabEquiv;
@@ -43,8 +44,9 @@ public class FormatOps {
 
 	// ----------------------------------------------------------------
 
-	public FormatOps(ParseRecord data, Settings settings) {
-		this.data = data;
+	public FormatterOps(DocModel model, Settings settings) {
+		this.doc = model.getDocument();
+		this.data = doc.getParseRecord();
 		this.settings = settings;
 		this.tabEquiv = Strings.spaces(settings.tabWidth);
 
@@ -56,10 +58,7 @@ public class FormatOps {
 		tokenAlignColIndex = new HashMap<>();
 	}
 
-	protected List<TextEdit> getTextEdits() {
-		if (edits.isEmpty()) return Collections.emptyList();
-		return new ArrayList<>(edits.values());
-	}
+	// -----------------------------------------------------------------------------
 
 	protected void addToAlignIndex(int index, int align) {
 		tokenAlignColIndex.put(index, align);
@@ -69,8 +68,6 @@ public class FormatOps {
 		Integer align = tokenAlignColIndex.get(index);
 		return align != null ? align : 0;
 	}
-
-	// -----------------------------------------------------------------------------
 
 	/**
 	 * Appends the given token to the modLineTokenIndex. Creates new lines as appropriate. Updates the
@@ -137,14 +134,6 @@ public class FormatOps {
 		mark.setVisCol(visCol);
 	}
 
-	protected int maxAligns(TreeMultilist<Integer, AdeptToken> modLines) {
-		int max = 0;
-		for (Integer num : modLines.keySet()) {
-			max = Math.max(max, modLines.get(num).size());
-		}
-		return max;
-	}
-
 	protected void updateOrCreateEditLeft(AdeptToken token, int toVisCol) {
 		TextEdit edit = findOrCreateEditLeft(token);
 		AdeptToken prior = data.tokenIndex.get(edit.begIndex());
@@ -176,14 +165,45 @@ public class FormatOps {
 		return entry.getValue();
 	}
 
+	protected Spacing findSpacingLeft(AdeptToken token) {
+		TextEdit edit = findEditLeft(token);
+		if (edit != null) return Spacing.characterize(edit.replacement(), settings.tabWidth);
+
+		RefToken ref = token.refToken();
+		if (ref.matched != null) return ref.matched.lSpacing;
+		if (ref.lSpacing != Spacing.UNKNOWN) return ref.lSpacing;
+
+		String existing = getTextBetween(findTokenLeft(token), token);
+		return Spacing.characterize(existing, settings.tabWidth);
+	}
+
 	/** Returns the left nearest visible token or {@code null}. */
 	protected AdeptToken findTokenLeft(AdeptToken token) {
 		Entry<Integer, AdeptToken> entry = data.tokenIndex.lowerEntry(token.getTokenIndex());
 		return entry != null ? entry.getValue() : null;
 	}
 
+	/** Returns the current line of the given token. */
 	protected int findTokenModLine(AdeptToken token) {
 		return modTokenLineIndex.get(token.getTokenIndex());
+	}
+
+	/**
+	 * Returns the position in the given current line of the given token. Returns {@code -1} if the
+	 * token is not found on the given line.
+	 */
+	protected int getInModLine(int line, AdeptToken token) {
+		return modLineTokensIndex.get(line).indexOf(token);
+	}
+
+	/**
+	 * Returns the token in the given current line at the given index. Returns {@code null} if no token
+	 * exists at the given line and index.
+	 */
+	protected AdeptToken getInModLine(int line, int idx) {
+		List<AdeptToken> tokens = modLineTokensIndex.get(line);
+		if (tokens.size() > idx) return tokens.get(idx);
+		return null;
 	}
 
 	// -----------------------------------------------------------------------------
@@ -245,11 +265,12 @@ public class FormatOps {
 	// -----------------------------------------------------------------------------
 
 	protected String getTextBetween(AdeptToken beg, AdeptToken end) {
-		return data.getTextBetween(beg.getTokenIndex(), end.getTokenIndex());
+		int begIdx = beg != null ? beg.getTokenIndex() : 0;
+		return data.getTextBetween(begIdx, end.getTokenIndex());
 	}
 
 	/** Change parsed lines to modified lines. */
-	protected TreeMultilist<Integer, AdeptToken> modLines(TreeMultilist<Integer, AdeptToken> lines) {
+	public TreeMultilist<Integer, AdeptToken> modLines(TreeMultilist<Integer, AdeptToken> lines) {
 		TreeMultilist<Integer, AdeptToken> modLines = new TreeMultilist<>();
 		modLines.setValueComparator(AdeptComp.Instance);
 		for (AdeptToken token : lines.valuesAll()) {

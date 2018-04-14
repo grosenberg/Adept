@@ -1,4 +1,4 @@
-package net.certiv.adept.format.align;
+package net.certiv.adept.format.plan.enums;
 
 public enum Place {
 

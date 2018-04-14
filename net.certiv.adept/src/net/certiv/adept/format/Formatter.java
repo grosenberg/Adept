@@ -1,20 +1,20 @@
-package net.certiv.adept.format.render;
+package net.certiv.adept.format;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 
 /** Document formatter. */
-public class Formatter {
+public class Formatter extends FormatterOps {
 
 	private Document doc;
-	private FormatOps ops;
 
 	private SpacingProcessor spacer;
 	private LineBreakProcessor breaker;
@@ -22,13 +22,12 @@ public class Formatter {
 	private CommentProcessor commenter;
 
 	public Formatter(DocModel model, Settings settings) {
-		doc = model.getDocument();
-		ops = new FormatOps(doc.getParseRecord(), settings);
+		super(model, settings);
 
-		spacer = new SpacingProcessor(ops);
-		breaker = new LineBreakProcessor(ops);
-		aligner = new AlignProcessor(ops);
-		commenter = new CommentProcessor(ops);
+		spacer = new SpacingProcessor(this);
+		breaker = new LineBreakProcessor(this);
+		aligner = new AlignProcessor(this);
+		commenter = new CommentProcessor(this);
 	}
 
 	/**
@@ -45,14 +44,14 @@ public class Formatter {
 	}
 
 	public List<TextEdit> createEdits() {
-		if (ops.settings.format) {
+		if (settings.format) {
 			spacer.adjustLineSpacing();
-			if (ops.settings.breakLongLines) breaker.breakLongLines();
-			if (ops.settings.alignFields) aligner.alignFields();
-			if (ops.settings.alignComments) aligner.alignComments();
-			if (ops.settings.formatComments) commenter.formatComments();
+			if (settings.breakLongLines) breaker.breakLongLines();
+			if (settings.alignFields) aligner.alignFields();
+			if (settings.alignComments) aligner.alignComments();
+			if (settings.formatComments) commenter.formatComments();
 		}
-		return ops.getTextEdits();
+		return getTextEdits();
 	}
 
 	public boolean applyEdits(List<TextEdit> edits) {
@@ -61,28 +60,29 @@ public class Formatter {
 			editSet.put(edit.begIndex(), edit);
 		}
 
-		List<AdeptToken> tokens = ops.data.getTokens();
+		List<AdeptToken> tokens = data.getTokens();
 		for (int idx = 0, len = tokens.size() - 1; idx < len;) {
 			AdeptToken token = tokens.get(idx);
-			ops.contents.append(token.getText());
+			contents.append(token.getText());
 			TextEdit edit = editSet.get(token.getTokenIndex());
 			if (edit != null) {
-				ops.contents.append(edit.replacement());
+				contents.append(edit.replacement());
 				idx = edit.endIndex();
 			} else {
 				idx++;
 			}
 		}
 
-		doc.setModified(ops.contents.toString());
+		doc.setModified(contents.toString());
 		return true;
 	}
 
 	public List<TextEdit> getTextEdits() {
-		return ops.getTextEdits();
+		if (edits.isEmpty()) return Collections.emptyList();
+		return new ArrayList<>(edits.values());
 	}
 
-	public String getFormattedContents() {
-		return ops.toString();
+	public String getFormatted() {
+		return contents.toString();
 	}
 }

@@ -14,9 +14,9 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
-import net.certiv.adept.format.align.Aligner;
-import net.certiv.adept.format.align.Group;
-import net.certiv.adept.format.indent.Indenter;
+import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.plan.Group;
+import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.unit.AdeptComp;

@@ -5,8 +5,8 @@ import java.util.List;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import net.certiv.adept.format.align.Aligner;
-import net.certiv.adept.format.indent.Indenter;
+import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.model.Document;
 
 public interface ISourceParser extends IParseErrorReporter {

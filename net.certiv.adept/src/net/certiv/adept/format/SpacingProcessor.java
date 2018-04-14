@@ -1,12 +1,9 @@
-package net.certiv.adept.format.render;
+package net.certiv.adept.format;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.certiv.adept.format.FormatException;
-import net.certiv.adept.format.Region;
-import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
@@ -16,9 +13,9 @@ import net.certiv.adept.util.Strings;
 
 public class SpacingProcessor {
 
-	private FormatOps ops;
+	private FormatterOps ops;
 
-	public SpacingProcessor(FormatOps ops) {
+	public SpacingProcessor(FormatterOps ops) {
 		this.ops = ops;
 	}
 
@@ -143,6 +140,7 @@ public class SpacingProcessor {
 		return feature != null ? feature.getRefFor(token.getTokenIndex()) : null;
 	}
 
+	// given desired spacing and existing ws, return replacement string
 	protected String calcSpacing(Spacing spacing, String existing, int indents) {
 		switch (spacing) {
 			case HFLEX:

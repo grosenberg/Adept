@@ -6,8 +6,8 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
-import net.certiv.adept.format.align.Place;
-import net.certiv.adept.format.indent.Dent;
+import net.certiv.adept.format.plan.Dent;
+import net.certiv.adept.format.plan.enums.Place;
 import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;

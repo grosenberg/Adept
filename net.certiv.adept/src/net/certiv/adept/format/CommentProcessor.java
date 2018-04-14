@@ -1,4 +1,4 @@
-package net.certiv.adept.format.render;
+package net.certiv.adept.format;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class CommentProcessor {
 
 	private static final Pattern Star = Pattern.compile("\\s*\\*");
 
-	private FormatOps ops;
+	private FormatterOps ops;
 
 	private CommentSourceParser parser;
 	private ParseTreeProperty<TypeToken> properties;
@@ -56,7 +56,7 @@ public class CommentProcessor {
 
 	private String comment; // formatted results
 
-	public CommentProcessor(FormatOps ops) {
+	public CommentProcessor(FormatterOps ops) {
 		this.ops = ops;
 
 		parser = new CommentSourceParser(this);

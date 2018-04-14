@@ -14,7 +14,7 @@ import net.certiv.adept.lang.comment.parser.gen.CommentParser.ListContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.ParamContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.PreformContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.WordContext;
-import net.certiv.adept.format.render.CommentProcessor;
+import net.certiv.adept.format.CommentProcessor;
 import net.certiv.adept.lang.comment.parser.gen.CommentParserBaseListener;
 
 public class CommentVisitor extends CommentParserBaseListener {

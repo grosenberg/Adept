@@ -1,7 +1,7 @@
 package net.certiv.adept.lang.antlr.parser;
 
-import net.certiv.adept.format.align.Align;
-import net.certiv.adept.format.align.Aligner;
+import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.plan.enums.Align;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltListContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AssignStmtContext;

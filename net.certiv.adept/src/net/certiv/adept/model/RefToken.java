@@ -8,10 +8,10 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.format.align.Align;
-import net.certiv.adept.format.align.Gap;
-import net.certiv.adept.format.align.Place;
-import net.certiv.adept.format.indent.Dent;
+import net.certiv.adept.format.plan.Dent;
+import net.certiv.adept.format.plan.enums.Align;
+import net.certiv.adept.format.plan.enums.Gap;
+import net.certiv.adept.format.plan.enums.Place;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;

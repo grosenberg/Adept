@@ -1,5 +1,7 @@
 package net.certiv.adept.model;
 
+import net.certiv.adept.util.Strings;
+
 public enum Spacing {
 
 	HFLEX("HFlex", 1),
@@ -20,6 +22,25 @@ public enum Spacing {
 
 	public boolean terminal() {
 		return this == VLINE || this == VFLEX;
+	}
+
+	/** Characterize the white space in the given string. */
+	public static Spacing characterize(String text, int tabWidth) {
+		switch (Strings.countVWS(text)) {
+			case 0:
+				switch (Strings.measureVisualWidth(text, tabWidth)) {
+					case 0:
+						return NONE;
+					case 1:
+						return HSPACE;
+					default:
+						return HFLEX;
+				}
+			case 1:
+				return VLINE;
+			default:
+				return VFLEX;
+		}
 	}
 
 	public static double score(Spacing a, Spacing b) {

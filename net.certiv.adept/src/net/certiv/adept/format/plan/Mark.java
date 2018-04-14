@@ -1,9 +1,11 @@
-package net.certiv.adept.format.indent;
+package net.certiv.adept.format.plan;
 
 import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import net.certiv.adept.format.plan.enums.Bind;
+import net.certiv.adept.format.plan.enums.Op;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 

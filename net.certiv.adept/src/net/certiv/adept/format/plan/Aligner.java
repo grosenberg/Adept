@@ -1,4 +1,4 @@
-package net.certiv.adept.format.align;
+package net.certiv.adept.format.plan;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,9 @@ import java.util.Map;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.certiv.adept.format.plan.enums.Align;
+import net.certiv.adept.format.plan.enums.Gap;
+import net.certiv.adept.format.plan.enums.Place;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.TableMultilist;

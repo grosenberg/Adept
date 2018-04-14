@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
-import net.certiv.adept.format.align.Align;
+import net.certiv.adept.format.plan.enums.Align;
 import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 
