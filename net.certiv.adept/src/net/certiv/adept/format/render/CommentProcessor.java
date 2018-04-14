@@ -1,4 +1,4 @@
-package net.certiv.adept.format;
+package net.certiv.adept.format.render;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
-import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.comment.parser.CommentSourceParser;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser;
@@ -39,33 +38,45 @@ public class CommentProcessor {
 
 	private static final Pattern Star = Pattern.compile("\\s*\\*");
 
-	private CommentSourceParser cmtParser;
-	private Settings settings;
-	private String oneTab;
-	private int visCol;
-	private int lastBlankIndex;
-	private int continguousBlanks;
+	private FormatOps ops;
 
-	private int listLevel;
+	private CommentSourceParser parser;
+	private ParseTreeProperty<TypeToken> properties;
+	private String oneTab;
+
+	private int visCol;
 	private String prefix1;
 	private String prefixN;
 	private String listPrefix1;
 	private String itemPrefix1;
 	private String itemPrefixN;
+	private int lastBlankIndex;
+	private int continguousBlanks;
+	private int listLevel;
 
-	private ParseTreeProperty<TypeToken> properties;
 	private String comment; // formatted results
 
-	public CommentProcessor(Settings settings) {
-		this.settings = settings;
+	public CommentProcessor(FormatOps ops) {
+		this.ops = ops;
 
-		cmtParser = new CommentSourceParser(this);
+		parser = new CommentSourceParser(this);
 		properties = new ParseTreeProperty<>();
-		oneTab = Strings.spaces(settings.tabWidth);
+		oneTab = Strings.spaces(ops.settings.tabWidth);
+	}
+
+	public void formatComments() {
+		int firstTokenIndex = ops.data.index.firstKey().getTokenIndex(); // header, if present
+		for (AdeptToken token : ops.data.commentIndex) {
+			if (token.getTokenIndex() == firstTokenIndex && !ops.settings.formatHdrComment) continue;
+
+			if (process(token)) {
+				token.setText(this.comment);
+			}
+		}
 	}
 
 	public boolean process(AdeptToken comment) {
-		return cmtParser.process(comment);
+		return parser.process(comment);
 	}
 
 	public String getResult() {
@@ -186,11 +197,11 @@ public class CommentProcessor {
 	}
 
 	public void blank(BlankContext ctx) {
-		if (settings.removeBlankLinesComment) {
+		if (ops.settings.removeBlankLinesComment) {
 			int index = ctx.BLANK().getSymbol().getTokenIndex();
 			if (continguousBlanks == 0 || lastBlankIndex + 1 == index) {
 				continguousBlanks++;
-				if (continguousBlanks >= settings.keepNumBlankLines) return;
+				if (continguousBlanks >= ops.settings.keepNumBlankLines) return;
 
 			} else {
 				continguousBlanks = 0;
@@ -206,7 +217,7 @@ public class CommentProcessor {
 		StringBuilder param = new StringBuilder();
 
 		param.append(BlkMid + rec.at + Strings.SPACE);
-		int wrapColN = visCol + param.length() + settings.tabWidth;
+		int wrapColN = visCol + param.length() + ops.settings.tabWidth;
 
 		if (rec.name != null) param.append(rec.name + Strings.SPACE);
 		wrapColN = Math.min(visCol + param.length(), wrapColN);
@@ -276,7 +287,7 @@ public class CommentProcessor {
 					}
 
 					int indents = Math.max(0, listLevel - 1);
-					listPrefix1 = BlkMid + Strings.spaces(indents * settings.tabWidth);
+					listPrefix1 = BlkMid + Strings.spaces(indents * ops.settings.tabWidth);
 					itemPrefix1 = listPrefix1 + oneTab;
 					itemPrefixN = itemPrefix1 + oneTab;
 
@@ -312,7 +323,7 @@ public class CommentProcessor {
 	private String wordWrap(List<TextToken> words) {
 		StringBuilder wrap = new StringBuilder();
 		StringBuilder line = new StringBuilder(prefix1);
-		int limit = settings.commentWidth - visCol;
+		int limit = ops.settings.commentWidth - visCol;
 
 		line.append(listLevel > 0 ? prefix1 : itemPrefix1);
 		for (int idx = 0, len = words.size(); idx < len; idx++) {

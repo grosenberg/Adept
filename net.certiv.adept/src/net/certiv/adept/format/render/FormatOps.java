@@ -1,4 +1,4 @@
-package net.certiv.adept.format;
+package net.certiv.adept.format.render;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,61 +10,67 @@ import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
+import net.certiv.adept.format.Region;
+import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
-/** Operates to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
-public class FormatMgr {
+/** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
+public class FormatOps {
 
-	private ParseRecord data;
-	private Settings settings;
-	private TextEditBuilder editBuilder;
+	ParseRecord data;
+	Settings settings;
+	String tabEquiv;
 
-	// key=edit region; value=edit
-	private TreeMap<Region, TextEdit> edits;	// implementing edits
-
-	// key=mod line number; value=list of tokens
-	public TreeMultilist<Integer, AdeptToken> modLineTokensIndex;
-
-	// key=token index; value=mod line number
-	public TreeMap<Integer, Integer> modTokenLineIndex;
-
-	// key=token index; value=align col
-	public HashMap<Integer, Integer> tokenAlignColIndex;
+	StringBuilder contents;				// the formatted source text
 
 	// ----------------------------------------------------------------
 
-	public FormatMgr(ParseRecord data, Settings settings) {
+	// key=edit region; value=edit
+	TreeMap<Region, TextEdit> edits;	// implementing edits
+
+	// key=mod line number; value=list of tokens
+	TreeMultilist<Integer, AdeptToken> modLineTokensIndex;
+
+	// key=token index; value=mod line number
+	TreeMap<Integer, Integer> modTokenLineIndex;
+
+	// key=token index; value=align col
+	HashMap<Integer, Integer> tokenAlignColIndex;
+
+	// ----------------------------------------------------------------
+
+	public FormatOps(ParseRecord data, Settings settings) {
 		this.data = data;
 		this.settings = settings;
-
-		editBuilder = new TextEditBuilder(this);
+		this.tabEquiv = Strings.spaces(settings.tabWidth);
 
 		edits = new TreeMap<>();
+		contents = new StringBuilder();
+
 		modLineTokensIndex = new TreeMultilist<>();
 		modTokenLineIndex = new TreeMap<>();
 		tokenAlignColIndex = new HashMap<>();
 	}
 
-	protected ParseRecord getData() {
-		return data;
-	}
-
-	protected TextEdit create(int begIndex, int endIndex, String existing, String repl, int priority, String msg) {
-		return editBuilder.create(begIndex, endIndex, existing, repl, priority, msg);
-	}
-
-	protected TreeMap<Region, TextEdit> edits() {
-		return edits;
-	}
-
-	public List<TextEdit> getTextEdits() {
+	protected List<TextEdit> getTextEdits() {
 		if (edits.isEmpty()) return Collections.emptyList();
 		return new ArrayList<>(edits.values());
 	}
+
+	protected void addToAlignIndex(int index, int align) {
+		tokenAlignColIndex.put(index, align);
+	}
+
+	protected int getAlign(int index) {
+		Integer align = tokenAlignColIndex.get(index);
+		return align != null ? align : 0;
+	}
+
+	// -----------------------------------------------------------------------------
 
 	/**
 	 * Appends the given token to the modLineTokenIndex. Creates new lines as appropriate. Updates the
@@ -102,64 +108,10 @@ public class FormatMgr {
 		modLineTokensIndex.put(line, token);
 	}
 
-	protected void addAlignIndex(int index, int align) {
-		tokenAlignColIndex.put(index, align);
-	}
-
-	protected int getAlign(int index) {
-		Integer align = tokenAlignColIndex.get(index);
-		return align != null ? align : 0;
-	}
-
-	// ----------------------------------------------------------------
-
-	protected void handlePairAlign(TreeMultilist<Integer, AdeptToken> lines) {
-		if (lines.isEmpty()) return;
-
-		TreeMultilist<Integer, AdeptToken> modLines = modLines(lines);
-		if (modLines.size() > 1) {
-			handleListAlign(lines);
-			return;
-		}
-
-		int modLine = lines.lastKey();
-		for (AdeptToken token : lines.get(modLine)) {
-			int rem = token.visCol() % settings.tabWidth;
-			if (rem > 0) {
-				int toVisCol = token.visCol() + settings.tabWidth - rem;
-				createEditAndShiftLine(modLine, token, toVisCol);
-			}
-		}
-	}
-
-	protected void handleListAlign(TreeMultilist<Integer, AdeptToken> lines) {
-		TreeMultilist<Integer, AdeptToken> modLines = modLines(lines);
-		int maxAligns = maxAligns(modLines);
-		for (int idx = 0; idx < maxAligns; idx++) {
-			int maxVisCol = 0;
-			for (int lineNum : modLines.keySet()) {
-				List<AdeptToken> tokens = modLines.get(lineNum);
-				if (tokens.size() > idx) {
-					AdeptToken alignToken = tokens.get(idx);
-					maxVisCol = Math.max(maxVisCol, alignToken.visCol());
-				}
-			}
-
-			for (int lineNum : modLines.keySet()) {
-				List<AdeptToken> tokens = modLines.get(lineNum);
-				if (tokens.size() > idx) {
-					AdeptToken alignToken = tokens.get(idx);
-					int adj = maxVisCol - alignToken.visCol();
-					if (adj > 0) {
-						createEditAndShiftLine(lineNum, alignToken, maxVisCol);
-					}
-				}
-			}
-		}
-	}
+	// -----------------------------------------------------------------------------
 
 	// create edit implemeting change to the given visual col and shift remaining tokens
-	private void createEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
+	protected void createEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
 		updateOrCreateEditLeft(token, toVisCol);
 
 		List<AdeptToken> fullLine = modLineTokensIndex.get(lineNum);
@@ -185,7 +137,7 @@ public class FormatMgr {
 		mark.setVisCol(visCol);
 	}
 
-	private int maxAligns(TreeMultilist<Integer, AdeptToken> modLines) {
+	protected int maxAligns(TreeMultilist<Integer, AdeptToken> modLines) {
 		int max = 0;
 		for (Integer num : modLines.keySet()) {
 			max = Math.max(max, modLines.get(num).size());
@@ -210,7 +162,7 @@ public class FormatMgr {
 		TextEdit edit = findEditLeft(token);
 		if (edit == null) {
 			AdeptToken prior = findTokenLeft(token);
-			edit = editBuilder.create(prior, token);
+			edit = createEdit(prior, token);
 			edits.put(edit.getRegion(), edit);
 		}
 		return edit;
@@ -234,12 +186,70 @@ public class FormatMgr {
 		return modTokenLineIndex.get(token.getTokenIndex());
 	}
 
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Define an edit for the existing text (should be ws only) between the given tokens (exclusive).
+	 *
+	 * @param beg left token
+	 * @param end right token
+	 * @throws IllegalArgumentException
+	 */
+	protected TextEdit createEdit(AdeptToken beg, AdeptToken end) {
+		String existing = getTextBetween(beg, end);
+		return createEdit(beg, end, existing, existing, 0, "");
+	}
+
+	/**
+	 * Define an edit to replace the existing text (should be ws only) between the given token indexes
+	 * (exclusive) with the new given string value.
+	 *
+	 * @param beg left token index
+	 * @param end right token index
+	 * @param existing existing text
+	 * @param replacement replacement text
+	 * @param priority relative edit priority
+	 * @param msg edit description
+	 * @throws IllegalArgumentException
+	 */
+	protected TextEdit createEdit(int begIndex, int endIndex, String existing, String replacement, int priority,
+			String msg) {
+		AdeptToken beg = begIndex > -1 ? data.getToken(begIndex) : null;
+		AdeptToken end = endIndex > -1 ? data.getToken(endIndex) : null;
+		return createEdit(beg, end, existing, replacement, priority, msg);
+	}
+
+	/**
+	 * Define an edit to replace the existing text (should be ws only) between the given tokens
+	 * (exclusive) with the new given string value.
+	 *
+	 * @param beg left token
+	 * @param end right token
+	 * @param existing existing text
+	 * @param replacement replacement text
+	 * @param priority relative edit priority
+	 * @param msg edit description
+	 * @throws IllegalArgumentException
+	 */
+	protected TextEdit createEdit(AdeptToken beg, AdeptToken end, String existing, String replacement, int priority,
+			String msg) {
+
+		if ((beg == null && end == null) || existing == null || replacement == null) {
+			throw new IllegalArgumentException("Malformed text edit create request.");
+		}
+		if (end == null) end = data.getToken(data.getTokenStream().size() - 1);
+		if (msg == null) msg = "";
+		return new TextEdit(beg, end, existing, replacement, priority, msg);
+	}
+
+	// -----------------------------------------------------------------------------
+
 	protected String getTextBetween(AdeptToken beg, AdeptToken end) {
 		return data.getTextBetween(beg.getTokenIndex(), end.getTokenIndex());
 	}
 
 	/** Change parsed lines to modified lines. */
-	public TreeMultilist<Integer, AdeptToken> modLines(TreeMultilist<Integer, AdeptToken> lines) {
+	protected TreeMultilist<Integer, AdeptToken> modLines(TreeMultilist<Integer, AdeptToken> lines) {
 		TreeMultilist<Integer, AdeptToken> modLines = new TreeMultilist<>();
 		modLines.setValueComparator(AdeptComp.Instance);
 		for (AdeptToken token : lines.valuesAll()) {

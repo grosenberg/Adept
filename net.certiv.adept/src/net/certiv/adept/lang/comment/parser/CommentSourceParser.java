@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.format.CommentProcessor;
+import net.certiv.adept.format.render.CommentProcessor;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.comment.parser.gen.CommentLexer;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser;
