@@ -43,7 +43,10 @@ public class Group {
 	public void update(FormatterOps ops) {
 		if (!updated) {
 			for (Align align : group.keySet()) {
-				TreeMultilist<Integer, AdeptToken> modded = ops.modLines(group.get(align));
+				TreeMultilist<Integer, AdeptToken> parsed = group.get(align);
+				TreeMultilist<Integer, AdeptToken> modded = ops.modLines(parsed);
+
+				group.remove(align);
 				group.put(align, modded);
 			}
 			updated = true;

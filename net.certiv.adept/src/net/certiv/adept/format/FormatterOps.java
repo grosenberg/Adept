@@ -76,7 +76,9 @@ public class FormatterOps {
 	protected void append(AdeptToken token) {
 		Region region = Region.key(token.getTokenIndex());
 		Entry<Region, TextEdit> lower = edits.lowerEntry(region);
-		if (region.adjacent(lower.getKey())) {
+		if (lower == null) {
+			append(0, token);
+		} else if (region.adjacent(lower.getKey())) {
 			TextEdit edit = lower.getValue();
 			append(Strings.countVWS(edit.replacement()), token);
 
@@ -123,14 +125,10 @@ public class FormatterOps {
 	}
 
 	private void shift(AdeptToken prior, AdeptToken mark) {
-		String text = prior.getText();
-		TextEdit edit = edits.get(Region.key(prior.getTokenIndex(), mark.getTokenIndex()));
-		if (edit != null) {
-			text += edit.replacement();
-		} else {
-			text += getTextBetween(prior, mark);
-		}
-		int visCol = Strings.measureVisualWidth(text, settings.tabWidth, prior.visCol());
+		String text = prior != null ? prior.getText() : "";
+		text += findWsLeft(mark);
+		int priorVisCol = prior != null ? prior.visCol() : 0;
+		int visCol = Strings.measureVisualWidth(text, settings.tabWidth, priorVisCol);
 		mark.setVisCol(visCol);
 	}
 
@@ -166,15 +164,17 @@ public class FormatterOps {
 	}
 
 	protected Spacing findSpacingLeft(AdeptToken token) {
+		String text = findWsLeft(token);
+		return Spacing.characterize(text, settings.tabWidth);
+	}
+
+	protected String findWsLeft(AdeptToken token) {
 		TextEdit edit = findEditLeft(token);
-		if (edit != null) return Spacing.characterize(edit.replacement(), settings.tabWidth);
+		if (edit != null) return edit.replacement();
 
 		RefToken ref = token.refToken();
-		if (ref.matched != null) return ref.matched.lSpacing;
-		if (ref.lSpacing != Spacing.UNKNOWN) return ref.lSpacing;
-
-		String existing = getTextBetween(findTokenLeft(token), token);
-		return Spacing.characterize(existing, settings.tabWidth);
+		if (ref.matched != null) return ref.matched.lActual;
+		return ref.lActual;
 	}
 
 	/** Returns the left nearest visible token or {@code null}. */

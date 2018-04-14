@@ -67,9 +67,6 @@ public class ParseRecord {
 	// alignment groups
 	public List<Group> groupIndex;
 
-	// // key=first line of group; value=comment group
-	// public TreeMap<Integer, Group> comments = new TreeMap<>();
-
 	// key=line number; value=list of tokens
 	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
 
@@ -93,6 +90,7 @@ public class ParseRecord {
 		index = new TreeMap<>(AdeptComp.Instance);
 		tokenIndex = new TreeMap<>();
 		featureIndex = new HashMap<>();
+		groupIndex = new ArrayList<>();
 		lineTokensIndex = new TreeMultilist<>(null, AdeptComp.Instance);
 		lineStartIndex = new HashMap<>();
 		blanklines = new HashMap<>();
@@ -107,6 +105,7 @@ public class ParseRecord {
 		index.clear();
 		tokenIndex.clear();
 		featureIndex.clear();
+		groupIndex.clear();
 		lineTokensIndex.clear();
 		lineStartIndex.clear();
 		blanklines.clear();

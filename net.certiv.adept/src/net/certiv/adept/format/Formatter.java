@@ -9,12 +9,9 @@ import java.util.Map;
 import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.DocModel;
-import net.certiv.adept.model.Document;
 
 /** Document formatter. */
 public class Formatter extends FormatterOps {
-
-	private Document doc;
 
 	private SpacingProcessor spacer;
 	private LineBreakProcessor breaker;
