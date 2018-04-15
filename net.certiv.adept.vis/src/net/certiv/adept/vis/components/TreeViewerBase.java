@@ -21,7 +21,7 @@ import org.antlr.v4.runtime.tree.Tree;
 
 import com.google.common.collect.HashBasedTable;
 
-import net.certiv.adept.view.utils.Point;
+import net.certiv.adept.vis.utils.Point;
 
 public abstract class TreeViewerBase extends JComponent {
 
@@ -175,12 +175,13 @@ public abstract class TreeViewerBase extends JComponent {
 					&& ctx.stop.getTokenIndex() < ctx.start.getTokenIndex();
 		}
 		if (isHighlighted(tree) || boxColor != null || tree instanceof ErrorNode || ruleFailedAndMatchedNothing) {
-			if (isHighlighted(tree))
+			if (isHighlighted(tree)) {
 				g.setColor(highlightedBoxColor);
-			else if (tree instanceof ErrorNode || ruleFailedAndMatchedNothing)
+			} else if (tree instanceof ErrorNode || ruleFailedAndMatchedNothing) {
 				g.setColor(LIGHT_RED);
-			else
+			} else {
 				g.setColor(boxColor);
+			}
 			g.fillRoundRect((int) box.x, (int) box.y, (int) box.width - 1, (int) box.height - 1, arcSize, arcSize);
 		}
 		if (borderColor != null) {

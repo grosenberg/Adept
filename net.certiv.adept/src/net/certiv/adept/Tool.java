@@ -67,7 +67,6 @@ public class Tool extends ToolBase {
 	private List<String> sourceFiles;
 	private List<String> corpusFiles;
 	private List<LangDescriptor> languages;
-	private List<Document> documents;
 
 	public static void main(String[] args) {
 		Tool tool = new Tool();
@@ -307,9 +306,9 @@ public class Tool extends ToolBase {
 		return mgr;
 	}
 
-	/** Retrieves the doc objects produced through execution, or null */
-	public List<Document> getDocuments() {
-		return documents;
+	/** Retrieves the doc object produced through execution, or null */
+	public Document getDocument() {
+		return mgr.getDocModel().getDocument();
 	}
 
 	/** Returns the formatted source of the last document parsed. */

@@ -14,8 +14,6 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-import net.certiv.adept.model.util.MatchData;
-
 public class SimularityPanel extends JPanel {
 
 	private JTextField txtSimilarity;
@@ -144,21 +142,21 @@ public class SimularityPanel extends JPanel {
 		txtWeightSim.setColumns(10);
 	}
 
-	public void load(MatchData matchData) {
-		txtSimilarity.setText(String.valueOf(matchData.similarity));
-		txtSelfSimF.setText(String.valueOf(matchData.selfSimF));
-		txtSelfSimM.setText(String.valueOf(matchData.selfSimM));
-		txtMutualSim.setText(String.valueOf(matchData.mutualSim));
-
-		txtAncestorSim.setText(String.valueOf(matchData.ancestorSim));
-		txtEdgeTypeSim.setText(String.valueOf(matchData.edgeTypeSim));
-		txtAspectsSim.setText(String.valueOf(matchData.edgeAspectsSim));
-		txtEdgeTextSim.setText(String.valueOf(matchData.edgeTextSim));
-		txtFormatLineSim.setText(String.valueOf(matchData.formatLineSim));
-		txtFormatWsSim.setText(String.valueOf(matchData.formatWsSim));
-		txtFormatStyleSim.setText(String.valueOf(matchData.formatStyleSim));
-		txtWeightSim.setText(String.valueOf(matchData.weightSim));
-	}
+	// public void load(MatchData matchData) {
+	// txtSimilarity.setText(String.valueOf(matchData.similarity));
+	// txtSelfSimF.setText(String.valueOf(matchData.selfSimF));
+	// txtSelfSimM.setText(String.valueOf(matchData.selfSimM));
+	// txtMutualSim.setText(String.valueOf(matchData.mutualSim));
+	//
+	// txtAncestorSim.setText(String.valueOf(matchData.ancestorSim));
+	// txtEdgeTypeSim.setText(String.valueOf(matchData.edgeTypeSim));
+	// txtAspectsSim.setText(String.valueOf(matchData.edgeAspectsSim));
+	// txtEdgeTextSim.setText(String.valueOf(matchData.edgeTextSim));
+	// txtFormatLineSim.setText(String.valueOf(matchData.formatLineSim));
+	// txtFormatWsSim.setText(String.valueOf(matchData.formatWsSim));
+	// txtFormatStyleSim.setText(String.valueOf(matchData.formatStyleSim));
+	// txtWeightSim.setText(String.valueOf(matchData.weightSim));
+	// }
 
 	public void clear() {
 		for (Component child : getComponents()) {

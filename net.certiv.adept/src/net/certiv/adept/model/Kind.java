@@ -3,7 +3,8 @@ package net.certiv.adept.model;
 public enum Kind {
 	TERMINAL("Terminal"),
 	BLOCKCOMMENT("Block Comment"),
-	LINECOMMENT("Line Comment");
+	LINECOMMENT("Line Comment"),
+	WHITESPACE("White Space");
 
 	private String kind;
 

@@ -134,8 +134,7 @@ public class TreeViewer extends TreeViewerBase {
 	public void setTree(Tree root) {
 		if (root != null) {
 			boolean useIdentity = true; // compare node identity
-			this.treeLayout = new TreeLayout<Tree>(getTreeLayoutAdaptor(root),
-					new TreeViewer.VariableExtentProvider(this),
+			this.treeLayout = new TreeLayout<>(getTreeLayoutAdaptor(root), new TreeViewer.VariableExtentProvider(this),
 					new DefaultConfiguration<Tree>(gapBetweenLevels, gapBetweenNodes), useIdentity);
 			updatePreferredSize();
 		} else {
@@ -145,8 +144,8 @@ public class TreeViewer extends TreeViewerBase {
 	}
 
 	/**
-	 * Get an adaptor for root that indicates how to walk ANTLR trees. Override to change the
-	 * adapter from the default of {@link TreeLayoutAdaptor}
+	 * Get an adaptor for root that indicates how to walk ANTLR trees. Override to change the adapter
+	 * from the default of {@link TreeLayoutAdaptor}
 	 */
 	public TreeForTreeLayout<Tree> getTreeLayoutAdaptor(Tree root) {
 		return new TreeLayoutAdaptor(root);

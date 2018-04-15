@@ -69,8 +69,10 @@ public class CoreMgr {
 				CorpusDocs.writeDocument(settings.corpusDir, doc);
 			} else {
 				DocProcessor proc = new DocProcessor(this, doc, settings);
-				if (proc.processDocument(doc, settings.check)) {
-					docModel = proc.createDocModel();
+				boolean ok = proc.processDocument(doc, settings.check);
+				docModel = proc.createDocModel();
+
+				if (ok) {
 					proc.match(corModel);
 					proc.formatDocument();
 				}

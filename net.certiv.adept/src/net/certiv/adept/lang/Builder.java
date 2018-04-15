@@ -206,12 +206,28 @@ public class Builder extends ParseRecord {
 			ref.setRight(right, spacing, ws);
 		}
 
-		Feature feature = Feature.create(mgr, doc, genPath(parents), token);
+		Feature feature = Feature.create(mgr, doc, toRulePath(parents), token);
 		index.put(token, feature);
 		featureIndex.put(feature.getId(), feature);
 	}
 
 	// ---------------------------------------------------------------------
+
+	public AdeptToken findRealLeft(int idx) {
+		for (int jdx = idx - 1; jdx > -1; jdx--) {
+			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
+			if (!isWhitespace(left.getType())) return left;
+		}
+		return null;
+	}
+
+	public AdeptToken findRealRight(int idx) {
+		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
+			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
+			if (!isWhitespace(right.getType())) return right;
+		}
+		return null;
+	}
 
 	private AdeptToken findCommentLeft(AdeptToken token) {
 		List<AdeptToken> hidden = getHiddenLeft(token.getTokenIndex());
@@ -236,6 +252,8 @@ public class Builder extends ParseRecord {
 			return Kind.BLOCKCOMMENT;
 		} else if (type == LINECOMMENT) {
 			return Kind.LINECOMMENT;
+		} else if (type == HWS || type == VWS) {
+			return Kind.WHITESPACE;
 		} else {
 			return Kind.TERMINAL;
 		}
@@ -251,7 +269,7 @@ public class Builder extends ParseRecord {
 	}
 
 	// convert ancestor list to integers
-	private List<Integer> genPath(List<ParseTree> nodes) {
+	private List<Integer> toRulePath(List<ParseTree> nodes) {
 		List<Integer> path = new ArrayList<>();
 		for (ParseTree node : nodes) {
 			if (node instanceof ParserRuleContext) {
@@ -266,8 +284,7 @@ public class Builder extends ParseRecord {
 	private String findWsLeft(int idx) {
 		StringBuilder sb = new StringBuilder();
 		for (Token token : getHiddenLeft(idx)) {
-			int type = token.getType();
-			if (type != BLOCKCOMMENT && type != LINECOMMENT) {
+			if (!isComment(token.getType())) {
 				sb.append(token.getText());
 			}
 		}
@@ -277,8 +294,7 @@ public class Builder extends ParseRecord {
 	private String findWsRight(int idx) {
 		StringBuilder sb = new StringBuilder();
 		for (Token token : getHiddenRight(idx)) {
-			int type = token.getType();
-			if (type != BLOCKCOMMENT && type != LINECOMMENT) {
+			if (!isComment(token.getType())) {
 				sb.append(token.getText());
 			}
 		}
@@ -323,6 +339,7 @@ public class Builder extends ParseRecord {
 		return ttypes(tokens);
 	}
 
+	// list of tokens -> list of token types
 	private List<Integer> ttypes(List<AdeptToken> tokens) {
 		List<Integer> ttypes = new ArrayList<>();
 		for (AdeptToken token : tokens) {

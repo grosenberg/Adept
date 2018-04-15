@@ -9,7 +9,7 @@ import javax.swing.event.ChangeListener;
 
 public class SliderCounter extends Counter {
 
-	private JSlider sld;
+	private JSlider slider;
 	private boolean disable;
 
 	public SliderCounter() {
@@ -20,14 +20,14 @@ public class SliderCounter extends Counter {
 	protected void build() {
 		super.build();
 
-		sld = new JSlider(min, max, 1);
-		sld.setToolTipText("Selector");
-		sld.addChangeListener(new ChangeListener() {
+		slider = new JSlider(min, max, 1);
+		slider.setToolTipText("Selector");
+		slider.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				int old = getCount();
-				int count = sld.getValue();
+				int count = slider.getValue();
 				if (old != count) {
 					setCount(count);
 					if (!disable) {
@@ -46,11 +46,11 @@ public class SliderCounter extends Counter {
 					case Counter.ADD:
 					case Counter.SUB:
 					case Counter.SET:
-						int old = sld.getValue();
+						int old = slider.getValue();
 						int count = (int) evt.getNewValue();
 						if (old != count) {
 							disable = true;
-							sld.setValue(count);
+							slider.setValue(count);
 							disable = false;
 						}
 						break;
@@ -58,19 +58,19 @@ public class SliderCounter extends Counter {
 			}
 		});
 
-		add(sld, 1);
+		add(slider, 1);
 	}
 
 	@Override
 	public void setRange(int max) {
 		super.setRange(max);
-		sld.setMaximum(max);
+		slider.setMaximum(max);
 	}
 
 	@Override
 	public void setRange(int min, int max) {
 		super.setRange(min, max);
-		sld.setMinimum(min);
-		sld.setMaximum(max);
+		slider.setMinimum(min);
+		slider.setMaximum(max);
 	}
 }

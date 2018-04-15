@@ -185,13 +185,13 @@ public class ParseRecord {
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<AdeptToken> convert(List<Token> tokens) {
+	private List<AdeptToken> convert(List<? extends Token> tokens) {
 		List<AdeptToken> adepts = new ArrayList<>();
-		if (tokens != null) adepts.addAll((List<AdeptToken>) ((List<?>) tokens));
+		if (tokens != null) adepts.addAll((List<AdeptToken>) tokens);
 		return adepts;
 	}
 
-	public ParserRuleContext getTree() {
+	public ParserRuleContext getParseTreeRoot() {
 		return tree;
 	}
 
@@ -278,33 +278,4 @@ public class ParseRecord {
 		if (line < 0 && line >= blanklines.size()) return true;
 		return blanklines.get(line);
 	}
-
-	// --------------------------------------
-
-	public AdeptToken findRealLeft(int idx) {
-		for (int jdx = idx - 1; jdx > -1; jdx--) {
-			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
-			if (left.getChannel() == Token.DEFAULT_CHANNEL) return left;
-		}
-		return null;
-	}
-
-	public AdeptToken findRealRight(int idx) {
-		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
-			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
-			if (right.getChannel() == Token.DEFAULT_CHANNEL) return right;
-		}
-		return null;
-	}
-
-	public int findMinAlignCol(AdeptToken token) {
-		return 0;
-	}
-
-	public AdeptToken findBOL(AdeptToken token, boolean b) {
-		return null;
-	}
-
-	// --------------------------------------
-
 }

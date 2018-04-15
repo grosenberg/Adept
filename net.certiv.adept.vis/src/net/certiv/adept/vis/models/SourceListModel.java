@@ -58,8 +58,12 @@ public class SourceListModel extends DefaultComboBoxModel<Item> {
 		return paths;
 	}
 
+	public int getIndexOfSelected() {
+		return getIndexOf(getSelectedItem());
+	}
+
 	public String getSelectedPathname() {
-		Item item = (Item) super.getSelectedItem();
+		Item item = (Item) getSelectedItem();
 		return item.pathname;
 	}
 }

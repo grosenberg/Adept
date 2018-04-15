@@ -56,7 +56,7 @@ public abstract class BaseProcessor {
 			return false;
 		}
 
-		if (check) return true;
+		if (check) return false;
 
 		builder.index();
 

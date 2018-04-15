@@ -80,6 +80,7 @@ public class CorpusData {
 				throw e;
 			}
 		}
+		corModel.setConsistent(true);
 		return corModel;
 	}
 
@@ -112,8 +113,8 @@ public class CorpusData {
 				.disableHtmlEscaping() //
 				.enableComplexMapKeySerialization() //
 				.excludeFieldsWithoutExposeAnnotation() //
-//				.registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Aspect>()) //
-//				.registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Adjunct>()) //
+				// .registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Aspect>()) //
+				// .registerTypeAdapter(TreeMultiset.class, new TreeMultimapAdapter<Integer, Adjunct>()) //
 				.serializeNulls() //
 				.setDateFormat(DateFormat.LONG) //
 				.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY) //

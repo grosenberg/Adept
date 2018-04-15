@@ -15,9 +15,11 @@ public class AlignCellRenderer extends DefaultTableCellRenderer {
 		this.alignment = alignment;
 	}
 
-	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused,
 			int row, int column) {
-		Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+		Component c = super.getTableCellRendererComponent(table, value, selected, focused, row, column);
 		setHorizontalAlignment(alignment);
 		switch (alignment) {
 			case SwingConstants.LEFT:

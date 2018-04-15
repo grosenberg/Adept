@@ -16,6 +16,7 @@ public class TokenCellRenderer extends DefaultTableCellRenderer {
 		this.model = model;
 	}
 
+	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 			int row, int column) {
 

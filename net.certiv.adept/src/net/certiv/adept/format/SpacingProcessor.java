@@ -39,7 +39,14 @@ public class SpacingProcessor {
 								Region region = entry.getKey();
 								TextEdit edit = entry.getValue();
 
-								if (ops.edits.containsKey(region)) {
+								boolean exists = false;
+								try {
+									exists = ops.edits.containsKey(region);
+								} catch (RegionException e) {
+									Log.error(this, "Region Err: " + e.getMessage());
+								}
+
+								if (exists) {
 									TextEdit existing = ops.edits.get(region);
 									if (existing.priority() > edit.priority()) {
 										Log.debug(this, "P: " + existing.toString());	// priority/presesrve

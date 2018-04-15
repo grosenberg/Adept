@@ -41,6 +41,9 @@ public class DocProcessor extends BaseProcessor {
 				case LINECOMMENT:
 				case TERMINAL:
 					corModel.match(feature);
+					break;
+				case WHITESPACE:
+					break;
 			}
 		}
 		Time.stop(Facet.MATCH);

@@ -74,21 +74,11 @@ public class FormatterOps {
 	 * {@code visCol} field of the given token to refect any formatting edits.
 	 */
 	protected void append(AdeptToken token) {
-		Region region = Region.key(token.getTokenIndex());
-		Entry<Region, TextEdit> lower = edits.lowerEntry(region);
-		if (lower == null) {
-			append(0, token);
-		} else if (region.adjacent(lower.getKey())) {
-			TextEdit edit = lower.getValue();
+		TextEdit edit = findEditLeft(token);
+		if (edit != null) {
 			append(Strings.countVWS(edit.replacement()), token);
-
-		} else if (token.atBol()) {
-			AdeptToken left = findTokenLeft(token);
-			int prior = left != null ? left.getLine() : 0;
-			append(token.getLine() - prior, token);
-
 		} else {
-			append(0, token);
+			append(Strings.countVWS(token.refToken().lActual), token);
 		}
 	}
 

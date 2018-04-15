@@ -96,12 +96,13 @@ public class FontChoiceBox extends JComboBox<Font> {
 
 		protected DefaultListCellRenderer renderer = new DefaultListCellRenderer();
 
+		@Override
 		public Component getListCellRendererComponent(JList<? extends Font> list, Font font, int index,
 				boolean isSelected, boolean cellHasFocus) {
 
 			Component result = renderer.getListCellRendererComponent(list, font.getName(), index, isSelected,
 					cellHasFocus);
-			//			float size = result.getFont().getSize();
+			// float size = result.getFont().getSize();
 			result.setFont(font.deriveFont((float) 12));
 			return result;
 		}

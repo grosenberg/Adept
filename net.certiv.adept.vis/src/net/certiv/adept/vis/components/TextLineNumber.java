@@ -32,9 +32,8 @@ import javax.swing.text.Utilities;
 /**
  * This class will display line numbers for a related text component. The text component must use
  * the same line height for each line. TextLineNumber supports wrapped lines and will highlight the
- * line number of the current line in the text component.
- * 
- * This class was designed to be used as a component added to the row header of a JScrollPane.
+ * line number of the current line in the text component. This class was designed to be used as a
+ * component added to the row header of a JScrollPane.
  */
 public class TextLineNumber extends JPanel implements CaretListener, DocumentListener, PropertyChangeListener {
 
@@ -158,16 +157,16 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 	}
 
 	/**
-	 * Gets the digit alignment
+	 * Gets the digit inLine
 	 *
-	 * @return the alignment of the painted digits
+	 * @return the inLine of the painted digits
 	 */
 	public float getDigitAlignment() {
 		return digitAlignment;
 	}
 
 	/**
-	 * Specify the horizontal alignment of the digits within the component. Common values would be:
+	 * Specify the horizontal inLine of the digits within the component. Common values would be:
 	 * <ul>
 	 * <li>TextLineNumber.LEFT
 	 * <li>TextLineNumber.CENTER
@@ -269,8 +268,10 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 		}
 	}
 
-	/* We need to know if the caret is currently positioned on the line we are about to paint so the
-	 * line number can be highlighted. */
+	/*
+	 * We need to know if the caret is currently positioned on the line we are about to paint so the
+	 * line number can be highlighted.
+	 */
 	private boolean isCurrentLine(int rowStartOffset) {
 		int caretPosition = component.getCaretPosition();
 		Element root = component.getDocument().getDefaultRootElement();
@@ -282,8 +283,10 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 		}
 	}
 
-	/* Get the line number to be drawn. The empty string will be returned when a line of text has
-	 * wrapped. */
+	/*
+	 * Get the line number to be drawn. The empty string will be returned when a line of text has
+	 * wrapped.
+	 */
 	protected String getTextLineNumber(int rowStartOffset) {
 		Element root = component.getDocument().getDefaultRootElement();
 		int index = root.getElementIndex(rowStartOffset);
@@ -386,8 +389,10 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
 		documentChanged();
 	}
 
-	/* A document change may affect the number of displayed lines of text. Therefore the lines numbers
-	 * will also change. */
+	/*
+	 * A document change may affect the number of displayed lines of text. Therefore the lines numbers
+	 * will also change.
+	 */
 	private void documentChanged() {
 		SwingUtilities.invokeLater(new Runnable() {
 

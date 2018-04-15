@@ -19,7 +19,7 @@ public class AdeptToken extends CommonToken {
 	public static final int BOF = Token.EOF;
 
 	// for transfer to Feature/RefToken
-	private Kind kind = Kind.TERMINAL;
+	private Kind kind = Kind.WHITESPACE;
 	private Bias bias = Bias.RIGHT;
 
 	private RefToken ref;
