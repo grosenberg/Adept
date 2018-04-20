@@ -12,10 +12,10 @@ import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
@@ -58,6 +58,38 @@ public class FormatterOps {
 		tokenAlignColIndex = new HashMap<>();
 	}
 
+	public void dispose() {
+		doc = null;
+		data = null;
+		edits.clear();
+		edits = null;
+		contents = null;
+		modLineTokensIndex.clear();
+		modTokenLineIndex.clear();
+		tokenAlignColIndex.clear();
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Appends the given token to the modLineTokenIndex. Creates new lines as appropriate. Updates the
+	 * {@code visCol} field of the given token to refect any formatting edits.
+	 */
+	protected void append(AdeptToken token) {
+		String ws = findWsLeft(token);
+		int incVert = Strings.countVWS(ws);
+
+		int line = 0;
+		try {
+			line = modLineTokensIndex.lastKey();
+		} catch (NoSuchElementException e) {}
+		line += incVert;
+
+		shift(findTokenLeft(token), token);		// sets visCol
+		modLineTokensIndex.put(line, token);	// sets line (effective)
+		modTokenLineIndex.put(token.getTokenIndex(), line);
+	}
+
 	// -----------------------------------------------------------------------------
 
 	protected void addToAlignIndex(int index, int align) {
@@ -69,69 +101,65 @@ public class FormatterOps {
 		return align != null ? align : 0;
 	}
 
-	/**
-	 * Appends the given token to the modLineTokenIndex. Creates new lines as appropriate. Updates the
-	 * {@code visCol} field of the given token to refect any formatting edits.
-	 */
-	protected void append(AdeptToken token) {
-		TextEdit edit = findEditLeft(token);
-		if (edit != null) {
-			append(Strings.countVWS(edit.replacement()), token);
-		} else {
-			append(Strings.countVWS(token.refToken().lActual), token);
-		}
-	}
-
-	private void append(int inc, AdeptToken token) {
-		int line = 0;
-		try {
-			line = modLineTokensIndex.lastKey();
-		} catch (NoSuchElementException e) {}
-		line += inc;
-
-		AdeptToken prior = findTokenLeft(token);
-		shift(prior, token);
-
-		modLineTokensIndex.put(line, token);
-		modTokenLineIndex.put(token.getTokenIndex(), line);
-		modLineTokensIndex.put(line, token);
-	}
-
 	// -----------------------------------------------------------------------------
 
-	// create edit implemeting change to the given visual col and shift remaining tokens
+	/**
+	 * Create an edit implementing the necessary whitespace change to move the given token to the given
+	 * visual column. Update the visual column of any tokens to the right of the given token.
+	 *
+	 * @param lineNum
+	 * @param token
+	 * @param toVisCol
+	 */
 	protected void createEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
-		updateOrCreateEditLeft(token, toVisCol);
+		if (token.visCol() == toVisCol) return;
 
 		List<AdeptToken> fullLine = modLineTokensIndex.get(lineNum);
-		int idx = fullLine.indexOf(token);
-		ListIterator<AdeptToken> itr = fullLine.listIterator(idx + 1);
+		int pos = fullLine.indexOf(token);
+		updateOrCreateEditLeft(token, pos, toVisCol);
+
+		ListIterator<AdeptToken> remainder = fullLine.listIterator(pos + 1);
 		AdeptToken prior = token;
-		while (itr.hasNext()) {
-			AdeptToken next = itr.next();
+		while (remainder.hasNext()) {
+			AdeptToken next = remainder.next();
 			shift(prior, next);
 			prior = next;
 		}
 	}
 
-	private void shift(AdeptToken prior, AdeptToken mark) {
-		String text = prior != null ? prior.getText() : "";
-		text += findWsLeft(mark);
-		int priorVisCol = prior != null ? prior.visCol() : 0;
-		int visCol = Strings.measureVisualWidth(text, settings.tabWidth, priorVisCol);
-		mark.setVisCol(visCol);
-	}
-
-	protected void updateOrCreateEditLeft(AdeptToken token, int toVisCol) {
+	protected void updateOrCreateEditLeft(AdeptToken token, int pos, int toVisCol) {
 		TextEdit edit = findOrCreateEditLeft(token);
-		AdeptToken prior = data.tokenIndex.get(edit.begIndex());
-		int beg = prior.visCol() + prior.getText().length();
-		if (settings.useTabs) {
-			edit.replUpdate(Strings.createVisualWs(settings.tabWidth, beg, toVisCol));
+		if (pos == 0) { // at BOL
+			int idx = Strings.lastNonHWS(edit.replacement());
+			String revised = edit.replacement().substring(0, idx + 1);
+			revised += createWs(1, toVisCol);
+			edit.replUpdate(revised);
 		} else {
-			edit.replAppend(Strings.spaces(toVisCol - beg));
+			AdeptToken prior = data.tokenIndex.get(edit.begIndex());
+			int from = prior.visCol() + prior.getText().length();
+			if (from > toVisCol) {
+				String msg = String.format("Err: shift %s to %s: %s", from, toVisCol, token.toString());
+				Log.error(this, msg);
+				return;
+			}
+			edit.replUpdate(createWs(from, toVisCol));
 		}
 		token.setVisCol(toVisCol);
+	}
+
+	private void shift(AdeptToken prior, AdeptToken token) {
+		int from = prior != null ? prior.visCol() + prior.getText().length() : 1;
+		String ws = findWsLeft(token);
+		int visCol = Strings.measureVisualWidth(ws, settings.tabWidth, from);
+		token.setVisCol(visCol);
+	}
+
+	private String createWs(int from, int to) {
+		if (settings.useTabs) {
+			return Strings.createVisualWs(settings.tabWidth, from, to);
+		} else {
+			return Strings.spaces(to - from);
+		}
 	}
 
 	/** Returns the left adjacent TextEdit . */
@@ -147,10 +175,8 @@ public class FormatterOps {
 
 	/** Returns the left adjacent TextEdit or {@code null}. */
 	protected TextEdit findEditLeft(AdeptToken token) {
-		Region key = Region.key(token);
-		Entry<Region, TextEdit> entry = edits.lowerEntry(key);
-		if (entry == null || !entry.getKey().adjacent(key)) return null;
-		return entry.getValue();
+		AdeptToken left = data.getRealLeft(token.getTokenIndex());
+		return edits.get(Region.key(left, token));
 	}
 
 	protected Spacing findSpacingLeft(AdeptToken token) {
@@ -162,9 +188,7 @@ public class FormatterOps {
 		TextEdit edit = findEditLeft(token);
 		if (edit != null) return edit.replacement();
 
-		RefToken ref = token.refToken();
-		if (ref.matched != null) return ref.matched.lActual;
-		return ref.lActual;
+		return token.refToken().lActual;
 	}
 
 	/** Returns the left nearest visible token or {@code null}. */
@@ -182,7 +206,7 @@ public class FormatterOps {
 	 * Returns the position in the given current line of the given token. Returns {@code -1} if the
 	 * token is not found on the given line.
 	 */
-	protected int getInModLine(int line, AdeptToken token) {
+	protected int findInModLine(int line, AdeptToken token) {
 		return modLineTokensIndex.get(line).indexOf(token);
 	}
 
@@ -190,7 +214,7 @@ public class FormatterOps {
 	 * Returns the token in the given current line at the given index. Returns {@code null} if no token
 	 * exists at the given line and index.
 	 */
-	protected AdeptToken getInModLine(int line, int idx) {
+	protected AdeptToken findInModLine(int line, int idx) {
 		List<AdeptToken> tokens = modLineTokensIndex.get(line);
 		if (tokens.size() > idx) return tokens.get(idx);
 		return null;
@@ -259,8 +283,8 @@ public class FormatterOps {
 		return data.getTextBetween(begIdx, end.getTokenIndex());
 	}
 
-	/** Change parsed lines to modified lines. */
-	public TreeMultilist<Integer, AdeptToken> modLines(TreeMultilist<Integer, AdeptToken> lines) {
+	/** Update parsed lines to formatting modified lines. */
+	public TreeMultilist<Integer, AdeptToken> updateLinesIndex(TreeMultilist<Integer, AdeptToken> lines) {
 		TreeMultilist<Integer, AdeptToken> modLines = new TreeMultilist<>();
 		modLines.setValueComparator(AdeptComp.Instance);
 		for (AdeptToken token : lines.valuesAll()) {
@@ -268,12 +292,5 @@ public class FormatterOps {
 			modLines.put(modLine, token);
 		}
 		return modLines;
-	}
-
-	protected void dispose() {
-		edits.clear();
-		modLineTokensIndex.clear();
-		modTokenLineIndex.clear();
-		tokenAlignColIndex.clear();
 	}
 }

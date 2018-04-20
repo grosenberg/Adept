@@ -12,12 +12,15 @@ import java.util.Map;
 
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.Settings;
+import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.Analyzer;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
+import net.certiv.adept.tool.ErrorType;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
@@ -58,8 +61,9 @@ public class CorpusModel {
 	}
 
 	/** Constructor for creating a scratch corpus model. */
-	public CorpusModel(Path corpusDir) {
+	public CorpusModel(CoreMgr mgr, Path corpusDir) {
 		this();
+		this.mgr = mgr;
 		setCorpusDir(corpusDir);
 	}
 
@@ -204,17 +208,32 @@ public class CorpusModel {
 	}
 
 	/** Perform operations to finalize the (re)built corpus. */
-	public void postBuild(ParseRecord data) {
+	public void postBuild(ParseRecord data, Settings settings) {
 		Feature.clearPool();
 		Analyzer.evaluate(data, getCorpusFeatures());
 		consistent = true;
+		save(settings.corpusDir);
 	}
 
-	public void save(Path corpusDir) throws Exception {
+	private void save(final Path corpusDir) {
 		lastModified = Utils.now();
-		CorpusData.save(corpusDir, this);
-		lastModified = Utils.getLastModified(corpusDir);
 		consistent = true;
+		Thread t = new Thread(mgr.getThreadGroup(), new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					CorpusData.save(corpusDir, CorpusModel.this, true);
+				} catch (Exception e) {
+					consistent = false;
+					Tool.errMgr.toolError(ErrorType.MODEL_SAVE_FAILURE, e.getMessage());
+					Log.error(this, "Cannot write file(s): ", e);
+				}
+			};
+		});
+		t.start();
+
+		lastModified = Utils.getLastModified(corpusDir);
 	}
 
 	public HashMultilist<Integer, Feature> getDocFeatures() {
@@ -252,7 +271,7 @@ public class CorpusModel {
 	 * {@code null} if no suitable match is found in the corpus.
 	 */
 	public void match(Feature feature) {
-		if (!feature.isMatchDone()) {
+		if (!feature.isMatched()) {
 			// corpus features that might contain a valid match
 			Feature matched = corpus.get(feature.getKey());
 			for (RefToken ref : feature.getRefs()) {
@@ -260,7 +279,7 @@ public class CorpusModel {
 				TreeMultiset<Double, RefToken> scored = matches(ref, matched);
 				ref.chooseBest(scored);
 			}
-			feature.setMatchDone(true);
+			feature.setMatched(true);
 		}
 	}
 
@@ -292,6 +311,13 @@ public class CorpusModel {
 
 	public void setConsistent(boolean consistent) {
 		this.consistent = consistent;
+	}
+
+	/** Prepare the corpus for a new round of matching. */
+	public void reset() {
+		for (Feature feature : corpus.values()) {
+			feature.setMatched(false);
+		}
 	}
 
 	public void clear() {

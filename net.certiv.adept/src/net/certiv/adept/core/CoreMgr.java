@@ -65,17 +65,19 @@ public class CoreMgr {
 		documents = loadDocuments(pathnames);
 		Log.info(this, documents.size() + " source documents to process.");
 		for (Document doc : documents.values()) {
-			if (settings.learn) {			// add document to corpus repo
+			if (settings.learn) {
 				CorpusDocs.writeDocument(settings.corpusDir, doc);
 			} else {
 				DocProcessor proc = new DocProcessor(this, doc, settings);
 				boolean ok = proc.processDocument(doc, settings.check);
 				docModel = proc.createDocModel();
-
 				if (ok) {
 					proc.match(corModel);
 					proc.formatDocument();
 				}
+				Feature.clearPool();
+				proc.dispose();
+				// docModel.dispose();
 			}
 		}
 		Time.stop(Facet.EXECUTE);

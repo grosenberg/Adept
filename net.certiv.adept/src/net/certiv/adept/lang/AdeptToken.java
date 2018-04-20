@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
 import net.certiv.adept.format.plan.Dent;
-import net.certiv.adept.format.plan.enums.Place;
+import net.certiv.adept.format.plan.Place;
 import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;
@@ -65,6 +65,10 @@ public class AdeptToken extends CommonToken {
 
 	public boolean isLineComment() {
 		return kind == Kind.LINECOMMENT;
+	}
+
+	public boolean isWhitespace() {
+		return kind == Kind.WHITESPACE;
 	}
 
 	// -------------------------

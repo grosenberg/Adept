@@ -9,9 +9,6 @@ import java.util.Map;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import net.certiv.adept.format.plan.enums.Align;
-import net.certiv.adept.format.plan.enums.Gap;
-import net.certiv.adept.format.plan.enums.Place;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.TableMultilist;
@@ -36,13 +33,13 @@ public class Aligner {
 	/** Add an alignable comment to a contiguous group. Will be added in comment token index order. */
 	public void comment(int line, AdeptToken token) {
 		if (lastCmtGroup != null) {
-			if (lastCmtGroup.contiguous(Align.COMMENT, line)) {
-				lastCmtGroup.addGroupMembers(Align.COMMENT, line, token);
+			if (lastCmtGroup.contiguous(Scheme.COMMENT, line)) {
+				lastCmtGroup.addGroupMembers(Scheme.COMMENT, line, token);
 				return;
 			}
 		}
 
-		lastCmtGroup = new Group(Align.COMMENT, line, token);
+		lastCmtGroup = new Group(Scheme.COMMENT, line, token);
 		data.groupIndex.add(lastCmtGroup);
 	}
 
@@ -65,7 +62,7 @@ public class Aligner {
 	 * @param ctx the relevant group context
 	 * @param tokens the token array
 	 */
-	public void align(Align align, ParserRuleContext ctx, TerminalNode... nodes) {
+	public void align(Scheme align, ParserRuleContext ctx, TerminalNode... nodes) {
 		align(align, ctx, Arrays.asList(nodes));
 	}
 
@@ -76,15 +73,15 @@ public class Aligner {
 	 * @param ctx the relevant group context
 	 * @param tokens the token collection
 	 */
-	public void align(Align align, ParserRuleContext ctx, List<TerminalNode> nodes) {
-		if (align != Align.GROUP) groupBeg(ctx);
+	public void align(Scheme scheme, ParserRuleContext ctx, List<TerminalNode> nodes) {
+		if (scheme != Scheme.GROUP) groupBeg(ctx);
 
 		Group group = groups.get(ctx);
 		for (AdeptToken token : symbols(nodes)) {
-			group.addGroupMembers(align, token.getLine(), token);
+			group.addGroupMembers(scheme, token.getLine(), token);
 		}
 
-		if (align != Align.GROUP) groupEnd(ctx);
+		if (scheme != Scheme.GROUP) groupEnd(ctx);
 	}
 
 	/**
@@ -100,9 +97,9 @@ public class Aligner {
 		if (group == null) throw new IllegalStateException("Non-existant inLine group.");
 
 		data.groupIndex.add(group);
-		TableMultilist<Align, Integer, AdeptToken> members = group.getMembers();
+		TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
 
-		for (Align align : members.keySet()) {
+		for (Scheme align : members.keySet()) {
 			TreeMultilist<Integer, AdeptToken> lines = members.get(align);
 			Gap gap = findGap(lines);
 			int total = lines.valuesSize();

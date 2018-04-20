@@ -136,13 +136,14 @@ public class FeaturePanel extends JPanel {
 	public void load(ParseRecord data, String pathname, Feature feature) {
 		textDocName.setText(pathname.replace('\\', '/'));
 		textNode.setText(String.format("%s  (%s)", feature.getNodeName(), feature.getType()));
-		textText.setText(feature.getText());
+		// textText.setText(feature.getText());
 		textAncestors.setText(evalAncestors(feature.getAncestors()));
 		chkComment.setSelected(feature.getKind().isComment());
 
-		textLine.setText(String.valueOf(feature.getLine() + 1));
-		textCol.setText(
-				String.format("%s (%s)", String.valueOf(feature.getCol() + 1), String.valueOf(feature.getVisCol())));
+		// textLine.setText(String.valueOf(feature.getLine() + 1));
+		// textCol.setText(
+		// String.format("%s (%s)", String.valueOf(feature.getCol() + 1),
+		// String.valueOf(feature.getVisCol())));
 		textWeight.setText(String.valueOf(feature.getWeight()));
 	}
 

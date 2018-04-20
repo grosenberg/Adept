@@ -10,6 +10,7 @@ import com.google.gson.annotations.Expose;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.util.Damerau;
+import net.certiv.adept.util.Log;
 
 public class Feature implements Comparable<Feature>, Cloneable {
 
@@ -17,8 +18,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 	private static int nextId;
 
 	private CoreMgr mgr;
-	private boolean matchingDone;				// ref tokens have been matched to corpus
-	private HashMap<Integer, RefToken> refIndex;
+	private boolean matched;	// ref tokens have been matched to corpus
 
 	// -------------------------------------------------------------------------------
 
@@ -35,12 +35,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 	// for visualization
 	@Expose private String docName;				// originating document name
-	@Expose private int tokenIndex;				// originating token stuff
-	@Expose private int line;
-	@Expose private int col;
-	@Expose private int visCol;
 	@Expose private String nodeName;
-	@Expose private String text;
 
 	// -------------------------------------------------------------------------------
 
@@ -64,7 +59,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		Pool.clear();
 	}
 
-	// defines a unique Feature
+	// defines a unique Feature independent of document
 	private static int hashKey(List<Integer> ancestors, AdeptToken token) {
 		final int prime = 31;
 		int result = 1;
@@ -95,12 +90,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 		// for analysis
 		this.docName = doc.getFilename();
-		this.tokenIndex = token.getTokenIndex();
-		this.line = token.getLine();
-		this.col = token.getCharPositionInLine();
-		this.visCol = token.visCol();
 		this.nodeName = token.refToken().nodeName;
-		this.text = token.refToken().text;
 	}
 
 	// -------------------------------------------------------------------------------
@@ -148,13 +138,11 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 	/** Returns the RefToken having the given token index. */
 	public RefToken getRefFor(int index) {
-		if (refIndex == null) {
-			refIndex = new HashMap<>();
-			for (RefToken ref : refs) {
-				refIndex.put(ref.index, ref);
-			}
+		for (RefToken ref : refs) {
+			if (ref.index == index) return ref;
 		}
-		return refIndex.get(index);
+		Log.error(this, "Problem: ref is null.");
+		return null;
 	}
 
 	/** Get all ref tokens associated with this feature. */
@@ -200,36 +188,16 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		return kind == Kind.BLOCKCOMMENT || kind == Kind.LINECOMMENT;
 	}
 
-	public boolean isMatchDone() {
-		return matchingDone;
+	public boolean isMatched() {
+		return matched;
 	}
 
-	public void setMatchDone(boolean done) {
-		this.matchingDone = done;
+	public void setMatched(boolean done) {
+		this.matched = done;
 	}
 
 	public String getDocName() {
 		return docName;
-	}
-
-	public int getTokenIndex() {
-		return tokenIndex;
-	}
-
-	public int getLine() {
-		return line;
-	}
-
-	public int getCol() {
-		return col;
-	}
-
-	public int getVisCol() {
-		return visCol;
-	}
-
-	public String getText() {
-		return text;
 	}
 
 	public double ancestorSimilarity(Feature other) {
@@ -290,7 +258,6 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 	@Override
 	public String toString() {
-		String where = String.format("@%03d:%03d<%03d>", line, col, tokenIndex);
-		return String.format("%s %-13s %s '%s'", nodeName, where, docName, text);
+		return String.format("%s %s ", nodeName, docName);
 	}
 }

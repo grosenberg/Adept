@@ -27,6 +27,15 @@ public class Formatter extends FormatterOps {
 		commenter = new CommentProcessor(this);
 	}
 
+	@Override
+	public void dispose() {
+		spacer.dispose();
+		breaker.dispose();
+		aligner.dispose();
+		commenter.dispose();
+		super.dispose();
+	}
+
 	/**
 	 * Executes the formatter. The final results is then accessible from the {@code modified} field of
 	 * the document.
@@ -41,13 +50,12 @@ public class Formatter extends FormatterOps {
 	}
 
 	public List<TextEdit> createEdits() {
-		if (settings.format) {
-			spacer.adjustLineSpacing();
-			if (settings.breakLongLines) breaker.breakLongLines();
-			if (settings.alignFields) aligner.alignFields();
-			if (settings.alignComments) aligner.alignComments();
-			if (settings.formatComments) commenter.formatComments();
-		}
+		if (settings.formatComments) commenter.formatComments();
+		if (settings.format) spacer.adjustLineSpacing();
+		if (settings.breakLongLines) breaker.breakLongLines();
+		if (settings.alignFields) aligner.alignFields();
+		if (settings.alignComments) aligner.alignComments();
+
 		return getTextEdits();
 	}
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -13,15 +14,17 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Group;
 import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.unit.TreeTable;
 
 /** Record of the information generated through the parsing of a single Document. */
 public class ParseRecord {
@@ -55,10 +58,10 @@ public class ParseRecord {
 	// ---------------------------------------------------------
 
 	/** Primary index of a parsed document. Ordered by token index. */
-	// key=visible token; value=feature
+	// key=real token; value=feature
 	public TreeMap<AdeptToken, Feature> index;
 
-	// key=visible token index; value=token
+	// key=real token index; value=token
 	public TreeMap<Integer, AdeptToken> tokenIndex;
 
 	// key=feature id; value=feature
@@ -79,8 +82,8 @@ public class ParseRecord {
 	// value=list of block comments
 	public List<AdeptToken> commentIndex;
 
-	// key=line number; value=list of fields
-	public TreeMultiset<Integer, AdeptToken> fieldIndex;
+	// row=start token index; col=stop token index; value=context ancestors
+	public TreeTable<Integer, Integer, List<ParseTree>> contextIndex;
 
 	// ---------------------------------------------------------
 
@@ -95,7 +98,7 @@ public class ParseRecord {
 		lineStartIndex = new HashMap<>();
 		blanklines = new HashMap<>();
 		commentIndex = new ArrayList<>();
-		fieldIndex = new TreeMultiset<>();
+		contextIndex = new TreeTable<>();
 
 		indenter = new Indenter(this);
 		aligner = new Aligner(this);
@@ -110,7 +113,7 @@ public class ParseRecord {
 		lineStartIndex.clear();
 		blanklines.clear();
 		commentIndex.clear();
-		fieldIndex.clear();
+		contextIndex.clear();
 
 		indenter.clear();
 		aligner.clear();
@@ -132,35 +135,71 @@ public class ParseRecord {
 		return lexer.getVocabulary().getDisplayName(type);
 	}
 
+	/** Returns the first real token prior to the given token index or {@code null}. */
+	public AdeptToken getRealLeft(int idx) {
+		if (!tokenIndex.isEmpty()) {
+			Entry<Integer, AdeptToken> entry = tokenIndex.lowerEntry(idx);
+			if (entry != null) return entry.getValue();
+		} else {
+			for (int jdx = idx - 1; jdx > -1; jdx--) {
+				AdeptToken left = (AdeptToken) tokenStream.get(jdx);
+				if (!left.isWhitespace()) return left;
+			}
+		}
+		return null;
+	}
+
+	/** Returns the first real token after the given token index or {@code null}. */
+	public AdeptToken getRealRight(int idx) {
+		if (!tokenIndex.isEmpty()) {
+			Entry<Integer, AdeptToken> entry = tokenIndex.higherEntry(idx);
+			if (entry != null) return entry.getValue();
+		} else {
+			for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
+				AdeptToken right = (AdeptToken) tokenStream.get(jdx);
+				if (!right.isWhitespace()) return right;
+			}
+		}
+		return null;
+	}
+
 	/** Returns a count of the real tokens in the given token index range, inclusive. */
 	public int getRealTokenCount(int begIndex, int endIndex) {
-		List<Token> tokens = tokenStream.get(begIndex, endIndex);
-		if (tokens == null) return 0;
-
 		int cnt = 0;
-		for (Token token : tokens) {
-			if (!isWsOrComment(token.getType())) cnt++;
+		for (AdeptToken token : getTokenInterval(begIndex, endIndex)) {
+			if (!token.isComment()) cnt++;
 		}
 		return cnt;
 	}
 
-	/** Returns a list of the tokens in the given token index range, inclusive. */
-	public List<Token> getTokenInterval(int begIndex, int endIndex) {
-		return tokenStream.get(begIndex, endIndex);
+	/**
+	 * Returns a list of the tokens in the given token index range, inclusive. Will not return
+	 * {@code null}.
+	 */
+	public List<AdeptToken> getTokenInterval(int begIndex, int endIndex) {
+		if (begIndex == -1) begIndex++;		// at BOF
+		return convert(tokenStream.get(begIndex, endIndex));
 	}
 
-	/** Returns the token at the given token index . */
+	/** Returns the token at the given token index. */
 	public AdeptToken getToken(int index) {
-		return (AdeptToken) tokenStream.getTokens().get(index);
+		if (index == -1) return null;		// at BOF
+		return (AdeptToken) tokenStream.get(index);
+	}
+
+	/** Returns the ref token for the token at the given token index. */
+	public RefToken getTokenRef(int index) {
+		AdeptToken token = getToken(index);
+		return token != null ? token.refToken() : null;
 	}
 
 	/** Returns the text of the tokens in the given token index range, exclusive. */
 	public String getTextBetween(int begIndex, int endIndex) {
-		List<Token> tokens = getTokenInterval(begIndex, endIndex);
-		if (tokens == null || tokens.size() < 3) return "";
+		List<AdeptToken> tokens = getTokenInterval(begIndex, endIndex);
+		if (tokens.size() < 3) return "";
 
 		StringBuilder sb = new StringBuilder();
-		for (Token token : tokens.subList(1, tokens.size() - 1)) {
+		for (AdeptToken token : tokens.subList(1, tokens.size() - 1)) {
 			sb.append(token.getText());
 		}
 		return sb.toString();
@@ -170,20 +209,11 @@ public class ParseRecord {
 	 * Returns the text in the character stream between {@code beg} character index (inclusive) and
 	 * {@code end} character index (exclusive).
 	 */
-	public String textSpan(int beg, int end) {
+	public String getTextSpan(int beg, int end) {
 		return charStream.getText(new Interval(beg, end - 1));
 	}
 
-	/** Protect against null */
-	public List<AdeptToken> getHiddenLeft(int tokenIndex) {
-		return convert(tokenStream.getHiddenTokensToLeft(tokenIndex));
-	}
-
-	/** Protect against null */
-	public List<AdeptToken> getHiddenRight(int tokenIndex) {
-		return convert(tokenStream.getHiddenTokensToRight(tokenIndex));
-	}
-
+	// upconvert type and protect against null
 	@SuppressWarnings("unchecked")
 	private List<AdeptToken> convert(List<? extends Token> tokens) {
 		List<AdeptToken> adepts = new ArrayList<>();
@@ -199,17 +229,25 @@ public class ParseRecord {
 		return errCount;
 	}
 
-	public List<String> getRuleNames() {
-		return Arrays.asList(parser.getRuleNames());
-	}
-
 	public String getRuleName(int idx) {
 		return getRuleNames().get(idx);
 	}
 
+	public List<String> getRuleNames() {
+		return Arrays.asList(parser.getRuleNames());
+	}
+
+	/** Fix omission in the ANTLR run-time. */
 	@SuppressWarnings("deprecation")
 	public List<String> getTokenNames() {
 		return Arrays.asList(parser.getTokenNames());
+	}
+
+	/** Returns the token feature index for the document, ordered by token index. */
+	public TreeMap<AdeptToken, Feature> getIndex() {
+		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(AdeptComp.Instance);
+		clone.putAll(index);
+		return clone;
 	}
 
 	/** Returns the unique features created for the parsed document. */
@@ -217,20 +255,11 @@ public class ParseRecord {
 		return new ArrayList<>(featureIndex.values());
 	}
 
-	/** Returns the token feature map for the document, ordered by token index. */
-	public TreeMap<AdeptToken, Feature> getIndex() {
-		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(AdeptComp.Instance);
-		clone.putAll(index);
-		return clone;
-	}
-
 	public Feature getFeature(AdeptToken token) {
 		return index.get(token);
 	}
 
-	/**
-	 * Returns the token on the given line (0..n) that includes the given visual column.
-	 */
+	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (1..n). */
 	public AdeptToken getVisualToken(int line, int vcol) {
 		List<AdeptToken> tokens = lineTokensIndex.get(line);
 		if (tokens == null || tokens.isEmpty()) return null;
@@ -244,34 +273,6 @@ public class ParseRecord {
 			if (beg <= vcol && vcol < end) return tokens.get(idx);
 		}
 		return tokens.get(tokens.size() - 1);
-	}
-
-	public boolean isWhitespace(int type) {
-		return type == HWS || type == VWS;
-	}
-
-	public boolean isVertWS(int type) {
-		return type == VWS;
-	}
-
-	public boolean isHorzWS(int type) {
-		return type == HWS;
-	}
-
-	public boolean isComment(int type) {
-		return type == BLOCKCOMMENT || type == LINECOMMENT;
-	}
-
-	public boolean isBlockComment(int type) {
-		return type == BLOCKCOMMENT;
-	}
-
-	public boolean isLineComment(int type) {
-		return type == LINECOMMENT;
-	}
-
-	public boolean isWsOrComment(int type) {
-		return type == VWS || type == HWS || type == BLOCKCOMMENT || type == LINECOMMENT;
 	}
 
 	public boolean isBlankLine(int line) {

@@ -5,72 +5,70 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
-public class SpacingProcessor {
-
-	private FormatterOps ops;
+public class SpacingProcessor extends AbstractProcessor {
 
 	public SpacingProcessor(FormatterOps ops) {
-		this.ops = ops;
+		super(ops);
 	}
 
 	// initial TextEdit creation pass; also creates
 	// the initial modified line/token index in the FormatMgr
 	public void adjustLineSpacing() {
-		for (AdeptToken token : ops.data.index.keySet()) { // visible tokens
-			RefToken present = srcRefFor(token.getTokenIndex());
+		for (AdeptToken token : ops.data.index.keySet()) { // real tokens
+			RefToken present = token.refToken();
+			if (present == null) {
+				Log.error(this, "Ref is null for " + token.toString());
+				continue;
+			}
+			RefToken prior = ops.data.getTokenRef(present.lIndex);
+			RefToken next = ops.data.getTokenRef(present.rIndex);
+			RefToken matched = present.matched;
+			showWhere(prior, present, matched, next);
 
-			if (present != null) {
-				RefToken prior = srcRefFor(present.lIndex);
-				RefToken next = srcRefFor(present.rIndex);
-				RefToken matched = present.matched;
-				showWhere(prior, next, matched);
+			if (matched != null) {
+				try {
+					Map<Region, TextEdit> editSet = adjustLineSpacing(prior, present, next, matched);
+					if (!editSet.isEmpty()) {
+						for (Entry<Region, TextEdit> entry : editSet.entrySet()) {
+							Region region = entry.getKey();
+							TextEdit edit = entry.getValue();
 
-				if (matched != null) {
-					try {
-						Map<Region, TextEdit> editSet = adjustLineSpacing(prior, present, next, matched);
-						if (!editSet.isEmpty()) {
-							for (Entry<Region, TextEdit> entry : editSet.entrySet()) {
-								Region region = entry.getKey();
-								TextEdit edit = entry.getValue();
+							boolean exists = false;
+							try {
+								exists = ops.edits.containsKey(region);
+							} catch (RegionException e) {
+								Log.error(this, "Region Err: " + e.getMessage());
+							}
 
-								boolean exists = false;
-								try {
-									exists = ops.edits.containsKey(region);
-								} catch (RegionException e) {
-									Log.error(this, "Region Err: " + e.getMessage());
-								}
-
-								if (exists) {
-									TextEdit existing = ops.edits.get(region);
-									if (existing.priority() > edit.priority()) {
-										Log.debug(this, "P: " + existing.toString());	// priority/presesrve
-									} else {
-										Log.debug(this, "R: " + edit.toString());		// remove/replace
-										if (edit.existing().equals(edit.replacement())) {
-											ops.edits.remove(region);
-										} else {
-											ops.edits.put(region, edit);
-										}
-									}
+							if (exists) {
+								TextEdit existing = ops.edits.get(region);
+								if (existing.priority() > edit.priority()) {
+									Log.debug(this, "P: " + existing.toString());	// priority/presesrve
 								} else {
-									if (!edit.existing().equals(edit.replacement())) {
-										Log.debug(this, "A: " + edit.toString());		// add
+									Log.debug(this, "R: " + edit.toString());		// remove/replace
+									if (edit.existing().equals(edit.replacement())) {
+										ops.edits.remove(region);
+									} else {
 										ops.edits.put(region, edit);
 									}
 								}
+							} else {
+								if (!edit.existing().equals(edit.replacement())) {
+									Log.debug(this, "A: " + edit.toString());		// add
+									ops.edits.put(region, edit);
+								}
 							}
 						}
-					} catch (FormatException e) {
-						Log.error(this, "Formatter Err: " + e.getMessage());
-					} catch (Exception e) {
-						Log.error(this, "Unexpected Err: " + e.getMessage(), e);
 					}
+				} catch (FormatException e) {
+					Log.error(this, "Formatter Err: " + e.getMessage());
+				} catch (Exception e) {
+					Log.error(this, "Unexpected Err: " + e.getMessage(), e);
 				}
 			}
 
@@ -140,12 +138,12 @@ public class SpacingProcessor {
 		return edits;
 	}
 
-	// converts a token index to a known good feature ref token
-	protected RefToken srcRefFor(int index) {
-		AdeptToken token = index > -1 ? ops.data.tokenIndex.get(index) : null;
-		Feature feature = token != null ? ops.data.index.get(token) : null;
-		return feature != null ? feature.getRefFor(token.getTokenIndex()) : null;
-	}
+	// // converts a token index to a known good feature ref token
+	// protected RefToken srcRefFor(int index) {
+	// AdeptToken token = index > -1 ? ops.data.tokenIndex.get(index) : null;
+	// Feature feature = token != null ? ops.data.index.get(token) : null;
+	// return feature != null ? feature.getRefFor(token.getTokenIndex()) : null;
+	// }
 
 	// given desired spacing and existing ws, return replacement string
 	protected String calcSpacing(Spacing spacing, String existing, int indents) {
@@ -164,7 +162,7 @@ public class SpacingProcessor {
 				return Strings.EOL + Strings.createIndent(ops.settings.tabWidth, ops.settings.useTabs, indents);
 
 			case VFLEX:
-				String vflex = Strings.getN(vertCount(existing), Strings.EOL);
+				String vflex = Strings.getN(adjVertSpacing(existing), Strings.EOL);
 				return vflex + Strings.createIndent(ops.settings.tabWidth, ops.settings.useTabs, indents);
 
 			default:
@@ -178,15 +176,15 @@ public class SpacingProcessor {
 		if (!ops.settings.removeTrailingWS) {
 			indentStr += Strings.leadHWS(existing);
 		}
-		int eline = vertCount(existing);
-		int mline = vertCount(matched);
+		int eline = adjVertSpacing(existing);
+		int mline = adjVertSpacing(matched);
 		int lines = Math.max(eline, mline);
 		indentStr += Strings.getN(lines, Strings.EOL);
 		indentStr += Strings.createIndent(ops.settings.tabWidth, ops.settings.useTabs, indents);
 		return indentStr;
 	}
 
-	protected int vertCount(String text) {
+	protected int adjVertSpacing(String text) {
 		int lines = Strings.countVWS(text);
 		if (ops.settings.removeBlankLines) {
 			lines = Math.min(lines, ops.settings.keepNumBlankLines + 1);
@@ -194,10 +192,12 @@ public class SpacingProcessor {
 		return lines;
 	}
 
-	protected void showWhere(RefToken prior, RefToken next, RefToken matched) {
-		String pname = prior != null ? ops.data.getTokenName(prior.type) : "Null";
-		String mname = matched != null ? ops.data.getTokenName(matched.type) : "Null";
-		String nname = next != null ? ops.data.getTokenName(next.type) : "Null";
-		Log.debug(this, "   %s > %s >%s", pname, mname, nname);
+	protected void showWhere(RefToken prior, RefToken present, RefToken matched, RefToken next) {
+		String pname = prior != null ? ops.data.getTokenName(prior.type) : "{Nil}";
+		String nname = next != null ? ops.data.getTokenName(next.type) : "{Nil}";
+		String cname = ops.data.getTokenName(present.type);
+		cname += matched != null ? "+" : "-";
+
+		Log.debug(this, "   %s > %s > %s", pname, cname, nname);
 	}
 }

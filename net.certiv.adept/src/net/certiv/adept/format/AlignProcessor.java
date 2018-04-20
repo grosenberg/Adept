@@ -3,27 +3,25 @@ package net.certiv.adept.format;
 import java.util.List;
 
 import net.certiv.adept.format.plan.Group;
-import net.certiv.adept.format.plan.enums.Align;
+import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
-public class AlignProcessor {
-
-	private FormatterOps ops;
+public class AlignProcessor extends AbstractProcessor {
 
 	public AlignProcessor(FormatterOps ops) {
-		this.ops = ops;
+		super(ops);
 	}
 
 	public void alignFields() {
 		for (Group group : ops.data.groupIndex) {
 			group.update(ops);
 
-			TableMultilist<Align, Integer, AdeptToken> members = group.getMembers();
-			for (Align align : members.keySet()) {
+			TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
+			for (Scheme align : members.keySet()) {
 				TreeMultilist<Integer, AdeptToken> lines = members.get(align);
 				switch (align) {
 					case PAIR:
@@ -50,19 +48,21 @@ public class AlignProcessor {
 		for (Group group : ops.data.groupIndex) {
 			group.update(ops);
 
-			TreeMultilist<Integer, AdeptToken> lines = group.get(Align.COMMENT);
+			TreeMultilist<Integer, AdeptToken> lines = group.get(Scheme.COMMENT);
 			if (lines != null) {
 				handleListAlign(lines, true);
 			}
 		}
 	}
 
-	/** Align on common nearest minimum, non-overlapping position. */
+	/**
+	 * Align on common nearest minimum, non-overlapping position.
+	 * <p>
+	 * TODO: for a single line pair, need to consider the prior line to determine alignment cols.
+	 */
 	private void handlePairAlign(TreeMultilist<Integer, AdeptToken> lines) {
 		if (lines.isEmpty()) return;
-
-		TreeMultilist<Integer, AdeptToken> modLines = ops.modLines(lines);
-		if (modLines.size() > 1) {
+		if (lines.size() > 1) {
 			handleListAlign(lines, false);
 			return;
 		}
@@ -106,13 +106,13 @@ public class AlignProcessor {
 			List<AdeptToken> alignTokens = alignables.get(line);
 			if (alignTokens.size() > col) {
 				AdeptToken alignable = alignTokens.get(col);
-				int idx = ops.getInModLine(line, alignable);
+				int idx = ops.findInModLine(line, alignable);
 				if (idx == -1) continue;
 				if (idx == 0) {
 					alignCol = alignCol > 0 ? alignCol : alignable.visCol();
 				} else {
 					int tabCol = Strings.nearestTabCol(alignable.visCol(), ops.settings.tabWidth);
-					AdeptToken prior = ops.getInModLine(line, idx - 1);
+					AdeptToken prior = ops.findInModLine(line, idx - 1);
 					if (tabCol <= prior.visCol() + prior.getText().length() + 1) {
 						tabCol += ops.settings.tabWidth;
 					}
@@ -129,12 +129,12 @@ public class AlignProcessor {
 			List<AdeptToken> alignTokens = alignables.get(line);
 			if (alignTokens.size() > col) {
 				AdeptToken alignable = alignTokens.get(col);
-				int idx = ops.getInModLine(line, alignable);
+				int idx = ops.findInModLine(line, alignable);
 				if (idx == -1) continue;
 				if (idx == 0) {
 					alignCol = alignCol > 0 ? alignCol : alignable.visCol();
 				} else {
-					AdeptToken prior = ops.getInModLine(line, idx - 1);
+					AdeptToken prior = ops.findInModLine(line, idx - 1);
 					int minCol = prior.visCol() + prior.getText().length();
 					if (ops.findSpacingLeft(alignable) != Spacing.NONE) minCol++;
 					alignCol = Math.max(alignCol, minCol);

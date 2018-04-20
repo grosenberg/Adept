@@ -136,7 +136,7 @@ public class CorpusData {
 	 * @param corpusDir directory to save to
 	 * @throws Exception if an existing file cannot be overwritten
 	 */
-	public static void save(Path corpusDir, CorpusModel model) throws Exception {
+	public static void save(CorpusModel model, Path corpusDir) throws Exception {
 		save(corpusDir, model, true);
 	}
 

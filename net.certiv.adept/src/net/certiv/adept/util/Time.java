@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import net.certiv.adept.unit.Pair;
 
@@ -47,5 +48,16 @@ public class Time {
 
 	public static void clear() {
 		times.clear();
+	}
+
+	// ------------------------------
+
+	public static boolean wait(int seconds) {
+		try {
+			TimeUnit.SECONDS.sleep(seconds);
+			return true;
+		} catch (InterruptedException e) {
+			return false;
+		}
 	}
 }

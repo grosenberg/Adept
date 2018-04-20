@@ -1,11 +1,9 @@
 package net.certiv.adept.format;
 
-public class LineBreakProcessor {
-
-	@SuppressWarnings("unused") private FormatterOps ops;
+public class LineBreakProcessor extends AbstractProcessor {
 
 	public LineBreakProcessor(FormatterOps ops) {
-		this.ops = ops;
+		super(ops);
 	}
 
 	// TODO

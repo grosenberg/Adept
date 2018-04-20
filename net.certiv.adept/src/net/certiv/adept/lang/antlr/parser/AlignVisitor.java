@@ -1,7 +1,7 @@
 package net.certiv.adept.lang.antlr.parser;
 
 import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.enums.Align;
+import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltListContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AssignStmtContext;
@@ -22,33 +22,33 @@ public class AlignVisitor extends Antlr4ParserBaseListener {
 	// align pair - no group
 	@Override
 	public void enterAssignStmt(AssignStmtContext ctx) {
-		aligner.align(Align.PAIR, ctx, ctx.EQ(), ctx.SEMI());
+		aligner.align(Scheme.PAIR, ctx, ctx.EQ(), ctx.SEMI());
 	}
 
 	// align list - no group
 	@Override
 	public void enterElements(ElementsContext ctx) {
-		if (ctx.POUND() != null) aligner.align(Align.LIST, ctx, ctx.POUND());
+		if (ctx.POUND() != null) aligner.align(Scheme.LIST, ctx, ctx.POUND());
 	}
 
 	// align guards - allow group members
 	@Override
 	public void enterRuleBlock(RuleBlockContext ctx) {
 		aligner.groupBeg(ctx);
-		aligner.align(Align.GROUP, ctx, ctx.COLON(), ctx.SEMI());
+		aligner.align(Scheme.GROUP, ctx, ctx.COLON(), ctx.SEMI());
 	}
 
 	// align guards - allow group members
 	@Override
 	public void enterAltBlock(AltBlockContext ctx) {
 		aligner.groupBeg(ctx);
-		aligner.align(Align.GROUP, ctx, ctx.LPAREN(), ctx.RPAREN());
+		aligner.align(Scheme.GROUP, ctx, ctx.LPAREN(), ctx.RPAREN());
 	}
 
 	// align list - include in parent group
 	@Override
 	public void enterAltList(AltListContext ctx) {
-		if (ctx.OR() != null) aligner.align(Align.GROUP, ctx.getParent(), ctx.OR());
+		if (ctx.OR() != null) aligner.align(Scheme.GROUP, ctx.getParent(), ctx.OR());
 	}
 
 	// ----

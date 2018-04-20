@@ -2,9 +2,6 @@ package net.certiv.adept.format.plan;
 
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.format.plan.enums.Bind;
-import net.certiv.adept.format.plan.enums.Op;
-
 public class Dent implements Comparable<Dent> {
 
 	@Expose public int indents;		// indent level at a token index

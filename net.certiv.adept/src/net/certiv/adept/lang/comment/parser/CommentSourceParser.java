@@ -37,25 +37,34 @@ public class CommentSourceParser {
 			parser = new CommentParser(tokenStream);
 			parser.removeErrorListeners();
 			tree = parser.comment();
-
+	
 		} catch (RecognitionException e) {
 			Log.error(this, ErrorType.PARSE_ERROR.msg + ": " + comment.toString());
 			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, comment.toString());
 			return false;
-
+	
 		} catch (Exception e) {
 			Log.error(this, ErrorType.PARSE_FAILURE.msg + ": " + comment.toString());
 			Tool.errMgr.toolError(ErrorType.PARSE_FAILURE, e, comment.toString());
 			return false;
-
+	
 		} finally {
 			if (tree == null || tree instanceof ErrorNode) {
 				Tool.errMgr.toolError(ErrorType.PARSE_ERROR, "Bad parse tree: " + comment);
 				return false;
 			}
 		}
-
+	
 		ParseTreeWalker.DEFAULT.walk(visitor, tree);
 		return true;
+	}
+
+	public void dispose() {
+		visitor = null;
+		tree = null;
+		parser = null;
+		lexer = null;
+		tokenStream = null;
+		charStream = null;
 	}
 }

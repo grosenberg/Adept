@@ -52,14 +52,18 @@ public class DocProcessor extends BaseProcessor {
 	/** Applies the docModel to format the doc content. */
 	public void formatDocument() {
 		Time.start(Facet.FORMAT);
-		if (settings.format) {
-			Formatter formatter = new Formatter(docModel, settings);
-			if (formatter.execute()) {
-				doc.setEdits(formatter.getTextEdits());
-				doc.setModified(formatter.getFormatted());
-				if (settings.save) doc.saveModified(settings.backup);
-			}
+		Formatter formatter = new Formatter(docModel, settings);
+		if (formatter.execute()) {
+			doc.setEdits(formatter.getTextEdits());
+			doc.setModified(formatter.getFormatted());
+			if (settings.save) doc.saveModified(settings.backup);
 		}
+		formatter.dispose();
 		Time.stop(Facet.FORMAT);
+	}
+
+	public void dispose() {
+		doc = null;
+		docModel = null;
 	}
 }

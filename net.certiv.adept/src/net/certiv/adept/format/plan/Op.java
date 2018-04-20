@@ -1,4 +1,4 @@
-package net.certiv.adept.format.plan.enums;
+package net.certiv.adept.format.plan;
 
 // Mark operations
 public enum Op {

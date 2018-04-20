@@ -67,13 +67,15 @@ public class FormatContentPanel extends JPanel {
 		lhsPanel.setLayout(new BorderLayout());
 		rhsPanel.setLayout(new BorderLayout());
 
-		lhs = new JTextPane();
+		lhs = new CodePane();
 		lhs.setSize(width, height);
 		lhs.setEditable(false);
 		lhs.addCaretListener(new CaretListener() {
 
 			@Override
 			public void caretUpdate(CaretEvent e) {
+				if (!lhs.isFocusOwner()) return;
+
 				try {
 					Document doc = lhs.getDocument();
 					int line = TextUtils.getLineOfOffset(doc, e.getDot()); 			// 0..n
@@ -83,26 +85,7 @@ public class FormatContentPanel extends JPanel {
 			}
 		});
 
-		rhs = new JTextPane() {
-
-			@Override
-			public String getToolTipText(MouseEvent e) {
-				int pos = rhs.viewToModel(e.getPoint());
-				if (pos >= 0) {
-					StyledDocument doc = (StyledDocument) rhs.getDocument();
-					try {
-						int line = TextUtils.getLineOfOffset(doc, pos); 			// 0..n
-						int beg = TextUtils.getLineStartOffset(doc, line);
-						int len = TextUtils.getLineEndOffset(doc, line) - beg;
-						String text = doc.getText(beg, len);
-						return Strings.encodeWS(text);
-					} catch (BadLocationException e1) {}
-				}
-				return null;
-			}
-
-		};
-		ToolTipManager.sharedInstance().registerComponent(rhs);
+		rhs = new CodePane();
 		rhs.setSize(width, height);
 		rhs.setEditable(false);
 
@@ -216,6 +199,30 @@ public class FormatContentPanel extends JPanel {
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
 		lhs.setCaretPosition(0);
+	}
+
+	private class CodePane extends JTextPane {
+
+		public CodePane() {
+			super();
+			ToolTipManager.sharedInstance().registerComponent(this);
+		}
+
+		@Override
+		public String getToolTipText(MouseEvent e) {
+			int pos = viewToModel(e.getPoint());
+			if (pos >= 0) {
+				StyledDocument doc = (StyledDocument) getDocument();
+				try {
+					int line = TextUtils.getLineOfOffset(doc, pos); // 0..n
+					int beg = TextUtils.getLineStartOffset(doc, line);
+					int len = TextUtils.getLineEndOffset(doc, line) - beg;
+					String text = doc.getText(beg, len);
+					return Strings.encodeWS(text);
+				} catch (BadLocationException e1) {}
+			}
+			return null;
+		}
 	}
 
 	private class Synchronizer implements AdjustmentListener {

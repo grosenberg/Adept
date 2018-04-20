@@ -56,7 +56,7 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 	}
 
 	public Region getRegion() {
-		return new Region(this);
+		return Region.key(this);
 	}
 
 	public boolean changesSomething() {

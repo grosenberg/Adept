@@ -1,6 +1,6 @@
 grammar    ARule;
 
-// hello
+// hello  <b>  there </b> {@ code	 blue       bonnet 		}    end	   
 rule
 	:A
 		|        B 

@@ -204,6 +204,14 @@ public class Strings {
 		return true;
 	}
 
+	/** Returns the given string stripped of any trailing whitespace */
+	public static String trimTrailing(String s) {
+		for (int idx = s.length() - 1; idx >= 0; idx--) {
+			if (!Character.isWhitespace(s.charAt(idx))) return s.substring(0, idx + 1);
+		}
+		return "";
+	}
+
 	/** Returns a string containing {@code count} spaces. */
 	public static String spaces(int count) {
 		return getN(count, SPACE);
@@ -228,7 +236,7 @@ public class Strings {
 	}
 
 	/**
-	 * Returns any leading HWS from the given string.
+	 * Returns the leading HWS contained in the given string.
 	 *
 	 * @param str the string to check
 	 * @return the leading HWS
@@ -236,6 +244,17 @@ public class Strings {
 	public static String leadHWS(String str) {
 		int idx = firstNonHWS(str);
 		return idx > -1 ? str.substring(0, idx) : "";
+	}
+
+	/**
+	 * Returns the trailing HWS contained in the given string.
+	 *
+	 * @param str the string to check
+	 * @return the tailing HWS
+	 */
+	public static String tailHWS(String str) {
+		int idx = lastNonHWS(str);
+		return idx != -1 ? str.substring(idx + 1) : str;
 	}
 
 	/**
@@ -248,6 +267,21 @@ public class Strings {
 		if (str == null || str.isEmpty()) return -1;
 
 		for (int col = 0; col < str.length(); col++) {
+			if (!isIndentChar(str.charAt(col))) return col;
+		}
+		return -1;
+	}
+
+	/**
+	 * Returns the index of the last non-horizontal whitespace character in the given string.
+	 *
+	 * @param str the string to check
+	 * @return index of the last non-whitespace character
+	 */
+	public static int lastNonHWS(String str) {
+		if (str == null || str.isEmpty()) return -1;
+
+		for (int col = str.length() - 1; col <= 0; col--) {
 			if (!isIndentChar(str.charAt(col))) return col;
 		}
 		return -1;
@@ -403,7 +437,9 @@ public class Strings {
 
 	public static String createVisualWs(int tabWidth, int from, int to) {
 		if (tabWidth < 1) tabWidth = 1;
-		if (from < 0 || to < from) throw new IllegalArgumentException(String.format("from %s to %s", from, to));
+		if (from < 0 || to < from) {
+			throw new IllegalArgumentException(String.format("from %s to %s", from, to));
+		}
 
 		StringBuilder sb = new StringBuilder();
 		int dot = from;

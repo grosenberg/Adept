@@ -13,7 +13,6 @@ public class DocModel {
 	private CoreMgr mgr;
 	private Builder builder;
 	private Document doc;
-
 	private List<Feature> features;
 
 	// key=token; value=unique feature
@@ -61,5 +60,16 @@ public class DocModel {
 
 	public int getTokenRefsCount() {
 		return index.size();
+	}
+
+	public void dispose() {
+		doc.setModel(null);
+		doc.setBuilder(null);
+		doc = null;
+		index = null;
+		features = null;
+		builder.dispose();
+		builder = null;
+		mgr = null;
 	}
 }

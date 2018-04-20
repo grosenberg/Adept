@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
-import net.certiv.adept.format.plan.enums.Align;
+import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 
@@ -35,8 +35,8 @@ public class Refs {
 	}
 
 	public static String tAlign(RefToken ref) {
-		if (ref.align == Align.NONE) return "None --";
-		return String.format(AlignMsg, ref.align, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
+		if (ref.scheme == Scheme.NONE) return "None --";
+		return String.format(AlignMsg, ref.scheme, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
 	}
 
 	public static String tSpace(RefToken ref) {

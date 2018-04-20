@@ -1,6 +1,5 @@
 package net.certiv.adept.core;
 
-import java.nio.file.Path;
 import java.util.List;
 
 import net.certiv.adept.Settings;
@@ -37,6 +36,8 @@ public class CorpusProcessor extends BaseProcessor {
 	}
 
 	public void loadModel() {
+		Time.clear();
+		Calc.clear();
 		Time.start(Facet.LOAD);
 		if (settings.rebuild || forceBuild) {
 			buildCorpusModel();
@@ -56,18 +57,13 @@ public class CorpusProcessor extends BaseProcessor {
 	}
 
 	public void buildCorpusModel() {
-		Time.clear();
-		Calc.clear();
-
 		Time.start(Facet.BUILD);
 		Log.info(this, "Building corpus model ...");
 
 		CorpusData.removeDataFiles(settings.corpusDir);
-		corModel = new CorpusModel(settings.corpusDir);
+		corModel = new CorpusModel(mgr, settings.corpusDir);
 
 		List<Document> documents = CorpusDocs.readDocuments(settings.corpusDir, settings.corpusExt, settings.tabWidth);
-		// documents.subList(3, documents.size()).clear();
-
 		for (Document doc : documents) {
 			if (pathnames.contains(doc.getPathname())) {
 				Calc.inc(Form.DOCS);
@@ -77,9 +73,7 @@ public class CorpusProcessor extends BaseProcessor {
 				corModel.merge(builder);	// merge document features into the corpus
 			}
 		}
-		corModel.postBuild(builder);
-		Thread t = new Thread(mgr.getThreadGroup(), new SaveOp(corModel, settings.corpusDir));
-		t.start();
+		corModel.postBuild(builder, settings);
 		Time.stop(Facet.BUILD);
 	}
 
@@ -89,28 +83,5 @@ public class CorpusProcessor extends BaseProcessor {
 
 	public boolean isConsistent() {
 		return corModel.isConsistent();
-	}
-
-	private class SaveOp implements Runnable {
-
-		private CorpusModel model;
-		private Path dir;
-
-		public SaveOp(CorpusModel model, Path dir) {
-			super();
-			this.model = model;
-			this.dir = dir;
-		}
-
-		@Override
-		public void run() {
-			try {
-				model.save(dir);
-			} catch (Exception e) {
-				corModel.setConsistent(false);
-				Tool.errMgr.toolError(ErrorType.MODEL_SAVE_FAILURE, e.getMessage());
-				Log.error(this, "Cannot write file(s): ", e);
-			}
-		}
 	}
 }

@@ -27,7 +27,7 @@ import net.certiv.adept.lang.comment.parser.gen.CommentParser.PreformContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.WordContext;
 import net.certiv.adept.util.Strings;
 
-public class CommentProcessor {
+public class CommentProcessor extends AbstractProcessor {
 
 	private static final String DocBeg = "/** ";
 	private static final String BlkBeg = "/* ";
@@ -35,10 +35,9 @@ public class CommentProcessor {
 	private static final String BlkEnd = " */";
 	private static final String LineBeg = "// ";
 	private static final String CodeBeg = "{@";
+	private static final Object CodeEnd = "}";
 
 	private static final Pattern Star = Pattern.compile("\\s*\\*");
-
-	private FormatterOps ops;
 
 	private CommentSourceParser parser;
 	private ParseTreeProperty<TypeToken> properties;
@@ -57,22 +56,39 @@ public class CommentProcessor {
 	private String comment; // formatted results
 
 	public CommentProcessor(FormatterOps ops) {
-		this.ops = ops;
+		super(ops);
 
 		parser = new CommentSourceParser(this);
 		properties = new ParseTreeProperty<>();
 		oneTab = Strings.spaces(ops.settings.tabWidth);
 	}
 
-	public void formatComments() {
-		int firstTokenIndex = ops.data.index.firstKey().getTokenIndex(); // header, if present
-		for (AdeptToken token : ops.data.commentIndex) {
-			if (token.getTokenIndex() == firstTokenIndex && !ops.settings.formatHdrComment) continue;
+	@Override
+	public void dispose() {
+		ops = null;
+		parser.dispose();
+		parser = null;
+		properties = null;
+		comment = null;
+	}
 
+	public void formatComments() {
+		for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
+			AdeptToken token = ops.data.commentIndex.get(idx);
 			if (process(token)) {
 				token.setText(this.comment);
 			}
 		}
+	}
+
+	private int firstCmtIdx() {
+		int idx = 0;
+		if (!ops.settings.formatHdrComment) {
+			AdeptToken firstCmt = ops.data.commentIndex.get(idx);
+			AdeptToken prior = ops.data.getRealLeft(firstCmt.getTokenIndex());
+			if (prior == null && !firstCmt.isLineComment()) idx++;
+		}
+		return idx;
 	}
 
 	public boolean process(AdeptToken comment) {
@@ -130,7 +146,12 @@ public class CommentProcessor {
 
 		prefix1 = LineBeg;
 		prefixN = LineBeg;
-		buildDescription((DescToken) properties.get(ctx), content);
+		DescToken rec = new DescToken(ctx.getRuleIndex());
+		for (ParseTree child : ctx.children) {
+			TypeToken prop = properties.get(child);
+			if (prop != null) rec.add(prop);
+		}
+		buildDescription(rec, content);
 		comment = content.toString();
 	}
 
@@ -146,16 +167,17 @@ public class CommentProcessor {
 		properties.put(ctx, rec);
 	}
 
-	public void description(DescContext desc) {
-		DescToken rec = new DescToken(desc.getRuleIndex());
-		for (ParseTree node : desc.children) {
-			rec.add(properties.get(node));
+	public void description(DescContext ctx) {
+		DescToken rec = new DescToken(ctx.getRuleIndex());
+		for (ParseTree node : ctx.children) {
+			TypeToken token = properties.get(node);
+			if (token != null) rec.add(token);
 		}
-		properties.put(desc, rec);
+		properties.put(ctx, rec);
 	}
 
-	public void word(WordContext ctx, Token tag) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), tag.toString()));
+	public void word(WordContext ctx, Token token) {
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void code(CodeContext ctx, Token mark, List<Token> words) {
@@ -164,7 +186,7 @@ public class CommentProcessor {
 			code.append(word.getText() + Strings.SPACE);
 		}
 		code.setLength(code.length() - 1);
-		code.append("}");
+		code.append(CodeEnd);
 		properties.put(ctx, new StrToken(ctx.getRuleIndex(), code.toString()));
 	}
 
@@ -177,23 +199,23 @@ public class CommentProcessor {
 	}
 
 	public void inline(InlineContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.toString()));
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void hdret(HdretContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.toString()));
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void flow(FlowContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.toString()));
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void list(ListContext ctx, Token token) {
-		properties.put(ctx, new ListToken(ctx.getRuleIndex(), token.toString()));
+		properties.put(ctx, new ListToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void item(ItemContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.toString()));
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void blank(BlankContext ctx) {
@@ -322,10 +344,11 @@ public class CommentProcessor {
 
 	private String wordWrap(List<TextToken> words) {
 		StringBuilder wrap = new StringBuilder();
-		StringBuilder line = new StringBuilder(prefix1);
+		StringBuilder line = new StringBuilder();
 		int limit = ops.settings.commentWidth - visCol;
+		String prefix = listLevel == 0 ? prefix1 : itemPrefix1;
 
-		line.append(listLevel > 0 ? prefix1 : itemPrefix1);
+		line.append(prefix);
 		for (int idx = 0, len = words.size(); idx < len; idx++) {
 			TextToken token = words.get(idx);
 
@@ -342,7 +365,7 @@ public class CommentProcessor {
 			if (line.length() + 5 > limit && idx < len - 1) {
 				wrap.append(line + Strings.EOL);
 				line.setLength(0);
-				line.append(listLevel > 0 ? prefixN : itemPrefixN);
+				line.append(listLevel == 0 ? prefixN : itemPrefixN);
 
 			} else if (idx < len - 1) {
 				// no space at EOL and after certain tags
@@ -414,7 +437,6 @@ public class CommentProcessor {
 	}
 
 	private abstract class TextToken extends TypeToken {
-
 		String text;
 		boolean tag;
 		boolean open;
@@ -424,6 +446,11 @@ public class CommentProcessor {
 			this.text = text;
 			this.tag = text.length() > 1 && text.charAt(0) == '<';
 			this.open = text.length() > 1 && text.charAt(1) != '/';
+		}
+
+		@Override
+		public String toString() {
+			return String.format("%4d: %s", type, text);
 		}
 	}
 

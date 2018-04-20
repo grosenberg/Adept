@@ -14,8 +14,7 @@ import net.certiv.adept.vis.renderers.FeaturesCellRenderer;
 
 public class FeatureTableModel extends BaseTableModel {
 
-	private final String[] columnNames = { "Line", "Feature", "Kind", "Ancestors", "Token", "Text", "Token Refs",
-			"Weight" };
+	private final String[] columnNames = { "Line", "Feature", "Kind", "Ancestors", "Token", "Token Refs", "Weight" };
 
 	private List<Feature> features;
 	private Object[][] rowData;
@@ -35,11 +34,10 @@ public class FeatureTableModel extends BaseTableModel {
 			String kind = feature.getKind().toString();
 			String ancestors = evalAncestors(feature.getAncestors());
 			String name = String.format("%s  (%s)", feature.getNodeName(), feature.getType());
-			String text = feature.getText();
 			int refCnt = feature.getRefs().size();
 			int weight = feature.getWeight();
 
-			Object[] row = { line, id, kind, ancestors, name, text, refCnt, weight };
+			Object[] row = { line, id, kind, ancestors, name, refCnt, weight };
 			rows.add(row);
 			line++;
 		}
@@ -66,8 +64,8 @@ public class FeatureTableModel extends BaseTableModel {
 		table.setRowSorter(sorter);
 		sorter.setComparator(0, NumComp);
 		sorter.setComparator(1, NumComp);
+		sorter.setComparator(5, NumComp);
 		sorter.setComparator(6, NumComp);
-		sorter.setComparator(7, NumComp);
 
 		TableColumnModel cols = table.getColumnModel();
 		cols.getColumn(0).setPreferredWidth(10);
@@ -75,9 +73,8 @@ public class FeatureTableModel extends BaseTableModel {
 		cols.getColumn(2).setPreferredWidth(40);
 		cols.getColumn(3).setPreferredWidth(300);
 		cols.getColumn(4).setPreferredWidth(80);
-		cols.getColumn(5).setPreferredWidth(100);
-		cols.getColumn(6).setPreferredWidth(30);
-		cols.getColumn(7).setPreferredWidth(40);
+		cols.getColumn(5).setPreferredWidth(30);
+		cols.getColumn(6).setPreferredWidth(40);
 	}
 
 	public Feature getFeature(int row) {

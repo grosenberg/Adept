@@ -3,37 +3,45 @@ package net.certiv.adept.format;
 import java.util.Comparator;
 
 import net.certiv.adept.lang.AdeptToken;
+import net.certiv.adept.unit.TreeTable;
 
+/**
+ * Defines a contiguous range of tokens by the indexes of the real token end-points. A beginning
+ * real token index of {@code -1} represents a virtual BOF real token. The real EOF token has an
+ * actual token index.
+ */
 public class Region implements Comparator<Region>, Comparable<Region> {
+
+	private static final TreeTable<Integer, Integer, Region> POOL = new TreeTable<>();
 
 	public final int min;
 	public final int max;
 
-	public static Region key(AdeptToken token) {
-		return key(token.getTokenIndex());
-	}
-
-	public static Region key(int idx) {
-		return key(idx, idx);
+	public static Region key(AdeptToken a, AdeptToken b) {
+		int idx = a == null ? -1 : a.getTokenIndex();
+		return key(idx, b.getTokenIndex());
 	}
 
 	public static Region key(int idx1, int idx2) {
+		Region region = POOL.get(idx1, idx1);
+		if (region != null) return region;
 		return new Region(idx1, idx2);
+	}
+
+	public static Region key(TextEdit edit) {
+		return key(edit.begIndex(), edit.endIndex());
+	}
+
+	public static Region merge(Region lower, Region upper) {
+		int min = Math.min(lower.min, upper.min);
+		int max = Math.max(lower.max, upper.max);
+		return key(min, max);
 	}
 
 	private Region(int idx1, int idx2) {
 		min = idx1;
 		max = idx2;
-	}
-
-	public Region(TextEdit edit) {
-		this.min = edit.begIndex();
-		this.max = edit.endIndex();
-	}
-
-	public Region(Region lower, Region upper) {
-		this.min = Math.min(lower.min, upper.min);
-		this.max = Math.max(lower.max, upper.max);
+		POOL.put(idx1, idx2, this);
 	}
 
 	public Region larger(Region lower, Region upper) {

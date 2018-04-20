@@ -24,13 +24,13 @@ public class Settings {
 	// settings that control formatting
 
 	@Expose public Boolean format = true;
-	@Expose public Boolean breakLongLines = true;
-	@Expose public Boolean alignFields = true;
+	@Expose public Boolean breakLongLines = false;
+	@Expose public Boolean alignFields = false;
 	@Expose public Boolean alignComments = true;
 
 	@Expose public Boolean formatComments = true;
-	@Expose public Boolean formatHdrComment = true;
-	@Expose public Boolean removeBlankLinesComment = true;
+	@Expose public Boolean formatHdrComment = false;
+	@Expose public Boolean removeBlankLinesComment = false;
 
 	@Expose public Boolean useTabs = true;
 	@Expose public Boolean removeBlankLines = true;		// remove blank lines in code

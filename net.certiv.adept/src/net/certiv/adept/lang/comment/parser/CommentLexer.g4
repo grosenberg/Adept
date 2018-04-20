@@ -6,10 +6,10 @@ lexer grammar CommentLexer;
 
 @members {
 	public boolean atBol(boolean allowStar) {
-		CodePointCharStream cpcs = (CodePointCharStream) _input;
-		int offset = cpcs.index();
+		if (_tokenStartCharIndex == 0) return true;
 
-		for (int dot = -1; dot > -offset; dot--) {
+		CodePointCharStream cpcs = (CodePointCharStream) _input;
+		for (int dot = -1; dot >= -(_tokenStartCharIndex); dot--) {
 			char c = (char) cpcs.LA(dot);
 			switch (c) {
 				case '\t':
@@ -43,10 +43,10 @@ CODE	: '{@'	-> pushMode(code) ;
 
 PREFORM	: '<pre>' .*? '</pre>' ;
 HDRET	: LAngle Break Slash? RAngle ;
-INLINE	: LAngle Slash? Inline ( EscSeq | ~[\r\n] )*? RAngle ;
-FLOW	: LAngle Slash? Flow   ( EscSeq | ~[\r\n] )*? RAngle ;
-LIST	: LAngle Slash? List   ( EscSeq | ~[\r\n] )*? RAngle ;
-ITEM	: LAngle Slash? Item   ( EscSeq | ~[\r\n] )*? RAngle ;
+INLINE	: TagBeg Inline TagEnd ;
+FLOW	: TagBeg Flow   TagEnd ;
+LIST	: TagBeg List   TagEnd ;
+ITEM	: TagBeg Item   TagEnd ;
 
 PARAM	: '@param' { atBol(true) }? ;
 AT		: At	   { atBol(true) }? ;
@@ -56,17 +56,25 @@ WS		: [ \r\n\t]+ -> skip ;
 
 
 mode code ;
-	CWORD	: WordChar+	 -> type(WORD)	;
-	RBRACE	: RBrace	 -> popMode		;
-	CWS		: [ \r\n\t]+ -> skip 		;
+	RBRACE	: RBrace		-> popMode		;
+	CWORD	: WordChar+		-> type(WORD)	;
+	CNL		: ( Nl | EOF )	-> type(RBRACE), popMode ;
+	CHWS	: [ \t]+		-> skip ;
 
 
 mode line ;
-	LCODE	: '{@'		-> type(CODE), pushMode(code) ;
-	LWORD	: WordChar+	-> type(WORD) ;
-	NL		: [\r\n]+	-> popMode ;
-	HWS		: [ \t]+	-> skip ;
+	LINLINE	: TagBeg Inline TagEnd  -> type(INLINE) ;
+	LCODE	: '{@'			-> type(CODE), pushMode(code) ;
+	LWORD	: WordChar+		-> type(WORD) ;
+	NL		: ( Nl | EOF )	-> popMode ;
+	HWS		: [ \t]+		-> skip ;
 
+
+// -------------
+
+fragment Nl		: '\r'? '\n'	;
+fragment TagBeg : LAngle Slash? ;
+fragment TagEnd : ( ~[>\\\r\n] | EscSeq )* RAngle ;
 
 fragment EscSeq
 	:	Esc
@@ -81,29 +89,20 @@ fragment UnicodeEsc
 	:	'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)?
 	;
 
+// all chars except control and ws
 fragment WordChar
-	:	WordStartChar
-	|	'0'..'9'
-	|	Underscore
-	|	'\u00B7'
-	|	'\u0300'..'\u036F'
-	|	'\u203F'..'\u2040'
-	;
-
-fragment WordStartChar
-	:	'A'..'Z'
-	|	'a'..'z'
-	|	'\u00C0'..'\u00D6'
-	|	'\u00D8'..'\u00F6'
-	|	'\u00F8'..'\u02FF'
-	|	'\u0370'..'\u037D'
-	|	'\u037F'..'\u1FFF'
-	|	'\u200C'..'\u200D'
-	|	'\u2070'..'\u218F'
-	|	'\u2C00'..'\u2FEF'
-	|	'\u3001'..'\uD7FF'
-	|	'\uF900'..'\uFDCF'
-	|	'\uFDF0'..'\uFFFD'
+	: '\u0021'..'\u007E'
+	| '\u00A0'..'\u00FF'
+	| '\u0100'..'\u02FF'
+	| '\u0300'..'\u03FF'
+	| '\u0400'..'\u1FFF'
+	| '\u200B'..'\u200D'
+	| '\u2010'..'\u2027'
+	| '\u2030'..'\u205E'
+	| '\u2070'..'\u2FFF'
+	| '\u3001'..'\uD7FF'
+	| '\uF900'..'\uFDCF'
+	| '\uFDF0'..'\uFFFD'
 	;
 
 fragment Esc			: '\\'	;

@@ -9,9 +9,9 @@ import org.antlr.v4.runtime.Token;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.format.plan.Dent;
-import net.certiv.adept.format.plan.enums.Align;
-import net.certiv.adept.format.plan.enums.Gap;
-import net.certiv.adept.format.plan.enums.Place;
+import net.certiv.adept.format.plan.Gap;
+import net.certiv.adept.format.plan.Place;
+import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;
@@ -55,7 +55,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public List<Context> contexts;	// associates
 
 	// aligns
-	@Expose public Align align = Align.NONE;	// type of align group
+	@Expose public Scheme scheme = Scheme.NONE;	// type of align group
 	@Expose public Gap gap = Gap.VARIABLE;		// characterized number of real intra-aspect tokens
 	@Expose public Place inGroup = Place.ANY;	// in the lines of a group
 	@Expose public Place inLine = Place.ANY;	// within a line
@@ -82,8 +82,8 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		this.text = Strings.shorten(token.getText(), TXTLIMIT);
 	}
 
-	public void setAlign(Align align, Gap gap, Place[] places, int grpTotal) {
-		this.align = align;
+	public void setAlign(Scheme align, Gap gap, Place[] places, int grpTotal) {
+		this.scheme = align;
 		this.gap = gap;
 		this.inGroup = places[0];
 		this.inLine = places[1];
@@ -185,9 +185,9 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (lType == matchable.lType) score++;
 		if (rType == matchable.rType) score++;
 		if (rType == matchable.rType) score++;
-		if (align == matchable.align) score++;
+		if (scheme == matchable.scheme) score++;
 
-		if (align != Align.NONE) {	// TODO: refine
+		if (scheme != Scheme.NONE) {	// TODO: refine
 			double aligns = 0;
 			if (gap != matchable.gap) aligns++;
 			if (inGroup != matchable.inGroup) aligns++;
@@ -256,8 +256,8 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (r1.rType > r2.rType) return 1;
 		if (r1.lSpacing != r2.lSpacing) return r1.lSpacing.compareTo(r2.lSpacing);
 		if (r1.rSpacing != r2.rSpacing) return r1.rSpacing.compareTo(r2.rSpacing);
-		if (align != Align.NONE) {
-			if (r1.align != r2.align) return r1.align.compareTo(r2.align);
+		if (scheme != Scheme.NONE) {
+			if (r1.scheme != r2.scheme) return r1.scheme.compareTo(r2.scheme);
 			if (r1.gap != r2.gap) return r1.gap.compareTo(r2.gap);
 			if (r1.inGroup != r2.inGroup) return r1.inGroup.compareTo(r2.inGroup);
 			if (r1.inLine != r2.inLine) return r1.inLine.compareTo(r2.inLine);
@@ -275,7 +275,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		result = prime * result + ((place == null) ? 0 : place.hashCode());
 		result = prime * result + ((inGroup == null) ? 0 : inGroup.hashCode());
 		result = prime * result + ((inLine == null) ? 0 : inLine.hashCode());
-		result = prime * result + ((align == null) ? 0 : align.hashCode());
+		result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
 		result = prime * result + ((gap == null) ? 0 : gap.hashCode());
 		result = prime * result + lType;
 		result = prime * result + lIndex;
@@ -309,7 +309,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (place != other.place) return false;
 		if (inGroup != other.inGroup) return false;
 		if (inLine != other.inLine) return false;
-		if (align != other.align) return false;
+		if (scheme != other.scheme) return false;
 		if (gap != other.gap) return false;
 
 		if (lType != other.lType) return false;

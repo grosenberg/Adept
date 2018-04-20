@@ -30,8 +30,15 @@ public class Tool extends ToolBase {
 			// command formatting qualifiers
 
 			new Options("backup", "-b", OptionType.BOOL, "create doc backup before formatting"),
-			new Options("format", "-f", OptionType.BOOL, "format doc (default)"),
 			new Options("save", "-s", OptionType.BOOL, "save formatted doc"),
+
+			new Options("format", "-f", OptionType.BOOL, "format"),
+			new Options("breakLongLines", "-fbreak", OptionType.BOOL, "break long lines"),
+			new Options("alignFields", "-falign", OptionType.BOOL, "align fields"),
+			new Options("alignComments", "-fcmtalign", OptionType.BOOL, "align comments"),
+			new Options("formatComments", "-fcmt", OptionType.BOOL, "format comments"),
+			new Options("formatHdrComment", "-fcmthdr", OptionType.BOOL, "format header comment"),
+			new Options("rmvBlanksComment", "-fcmtrmvblanks", OptionType.BOOL, "remove blank lines in comments"),
 
 			// command operators
 
@@ -47,7 +54,15 @@ public class Tool extends ToolBase {
 	// fields set by option manager
 	private Boolean backup;
 	private Boolean check;
+
 	private Boolean format;
+	private Boolean breakLongLines;
+	private Boolean alignFields;
+	private Boolean alignComments;
+	private Boolean formatComments;
+	private Boolean formatHdrComment;
+	private Boolean rmvBlanksComment;
+
 	private Boolean learn;
 	private Boolean rebuild;
 	private Boolean save;
@@ -206,6 +221,36 @@ public class Tool extends ToolBase {
 		} else if (format != null) {
 			settings.format = format;
 		}
+		if (breakLongLines == null && settings.breakLongLines == null) {
+			settings.breakLongLines = true;
+		} else if (breakLongLines != null) {
+			settings.breakLongLines = breakLongLines;
+		}
+		if (alignFields == null && settings.alignFields == null) {
+			settings.alignFields = true;
+		} else if (alignFields != null) {
+			settings.alignFields = alignFields;
+		}
+		if (formatComments == null && settings.formatComments == null) {
+			settings.formatComments = true;
+		} else if (formatComments != null) {
+			settings.formatComments = formatComments;
+		}
+		if (alignComments == null && settings.alignComments == null) {
+			settings.alignComments = true;
+		} else if (alignComments != null) {
+			settings.alignComments = alignComments;
+		}
+		if (formatHdrComment == null && settings.formatHdrComment == null) {
+			settings.formatHdrComment = true;
+		} else if (formatHdrComment != null) {
+			settings.formatHdrComment = formatHdrComment;
+		}
+		if (rmvBlanksComment == null && settings.removeBlankLinesComment == null) {
+			settings.removeBlankLinesComment = true;
+		} else if (rmvBlanksComment != null) {
+			settings.removeBlankLinesComment = rmvBlanksComment;
+		}
 
 		// ---- learn ----
 
@@ -350,6 +395,36 @@ public class Tool extends ToolBase {
 	public void setFormat(boolean format) {
 		chkSettings();
 		settings.format = format;
+	}
+
+	/** Sets the formatter to break long lines. */
+	public void setFormatBreakLongLines(boolean breakLongLines) {
+		this.breakLongLines = breakLongLines;
+	}
+
+	/** Sets the formatter to align fields */
+	public void setFormatAlignFields(boolean alignFields) {
+		this.alignFields = alignFields;
+	}
+
+	/** Sets the formatter to align consecutive line comments */
+	public void setFormatAlignComments(boolean alignComments) {
+		this.alignComments = alignComments;
+	}
+
+	/** Sets the formatter to format comments */
+	public void setFormatComments(boolean comments) {
+		this.formatComments = comments;
+	}
+
+	/** Sets the formatter to also format header comments */
+	public void setFormatHdrComment(boolean header) {
+		this.formatHdrComment = header;
+	}
+
+	/** Sets the formatter to remove blank lines in comments */
+	public void setRemoveCommentBlankLines(boolean remove) {
+		this.rmvBlanksComment = remove;
 	}
 
 	public void setLang(String lang) {

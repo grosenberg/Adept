@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
-import net.certiv.adept.format.plan.enums.Place;
+import net.certiv.adept.format.plan.Place;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
@@ -47,7 +47,7 @@ public class Builder extends ParseRecord {
 	// ---------------------------------------------------------------------
 
 	/**
-	 * Build indexes prior to feature extraction.
+	 * Build indexes prior to feature construction.
 	 * <ul>
 	 * <li>tokenIndex: token index -> formattable token
 	 * <li>lineTokensIndex: line# -> formattable tokens
@@ -69,7 +69,8 @@ public class Builder extends ParseRecord {
 			}
 
 			int type = token.getType();
-			if (!isWhitespace(type)) {			// formattable only
+			token.setKind(evalKind(type));
+			if (!token.isWhitespace()) {			// formattable only
 				token.setRefToken(new RefToken(token));
 				token.setVisCol(calcVisualColumn(start, token, tabWidth));
 
@@ -77,8 +78,8 @@ public class Builder extends ParseRecord {
 				lineTokensIndex.put(current, token);
 				blanklines.put(current, false);	// correct assumption
 
-				if (isBlockComment(type)) commentIndex.add(token);
-				if (isLineComment(type)) aligner.comment(current, token);
+				if (token.isComment()) commentIndex.add(token);
+				if (token.isLineComment()) aligner.comment(current, token);
 			}
 		}
 
@@ -125,6 +126,10 @@ public class Builder extends ParseRecord {
 		}
 
 		List<ParseTree> ancestors = getAncestors(ctx);
+		int start = ctx.getStart().getTokenIndex();
+		int stop = ctx.getStop().getTokenIndex();
+		if (stop > start) contextIndex.put(start, stop, ancestors);
+
 		for (ParseTree child : ctx.children) {
 			if (child instanceof ErrorNode) {
 				String err = ((ErrorNode) child).getText();
@@ -134,19 +139,27 @@ public class Builder extends ParseRecord {
 			} else if (child instanceof TerminalNode) {
 				TerminalNode node = (TerminalNode) child;
 				AdeptToken token = (AdeptToken) node.getSymbol();
-				// token.setTerminal(node);
 
-				if (token.getType() == Token.EOF) continue;
-
-				// real feature
-				defineFeature(ancestors, token);
-
-				// comment features
-				AdeptToken left = findCommentLeft(token);
-				if (left != null) defineFeature(ancestors, left);
-				AdeptToken right = findCommentRight(token);
-				if (right != null) defineFeature(ancestors, right);
+				// parse tree feature
+				if (token.getType() != Token.EOF) defineFeature(ancestors, token);
 			}
+		}
+	}
+
+	public void extractCommentFeatures() {
+		for (AdeptToken comment : commentIndex) {
+			// if (comment.getText().equals("/* and exp */")) {
+			// Log.info(this, "Nil ancestors for: " + comment.toString());
+			// }
+			int idx = comment.getTokenIndex();
+			List<ParseTree> ancestors = contextIndex.encloses(idx, idx);
+			if (ancestors == null) {
+				ancestors = Collections.emptyList();
+				Log.info(this, "Nil ancestors for: " + comment.toString());
+			}
+
+			// comment feature
+			defineFeature(ancestors, comment);
 		}
 	}
 
@@ -163,14 +176,16 @@ public class Builder extends ParseRecord {
 	private void defineFeature(List<ParseTree> parents, AdeptToken token) {
 
 		// current context
-		ParserRuleContext ctx = (ParserRuleContext) parents.get(0);
-		int rule = ctx.getRuleIndex();
-		int ruleType = rule << 16;
-		if (exTypes.contains(ruleType)) {
-			if (ruleType == ERR_RULE) {
-				Log.debug(this, String.format("Error rule: %s", Utils.escapeWhitespace(ctx.getText(), false)));
+		if (!parents.isEmpty()) {
+			ParserRuleContext ctx = (ParserRuleContext) parents.get(0);
+			int rule = ctx.getRuleIndex();
+			int ruleType = rule << 16;
+			if (exTypes.contains(ruleType)) {
+				if (ruleType == ERR_RULE) {
+					Log.debug(this, String.format("Error rule: %s", Utils.escapeWhitespace(ctx.getText(), false)));
+				}
+				return;
 			}
-			return;
 		}
 
 		// target token
@@ -192,14 +207,14 @@ public class Builder extends ParseRecord {
 		List<Integer> rAssocs = rightAssociates(token);
 		ref.createContext(lAssocs, rAssocs);
 
-		AdeptToken left = findRealLeft(tokenIdx);
+		AdeptToken left = getRealLeft(tokenIdx);
 		if (left != null) {
 			String ws = findWsLeft(tokenIdx);
 			Spacing spacing = evalSpacing(left.getTokenIndex(), tokenIdx);
 			ref.setLeft(left, spacing, ws);
 		}
 
-		AdeptToken right = findRealRight(tokenIdx);
+		AdeptToken right = getRealRight(tokenIdx);
 		if (right != null) {
 			String ws = findWsRight(tokenIdx);
 			Spacing spacing = evalSpacing(tokenIdx, right.getTokenIndex());
@@ -213,40 +228,7 @@ public class Builder extends ParseRecord {
 
 	// ---------------------------------------------------------------------
 
-	public AdeptToken findRealLeft(int idx) {
-		for (int jdx = idx - 1; jdx > -1; jdx--) {
-			AdeptToken left = (AdeptToken) tokenStream.get(jdx);
-			if (!isWhitespace(left.getType())) return left;
-		}
-		return null;
-	}
-
-	public AdeptToken findRealRight(int idx) {
-		for (int jdx = idx + 1, len = tokenStream.size(); jdx < len; jdx++) {
-			AdeptToken right = (AdeptToken) tokenStream.get(jdx);
-			if (!isWhitespace(right.getType())) return right;
-		}
-		return null;
-	}
-
-	private AdeptToken findCommentLeft(AdeptToken token) {
-		List<AdeptToken> hidden = getHiddenLeft(token.getTokenIndex());
-		Collections.reverse(hidden);
-		return findComment(hidden);
-	}
-
-	private AdeptToken findCommentRight(AdeptToken token) {
-		List<AdeptToken> hidden = getHiddenRight(token.getTokenIndex());
-		return findComment(hidden);
-	}
-
-	private AdeptToken findComment(List<AdeptToken> hidden) {
-		for (AdeptToken token : hidden) {
-			if (isComment(token.getType())) return token;
-		}
-		return null;
-	}
-
+	// characterize the kind of token as identified by type
 	private Kind evalKind(int type) {
 		if (type == BLOCKCOMMENT) {
 			return Kind.BLOCKCOMMENT;
@@ -272,33 +254,23 @@ public class Builder extends ParseRecord {
 	private List<Integer> toRulePath(List<ParseTree> nodes) {
 		List<Integer> path = new ArrayList<>();
 		for (ParseTree node : nodes) {
-			if (node instanceof ParserRuleContext) {
+			try {
 				path.add(((ParserRuleContext) node).getRuleIndex());
-			} else {
-				throw new IllegalArgumentException("Ancestors must be rules.");
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Ancestors must be rules.", e);
 			}
 		}
 		return path;
 	}
 
-	private String findWsLeft(int idx) {
-		StringBuilder sb = new StringBuilder();
-		for (Token token : getHiddenLeft(idx)) {
-			if (!isComment(token.getType())) {
-				sb.append(token.getText());
-			}
-		}
-		return sb.toString();
+	private String findWsLeft(int tokenIndex) {
+		AdeptToken left = getRealLeft(tokenIndex);
+		return getTextBetween(left.getTokenIndex(), tokenIndex);
 	}
 
-	private String findWsRight(int idx) {
-		StringBuilder sb = new StringBuilder();
-		for (Token token : getHiddenRight(idx)) {
-			if (!isComment(token.getType())) {
-				sb.append(token.getText());
-			}
-		}
-		return sb.toString();
+	private String findWsRight(int tokenIndex) {
+		AdeptToken right = getRealRight(tokenIndex);
+		return getTextBetween(tokenIndex, right.getTokenIndex());
 	}
 
 	private List<Integer> leftAssociates(AdeptToken token) {
@@ -308,7 +280,7 @@ public class Builder extends ParseRecord {
 		try {
 			tokens.subList(idx, tokens.size()).clear();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.error(this, "Invalid 'linesTokenIndex'.");
 		}
 
 		while (tokens.size() < AssocLimit && line > 0) {

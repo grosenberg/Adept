@@ -64,6 +64,7 @@ public abstract class BaseProcessor {
 			parser.defineIndentation(builder.indenter());
 			parser.locateAlignables(builder.aligner());
 			parser.extractFeatures(builder);
+			builder.extractCommentFeatures();
 		} catch (Exception e) {
 			Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname(), e);
 			Tool.errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());

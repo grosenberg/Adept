@@ -1,6 +1,6 @@
-package net.certiv.adept.format.plan.enums;
+package net.certiv.adept.format.plan;
 
-public enum Align {
+public enum Scheme {
 
 	/** Default: for identification of unaliged ref tokens. */
 	NONE,

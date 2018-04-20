@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
 import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
@@ -55,9 +56,8 @@ public class FormatView extends AbstractViewBase {
 	private FormatContentPanel formatPanel;
 	private FormatInfoPanel info;
 
-	// key=source line; value=list of features
-	// private TreeMultiset<Integer, Feature> lineFeaturesIndex;
-	public String sourceContent;
+	private String pathname;
+	private String sourceContent;
 	private boolean enabled;
 
 	public static void main(String args[]) {
@@ -153,17 +153,20 @@ public class FormatView extends AbstractViewBase {
 	protected void selectFeatureData(int line, int col) {
 		if (enabled) {
 			ParseRecord rec = tool.getMgr().getDocModel().getParseRecord();
-			int start = rec.lineStartIndex.get(line);
-			String text = rec.charStream.getText(new Interval(start, start + col - 1));
-			int vcol = Strings.measureVisualWidth(text, tool.getMgr().getTabWidth());
-			AdeptToken token = rec.getVisualToken(line, vcol);
-			if (token != null) {
-				Feature feature = rec.getFeature(token);
-				RefToken ref = feature.getRefFor(token.getTokenIndex());
-				info.loadData(tool.getMgr(), feature, ref);
-			} else {
-				info.clearData();
+			Integer start = rec.lineStartIndex.get(line);
+			if (start != null) {
+				String text = rec.charStream.getText(new Interval(start, start + col - 1));
+				int vcol = Strings.measureVisualWidth(text, tool.getMgr().getTabWidth());
+				AdeptToken token = rec.getVisualToken(line, vcol);
+				if (token != null && token.getType() != Token.EOF) {
+					Feature feature = rec.getFeature(token);
+					RefToken ref = feature.getRefFor(token.getTokenIndex());
+					info.loadData(tool.getMgr(), feature, ref);
+					return;
+				}
 			}
+
+			info.clearData();
 		}
 	}
 
@@ -173,6 +176,12 @@ public class FormatView extends AbstractViewBase {
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 		tool.setRebuild(true);
+		tool.setFormat(true);
+		tool.setFormatAlignFields(false);
+		tool.setFormatAlignComments(false);
+		tool.setFormatHdrComment(false);
+		tool.setFormatComments(true);
+		tool.setRemoveCommentBlankLines(true);
 
 		boolean ok = tool.loadResources();
 		ok = ok && tool.validateOptions();
@@ -185,17 +194,31 @@ public class FormatView extends AbstractViewBase {
 	}
 
 	private void process() {
-		new Formatter().execute();
+		SourceListModel model = (SourceListModel) srcBox.getModel();
+		pathname = model.getSelectedPathname();
+		sourceContent = loadContent(pathname);
+		formatPanel.load(sourceContent, "");
+
+		// Time.wait(1);
+		FormatWorker worker = new FormatWorker();
+		worker.execute();
 	}
 
-	private class Formatter extends SwingWorker<String, Object> {
+	private String loadContent(String pathname) {
+		try {
+			byte[] bytes = Files.readAllBytes(Paths.get(pathname));
+			return new String(bytes, StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			Log.error(this, "Failed to read source file" + pathname + ": " + e.getMessage());
+		}
+		return "";
+	}
+
+	private class FormatWorker extends SwingWorker<String, Object> {
 
 		@Override
 		protected String doInBackground() throws Exception {
 			try {
-				SourceListModel model = (SourceListModel) srcBox.getModel();
-				String pathname = model.getSelectedPathname();
-				sourceContent = loadContent(pathname);
 				tool.setSourceFiles(pathname);
 				tool.execute();
 			} catch (Exception e) {
@@ -203,16 +226,6 @@ public class FormatView extends AbstractViewBase {
 				throw e;
 			}
 			return null;
-		}
-
-		protected String loadContent(String pathname) {
-			try {
-				byte[] bytes = Files.readAllBytes(Paths.get(pathname));
-				return new String(bytes, StandardCharsets.UTF_8);
-			} catch (IOException e) {
-				Log.error(this, "Failed to read source file" + pathname + ": " + e.getMessage());
-			}
-			return "";
 		}
 
 		@Override
