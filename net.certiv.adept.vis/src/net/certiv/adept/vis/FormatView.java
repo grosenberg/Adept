@@ -26,11 +26,14 @@ import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
+import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Strings;
 import net.certiv.adept.util.Time;
 import net.certiv.adept.vis.components.AbstractViewBase;
@@ -161,7 +164,16 @@ public class FormatView extends AbstractViewBase {
 				if (token != null && token.getType() != Token.EOF) {
 					Feature feature = rec.getFeature(token);
 					RefToken ref = feature.getRefFor(token.getTokenIndex());
-					info.loadData(tool.getMgr(), feature, ref);
+
+					RefToken matched = ref.matched;
+
+					TreeMultiset<Double, RefToken> matches = tool.getMgr().getMatches(feature, ref);
+					double sim = Maths.round(matches.firstKey(), 6);
+
+					TextEdit ledit = tool.getDocument().getEditLeft(token.getTokenIndex());
+					TextEdit redit = tool.getDocument().getEditRight(token.getTokenIndex());
+
+					info.loadData(feature, ref, matched, sim, ledit, redit);
 					return;
 				}
 			}

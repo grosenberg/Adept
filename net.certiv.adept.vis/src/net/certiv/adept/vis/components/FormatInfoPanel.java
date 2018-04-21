@@ -15,15 +15,17 @@ import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Refs;
+import net.certiv.adept.util.Strings;
 import net.certiv.adept.util.Time;
 
 public class FormatInfoPanel extends JPanel {
+
+	private static final String MsFmt = "%s ms";
 
 	private JTextField txtExecute;
 	private JTextField txtLoad;
@@ -53,18 +55,23 @@ public class FormatInfoPanel extends JPanel {
 	private JTextField txtPlace;
 	private JTextField txtSpacing;
 	private JTextField txtAlignment;
+	private JTextField txtRExist;
+	private JTextField txtRRepl;
+	private JTextField txtLExist;
+	private JTextField txtLRepl;
 
 	public FormatInfoPanel() {
 		setLayout(new FormLayout(new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("max(50dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				ColumnSpec.decode("max(34dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC,
 				FormSpecs.LABEL_COMPONENT_GAP_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC,
 				ColumnSpec.decode("max(40dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(30dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC,
-				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-				ColumnSpec.decode("default:grow"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
-				FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, ColumnSpec.decode("default:grow"), },
+				FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(30dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(30dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("max(30dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				ColumnSpec.decode("default:grow"), },
 				new RowSpec[] { FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
@@ -73,13 +80,14 @@ public class FormatInfoPanel extends JPanel {
 						FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
 						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, }));
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, }));
 
 		JLabel lblPerformance = new JLabel("Performance");
 		lblPerformance.setFont(new Font("Tahoma", Font.BOLD, 11));
-		add(lblPerformance, "2, 2, 3, 1, left, default");
+		add(lblPerformance, "2, 2, 5, 1, left, default");
 
 		JLabel lblDocLine = new JLabel("Line");
 		add(lblDocLine, "12, 2, center, default");
@@ -89,12 +97,6 @@ public class FormatInfoPanel extends JPanel {
 
 		JLabel lblVisCol = new JLabel("Visual Col");
 		add(lblVisCol, "16, 2, center, default");
-
-		JLabel lblNewLabel_1 = new JLabel("Place");
-		add(lblNewLabel_1, "18, 2, center, default");
-
-		JLabel lblMatDents = new JLabel("Dents");
-		add(lblMatDents, "20, 2, center, default");
 
 		JLabel lblLoad = new JLabel("Load");
 		add(lblLoad, "2, 4, right, default");
@@ -109,29 +111,22 @@ public class FormatInfoPanel extends JPanel {
 		add(lblSource, "10, 4");
 
 		txtLine = new JTextField();
+		txtLine.setHorizontalAlignment(SwingConstants.CENTER);
 		txtLine.setColumns(5);
 		txtLine.setEditable(false);
-		add(txtLine, "12, 4, fill, default");
+		add(txtLine, "12, 4, center, default");
 
 		txtCol = new JTextField();
+		txtCol.setHorizontalAlignment(SwingConstants.CENTER);
 		txtCol.setColumns(5);
 		txtCol.setEditable(false);
 		add(txtCol, "14, 4, fill, default");
 
 		txtVisCol = new JTextField();
+		txtVisCol.setHorizontalAlignment(SwingConstants.CENTER);
 		txtVisCol.setColumns(5);
 		txtVisCol.setEditable(false);
 		add(txtVisCol, "16, 4, fill, default");
-
-		txtPlace = new JTextField();
-		txtPlace.setEditable(false);
-		add(txtPlace, "18, 4, fill, default");
-		txtPlace.setColumns(8);
-
-		txtDent = new JTextField();
-		txtDent.setColumns(16);
-		txtDent.setEditable(false);
-		add(txtDent, "20, 4, fill, default");
 
 		JLabel lblRebuildTime = new JLabel("Build");
 		add(lblRebuildTime, "2, 6, right, default");
@@ -143,14 +138,14 @@ public class FormatInfoPanel extends JPanel {
 
 		JSeparator separator = new JSeparator();
 		separator.setOrientation(SwingConstants.VERTICAL);
-		add(separator, "8, 2, 1, 24");
+		add(separator, "8, 2, 1, 29");
 
 		JLabel lblAncestors = new JLabel("Ancestors");
 		add(lblAncestors, "10, 6, right, default");
 
 		txtAncestors = new JTextField();
 		txtAncestors.setEditable(false);
-		add(txtAncestors, "12, 6, 15, 1, fill, default");
+		add(txtAncestors, "12, 6, 13, 1, fill, default");
 
 		JLabel lblParse = new JLabel("Parse");
 		add(lblParse, "2, 8, right, default");
@@ -167,6 +162,16 @@ public class FormatInfoPanel extends JPanel {
 		txtToken.setEditable(false);
 		add(txtToken, "12, 8, 5, 1, fill, default");
 
+		txtPlace = new JTextField();
+		txtPlace.setEditable(false);
+		add(txtPlace, "18, 8, fill, default");
+		txtPlace.setColumns(8);
+
+		txtDent = new JTextField();
+		txtDent.setColumns(16);
+		txtDent.setEditable(false);
+		add(txtDent, "20, 8, 5, 1, fill, default");
+
 		JLabel lblMatching = new JLabel("Match");
 		add(lblMatching, "2, 10, right, default");
 
@@ -180,7 +185,7 @@ public class FormatInfoPanel extends JPanel {
 
 		txtSpacing = new JTextField();
 		txtSpacing.setEditable(false);
-		add(txtSpacing, "12, 10, 15, 1, fill, default");
+		add(txtSpacing, "12, 10, 13, 1, fill, default");
 		txtSpacing.setColumns(10);
 
 		JLabel lblFormatting = new JLabel("Format");
@@ -196,7 +201,7 @@ public class FormatInfoPanel extends JPanel {
 
 		txtAlignment = new JTextField();
 		txtAlignment.setEditable(false);
-		add(txtAlignment, "12, 12, 15, 1, fill, default");
+		add(txtAlignment, "12, 12, 13, 1, fill, default");
 		txtAlignment.setColumns(10);
 
 		JLabel lblExecute = new JLabel("Execute");
@@ -207,14 +212,11 @@ public class FormatInfoPanel extends JPanel {
 		txtExecute.setEditable(false);
 		add(txtExecute, "4, 14, 3, 1, fill, default");
 
-		JLabel lblMToken = new JLabel("Token");
-		add(lblMToken, "12, 16, 5, 1, center, default");
+		// --
 
-		JLabel lblMPlace = new JLabel("Place");
-		add(lblMPlace, "18, 16, center, default");
-
-		JLabel lblMDents = new JLabel("Dents");
-		add(lblMDents, "20, 16, center, default");
+		JLabel lblMatched = new JLabel("Matched");
+		lblMatched.setFont(new Font("Tahoma", Font.BOLD, 11));
+		add(lblMatched, "10, 16, left, default");
 
 		JLabel lblDocFeatures = new JLabel("Features");
 		add(lblDocFeatures, "4, 18, center, default");
@@ -222,25 +224,12 @@ public class FormatInfoPanel extends JPanel {
 		JLabel lblRefTokens = new JLabel("Refs");
 		add(lblRefTokens, "6, 18, center, default");
 
-		// --
+		JLabel lblSimilarity = new JLabel("Similarity");
+		add(lblSimilarity, "10, 18, right, default");
 
-		JLabel lblMatched = new JLabel("Matched");
-		lblMatched.setFont(new Font("Tahoma", Font.BOLD, 11));
-		add(lblMatched, "10, 18");
-
-		txtMToken = new JTextField();
-		txtMToken.setEditable(false);
-		add(txtMToken, "12, 18, 5, 1, fill, default");
-
-		txtMPlace = new JTextField();
-		txtMPlace.setEditable(false);
-		add(txtMPlace, "18, 18, fill, default");
-		txtMPlace.setColumns(8);
-
-		txtMDent = new JTextField();
-		txtMDent.setEditable(false);
-		add(txtMDent, "20, 18, fill, default");
-		txtMDent.setColumns(16);
+		txtMSimularity = new JTextField();
+		txtMSimularity.setEditable(false);
+		add(txtMSimularity, "12, 18, 3, 1, fill, default");
 
 		JLabel lblDocument = new JLabel("Source");
 		lblDocument.setFont(new Font("Tahoma", Font.BOLD, 11));
@@ -256,12 +245,22 @@ public class FormatInfoPanel extends JPanel {
 		txtDocRefs.setEditable(false);
 		add(txtDocRefs, "6, 20, fill, default");
 
-		JLabel lblMSpacing = new JLabel("Spacing");
-		add(lblMSpacing, "10, 20, right, default");
+		JLabel lblMToken = new JLabel("Token");
+		add(lblMToken, "10, 20, right, default");
 
-		txtMSpacing = new JTextField();
-		txtMSpacing.setEditable(false);
-		add(txtMSpacing, "12, 20, 15, 1, fill, default");
+		txtMToken = new JTextField();
+		txtMToken.setEditable(false);
+		add(txtMToken, "12, 20, 5, 1, fill, default");
+
+		txtMPlace = new JTextField();
+		txtMPlace.setEditable(false);
+		add(txtMPlace, "18, 20, fill, default");
+		txtMPlace.setColumns(8);
+
+		txtMDent = new JTextField();
+		txtMDent.setEditable(false);
+		add(txtMDent, "20, 20, 5, 1, fill, default");
+		txtMDent.setColumns(16);
 
 		JLabel lblCorpus = new JLabel("Corpus");
 		lblCorpus.setFont(new Font("Tahoma", Font.BOLD, 11));
@@ -277,23 +276,63 @@ public class FormatInfoPanel extends JPanel {
 		txtCorpusRefs.setEditable(false);
 		add(txtCorpusRefs, "6, 22, fill, default");
 
+		JLabel lblMSpacing = new JLabel("Spacing");
+		add(lblMSpacing, "10, 22, right, default");
+
+		txtMSpacing = new JTextField();
+		txtMSpacing.setEditable(false);
+		add(txtMSpacing, "12, 22, 13, 1, fill, default");
+
 		JLabel lblMAlignment = new JLabel("Alignment");
-		add(lblMAlignment, "10, 22, right, default");
+		add(lblMAlignment, "10, 24, right, default");
 
 		txtMAlignment = new JTextField();
 		txtMAlignment.setEditable(false);
-		add(txtMAlignment, "12, 22, 15, 1, fill, default");
+		add(txtMAlignment, "12, 24, 13, 1, fill, default");
 		txtMAlignment.setColumns(5);
 
-		JLabel lblMSim = new JLabel("Simularity");
-		add(lblMSim, "10, 24, right, default");
+		JLabel lblEdits = new JLabel("Edits");
+		lblEdits.setFont(new Font("Tahoma", Font.BOLD, 11));
+		add(lblEdits, "10, 28");
 
-		txtMSimularity = new JTextField();
-		txtMSimularity.setEditable(false);
-		add(txtMSimularity, "12, 24, 5, 1, fill, top");
+		JLabel lblNewLabel_2 = new JLabel("Left");
+		add(lblNewLabel_2, "12, 28");
+
+		JLabel lblNewLabel_3 = new JLabel("Right");
+		add(lblNewLabel_3, "20, 28");
+
+		JLabel lblFrom = new JLabel("From");
+		add(lblFrom, "10, 30, right, default");
+
+		txtLExist = new JTextField();
+		txtLExist.setEditable(false);
+		add(txtLExist, "12, 30, 5, 1, fill, default");
+		txtLExist.setColumns(10);
+
+		JLabel lblFrom_1 = new JLabel("From");
+		add(lblFrom_1, "18, 30, right, default");
+
+		txtRExist = new JTextField();
+		txtRExist.setEditable(false);
+		add(txtRExist, "20, 30, 5, 1, fill, default");
+		txtRExist.setColumns(20);
+
+		JLabel lblTo = new JLabel("To");
+		add(lblTo, "10, 32, right, default");
+
+		txtLRepl = new JTextField();
+		txtLRepl.setEditable(false);
+		add(txtLRepl, "12, 32, 5, 1, fill, default");
+		txtLRepl.setColumns(10);
+
+		JLabel lblNewLabel_1 = new JLabel("To");
+		add(lblNewLabel_1, "18, 32, right, default");
+
+		txtRRepl = new JTextField();
+		txtRRepl.setEditable(false);
+		add(txtRRepl, "20, 32, 5, 1, fill, default");
+		txtRRepl.setColumns(40);
 	}
-
-	private static final String MsFmt = "%s ms";
 
 	public void loadPerfData(CoreMgr mgr) {
 		ParseRecord rec = mgr.getDocModel().getParseRecord();
@@ -313,10 +352,7 @@ public class FormatInfoPanel extends JPanel {
 		txtCorpusRefs.setText(String.valueOf(mgr.getCorpusModel().getCorpusRefTokensCount()));
 	}
 
-	public void loadData(CoreMgr mgr, Feature feature, RefToken ref) {
-		TreeMultiset<Double, RefToken> matches = mgr.getMatches(feature, ref);
-		double sim = Maths.round(matches.firstKey(), 6);
-
+	public void loadData(Feature feature, RefToken ref, RefToken matched, double sim, TextEdit ledit, TextEdit redit) {
 		txtLine.setText(String.valueOf(ref.line + 1));
 		txtCol.setText(String.valueOf(ref.col + 1));
 		txtVisCol.setText(String.valueOf(ref.visCol));
@@ -328,7 +364,6 @@ public class FormatInfoPanel extends JPanel {
 		txtAlignment.setText(Refs.tAlign(ref));
 		txtSpacing.setText(Refs.tSpace(ref));
 
-		RefToken matched = ref.matched;
 		if (matched != null) {
 			txtMPlace.setText(Refs.tPlace(matched));
 			txtMDent.setText(matched.dent.toString());
@@ -338,6 +373,22 @@ public class FormatInfoPanel extends JPanel {
 			txtMSimularity.setText(String.valueOf(sim));
 		} else {
 			clearMatched();
+		}
+
+		if (ledit != null) {
+			txtLExist.setText(Strings.encodeWS(ledit.existing()));
+			txtLRepl.setText(Strings.encodeWS(ledit.replacement()));
+		} else {
+			txtLExist.setText("");
+			txtLRepl.setText("");
+		}
+
+		if (redit != null) {
+			txtRExist.setText(Strings.encodeWS(redit.existing()));
+			txtRRepl.setText(Strings.encodeWS(redit.replacement()));
+		} else {
+			txtRExist.setText("");
+			txtRRepl.setText("");
 		}
 	}
 

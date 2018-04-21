@@ -79,6 +79,20 @@ public class Document {
 		this.edits = list;
 	}
 
+	public TextEdit getEditLeft(int tokenIndex) {
+		for (TextEdit edit : edits) {
+			if (edit.endIndex() == tokenIndex) return edit;
+		}
+		return null;
+	}
+
+	public TextEdit getEditRight(int tokenIndex) {
+		for (TextEdit edit : edits) {
+			if (edit.begIndex() == tokenIndex) return edit;
+		}
+		return null;
+	}
+
 	public String getModified() {
 		return modified;
 	}

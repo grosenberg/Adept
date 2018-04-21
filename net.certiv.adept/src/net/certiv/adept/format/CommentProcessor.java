@@ -73,10 +73,12 @@ public class CommentProcessor extends AbstractProcessor {
 	}
 
 	public void formatComments() {
-		for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
-			AdeptToken token = ops.data.commentIndex.get(idx);
-			if (process(token)) {
-				token.setText(this.comment);
+		if (!ops.data.commentIndex.isEmpty()) {
+			for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
+				AdeptToken token = ops.data.commentIndex.get(idx);
+				if (process(token)) {
+					token.setText(this.comment);
+				}
 			}
 		}
 	}
