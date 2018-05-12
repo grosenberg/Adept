@@ -55,6 +55,29 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		replLen = end.getStartIndex() - replOffset;
 	}
 
+	/**
+	 * Define an edit to replacement the existing text of a token (should be a comment) with the new
+	 * given string value.
+	 *
+	 * @param token token representing the existing text
+	 * @param replacement replacement text
+	 * @param priority relative edit priority
+	 * @param msg edit description
+	 */
+	public TextEdit(AdeptToken token, String replacement, int priority, String msg) {
+		this.existing = token.getText();
+		this.replacement = replacement;
+		this.priority = priority;
+		this.msg = msg;
+
+		begIndex = endIndex = token.getTokenIndex();
+		replOffset = token.getStartIndex();
+		replLine = token.getLine();
+		replCol = token.getCharPositionInLine();
+		replLen = token.getStopIndex() - replOffset + 1;
+
+	}
+
 	public Region getRegion() {
 		return Region.key(this);
 	}
@@ -130,8 +153,14 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		replacement += c;
 	}
 
-	public void replUpdate(String replacement) {
+	public void setReplacement(String replacement) {
 		this.replacement = replacement;
+	}
+
+	/** Updates the replacement string by changing the trailing HWs to the given string. */
+	public void replUpdate(String replacement) {
+		this.replacement = Strings.trimTrailinglHWs(this.replacement);
+		this.replacement += replacement;
 	}
 
 	@Override

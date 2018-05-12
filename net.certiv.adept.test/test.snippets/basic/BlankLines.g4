@@ -2,14 +2,12 @@ grammar First ;
 
 rule
 	: A
-	| B 
+	| B
 	;
 
-A
-	: 'a' 
+A	: 'a'
 	;
-B
-	: A 'b'
+B	: A 'b'
 	;
 
 

@@ -5,11 +5,19 @@ import java.util.List;
 import net.certiv.adept.format.plan.Group;
 import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.model.Spacing;
+import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
+/**
+ * Aligns identified source elements: fields and comments. Alignment results are realized as edits
+ * left of the aligned tokens. Updates the {@code visCol} of the aligned element and that of all
+ * real tokens to the right on the same line.
+ * <p>
+ * Depends on the {@code visCol} comment token value being accurate and on the formatter line
+ * indexes.
+ */
 public class AlignProcessor extends AbstractProcessor {
 
 	public AlignProcessor(FormatterOps ops) {
@@ -17,12 +25,14 @@ public class AlignProcessor extends AbstractProcessor {
 	}
 
 	public void alignFields() {
+		ops.buildLinesIndexes();
+
 		for (Group group : ops.data.groupIndex) {
-			group.update(ops);
 
 			TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
 			for (Scheme align : members.keySet()) {
 				TreeMultilist<Integer, AdeptToken> lines = members.get(align);
+				lines = update(lines);
 				switch (align) {
 					case PAIR:
 						handlePairAlign(lines);
@@ -45,11 +55,12 @@ public class AlignProcessor extends AbstractProcessor {
 
 	/** Align on common nearest, non-overlapping tab stop. */
 	public void alignComments() {
-		for (Group group : ops.data.groupIndex) {
-			group.update(ops);
+		ops.buildLinesIndexes();
 
+		for (Group group : ops.data.groupIndex) {
 			TreeMultilist<Integer, AdeptToken> lines = group.get(Scheme.COMMENT);
 			if (lines != null) {
+				lines = update(lines);
 				handleListAlign(lines, true);
 			}
 		}
@@ -72,7 +83,7 @@ public class AlignProcessor extends AbstractProcessor {
 			int rem = token.visCol() % ops.settings.tabWidth;
 			if (rem > 0) {
 				int toVisCol = token.visCol() + ops.settings.tabWidth - rem;
-				ops.createEditAndShiftLine(modLine, token, toVisCol);
+				ops.prepEditAndShiftLine(modLine, token, toVisCol);
 			}
 		}
 	}
@@ -83,9 +94,9 @@ public class AlignProcessor extends AbstractProcessor {
 		for (int col = 0; col < colsToAlign; col++) {
 			int alignCol = 0;
 			if (col == 0 && tabAlignFirst) {
-				alignCol = tabColAlign(alignables, col);
+				alignCol = minTabCol(alignables, col);
 			} else {
-				alignCol = minColAlign(alignables, col);
+				alignCol = minCol(alignables, col);
 			}
 
 			for (int lineNum : alignables.keySet()) {
@@ -93,55 +104,45 @@ public class AlignProcessor extends AbstractProcessor {
 				if (tokens.size() > col) {
 					AdeptToken alignToken = tokens.get(col);
 					if (alignCol != alignToken.visCol()) {
-						ops.createEditAndShiftLine(lineNum, alignToken, alignCol);
+						ops.prepEditAndShiftLine(lineNum, alignToken, alignCol);
 					}
 				}
 			}
 		}
 	}
 
-	private int tabColAlign(TreeMultilist<Integer, AdeptToken> alignables, int col) {
-		int alignCol = 0;
-		for (int line : alignables.keySet()) {
-			List<AdeptToken> alignTokens = alignables.get(line);
-			if (alignTokens.size() > col) {
-				AdeptToken alignable = alignTokens.get(col);
-				int idx = ops.findInModLine(line, alignable);
-				if (idx == -1) continue;
-				if (idx == 0) {
-					alignCol = alignCol > 0 ? alignCol : alignable.visCol();
-				} else {
-					int tabCol = Strings.nearestTabCol(alignable.visCol(), ops.settings.tabWidth);
-					AdeptToken prior = ops.findInModLine(line, idx - 1);
-					if (tabCol <= prior.visCol() + prior.getText().length() + 1) {
-						tabCol += ops.settings.tabWidth;
-					}
-					alignCol = Math.max(alignCol, tabCol);
-				}
-			}
+	// Update line numers to account for edits
+	private TreeMultilist<Integer, AdeptToken> update(TreeMultilist<Integer, AdeptToken> lines) {
+		TreeMultilist<Integer, AdeptToken> updated = new TreeMultilist<>();
+		updated.setValueComparator(AdeptComp.Instance);
+		for (AdeptToken token : lines.valuesAll()) {
+			Integer modLine = ops.tokenLineIndex.get(token.getTokenIndex());
+			updated.put(modLine, token);
 		}
-		return alignCol;
+		return updated;
 	}
 
-	private int minColAlign(TreeMultilist<Integer, AdeptToken> alignables, int col) {
-		int alignCol = 0;
+	private int minTabCol(TreeMultilist<Integer, AdeptToken> group, int col) {
+		int minCol = minCol(group, col);
+		return Strings.nextTabCol(minCol, ops.settings.tabWidth);
+	}
+
+	private int minCol(TreeMultilist<Integer, AdeptToken> alignables, int col) {
+		int minCol = 0;
 		for (int line : alignables.keySet()) {
 			List<AdeptToken> alignTokens = alignables.get(line);
 			if (alignTokens.size() > col) {
 				AdeptToken alignable = alignTokens.get(col);
-				int idx = ops.findInModLine(line, alignable);
-				if (idx == -1) continue;
-				if (idx == 0) {
-					alignCol = alignCol > 0 ? alignCol : alignable.visCol();
+				AdeptToken prior = ops.priorInLine(line, alignable);
+
+				if (prior != null) {
+					minCol = Math.max(minCol, prior.visCol() + prior.getText().length() + 1);
 				} else {
-					AdeptToken prior = ops.findInModLine(line, idx - 1);
-					int minCol = prior.visCol() + prior.getText().length();
-					if (ops.findSpacingLeft(alignable) != Spacing.NONE) minCol++;
-					alignCol = Math.max(alignCol, minCol);
+					minCol = Math.max(minCol, alignable.dent().indents * ops.settings.tabWidth);
 				}
 			}
 		}
-		return alignCol;
+		return minCol;
 	}
 
 	private int countMaxCols(TreeMultilist<Integer, AdeptToken> alignables) {

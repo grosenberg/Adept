@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
@@ -13,7 +12,6 @@ import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Spacing;
-import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
@@ -33,11 +31,11 @@ public class FormatterOps {
 	// key=edit region; value=edit
 	TreeMap<Region, TextEdit> edits;	// implementing edits
 
-	// key=mod line number; value=list of tokens
-	TreeMultilist<Integer, AdeptToken> modLineTokensIndex;
+	// key=line number; value=list of tokens
+	TreeMultilist<Integer, AdeptToken> lineTokensIndex;
 
-	// key=token index; value=mod line number
-	TreeMap<Integer, Integer> modTokenLineIndex;
+	// key=token index; value=line number
+	TreeMap<Integer, Integer> tokenLineIndex;
 
 	// key=token index; value=align col
 	HashMap<Integer, Integer> tokenAlignColIndex;
@@ -53,8 +51,8 @@ public class FormatterOps {
 		edits = new TreeMap<>();
 		contents = new StringBuilder();
 
-		modLineTokensIndex = new TreeMultilist<>();
-		modTokenLineIndex = new TreeMap<>();
+		lineTokensIndex = new TreeMultilist<>();
+		tokenLineIndex = new TreeMap<>();
 		tokenAlignColIndex = new HashMap<>();
 	}
 
@@ -64,30 +62,9 @@ public class FormatterOps {
 		edits.clear();
 		edits = null;
 		contents = null;
-		modLineTokensIndex.clear();
-		modTokenLineIndex.clear();
+		lineTokensIndex.clear();
+		tokenLineIndex.clear();
 		tokenAlignColIndex.clear();
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Appends the given token to the modLineTokenIndex. Creates new lines as appropriate. Updates the
-	 * {@code visCol} field of the given token to refect any formatting edits.
-	 */
-	protected void append(AdeptToken token) {
-		String ws = findWsLeft(token);
-		int incVert = Strings.countVWS(ws);
-
-		int line = 0;
-		try {
-			line = modLineTokensIndex.lastKey();
-		} catch (NoSuchElementException e) {}
-		line += incVert;
-
-		shift(findTokenLeft(token), token);		// sets visCol
-		modLineTokensIndex.put(line, token);	// sets line (effective)
-		modTokenLineIndex.put(token.getTokenIndex(), line);
 	}
 
 	// -----------------------------------------------------------------------------
@@ -104,6 +81,62 @@ public class FormatterOps {
 	// -----------------------------------------------------------------------------
 
 	/**
+	 * Rebuilds the line indexes to reflect edits between real tokens. Appends each real token to the
+	 * modLineTokenIndex. Creates new lines as appropriate. Updates the {@code visCol} field of the
+	 * given token to refect any formatting edits.
+	 */
+	protected void buildLinesIndexes() {
+		lineTokensIndex.clear();
+		tokenLineIndex.clear();
+
+		// examine all real tokens
+		AdeptToken prior = null;
+		for (AdeptToken token : data.index.keySet()) {
+			String ws = findWsLeft(token);
+			int nls = Strings.countVWS(ws);
+
+			int line = prior != null ? prior.getLine() : 0;
+			line += nls + 1;	// native 1..n
+			token.setLine(line);
+
+			int from = 0;
+			if (prior != null && nls == 0) {
+				from = prior.visCol() + prior.getText().length();
+			}
+			int width = Strings.measureVisualWidth(ws, settings.tabWidth, from);
+			token.setVisCol(from + width);
+
+			lineTokensIndex.put(line, token);
+			tokenLineIndex.put(token.getTokenIndex(), line);
+
+			prior = token;
+		}
+	}
+
+	/**
+	 * Define an edit to replace the existing text (should be ws only) between the given tokens
+	 * (exclusive) with the new given string value.
+	 *
+	 * @param beg left token
+	 * @param end right token
+	 * @param existing existing text
+	 * @param replacement replacement text
+	 * @param priority relative edit priority
+	 * @param msg edit description
+	 * @throws IllegalArgumentException
+	 */
+	protected TextEdit updateOrCreateCommentEdit(AdeptToken token, String replacement, int priority, String msg) {
+		TextEdit edit = edits.get(Region.key(token, token));
+		if (edit != null) {
+			edit.setReplacement(replacement);
+		} else {
+			edit = new TextEdit(token, replacement, priority, msg);
+			edits.put(edit.getRegion(), edit);
+		}
+		return edit;
+	}
+
+	/**
 	 * Create an edit implementing the necessary whitespace change to move the given token to the given
 	 * visual column. Update the visual column of any tokens to the right of the given token.
 	 *
@@ -111,29 +144,32 @@ public class FormatterOps {
 	 * @param token
 	 * @param toVisCol
 	 */
-	protected void createEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
+	protected void prepEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
 		if (token.visCol() == toVisCol) return;
 
-		List<AdeptToken> fullLine = modLineTokensIndex.get(lineNum);
-		int pos = fullLine.indexOf(token);
-		updateOrCreateEditLeft(token, pos, toVisCol);
+		List<AdeptToken> fullLine = lineTokensIndex.get(lineNum);
+		int idx = fullLine.indexOf(token);
+		updateOrCreateEditLeft(token, idx, toVisCol);
 
-		ListIterator<AdeptToken> remainder = fullLine.listIterator(pos + 1);
+		ListIterator<AdeptToken> remainder = fullLine.listIterator(idx + 1);
 		AdeptToken prior = token;
 		while (remainder.hasNext()) {
 			AdeptToken next = remainder.next();
-			shift(prior, next);
+			int from = prior.visCol() + prior.getText().length();
+			String ws = findWsLeft(token);
+			int width = Strings.measureVisualWidth(ws, settings.tabWidth, from);
+			token.setVisCol(from + width);
 			prior = next;
 		}
 	}
 
+	// -----------------------------------------------------------------------------
+
 	protected void updateOrCreateEditLeft(AdeptToken token, int pos, int toVisCol) {
 		TextEdit edit = findOrCreateEditLeft(token);
 		if (pos == 0) { // at BOL
-			int idx = Strings.lastNonHWS(edit.replacement());
-			String revised = edit.replacement().substring(0, idx + 1);
-			revised += createWs(1, toVisCol);
-			edit.replUpdate(revised);
+			String ws = createWs(0, toVisCol);
+			edit.replUpdate(ws);
 		} else {
 			AdeptToken prior = data.tokenIndex.get(edit.begIndex());
 			int from = prior.visCol() + prior.getText().length();
@@ -147,19 +183,11 @@ public class FormatterOps {
 		token.setVisCol(toVisCol);
 	}
 
-	private void shift(AdeptToken prior, AdeptToken token) {
-		int from = prior != null ? prior.visCol() + prior.getText().length() : 1;
-		String ws = findWsLeft(token);
-		int visCol = Strings.measureVisualWidth(ws, settings.tabWidth, from);
-		token.setVisCol(visCol);
-	}
-
 	private String createWs(int from, int to) {
 		if (settings.useTabs) {
 			return Strings.createVisualWs(settings.tabWidth, from, to);
-		} else {
-			return Strings.spaces(to - from);
 		}
+		return Strings.spaces(to - from);
 	}
 
 	/** Returns the left adjacent TextEdit . */
@@ -198,26 +226,36 @@ public class FormatterOps {
 	}
 
 	/** Returns the current line of the given token. */
-	protected int findTokenModLine(AdeptToken token) {
-		return modTokenLineIndex.get(token.getTokenIndex());
+	protected int findLine(AdeptToken token) {
+		return tokenLineIndex.get(token.getTokenIndex());
 	}
 
 	/**
 	 * Returns the position in the given current line of the given token. Returns {@code -1} if the
 	 * token is not found on the given line.
 	 */
-	protected int findInModLine(int line, AdeptToken token) {
-		return modLineTokensIndex.get(line).indexOf(token);
+	protected int indexInLine(int line, AdeptToken token) {
+		return lineTokensIndex.get(line).indexOf(token);
 	}
 
 	/**
-	 * Returns the token in the given current line at the given index. Returns {@code null} if no token
-	 * exists at the given line and index.
+	 * Returns the token in the given line at the given index. Returns {@code null} if no token exists
+	 * at the given line and index.
 	 */
-	protected AdeptToken findInModLine(int line, int idx) {
-		List<AdeptToken> tokens = modLineTokensIndex.get(line);
+	protected AdeptToken getFromLine(int line, int idx) {
+		List<AdeptToken> tokens = lineTokensIndex.get(line);
 		if (tokens.size() > idx) return tokens.get(idx);
 		return null;
+	}
+
+	/**
+	 * Returns the token prior to the given token in the given line. Returns {@code null} if no such
+	 * token exists.
+	 */
+	protected AdeptToken priorInLine(int line, AdeptToken token) {
+		int idx = indexInLine(line, token);
+		if (idx < 1) return null;
+		return getFromLine(line, idx - 1);
 	}
 
 	// -----------------------------------------------------------------------------
@@ -225,13 +263,14 @@ public class FormatterOps {
 	/**
 	 * Define an edit for the existing text (should be ws only) between the given tokens (exclusive).
 	 *
-	 * @param beg left token
-	 * @param end right token
+	 * @param prior left token
+	 * @param token right token
 	 * @throws IllegalArgumentException
 	 */
-	protected TextEdit createEdit(AdeptToken beg, AdeptToken end) {
-		String existing = getTextBetween(beg, end);
-		return createEdit(beg, end, existing, existing, 0, "");
+	protected TextEdit createEdit(AdeptToken prior, AdeptToken token) {
+		int priorIdx = prior != null ? prior.getTokenIndex() : 0;
+		String existing = data.getTextBetween(priorIdx, token.getTokenIndex());
+		return createEdit(prior, token, existing, existing, 0, "");
 	}
 
 	/**
@@ -274,23 +313,5 @@ public class FormatterOps {
 		if (end == null) end = data.getToken(data.getTokenStream().size() - 1);
 		if (msg == null) msg = "";
 		return new TextEdit(beg, end, existing, replacement, priority, msg);
-	}
-
-	// -----------------------------------------------------------------------------
-
-	protected String getTextBetween(AdeptToken beg, AdeptToken end) {
-		int begIdx = beg != null ? beg.getTokenIndex() : 0;
-		return data.getTextBetween(begIdx, end.getTokenIndex());
-	}
-
-	/** Update parsed lines to formatting modified lines. */
-	public TreeMultilist<Integer, AdeptToken> updateLinesIndex(TreeMultilist<Integer, AdeptToken> lines) {
-		TreeMultilist<Integer, AdeptToken> modLines = new TreeMultilist<>();
-		modLines.setValueComparator(AdeptComp.Instance);
-		for (AdeptToken token : lines.valuesAll()) {
-			Integer modLine = modTokenLineIndex.get(token.getTokenIndex());
-			modLines.put(modLine, token);
-		}
-		return modLines;
 	}
 }

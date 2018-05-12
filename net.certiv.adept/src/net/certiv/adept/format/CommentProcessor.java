@@ -27,6 +27,12 @@ import net.certiv.adept.lang.comment.parser.gen.CommentParser.PreformContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.WordContext;
 import net.certiv.adept.util.Strings;
 
+/**
+ * Format the contents of comments. The formatting results replace the text of the comment token.
+ * <p>
+ * Depends on the {@code visCol} comment token value being accurate. Does not depend on the
+ * formatter line indexes.
+ */
 public class CommentProcessor extends AbstractProcessor {
 
 	private static final String DocBeg = "/** ";
@@ -44,14 +50,15 @@ public class CommentProcessor extends AbstractProcessor {
 	private String oneTab;
 
 	private int visCol;
-	private String prefix1;
-	private String prefixN;
-	private String listPrefix1;
-	private String itemPrefix1;
-	private String itemPrefixN;
 	private int lastBlankIndex;
 	private int continguousBlanks;
-	private int listLevel;
+
+	private String prefix1; 	// first line of wrappable words
+	private String prefixN; 	// subsequent lines
+
+	private int listLevel = -1; // in list iff > -1
+	private String itemPrefix1; // overrides for within lists
+	private String itemPrefixN;
 
 	private String comment; // formatted results
 
@@ -65,7 +72,7 @@ public class CommentProcessor extends AbstractProcessor {
 
 	@Override
 	public void dispose() {
-		ops = null;
+		super.dispose();
 		parser.dispose();
 		parser = null;
 		properties = null;
@@ -77,7 +84,8 @@ public class CommentProcessor extends AbstractProcessor {
 			for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
 				AdeptToken token = ops.data.commentIndex.get(idx);
 				if (process(token)) {
-					token.setText(this.comment);
+					// token.setText(this.comment);
+					ops.updateOrCreateCommentEdit(token, this.comment, 1, "");
 				}
 			}
 		}
@@ -110,10 +118,12 @@ public class CommentProcessor extends AbstractProcessor {
 		prefixN = BlkMid;
 		int num = buildDescription((DescToken) properties.get(ctx.desc()), content);
 
-		if (content.length() > 0) content.append(Strings.EOL + BlkMid);
-
-		for (ParamContext param : ctx.param()) {
-			num += buildParam((ParamToken) properties.get(param), content);
+		int tags = ctx.param().size();
+		if (content.length() > 0 && tags > 0) content.append(Strings.EOL + BlkMid + Strings.EOL);
+		for (int idx = 0; idx < tags; idx++) {
+			ParamToken param = (ParamToken) properties.get(ctx.param(idx));
+			num += buildParam(param, content);
+			if (idx < tags - 1) content.append(Strings.EOL);
 		}
 
 		if (num == 1) {
@@ -159,14 +169,13 @@ public class CommentProcessor extends AbstractProcessor {
 
 	// --- Listener callbacks -- support --------------------------------
 
-	public void param(ParamContext ctx, Token at, Token form, Token name, DescContext desc) {
-		ParamToken rec = new ParamToken();
-		rec.type = ctx.getRuleIndex();
-		rec.at = at.getText();
-		rec.at += form != null ? form.getText() : "";
-		rec.name = name != null ? name.getText() : null;
-		rec.desc = (DescToken) properties.get(desc);
-		properties.put(ctx, rec);
+	public void param(ParamContext ctx, Token at, WordContext wordContext, DescContext desc) {
+		ParamToken pTok = new ParamToken();
+		pTok.type = ctx.getRuleIndex();
+		pTok.at = at.getText();
+		pTok.name = wordContext != null ? wordContext.getText() : null;
+		pTok.desc = (DescToken) properties.get(desc);
+		properties.put(ctx, pTok);
 	}
 
 	public void description(DescContext ctx) {
@@ -178,13 +187,13 @@ public class CommentProcessor extends AbstractProcessor {
 		properties.put(ctx, rec);
 	}
 
-	public void word(WordContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
+	public void word(WordContext ctx) {
+		properties.put(ctx, new StrToken(ctx.getRuleIndex(), ctx.getText()));
 	}
 
-	public void code(CodeContext ctx, Token mark, List<Token> words) {
+	public void code(CodeContext ctx, Token mark, List<WordContext> words) {
 		StringBuilder code = new StringBuilder(CodeBeg);
-		for (Token word : words) {
+		for (WordContext word : words) {
 			code.append(word.getText() + Strings.SPACE);
 		}
 		code.setLength(code.length() - 1);
@@ -217,7 +226,7 @@ public class CommentProcessor extends AbstractProcessor {
 	}
 
 	public void item(ItemContext ctx, Token token) {
-		properties.put(ctx, new StrToken(ctx.getRuleIndex(), token.getText()));
+		properties.put(ctx, new ItemToken(ctx.getRuleIndex(), token.getText()));
 	}
 
 	public void blank(BlankContext ctx) {
@@ -237,28 +246,33 @@ public class CommentProcessor extends AbstractProcessor {
 
 	// ---- utility ----------------------------------------------------
 
-	private int buildParam(ParamToken rec, StringBuilder doc) {
+	private int buildParam(ParamToken pTok, StringBuilder doc) {
+		int num = 1;
 		StringBuilder param = new StringBuilder();
+		param.append(BlkMid + pTok.at);
+		int wrapColN = visCol + param.length() + ops.settings.tabWidth + 1;
 
-		param.append(BlkMid + rec.at + Strings.SPACE);
-		int wrapColN = visCol + param.length() + ops.settings.tabWidth;
+		if (pTok.name != null) param.append(Strings.SPACE + pTok.name);
+		if (pTok.desc != null) {
+			param.append(Strings.SPACE);
+			wrapColN = Math.min(visCol + param.length(), wrapColN);
 
-		if (rec.name != null) param.append(rec.name + Strings.SPACE);
-		wrapColN = Math.min(visCol + param.length(), wrapColN);
+			prefix1 = param.toString();	// sneaky!
+			prefixN = BlkMid + Strings.spaces(wrapColN - visCol - BlkMid.length());
 
-		prefix1 = param.toString();
-		prefixN = BlkMid + Strings.spaces(wrapColN - visCol - BlkMid.length());
-
-		StringBuilder desc = new StringBuilder();
-		int num = buildDescription(rec.desc, desc);
-		doc.append(desc);
+			StringBuilder desc = new StringBuilder();
+			num += buildDescription(pTok.desc, desc) - 1;
+			doc.append(desc);
+		} else {
+			doc.append(param);
+		}
 		return num;
 	}
 
-	private int buildDescription(DescToken rec, StringBuilder sb) {
+	private int buildDescription(DescToken descTok, StringBuilder sb) {
 		int num = 0;
 		List<TextToken> wrap = new ArrayList<>();
-		for (TypeToken token : rec.desc) {
+		for (TypeToken token : descTok.desc) {
 			switch (token.type) {
 				case CommentParser.RULE_word:
 				case CommentParser.RULE_code:
@@ -285,7 +299,7 @@ public class CommentProcessor extends AbstractProcessor {
 					sb.append(prefix1);
 					break;
 
-				case CommentParser.RULE_flow:
+				case CommentParser.RULE_flow: // p & hr, etc.
 					num += commitWrap(sb, num, wrap);
 					wrap.clear();
 					listLevel = 0;
@@ -307,15 +321,19 @@ public class CommentProcessor extends AbstractProcessor {
 					if (list.open) {
 						listLevel++;
 					} else {
-						if (listLevel > 0) listLevel--;
+						if (listLevel > -1) listLevel--;
 					}
 
-					int indents = Math.max(0, listLevel - 1);
-					listPrefix1 = BlkMid + Strings.spaces(indents * ops.settings.tabWidth);
+					int indents = Math.max(0, listLevel);
+					String listPrefix1 = BlkMid + Strings.spaces(indents * ops.settings.tabWidth);
+
+					if (sb.length() > 0) sb.append(Strings.EOL);
+					sb.append(listPrefix1 + list.text);
+					num++;
+
 					itemPrefix1 = listPrefix1 + oneTab;
 					itemPrefixN = itemPrefix1 + oneTab;
 
-					wrap.add(list);
 					break;
 
 				case CommentParser.RULE_item:
@@ -323,7 +341,6 @@ public class CommentProcessor extends AbstractProcessor {
 					if (!item.open) wrap.add(item);
 					num += commitWrap(sb, num, wrap);
 					wrap.clear();
-
 					if (item.open) wrap.add(item);
 					break;
 			}
@@ -332,14 +349,13 @@ public class CommentProcessor extends AbstractProcessor {
 		return num;
 	}
 
-	// forces prefix1 to start on a new line
-	private int commitWrap(StringBuilder sb, int num, List<TextToken> wrap) {
-		if (!wrap.isEmpty()) {
-			String content = wordWrap(wrap);
-			num += Strings.countVWS(content);
-
+	// adds EOL and wrapped words
+	private int commitWrap(StringBuilder sb, int num, List<TextToken> words) {
+		if (!words.isEmpty()) {
 			if (sb.length() > 0) sb.append(Strings.EOL);
-			sb.append(content);
+			String wrapped = wordWrap(words);
+			sb.append(wrapped);
+			num += Strings.countVWS(wrapped);
 		}
 		return num;
 	}
@@ -348,9 +364,10 @@ public class CommentProcessor extends AbstractProcessor {
 		StringBuilder wrap = new StringBuilder();
 		StringBuilder line = new StringBuilder();
 		int limit = ops.settings.commentWidth - visCol;
-		String prefix = listLevel == 0 ? prefix1 : itemPrefix1;
 
+		String prefix = listLevel == -1 ? prefix1 : itemPrefix1;
 		line.append(prefix);
+
 		for (int idx = 0, len = words.size(); idx < len; idx++) {
 			TextToken token = words.get(idx);
 
@@ -367,7 +384,7 @@ public class CommentProcessor extends AbstractProcessor {
 			if (line.length() + 5 > limit && idx < len - 1) {
 				wrap.append(line + Strings.EOL);
 				line.setLength(0);
-				line.append(listLevel == 0 ? prefixN : itemPrefixN);
+				line.append(listLevel == -1 ? prefixN : itemPrefixN);
 
 			} else if (idx < len - 1) {
 				// no space at EOL and after certain tags

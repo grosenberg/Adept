@@ -1,4 +1,4 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.panels;
 
 import java.awt.Component;
 import java.awt.Font;

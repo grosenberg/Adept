@@ -50,11 +50,11 @@ public class Formatter extends FormatterOps {
 	}
 
 	public List<TextEdit> createEdits() {
-		if (settings.formatComments) commenter.formatComments();
-		if (settings.format) spacer.adjustLineSpacing();
+		if (settings.format) spacer.formatWhiteSpace();
 		if (settings.breakLongLines) breaker.breakLongLines();
 		if (settings.alignFields) aligner.alignFields();
 		if (settings.alignComments) aligner.alignComments();
+		if (settings.formatComments) commenter.formatComments();
 
 		return getTextEdits();
 	}
@@ -68,12 +68,13 @@ public class Formatter extends FormatterOps {
 		List<AdeptToken> tokens = data.getTokens();
 		for (int idx = 0, len = tokens.size() - 1; idx < len;) {
 			AdeptToken token = tokens.get(idx);
-			contents.append(token.getText());
 			TextEdit edit = editSet.get(token.getTokenIndex());
+
 			if (edit != null) {
 				contents.append(edit.replacement());
-				idx = edit.endIndex();
+				idx = idx != edit.endIndex() ? edit.endIndex() : idx + 1;
 			} else {
+				contents.append(token.getText());
 				idx++;
 			}
 		}

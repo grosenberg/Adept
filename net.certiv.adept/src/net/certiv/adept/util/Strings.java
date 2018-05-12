@@ -212,27 +212,16 @@ public class Strings {
 		return "";
 	}
 
-	/** Returns a string containing {@code count} spaces. */
-	public static String spaces(int count) {
-		return getN(count, SPACE);
-	}
-
-	/** Returns a string containing {@code count} sequential copies of the given character. */
-	public static String getN(int count, char c) {
-		StringBuffer buf = new StringBuffer();
-		for (int i = 0; i < count; i++) {
-			buf.append(c);
-		}
-		return buf.toString();
-	}
-
-	/** Returns a string containing {@code count} sequential copies of the given text. */
-	public static String getN(int count, String text) {
-		StringBuffer buf = new StringBuffer();
-		for (int i = 0; i < count; i++) {
-			buf.append(text);
-		}
-		return buf.toString();
+	/**
+	 * Returns the given string trimmed of any trailing HWS.
+	 *
+	 * @param str the string to check
+	 * @return the string without tailing HWS
+	 */
+	public static String trimTrailinglHWs(String str) {
+		int idx = lastNonHWs(str);
+		if (idx == -1) return "";
+		return str.substring(0, idx + 1);
 	}
 
 	/**
@@ -241,8 +230,8 @@ public class Strings {
 	 * @param str the string to check
 	 * @return the leading HWS
 	 */
-	public static String leadHWS(String str) {
-		int idx = firstNonHWS(str);
+	public static String leadHWs(String str) {
+		int idx = firstNonHWs(str);
 		return idx > -1 ? str.substring(0, idx) : "";
 	}
 
@@ -252,8 +241,8 @@ public class Strings {
 	 * @param str the string to check
 	 * @return the tailing HWS
 	 */
-	public static String tailHWS(String str) {
-		int idx = lastNonHWS(str);
+	public static String trailingHWs(String str) {
+		int idx = lastNonHWs(str);
 		return idx != -1 ? str.substring(idx + 1) : str;
 	}
 
@@ -263,11 +252,11 @@ public class Strings {
 	 * @param str the string to check
 	 * @return index of the first non-whitespace character
 	 */
-	public static int firstNonHWS(String str) {
+	public static int firstNonHWs(String str) {
 		if (str == null || str.isEmpty()) return -1;
 
 		for (int col = 0; col < str.length(); col++) {
-			if (!isIndentChar(str.charAt(col))) return col;
+			if (!isHWs(str.charAt(col))) return col;
 		}
 		return -1;
 	}
@@ -278,11 +267,11 @@ public class Strings {
 	 * @param str the string to check
 	 * @return index of the last non-whitespace character
 	 */
-	public static int lastNonHWS(String str) {
+	public static int lastNonHWs(String str) {
 		if (str == null || str.isEmpty()) return -1;
 
-		for (int col = str.length() - 1; col <= 0; col--) {
-			if (!isIndentChar(str.charAt(col))) return col;
+		for (int col = str.length() - 1; col >= 0; col--) {
+			if (!isHWs(str.charAt(col))) return col;
 		}
 		return -1;
 	}
@@ -295,7 +284,7 @@ public class Strings {
 	 * @return Returns <code>true</code> if this the character is a indent character, <code>false</code>
 	 *         otherwise
 	 */
-	public static boolean isIndentChar(char ch) {
+	public static boolean isHWs(char ch) {
 		return Character.isWhitespace(ch) && !isLineDelimiterChar(ch);
 	}
 
@@ -308,6 +297,33 @@ public class Strings {
 	 */
 	public static boolean isLineDelimiterChar(char ch) {
 		return ch == '\n' || ch == '\r';
+	}
+
+	/** Returns a string containing {@code count} spaces. */
+	public static String spaces(int count) {
+		return getN(count, SPACE);
+	}
+
+	/** Returns a string containing {@code count} sequential copies of the given character. */
+	public static String getN(int count, char c) {
+		if (count <= 0) return "";
+
+		StringBuffer buf = new StringBuffer();
+		for (int idx = 0; idx < count; idx++) {
+			buf.append(c);
+		}
+		return buf.toString();
+	}
+
+	/** Returns a string containing {@code count} sequential copies of the given text. */
+	public static String getN(int count, String text) {
+		if (count <= 0) return "";
+
+		StringBuffer buf = new StringBuffer();
+		for (int idx = 0; idx < count; idx++) {
+			buf.append(text);
+		}
+		return buf.toString();
 	}
 
 	/**
@@ -359,7 +375,7 @@ public class Strings {
 			char ch = line.charAt(idx);
 			if (ch == TAB) {
 				length += tabWidth - (length % tabWidth);
-			} else if (isIndentChar(ch)) {
+			} else if (isHWs(ch)) {
 				length++;
 			} else {
 				return length;
@@ -369,44 +385,20 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the visual width of a given given line.
+	 * Returns the visual width of the given line of text.
 	 *
-	 * @param line the string to measure
+	 * @param text the string to measure
 	 * @param tabWidth the visual width of a tab
 	 * @return the visual width of <code>text</code>
-	 * @see https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
+	 * @see org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
 	 */
-	public static int measureVisualWidth(CharSequence line, int tabWidth) {
-		return measureVisualWidth(line, tabWidth, 0);
+	public static int measureVisualWidth(CharSequence text, int tabWidth) {
+		return measureVisualWidth(text, tabWidth, 0);
 	}
 
-	// /**
-	// * Returns the visual width of a given given line.
-	// *
-	// * @param text the string to measure
-	// * @param tabWidth the visual width of a tab
-	// * @param from the visual starting offset of the text
-	// * @return the visual width of <code>text</code>
-	// * @see
-	// https://github.com/eclipse/eclipse.jdt.ui/blob/master/org.eclipse.jdt.ui/ui/org/eclipse/jdt/internal/ui/javaeditor/IndentUtil.java
-	// */
-	// public static int measureVisualWidth(CharSequence text, int tabWidth, int from) {
-	// if (text == null || tabWidth < 0 || from < 0) throw new IllegalArgumentException();
-	//
-	// int width = from;
-	// int len = text.length();
-	// for (int idx = 0; idx < len; idx++) {
-	// if (text.charAt(idx) == TAB) {
-	// if (tabWidth > 0) width += tabWidth - width % tabWidth;
-	// } else {
-	// width++;
-	// }
-	// }
-	// return width - from;
-	// }
-
 	/**
-	 * Returns the visual width of a given line. Width is reset if a line separator is encountered.
+	 * Returns the visual width of the given text starting from the given offset within a line. Width is
+	 * reset each time a line separator character is encountered.
 	 *
 	 * @param text the string to measure
 	 * @param tabWidth the visual width of a tab
@@ -437,22 +429,13 @@ public class Strings {
 
 	public static String createVisualWs(int tabWidth, int from, int to) {
 		if (tabWidth < 1) tabWidth = 1;
-		if (from < 0 || to < from) {
-			throw new IllegalArgumentException(String.format("from %s to %s", from, to));
+		if (from < 0 || from > to) {
+			throw new IllegalArgumentException(String.format("%d:%d", from, to));
 		}
 
-		StringBuilder sb = new StringBuilder();
-		int dot = from;
-		int nxt = dot;
-		while ((nxt = dot + tabWidth - dot % tabWidth) < to) {
-			sb.append(TAB);
-			dot = nxt;
-		}
-		while (dot < to) {
-			sb.append(SPACE);
-			dot++;
-		}
-		return sb.toString();
+		int tabs = to / tabWidth - from / tabWidth;
+		int spcs = to % tabWidth;
+		return Strings.getN(tabs, TAB) + Strings.getN(spcs, SPC);
 	}
 
 	public static String shorten(String in, int len) {
@@ -461,6 +444,7 @@ public class Strings {
 		return out + ELLIPSIS_MARK;
 	}
 
+	/** Encodes WS as visible characters. */
 	public static String encodeWS(String in) {
 		StringBuilder sb = new StringBuilder();
 		for (int idx = 0; idx < in.length(); idx++) {
@@ -508,11 +492,14 @@ public class Strings {
 		return cnt;
 	}
 
+	/** Returns the column of the tab stop equal to or larger than the given column. */
 	public static int nextTabCol(int col, int tabWidth) {
 		int rem = col % tabWidth;
+		if (rem == 0) return col;
 		return col + tabWidth - rem;
 	}
 
+	/** Returns the tab column of the nearest tab stop to the given column. */
 	public static int nearestTabCol(int col, int tabWidth) {
 		int rem = col % tabWidth;
 		if (rem / 2 >= tabWidth / 2) return col + tabWidth - rem;

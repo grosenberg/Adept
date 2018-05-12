@@ -67,11 +67,14 @@ public class ParseRecord {
 	// key=feature id; value=feature
 	public HashMap<Integer, Feature> featureIndex;
 
+	// value=list of block comments
+	public List<AdeptToken> commentIndex;
+
+	// row=start token index; col=stop token index; value=context ancestors
+	public TreeTable<Integer, Integer, List<ParseTree>> contextIndex;
+
 	// alignment groups
 	public List<Group> groupIndex;
-
-	// key=line number; value=list of tokens
-	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
 
 	// key=line number; value=bol char offset
 	public HashMap<Integer, Integer> lineStartIndex;
@@ -79,11 +82,8 @@ public class ParseRecord {
 	// key=line number; value=blank?
 	public HashMap<Integer, Boolean> blanklines;
 
-	// value=list of block comments
-	public List<AdeptToken> commentIndex;
-
-	// row=start token index; col=stop token index; value=context ancestors
-	public TreeTable<Integer, Integer, List<ParseTree>> contextIndex;
+	// key=line number; value=list of real tokens
+	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
 
 	// ---------------------------------------------------------
 
@@ -259,15 +259,15 @@ public class ParseRecord {
 		return index.get(token);
 	}
 
-	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (1..n). */
+	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (0..n-1). */
 	public AdeptToken getVisualToken(int line, int vcol) {
 		List<AdeptToken> tokens = lineTokensIndex.get(line);
 		if (tokens == null || tokens.isEmpty()) return null;
 		if (tokens.size() == 1) return tokens.get(0);
 
 		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
-			int beg = tokens.get(idx).visCol(true);
-			int end = tokens.get(idx + 1).visCol(true) - 1;
+			int beg = tokens.get(idx).iVisCol();
+			int end = tokens.get(idx + 1).iVisCol() - 1;
 
 			if (idx == 0 && vcol < beg) return tokens.get(idx);
 			if (beg <= vcol && vcol < end) return tokens.get(idx);

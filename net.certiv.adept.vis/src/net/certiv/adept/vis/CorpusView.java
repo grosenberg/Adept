@@ -22,9 +22,9 @@ import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.vis.components.AbstractViewBase;
 import net.certiv.adept.vis.models.CorpusRefsTableModel;
 import net.certiv.adept.vis.models.FeatureTableModel;
+import net.certiv.adept.vis.panels.AbstractViewBase;
 
 /**
  * View the combined set of features present in the corpus documents.
@@ -61,13 +61,13 @@ public class CorpusView extends AbstractViewBase {
 		createFeatureTable();
 		createRefTokensTable();
 
-		setLocation();
+		applyPrefs();
 		split.setDividerLocation(prefs.getInt(KEY_SPLIT_HORZ, 300));
 		frame.setVisible(true);
 	}
 
 	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
+	protected void saveCustomPrefs(Preferences prefs) {
 		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
 	}
 

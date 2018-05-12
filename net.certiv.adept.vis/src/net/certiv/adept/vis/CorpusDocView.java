@@ -29,11 +29,11 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.vis.components.AbstractViewBase;
 import net.certiv.adept.vis.models.CorpusRefsTableModel;
 import net.certiv.adept.vis.models.FeatureTableModel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
+import net.certiv.adept.vis.panels.AbstractViewBase;
 
 /**
  * View the features present in any of the individual documents present within the set of corpus
@@ -75,13 +75,13 @@ public class CorpusDocView extends AbstractViewBase {
 		createFeatureTable();
 		createRefTokensTable();
 
-		setLocation();
+		applyPrefs();
 		split.setDividerLocation(prefs.getInt(KEY_SPLIT_HORZ, 300));
 		frame.setVisible(true);
 	}
 
 	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
+	protected void saveCustomPrefs(Preferences prefs) {
 		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
 	}
 

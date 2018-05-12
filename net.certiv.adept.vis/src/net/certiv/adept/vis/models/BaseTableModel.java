@@ -9,6 +9,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.util.Refs;
@@ -64,8 +65,8 @@ public abstract class BaseTableModel extends AbstractTableModel {
 		return Refs.tSpace(ref);
 	}
 
-	protected static String tLocation(RefToken ref) {
-		return Refs.tLocation(ref);
+	protected static String tLocation(AdeptToken token) {
+		return Refs.tLocation(token);
 	}
 
 	protected static String tText(int type, String text) {

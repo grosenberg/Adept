@@ -148,14 +148,10 @@ public class Builder extends ParseRecord {
 
 	public void extractCommentFeatures() {
 		for (AdeptToken comment : commentIndex) {
-			// if (comment.getText().equals("/* and exp */")) {
-			// Log.info(this, "Nil ancestors for: " + comment.toString());
-			// }
 			int idx = comment.getTokenIndex();
 			List<ParseTree> ancestors = contextIndex.encloses(idx, idx);
 			if (ancestors == null) {
 				ancestors = Collections.emptyList();
-				Log.info(this, "Nil ancestors for: " + comment.toString());
 			}
 
 			// comment feature
@@ -334,14 +330,15 @@ public class Builder extends ParseRecord {
 		return parents;
 	}
 
-	/* 'start' is token at BOL; result is in range 1..n */
-	private int calcVisualColumn(Token start, Token mark, int tabWidth) {
-		if (start == null || start == mark) return 0;
+	// 'start' is token at BOL - returns the visual offset of 'token' (0..n-1)
+	private int calcVisualColumn(Token start, Token token, int tabWidth) {
+		if (start == null || start == token) return 0;
 
 		int beg = start.getStartIndex();
-		int end = mark.getStartIndex() - 1;
-		String text = mark.getInputStream().getText(new Interval(beg, end));
-		return Strings.measureVisualWidth(text, tabWidth) + 1;
+		int end = token.getStartIndex() - 1;
+		String text = token.getInputStream().getText(new Interval(beg, end));
+		int vis = Strings.measureVisualWidth(text, tabWidth);
+		return vis;
 	}
 
 	// --------------------

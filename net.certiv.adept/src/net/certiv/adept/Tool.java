@@ -356,9 +356,14 @@ public class Tool extends ToolBase {
 		return mgr.getDocModel().getDocument();
 	}
 
-	/** Returns the formatted source of the last document parsed. */
+	/**
+	 * Returns the formatted source of the last document parsed. Can be equivalent to the original
+	 * source if the formatting resulted in no changes.
+	 */
 	public String getFormatted() {
-		return mgr.getDocModel().getDocument().getModified();
+		Document doc = getDocument();
+		if (doc.isModified()) return doc.getModified();
+		return doc.getContent();
 	}
 
 	/**

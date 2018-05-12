@@ -28,30 +28,43 @@
 */
 
 
- /*
+       /*
 	This grammar builds on top of the ANTLR4 Java grammar, but it uses
 	lexical modes to lex the annotation form of AspectJ; hence in order to use it
 	you need to break Java.g4 into Separate Lexer (JavaLexer.g4) and Parser (JavaParser.g4) grammars.
   */
-grammar Comments ;
+     grammar Comments ;
 
-// hello  <b>  there </b> {@   code	 blue       bonnet 		}    end	   
+// hello<b>  there </b> {@   code	 blue       bonnet 		}    end
 rule
-	: A
-	| B 
+	: A			// A
+	| B						//   B
 	;
 
-// Eclipse Public License 	-      v 1.0, http://www.eclipse.org/legal/epl-v10.html
+//   Eclipse Public License 	-      v 1.0, http://www.eclipse.org/legal/epl-v10.html
 //		Copyright (c) 2013, Christian Wulf (chwchw@gmx.de)
 //	  Copyright (c) 2016, Ivan Kochurkin (kvanttt@gmail.com),    Positive Technologies.
 A
-	: 'a' 
+	: 'a'
 	;
+
+	/**
+	 * Creates an embedded instance of the tool, pending configuration. To use
+	 * <ul>
+	 * <li>call setters to configure	  <li>call loadResources()
+	 * <li>call validateOptions()
+	 * <li>call execute()
+	 * <li>call getSources() to retrieve the results, if generated.
+	 * </ul>
+	 */
 B
 	: A 'b'
 	;
 
 
-
+/**
+Configure the tool using command-line styled arguments.
+	@param args command-line styled arguments
+	 * @return true iff all of the command-line styled arguments are recognized 	*/
 WS
 	: [ \t\r\n\f]*           -> channel(HIDDEN) ;

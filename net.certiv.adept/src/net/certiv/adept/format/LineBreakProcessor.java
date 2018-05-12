@@ -7,6 +7,7 @@ public class LineBreakProcessor extends AbstractProcessor {
 	}
 
 	// TODO
-	public void breakLongLines() {}
-
+	public void breakLongLines() {
+		ops.buildLinesIndexes();
+	}
 }

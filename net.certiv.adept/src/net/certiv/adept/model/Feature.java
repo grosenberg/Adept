@@ -90,7 +90,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 		// for analysis
 		this.docName = doc.getFilename();
-		this.nodeName = token.refToken().nodeName;
+		this.nodeName = token.getText();
 	}
 
 	// -------------------------------------------------------------------------------

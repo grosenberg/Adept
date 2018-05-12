@@ -8,6 +8,7 @@ import java.util.List;
 import org.antlr.v4.runtime.Token;
 
 import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;
 
@@ -43,8 +44,8 @@ public class Refs {
 		return String.format(SpaceMsg, fType(ref.lType), ref.lSpacing, fType(ref.type), ref.rSpacing, fType(ref.rType));
 	}
 
-	public static String tLocation(RefToken ref) {
-		return String.format(LocMsg, ref.line, ref.col, ref.visCol);
+	public static String tLocation(AdeptToken token) {
+		return String.format(LocMsg, token.getLine(), token.getCharPositionInLine(), token.visCol());
 	}
 
 	public static String tText(int type, String text) {
@@ -94,6 +95,8 @@ public class Refs {
 	}
 
 	public static String evalAncestors(List<Integer> rules) {
+		if (rules.isEmpty()) return "";
+
 		StringBuilder sb = new StringBuilder();
 		for (int rule : rules) {
 			sb.append(_ruleNames.get(rule) + " > ");

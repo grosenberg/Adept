@@ -27,11 +27,11 @@ import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 import net.certiv.adept.Tool;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.vis.components.AbstractViewBase;
 import net.certiv.adept.vis.components.SliderDialog;
-import net.certiv.adept.vis.components.TextLineNumber;
+import net.certiv.adept.vis.components.LineRuler;
 import net.certiv.adept.vis.components.TreeViewer;
 import net.certiv.adept.vis.models.TokenTableModel;
+import net.certiv.adept.vis.panels.AbstractViewBase;
 
 public class ParseTreeGraph extends AbstractViewBase {
 
@@ -79,7 +79,7 @@ public class ParseTreeGraph extends AbstractViewBase {
 
 		textPane = new JTextPane();
 		JScrollPane scrollText = new JScrollPane(textPane);
-		TextLineNumber nums = new TextLineNumber(textPane);
+		LineRuler nums = new LineRuler(textPane);
 		scrollText.setRowHeaderView(nums);
 
 		mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -100,7 +100,7 @@ public class ParseTreeGraph extends AbstractViewBase {
 		content.add(mainPane, BorderLayout.CENTER);
 		content.add(createToolBar(), BorderLayout.NORTH);
 
-		setLocation();
+		applyPrefs();
 
 		int split = prefs.getInt(KEY_SPLIT_VERT, 300);
 		mainPane.setDividerLocation(split);
@@ -111,7 +111,7 @@ public class ParseTreeGraph extends AbstractViewBase {
 	}
 
 	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
+	protected void saveCustomPrefs(Preferences prefs) {
 		prefs.putInt(KEY_SPLIT_VERT, mainPane.getDividerLocation());
 		prefs.putInt(KEY_SPLIT_HORZ, bottomPane.getDividerLocation());
 	}

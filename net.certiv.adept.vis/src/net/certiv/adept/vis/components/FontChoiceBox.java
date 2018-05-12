@@ -22,6 +22,9 @@ import javax.swing.ListCellRenderer;
 
 public class FontChoiceBox extends JComboBox<Font> {
 
+	public static final FontRenderContext FRC = new FontRenderContext(null, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
+			RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
+
 	private static final Pattern NON_REGULAR = Pattern.compile(
 			".*?(bold|italic|black|condensed|light|heavy|oblique|drawing|typographic|symbols|multinational).*?");
 
@@ -47,6 +50,10 @@ public class FontChoiceBox extends JComboBox<Font> {
 		int idx = getSelectedIndex();
 		Font font = (Font) getSelectedItem();
 		fireItemStateChanged(new ItemEvent(this, idx, font, ItemEvent.SELECTED));
+	}
+
+	public Font getSelectedFont() {
+		return (Font) getSelectedItem();
 	}
 
 	private void loadFonts() {
@@ -78,13 +85,10 @@ public class FontChoiceBox extends JComboBox<Font> {
 
 		if (!mono) return allFonts;
 
-		FontRenderContext frc = new FontRenderContext(null, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
-				RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
-
 		List<Font> monoFonts = new ArrayList<>();
 		for (Font font : allFonts) {
-			Rectangle2D iBounds = font.getStringBounds("i", frc);
-			Rectangle2D mBounds = font.getStringBounds("m", frc);
+			Rectangle2D iBounds = font.getStringBounds("i", FRC);
+			Rectangle2D mBounds = font.getStringBounds("m", FRC);
 			if (iBounds.getWidth() == mBounds.getWidth()) {
 				monoFonts.add(font);
 			}

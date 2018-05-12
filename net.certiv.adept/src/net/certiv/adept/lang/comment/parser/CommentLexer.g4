@@ -1,80 +1,69 @@
 lexer grammar CommentLexer;
 
+options {
+	superClass = CommentLexerAdaptor ;
+}
+
+tokens {
+	WORD
+}
+
 @header {
 	package net.certiv.adept.lang.comment.parser.gen;
+	import net.certiv.adept.lang.comment.parser.CommentLexerAdaptor;
 }
 
-@members {
-	public boolean atBol(boolean allowStar) {
-		if (_tokenStartCharIndex == 0) return true;
-
-		CodePointCharStream cpcs = (CodePointCharStream) _input;
-		for (int dot = -1; dot >= -(_tokenStartCharIndex); dot--) {
-			char c = (char) cpcs.LA(dot);
-			switch (c) {
-				case '\t':
-				case ' ':
-					continue;
-				case '\r':
-				case '\n':
-					return true;
-				case '*':
-					if (allowStar) continue;
-				default:
-					return false;
-			}
-		}
-		return true;
-	}
-}
 
 // -------------------------
 
-DOC		: '/**' { atBol(false) }? ;
-BLOCK	: '/*'  { atBol(false) }? ;
-LINE	: '//'  { atBol(false) }? -> pushMode(line) ;
-END		: '*/'  ;
+DOC		: '/**' -> pushMode(block)	;
+BLOCK	: '/*'  -> pushMode(block)	;
+LINE	: '//'  -> pushMode(line)	;
 
-BLANK	: . { atBol(true) }? [ \t]* [\r\n] ;
-MID		: Star  { atBol(false) }? -> skip ;
+WS		: ( VWs | HWs )+ -> skip 	;
 
 
-CODE	: '{@'	-> pushMode(code) ;
+mode block ;
+	END		: '*/'	-> popMode ;
+	BLANK	: . 	{ atBol(true) }? HWs* VWs ;
+	MID		: Star  { atBol(false) }? -> skip ;
 
-PREFORM	: '<pre>' .*? '</pre>' ;
-HDRET	: LAngle Break Slash? RAngle ;
-INLINE	: TagBeg Inline TagEnd ;
-FLOW	: TagBeg Flow   TagEnd ;
-LIST	: TagBeg List   TagEnd ;
-ITEM	: TagBeg Item   TagEnd ;
+	PREFORM	: '<pre>' .*? '</pre>' ;
+	HDRET	: TagBeg Break  TagEnd ;
+	INLINE	: TagBeg Inline TagEnd ;
+	FLOW	: TagBeg Flow   TagEnd ;
+	LIST	: TagBeg List   TagEnd ;
+	ITEM	: TagBeg Item   TagEnd ;
 
-PARAM	: '@param' { atBol(true) }? ;
-AT		: At	   { atBol(true) }? ;
+	CODE	: Code		-> pushMode(code) ;
+	PARAM	: Param		{ atBol(true) }? ;
+	ATTAG	: AtTag		{ atBol(true) }? ;
 
-WORD	: WordChar+ ;
-WS		: [ \r\n\t]+ -> skip ;
+	CHAR	: Char	{ more(WORD); } ;
+	BWS		: ( VWs | HWs ) -> skip ;
+
+mode line ;
+	NL		: ( Nl | EOF )	-> popMode ;
+
+	LINLINE	: TagBeg Inline TagEnd  -> type(INLINE) ;
+
+	LCODE	: Code		-> type(CODE), pushMode(code) ;
+	LCHAR	: Char 		{ more(WORD); } ;
+	LWS		: HWs 		-> skip ;
 
 
 mode code ;
-	RBRACE	: RBrace		-> popMode		;
-	CWORD	: WordChar+		-> type(WORD)	;
-	CNL		: ( Nl | EOF )	-> type(RBRACE), popMode ;
-	CHWS	: [ \t]+		-> skip ;
+	RBRACE	: ( RBrace | Nl | EOF )	-> popMode ;
 
-
-mode line ;
-	LINLINE	: TagBeg Inline TagEnd  -> type(INLINE) ;
-	LCODE	: '{@'			-> type(CODE), pushMode(code) ;
-	LWORD	: WordChar+		-> type(WORD) ;
-	NL		: ( Nl | EOF )	-> popMode ;
-	HWS		: [ \t]+		-> skip ;
+	CCHAR	: Char	{ more(WORD); } ;
+	CWS		: HWs	-> skip ;
 
 
 // -------------
 
-fragment Nl		: '\r'? '\n'	;
-fragment TagBeg : LAngle Slash? ;
-fragment TagEnd : ( ~[>\\\r\n] | EscSeq )* RAngle ;
+fragment TagBeg : LAngle Slash? HWs* ;
+fragment TagEnd	: Style* Slash? RAngle ;
+fragment Style	: ~[=>\r\n]+ Eq ( ~[>\\\r\n] | EscSeq )+ ;
 
 fragment EscSeq
 	:	Esc
@@ -89,8 +78,10 @@ fragment UnicodeEsc
 	:	'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)?
 	;
 
-// all chars except control and ws
-fragment WordChar
+fragment HexDigit		: [0-9a-fA-F]	;
+
+// all chars except control & ws
+fragment Char
 	: '\u0021'..'\u007E'
 	| '\u00A0'..'\u00FF'
 	| '\u0100'..'\u02FF'
@@ -105,17 +96,15 @@ fragment WordChar
 	| '\uFDF0'..'\uFFFD'
 	;
 
-fragment Esc			: '\\'	;
-fragment HexDigit		: [0-9a-fA-F]	;
 
-fragment Underscore		: '_'	;
-fragment LBrace			: '{'	;
-fragment RBrace			: '}'	;
-fragment LAngle			: '<'	;
-fragment RAngle			: '>'	;
-fragment Slash			: '/'	;
-fragment Star			: '*'	;
-fragment At				: '@'	;
+fragment Code	: '{@'		;
+fragment Param	: '@param'	;
+fragment AtTag
+	: At
+	( 'author' | 'version' | 'return' | 'exception' | 'throws'
+	| 'see' | 'since' | 'serial' | 'serialField' | 'serialData' | 'deprecated'
+	)
+	;
 
 fragment Inline
 	: 'b' | 'del' | 'em' | 'i' | 'samp' | 'small' | 'strong' | 'tt' | 'u'
@@ -138,4 +127,19 @@ fragment List
 fragment Item
 	: 'li' | 'dd' | 'dt' | 'td' | 'th'
 	;
+
+fragment Esc	: '\\'			;
+fragment Nl		: '\r'? '\n'	;
+fragment HWs	: [ \t]			;
+fragment VWs	: [\r\n]		;
+
+fragment Underscore	: '_'	;
+fragment LBrace		: '{'	;
+fragment RBrace		: '}'	;
+fragment LAngle		: '<'	;
+fragment RAngle		: '>'	;
+fragment Slash		: '/'	;
+fragment Star		: '*'	;
+fragment At			: '@'	;
+fragment Eq			: '='	;
 

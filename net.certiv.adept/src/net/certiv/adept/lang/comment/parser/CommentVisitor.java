@@ -1,5 +1,6 @@
 package net.certiv.adept.lang.comment.parser;
 
+import net.certiv.adept.format.CommentProcessor;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.BlankContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.BlockContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.CodeContext;
@@ -14,7 +15,6 @@ import net.certiv.adept.lang.comment.parser.gen.CommentParser.ListContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.ParamContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.PreformContext;
 import net.certiv.adept.lang.comment.parser.gen.CommentParser.WordContext;
-import net.certiv.adept.format.CommentProcessor;
 import net.certiv.adept.lang.comment.parser.gen.CommentParserBaseListener;
 
 public class CommentVisitor extends CommentParserBaseListener {
@@ -51,12 +51,12 @@ public class CommentVisitor extends CommentParserBaseListener {
 
 	@Override
 	public void exitParam(ParamContext ctx) {
-		helper.param(ctx, ctx.at, ctx.form, ctx.name, ctx.desc());
+		helper.param(ctx, ctx.at, ctx.word(), ctx.desc());
 	}
 
 	@Override
 	public void exitCode(CodeContext ctx) {
-		helper.code(ctx, ctx.mark, ctx.words);
+		helper.code(ctx, ctx.mark, ctx.word());
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class CommentVisitor extends CommentParserBaseListener {
 
 	@Override
 	public void exitWord(WordContext ctx) {
-		helper.word(ctx, ctx.WORD().getSymbol());
+		helper.word(ctx);
 	}
 
 	@Override

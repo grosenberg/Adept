@@ -48,7 +48,7 @@ public class SourceRefsTableModel extends BaseTableModel {
 				String assoc = tAssoc(ref.type, ref.contexts.get(0));
 				String space = tSpace(ref);
 				String align = tAlign(ref);
-				String location = tLocation(ref);
+				String location = tLocation(token);
 				int tIndex = ref.index;
 
 				Object[] row = { num, tname, ancestors, place, dents, assoc, space, align, location, tIndex };

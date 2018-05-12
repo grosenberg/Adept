@@ -1,5 +1,10 @@
 package net.certiv.adept.vis.utils;
 
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.util.Map;
+
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -8,7 +13,33 @@ import javax.swing.text.Utilities;
 
 public class TextUtils {
 
+	/**
+	 * The values for the string key for Text Anti-Aliasing
+	 */
+	private static RenderingHints sysHints;
+
+	static {
+		sysHints = null;
+		try {
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			@SuppressWarnings("unchecked")
+			Map<RenderingHints.Key, ?> map = (Map<RenderingHints.Key, ?>) toolkit
+					.getDesktopProperty("awt.font.desktophints");
+			sysHints = new RenderingHints(map);
+		} catch (Throwable t) {}
+	}
+
 	private TextUtils() {}
+
+	/**
+	 * Sets the Rendering Hints on the Graphics. This is used so that any painters can set the Rendering
+	 * Hints to match the view.
+	 *
+	 * @param g2d
+	 */
+	public static void setRenderingHits(Graphics2D g2d) {
+		g2d.addRenderingHints(sysHints);
+	}
 
 	/**
 	 * Translates an offset into the components text to a line number.
@@ -40,12 +71,22 @@ public class TextUtils {
 	}
 
 	/**
+	 * Gets the Line Number at the give position of the editor component. The first line number is ZERO
+	 *
+	 * @return line number
+	 * @throws BadLocationException
+	 */
+	public static int getLineNumber(Document doc, int pos) {
+		return doc.getDefaultRootElement().getElementIndex(pos);
+	}
+
+	/**
 	 * Determines the offset of the start of the given line.
 	 *
 	 * @param line the line number to translate &gt;= 0
 	 * @return the offset &gt;= 0
-	 * @exception BadLocationException thrown if the line is less than zero or greater or equal to
-	 *                the number of lines contained in the document (as reported by getLineCount).
+	 * @exception BadLocationException thrown if the line is less than zero or greater or equal to the
+	 *                number of lines contained in the document (as reported by getLineCount).
 	 */
 	public static int getLineStartOffset(Document doc, int line) throws BadLocationException {
 		int lineCount = getLineCount(doc);
@@ -65,8 +106,8 @@ public class TextUtils {
 	 *
 	 * @param line the line &gt;= 0
 	 * @return the offset &gt;= 0
-	 * @exception BadLocationException Thrown if the line is less than zero or greater or equal to
-	 *                the number of lines contained in the document (as reported by getLineCount).
+	 * @exception BadLocationException Thrown if the line is less than zero or greater or equal to the
+	 *                number of lines contained in the document (as reported by getLineCount).
 	 */
 	public static int getLineEndOffset(Document doc, int line) throws BadLocationException {
 		int lineCount = getLineCount(doc);

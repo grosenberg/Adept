@@ -32,13 +32,13 @@ desc
 	;
 
 param
-	: at=PARAM ( name=WORD desc? )?
-	| at=AT form=WORD desc?
+	: at=PARAM ( word desc? )?
+	| at=ATTAG desc?
 	;
 
-code	: mark=CODE words+=WORD* RBRACE	;
+code	: mark=CODE word* RBRACE ;
 
-word	: WORD	;
+word	: WORD		;
 
 preform	: PREFORM	;
 

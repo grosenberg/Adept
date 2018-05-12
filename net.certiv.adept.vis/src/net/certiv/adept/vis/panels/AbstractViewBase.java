@@ -1,4 +1,4 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.panels;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -101,7 +101,7 @@ public abstract class AbstractViewBase {
 				prefs.putInt(qual + KEY_Y, b.y);
 				prefs.putInt(qual + KEY_WIDTH, b.width);
 				prefs.putInt(qual + KEY_HEIGHT, b.height);
-				saveWindowClosingPrefs(prefs);
+				saveCustomPrefs(prefs);
 			}
 		});
 	}
@@ -170,7 +170,9 @@ public abstract class AbstractViewBase {
 		return "/" + className.replace('.', '/');
 	}
 
-	protected void saveWindowClosingPrefs(Preferences prefs) {}
+	protected void saveCustomPrefs(Preferences prefs) {}
+
+	protected void applyCustomPrefs() {}
 
 	protected void handleFileOpen(File file) {}
 
@@ -179,12 +181,13 @@ public abstract class AbstractViewBase {
 		return "";
 	}
 
-	protected void setLocation() {
+	protected void applyPrefs() {
 		int x = prefs.getInt(qual + KEY_X, 100);
 		int y = prefs.getInt(qual + KEY_Y, 100);
 		int width = prefs.getInt(qual + KEY_WIDTH, 600);
 		int height = prefs.getInt(qual + KEY_HEIGHT, 400);
 		frame.setBounds(x, y, width, height);
+		applyCustomPrefs();
 	}
 
 	protected Action getOpenAction() {

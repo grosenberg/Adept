@@ -93,6 +93,10 @@ public class Document {
 		return null;
 	}
 
+	public boolean isModified() {
+		return modified != null && !modified.isEmpty();
+	}
+
 	public String getModified() {
 		return modified;
 	}

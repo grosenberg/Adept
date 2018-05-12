@@ -11,10 +11,9 @@ import net.certiv.adept.format.plan.Place;
 import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;
+import net.certiv.adept.util.Strings;
 
 public class AdeptToken extends CommonToken {
-
-	private static final String Msg = "[@%s, <%s:%s> (%s) %s='%s', %s, %s:%s:%s]";
 
 	public static final int BOF = Token.EOF;
 
@@ -22,18 +21,28 @@ public class AdeptToken extends CommonToken {
 	private Kind kind = Kind.WHITESPACE;
 	private Bias bias = Bias.RIGHT;
 
+	private String nodeName = "";
+	private int visCol = -1;	// 0..n-1
 	private RefToken ref;
 
 	// for formatter use only
-	private int alignCol;
-	private int visCol = -1;		// as parsed
-
-	public AdeptToken(int type, String text) {
-		super(type, text);
-	}
+	/** Initial source line value */
+	public final int iLine;
+	/** Initial source column value */
+	public final int iCol;
+	/** Initial source visual column value */
+	public int iVisCol = -1;
 
 	public AdeptToken(Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
 		super(source, type, channel, start, stop);
+		iLine = getLine();
+		iCol = charPositionInLine;
+	}
+
+	public AdeptToken(int type, String text) {
+		super(type, text);
+		iLine = getLine();
+		iCol = charPositionInLine;
 	}
 
 	/**
@@ -83,29 +92,20 @@ public class AdeptToken extends CommonToken {
 	}
 
 	public void setNodeName(String name) {
-		ref.nodeName = name;
+		this.nodeName = name;
 	}
 
-	public int visCol(boolean asParsed) {
-		if (asParsed) return this.visCol;
-		return visCol();
+	public int iVisCol() {
+		return iVisCol;
 	}
 
 	public int visCol() {
-		return ref.visCol;
+		return visCol;
 	}
 
 	public void setVisCol(int visCol) {
-		ref.visCol = visCol;
-		if (this.visCol == -1) this.visCol = visCol;
-	}
-
-	public int alignCol() {
-		return alignCol;
-	}
-
-	public void setAlignCol(int alignCol) {
-		this.alignCol = alignCol;
+		this.visCol = visCol;
+		if (iVisCol == -1) iVisCol = visCol;
 	}
 
 	public Place place() {
@@ -134,18 +134,14 @@ public class AdeptToken extends CommonToken {
 
 	// -------------------------
 
+	private static final String Msg = "@%s <%s:%s - %s %s> %s[%s]='%s'";
+
 	@Override
 	public String toString() {
-		String chanStr = "chan=" + channel;
-		if (channel == 0) chanStr = "chan=Def";
-		if (channel == 1) chanStr = "chan=Hid";
+		String pos = getLine() + ":" + charPositionInLine + " (" + visCol + ")";
+		String txt = ref != null ? Strings.encodeWS(ref.text) : Strings.encodeWS(getText());
+		String place = ref != null ? ref.place.toString() : Place.ANY.toString();
 
-		if (ref == null) {
-			return String.format(Msg, index, start, stop, "", type, getText(), chanStr, getLine(),
-					getCharPositionInLine(), Place.ANY);
-		} else {
-			return String.format(Msg, index, start, stop, ref.nodeName, type, ref.text, chanStr, ref.line, ref.col,
-					ref.place);
-		}
+		return String.format(Msg, index, start, stop, pos, place, nodeName, type, txt);
 	}
 }

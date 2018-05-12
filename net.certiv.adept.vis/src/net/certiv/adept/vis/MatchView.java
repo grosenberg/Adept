@@ -29,12 +29,12 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.vis.components.AbstractViewBase;
 import net.certiv.adept.vis.models.ContextsTableModel;
 import net.certiv.adept.vis.models.MatchRefsTableModel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceRefsTableModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
+import net.certiv.adept.vis.panels.AbstractViewBase;
 
 public class MatchView extends AbstractViewBase {
 
@@ -88,7 +88,7 @@ public class MatchView extends AbstractViewBase {
 		split.setBottomComponent(split2);
 		createMatchTable();
 
-		setLocation();
+		applyPrefs();
 		split.setDividerLocation(prefs.getInt(KEY_SPLIT_VERT, 300));
 		split2.setDividerLocation(prefs.getInt(KEY_SPLIT_VERT + "2", 300));
 		frame.setVisible(true);
@@ -178,7 +178,7 @@ public class MatchView extends AbstractViewBase {
 	}
 
 	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
+	protected void saveCustomPrefs(Preferences prefs) {
 		prefs.putInt(KEY_SPLIT_VERT, split.getDividerLocation());
 		prefs.putInt(KEY_SPLIT_VERT + "2", split2.getDividerLocation());
 	}

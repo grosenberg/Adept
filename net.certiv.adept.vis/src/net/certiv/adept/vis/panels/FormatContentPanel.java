@@ -1,49 +1,42 @@
-package net.certiv.adept.vis.components;
+package net.certiv.adept.vis.panels;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.ToolTipManager;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.TabSet;
-import javax.swing.text.TabStop;
 
-import net.certiv.adept.util.Strings;
+import net.certiv.adept.vis.components.CodePane;
+import net.certiv.adept.vis.components.FontChoiceBox;
+import net.certiv.adept.vis.components.LineRuler;
+import net.certiv.adept.vis.components.TabRuler;
 import net.certiv.adept.vis.utils.Point;
 import net.certiv.adept.vis.utils.TextUtils;
 
 public class FormatContentPanel extends JPanel {
 
-	public static final String CLICK1_LEFT = "click1_left";
+	public static final String CLICK_LEFT = "click_left";
 
 	private int width;
 	private int height;
 
 	private String lhsTitle;
 	private String rhsTitle;
-	private JTextPane lhs;
-	private JTextPane rhs;
+	private CodePane lhs;
+	private CodePane rhs;
 
 	public FormatContentPanel(int width, int height, FontChoiceBox fontBox, JComboBox<Integer> sizeBox,
 			JComboBox<Integer> tabBox, String lhsTitle, String rhsTitle) {
@@ -60,7 +53,8 @@ public class FormatContentPanel extends JPanel {
 
 	private void createComponents() {
 		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new GridLayout(0, 2));
+		mainPanel.setSize(width, height);
+		mainPanel.setLayout(new GridLayout(1, 2));
 
 		JPanel lhsPanel = new JPanel();
 		JPanel rhsPanel = new JPanel();
@@ -68,7 +62,6 @@ public class FormatContentPanel extends JPanel {
 		rhsPanel.setLayout(new BorderLayout());
 
 		lhs = new CodePane();
-		lhs.setSize(width, height);
 		lhs.setEditable(false);
 		lhs.addCaretListener(new CaretListener() {
 
@@ -80,28 +73,33 @@ public class FormatContentPanel extends JPanel {
 					Document doc = lhs.getDocument();
 					int line = TextUtils.getLineOfOffset(doc, e.getDot()); 			// 0..n
 					int col = e.getDot() - TextUtils.getLineStartOffset(doc, line); // 0..n
-					firePropertyChange(CLICK1_LEFT, null, new Point(col, line));
-				} catch (BadLocationException e1) {}
+					firePropertyChange(CLICK_LEFT, null, new Point(col, line));
+				} catch (BadLocationException ex) {}
 			}
 		});
 
 		rhs = new CodePane();
-		rhs.setSize(width, height);
 		rhs.setEditable(false);
 
 		JScrollPane lhsScroll = new JScrollPane(lhs);
-		TextLineNumber lhsNums = new TextLineNumber(lhs);
-		lhsNums.setUpdateFont(true);
-		lhsScroll.setRowHeaderView(lhsNums);
 		lhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		lhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
+		LineRuler lLineRuler = new LineRuler(lhs);
+		lhsScroll.setRowHeaderView(lLineRuler);
+
+		TabRuler lTagRuler = new TabRuler(lhs);
+		lhsScroll.setColumnHeaderView(lTagRuler);
+
 		JScrollPane rhsScroll = new JScrollPane(rhs);
-		TextLineNumber rhsNums = new TextLineNumber(rhs);
-		rhsNums.setUpdateFont(true);
-		rhsScroll.setRowHeaderView(rhsNums);
 		rhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		rhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+		LineRuler rLineRuler = new LineRuler(rhs);
+		rhsScroll.setRowHeaderView(rLineRuler);
+
+		TabRuler rTabRuler = new TabRuler(rhs);
+		rhsScroll.setColumnHeaderView(rTabRuler);
 
 		new Synchronizer(lhsScroll, rhsScroll);
 
@@ -131,11 +129,11 @@ public class FormatContentPanel extends JPanel {
 
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				Font font = (Font) e.getItem();
-				int size = (int) sizeBox.getSelectedItem();
-				font = font.deriveFont((float) size);
-				updateDocFont(lhs, font);
-				updateDocFont(rhs, font);
+				Font font = fontBox.getSelectedFont();
+				float size = (int) sizeBox.getSelectedItem();
+				font = font.deriveFont(size);
+				lhs.changeStyle(font);
+				rhs.changeStyle(font);
 			}
 		});
 		sizeBox.addItemListener(new ItemListener() {
@@ -143,10 +141,10 @@ public class FormatContentPanel extends JPanel {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				float size = (int) e.getItem();
-				Font font = getFont();
+				Font font = fontBox.getSelectedFont();
 				font = font.deriveFont(size);
-				updateDocFont(lhs, font);
-				updateDocFont(rhs, font);
+				lhs.changeStyle(font);
+				rhs.changeStyle(font);
 			}
 		});
 		tabBox.addItemListener(new ItemListener() {
@@ -154,75 +152,21 @@ public class FormatContentPanel extends JPanel {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				int width = (int) e.getItem();
-				setTabStops(width);
+				lhs.changeStyle(width);
+				rhs.changeStyle(width);
 			}
 		});
 	}
 
-	protected void updateDocFont(JTextPane pane, Font font) {
-		MutableAttributeSet attrs = pane.getInputAttributes();
-		StyleConstants.setFontFamily(attrs, font.getFamily());
-		StyleConstants.setFontSize(attrs, font.getSize());
-		StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
-		StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
-		StyledDocument doc = pane.getStyledDocument();
-		doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
-	}
-
-	public void setTabStops(int width) {
-		FontMetrics fm = lhs.getFontMetrics(lhs.getFont());
-		int px = fm.charWidth('m');
-		TabSet tabs = calcTabSet(width * px);
-		SimpleAttributeSet attributes = new SimpleAttributeSet();
-		StyleConstants.setTabSet(attributes, tabs);
-
-		int length = lhs.getDocument().getLength();
-		lhs.getStyledDocument().setParagraphAttributes(0, length, attributes, false);
-
-		length = rhs.getDocument().getLength();
-		rhs.getStyledDocument().setParagraphAttributes(0, length, attributes, false);
-	}
-
-	private TabSet calcTabSet(int width) {
-		TabStop[] tabs = new TabStop[10];
-		for (int idx = 0; idx < 10; idx++) {
-			tabs[idx] = new TabStop((idx + 1) * width);
-		}
-		return new TabSet(tabs);
-	}
-
 	public void clear() {
-		load("", "");
+		lhs.clear();
+		rhs.clear();
 	}
 
 	public void load(String lhsContent, String rhsContent) {
+		clear();
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
-		lhs.setCaretPosition(0);
-	}
-
-	private class CodePane extends JTextPane {
-
-		public CodePane() {
-			super();
-			ToolTipManager.sharedInstance().registerComponent(this);
-		}
-
-		@Override
-		public String getToolTipText(MouseEvent e) {
-			int pos = viewToModel(e.getPoint());
-			if (pos >= 0) {
-				StyledDocument doc = (StyledDocument) getDocument();
-				try {
-					int line = TextUtils.getLineOfOffset(doc, pos); // 0..n
-					int beg = TextUtils.getLineStartOffset(doc, line);
-					int len = TextUtils.getLineEndOffset(doc, line) - beg;
-					String text = doc.getText(beg, len);
-					return Strings.encodeWS(text);
-				} catch (BadLocationException e1) {}
-			}
-			return null;
-		}
 	}
 
 	private class Synchronizer implements AdjustmentListener {

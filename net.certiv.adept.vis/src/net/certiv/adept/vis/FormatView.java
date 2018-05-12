@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.prefs.Preferences;
 
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -29,6 +30,7 @@ import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
@@ -36,12 +38,12 @@ import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Strings;
 import net.certiv.adept.util.Time;
-import net.certiv.adept.vis.components.AbstractViewBase;
 import net.certiv.adept.vis.components.FontChoiceBox;
-import net.certiv.adept.vis.components.FormatContentPanel;
-import net.certiv.adept.vis.components.FormatInfoPanel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
+import net.certiv.adept.vis.panels.AbstractViewBase;
+import net.certiv.adept.vis.panels.FormatContentPanel;
+import net.certiv.adept.vis.panels.FormatInfoPanel;
 import net.certiv.adept.vis.utils.Point;
 
 public class FormatView extends AbstractViewBase {
@@ -50,18 +52,31 @@ public class FormatView extends AbstractViewBase {
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
 	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
 	private static final String srcExt = ".g4";
+	private static final String KEY_FMT_CODE = "format_code";
+	private static final String KEY_FMT_COMMENTS = "format_comments";
+	private static final String KEY_FMT_HEADER = "format_header";
+	private static final String KEY_ALIGN_FIELDS = "align_fields";
+	private static final String KEY_ALIGN_COMMENTS = "align_comments";
 
 	private Tool tool;
+	private CoreMgr mgr;
+	private Document doc;
+	private String pathname;
+	private String sourceContent;
+	private boolean enabled;
+
 	private JComboBox<Item> srcBox;
 	private FontChoiceBox fontBox;
 	private JComboBox<Integer> sizeBox;
 	private JComboBox<Integer> tabBox;
 	private FormatContentPanel formatPanel;
 	private FormatInfoPanel info;
-
-	private String pathname;
-	private String sourceContent;
-	private boolean enabled;
+	private JCheckBox fmtCodeBox;
+	private JCheckBox fmtBreakBox;
+	private JCheckBox fmtHeaderBox;
+	private JCheckBox fmtCommentsBox;
+	private JCheckBox alignFieldsBox;
+	private JCheckBox alignCommentsBox;
 
 	public static void main(String args[]) {
 		try {
@@ -79,7 +94,7 @@ public class FormatView extends AbstractViewBase {
 		createFormatPanel();
 		createInfoPanel();
 
-		setLocation();
+		applyPrefs();
 		frame.setVisible(true);
 
 		Integer fontsize = prefs.getInt(KEY_FONT_SIZE, 12);
@@ -90,19 +105,25 @@ public class FormatView extends AbstractViewBase {
 	}
 
 	private void createSelectPanel() {
+		ActionListener run = new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Time.clear();
+				if (e.getSource() instanceof JCheckBox) {
+					loadTool();
+				} else {
+					process();
+				}
+			}
+		};
+
 		JPanel selectPanel = createPanel("Source");
 		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 2));
 
 		srcBox = new JComboBox<>(new SourceListModel(rootDir, srcExt));
 		srcBox.setSize(300, 32);
-		srcBox.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Time.clear();
-				process();
-			}
-		});
+		srcBox.addActionListener(run);
 		selectPanel.add(new JLabel("Document: "));
 		selectPanel.add(srcBox);
 
@@ -120,12 +141,33 @@ public class FormatView extends AbstractViewBase {
 		selectPanel.add(new JLabel("    Tab Width: "));
 		selectPanel.add(tabBox);
 
+		fmtCodeBox = new JCheckBox("Format code");
+		fmtBreakBox = new JCheckBox("Format long lines");
+		fmtHeaderBox = new JCheckBox("Format header");
+		fmtCommentsBox = new JCheckBox("Format comments");
+		alignFieldsBox = new JCheckBox("Align fields");
+		alignCommentsBox = new JCheckBox("Align comments");
+
+		fmtCodeBox.addActionListener(run);
+		fmtBreakBox.addActionListener(run);
+		fmtHeaderBox.addActionListener(run);
+		fmtCommentsBox.addActionListener(run);
+		alignFieldsBox.addActionListener(run);
+		alignCommentsBox.addActionListener(run);
+
+		selectPanel.add(fmtCodeBox);
+		selectPanel.add(fmtBreakBox);
+		selectPanel.add(fmtHeaderBox);
+		selectPanel.add(fmtCommentsBox);
+		selectPanel.add(alignFieldsBox);
+		selectPanel.add(alignCommentsBox);
+
 		content.add(selectPanel, BorderLayout.NORTH);
 	}
 
 	private void createFormatPanel() {
-		formatPanel = new FormatContentPanel(400, 400, fontBox, sizeBox, tabBox, "Source", "Formatted");
-		formatPanel.addPropertyChangeListener(FormatContentPanel.CLICK1_LEFT, new PropertyChangeListener() {
+		formatPanel = new FormatContentPanel(800, 400, fontBox, sizeBox, tabBox, "Source", "Formatted");
+		formatPanel.addPropertyChangeListener(FormatContentPanel.CLICK_LEFT, new PropertyChangeListener() {
 
 			@Override
 			public void propertyChange(PropertyChangeEvent e) {
@@ -139,41 +181,54 @@ public class FormatView extends AbstractViewBase {
 
 	private void createInfoPanel() {
 		JPanel infoPanel = createPanel("Formatting details");
-		info = new FormatInfoPanel();
+		info = new FormatInfoPanel(this);
 		infoPanel.add(info);
 
 		content.add(infoPanel, BorderLayout.SOUTH);
 	}
 
 	@Override
-	protected void saveWindowClosingPrefs(Preferences prefs) {
+	protected void saveCustomPrefs(Preferences prefs) {
 		Font font = (Font) fontBox.getSelectedItem();
 		prefs.put(KEY_FONT_NAME, font.getName());
 		prefs.putInt(KEY_FONT_SIZE, (int) sizeBox.getSelectedItem());
 		prefs.putInt(KEY_TAB_WIDTH, (int) tabBox.getSelectedItem());
+		prefs.putBoolean(KEY_FMT_CODE, fmtCodeBox.isSelected());
+		prefs.putBoolean(KEY_FMT_COMMENTS, fmtCommentsBox.isSelected());
+		prefs.putBoolean(KEY_FMT_HEADER, fmtHeaderBox.isSelected());
+		prefs.putBoolean(KEY_ALIGN_FIELDS, alignFieldsBox.isSelected());
+		prefs.putBoolean(KEY_ALIGN_COMMENTS, alignCommentsBox.isSelected());
+	}
+
+	@Override
+	protected void applyCustomPrefs() {
+		fmtCodeBox.setSelected(prefs.getBoolean(KEY_FMT_CODE, false));
+		fmtCommentsBox.setSelected(prefs.getBoolean(KEY_FMT_COMMENTS, false));
+		fmtHeaderBox.setSelected(prefs.getBoolean(KEY_FMT_HEADER, false));
+		alignFieldsBox.setSelected(prefs.getBoolean(KEY_ALIGN_FIELDS, false));
+		alignCommentsBox.setSelected(prefs.getBoolean(KEY_ALIGN_COMMENTS, false));
 	}
 
 	protected void selectFeatureData(int line, int col) {
 		if (enabled) {
-			ParseRecord rec = tool.getMgr().getDocModel().getParseRecord();
-			Integer start = rec.lineStartIndex.get(line);
+			ParseRecord data = mgr.getDocModel().getParseRecord();
+			Integer start = data.lineStartIndex.get(line);
 			if (start != null) {
-				String text = rec.charStream.getText(new Interval(start, start + col - 1));
-				int vcol = Strings.measureVisualWidth(text, tool.getMgr().getTabWidth());
-				AdeptToken token = rec.getVisualToken(line, vcol);
+				String text = data.charStream.getText(new Interval(start, start + col - 1));
+				int vcol = Strings.measureVisualWidth(text, mgr.getTabWidth());
+				AdeptToken token = data.getVisualToken(line, vcol);
 				if (token != null && token.getType() != Token.EOF) {
-					Feature feature = rec.getFeature(token);
-					RefToken ref = feature.getRefFor(token.getTokenIndex());
-
+					Feature feature = data.getFeature(token);
+					RefToken ref = token.refToken();
 					RefToken matched = ref.matched;
 
 					TreeMultiset<Double, RefToken> matches = tool.getMgr().getMatches(feature, ref);
 					double sim = Maths.round(matches.firstKey(), 6);
 
-					TextEdit ledit = tool.getDocument().getEditLeft(token.getTokenIndex());
-					TextEdit redit = tool.getDocument().getEditRight(token.getTokenIndex());
+					TextEdit ledit = doc.getEditLeft(token.getTokenIndex());
+					TextEdit redit = doc.getEditRight(token.getTokenIndex());
 
-					info.loadData(feature, ref, matched, sim, ledit, redit);
+					info.loadData(feature, token, ref, matched, sim, ledit, redit);
 					return;
 				}
 			}
@@ -188,11 +243,13 @@ public class FormatView extends AbstractViewBase {
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 		tool.setRebuild(true);
-		tool.setFormat(true);
-		tool.setFormatAlignFields(false);
-		tool.setFormatAlignComments(false);
-		tool.setFormatHdrComment(false);
-		tool.setFormatComments(true);
+
+		tool.setFormat(fmtCodeBox.isSelected());
+		tool.setFormatComments(fmtCommentsBox.isSelected());
+		tool.setFormatHdrComment(fmtHeaderBox.isSelected());
+		tool.setFormatAlignFields(alignFieldsBox.isSelected());
+		tool.setFormatAlignComments(alignCommentsBox.isSelected());
+
 		tool.setRemoveCommentBlankLines(true);
 
 		boolean ok = tool.loadResources();
@@ -248,18 +305,11 @@ public class FormatView extends AbstractViewBase {
 
 	protected void displayResults() {
 		enabled = false;
-		formatPanel.clear();
-		info.clearAll();
+		mgr = tool.getMgr();
+		doc = mgr.getDocModel().getDocument();
 
-		String formatted = tool.getFormatted();
-		if (formatted != null && !formatted.isEmpty()) {
-			CoreMgr mgr = tool.getMgr();
-			int width = mgr.getDocModel().getDocument().getTabWidth();
-			formatPanel.setTabStops(width);
-
-			formatPanel.load(sourceContent, formatted);
-			info.loadPerfData(mgr);
-		}
+		formatPanel.load(sourceContent, tool.getFormatted());
+		info.loadPerfData(mgr);
 		enabled = true;
 	}
 }

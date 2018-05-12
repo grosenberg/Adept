@@ -35,18 +35,18 @@ public class Analyzer {
 				int tIndex = ref.index;
 				String name = Refs.tText(ref.type, ref.text);
 				String place = Refs.tPlace(ref);
-				String loc = Refs.tLocation(ref);
+				// String loc = Refs.tLocation(ref);
 				// String ancestors = Refs.evalAncestors(feature.getAncestors());
 				// String dents = Refs.tIndent(ref);
 				// String space = Refs.tSpace(ref);
 				// String align = Refs.tAlign(ref);
 
 				if (ref.contexts == null) {
-					String msg = String.format("Null: %3d %s %s %s", tIndex, name, loc, place);
+					String msg = String.format("Null: %3d %s %s", tIndex, name, place);
 					Log.debug(Analyzer.class, msg);
 
 				} else if (ref.contexts.isEmpty()) {
-					String msg = String.format("None: %3d %s %s %s", tIndex, name, loc, place);
+					String msg = String.format("None: %3d %s %s", tIndex, name, place);
 					Log.debug(Analyzer.class, msg);
 
 				} else {

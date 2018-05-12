@@ -33,6 +33,9 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	private static final String MIDL = " > %s%s-%s[%s] > ";
 	private static final String RGHT = "%s(%s) %s[%s]";
 
+	// for visualization
+	public String text;
+
 	// derived from a corpus ref token
 	public RefToken matched;
 
@@ -43,13 +46,8 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public int type;
 	@Expose public int index;
 	@Expose public boolean isComment;
-	@Expose public int line;			// node line (0..n)
-	@Expose public int col;				// node column (0..n)
-	@Expose public String text;			// node content
 
 	// feature token - computed
-	@Expose public String nodeName;
-	@Expose public int visCol;				// actual visual node column (1..n)
 	@Expose public Place place;				// characterized placement in line
 	@Expose public Dent dent;				// indent level & hint
 	@Expose public List<Context> contexts;	// associates
@@ -77,8 +75,6 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		this.type = token.getType();
 		this.index = token.getTokenIndex();
 		this.isComment = token.isComment();
-		this.line = token.getLine();
-		this.col = token.getCharPositionInLine();
 		this.text = Strings.shorten(token.getText(), TXTLIMIT);
 	}
 

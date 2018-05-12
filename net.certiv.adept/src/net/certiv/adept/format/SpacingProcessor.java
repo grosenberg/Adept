@@ -18,7 +18,9 @@ public class SpacingProcessor extends AbstractProcessor {
 
 	// initial TextEdit creation pass; also creates
 	// the initial modified line/token index in the FormatMgr
-	public void adjustLineSpacing() {
+	public void formatWhiteSpace() {
+		ops.buildLinesIndexes();
+
 		for (AdeptToken token : ops.data.index.keySet()) { // real tokens
 			RefToken present = token.refToken();
 			if (present == null) {
@@ -71,8 +73,6 @@ public class SpacingProcessor extends AbstractProcessor {
 					Log.error(this, "Unexpected Err: " + e.getMessage(), e);
 				}
 			}
-
-			ops.append(token);
 		}
 	}
 
@@ -174,7 +174,7 @@ public class SpacingProcessor extends AbstractProcessor {
 	protected String calcIndent(String existing, String matched, int indents) {
 		String indentStr = "";
 		if (!ops.settings.removeTrailingWS) {
-			indentStr += Strings.leadHWS(existing);
+			indentStr += Strings.leadHWs(existing);
 		}
 		int eline = adjVertSpacing(existing);
 		int mline = adjVertSpacing(matched);
