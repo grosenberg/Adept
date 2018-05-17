@@ -1,15 +1,15 @@
-package net.certiv.adept.lang.xvisitor.parser;
+package net.certiv.adept.lang.java.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import net.certiv.adept.lang.Builder;
-import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParserBaseListener;
+import net.certiv.adept.lang.java.parser.gen.JavaParserBaseListener;
 
-public class XVisitorVisitor extends XVisitorParserBaseListener {
+public class JavaFeatureVisitor extends JavaParserBaseListener {
 
 	private Builder builder;
 
-	public XVisitorVisitor(Builder builder) {
+	public JavaFeatureVisitor(Builder builder) {
 		this.builder = builder;
 	}
 

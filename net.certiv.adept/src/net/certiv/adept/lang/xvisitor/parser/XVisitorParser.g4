@@ -51,7 +51,11 @@ action
 	;
 
 xmain
-	:	name=ID COLON ID ( OR ID )* actionBlock? SEMI
+	:	name=ID COLON ID xalt* actionBlock? SEMI
+	;
+
+xalt
+	:	OR ID
 	;
 
 xpath

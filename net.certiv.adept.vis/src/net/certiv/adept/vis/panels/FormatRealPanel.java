@@ -149,18 +149,7 @@ public class FormatRealPanel extends JPanel {
 					clearData();
 				}
 				break;
-
-			case 3:
-				txtLine.setText(String.format("%s:%s %s", token.getLine() + 1, token.getCharPositionInLine() + 1,
-						token.visCol() + 1));
-				txtToken.setText(Refs.fType(ref.type));
-				txtPlace.setText(Refs.tPlace(ref));
-				txtDent.setText(ref.dent.toString());
-				txtAlignment.setText(Refs.tAlign(ref));
-				txtSpacing.setText(Refs.tSpace(ref));
-				break;
 		}
-
 	}
 
 	public void clearData() {

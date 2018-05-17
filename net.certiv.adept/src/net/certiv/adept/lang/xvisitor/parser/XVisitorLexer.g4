@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010-2015 Gerald Rosenberg. All rights reserved.
+ * Copyright (c) 2010-2018 Gerald Rosenberg. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the standard 3-clause BSD License.  A copy of the License
@@ -10,7 +10,7 @@
 lexer grammar XVisitorLexer;
 
 options {
-	superClass = LexerAdaptor ;
+	superClass = XVLexerAdaptor ;
 }
 
 tokens {
@@ -21,8 +21,7 @@ tokens {
 
 @header {
 	package net.certiv.adept.lang.xvisitor.parser.gen;
-
-	import net.certiv.adept.lang.xvisitor.parser.LexerAdaptor;
+	import net.certiv.adept.lang.xvisitor.parser.XVLexerAdaptor;
 }
 
 

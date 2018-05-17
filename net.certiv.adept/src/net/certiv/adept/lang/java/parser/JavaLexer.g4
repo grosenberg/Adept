@@ -1,12 +1,7 @@
 lexer grammar JavaLexer;
 
-options {
-	superClass = LexerErrorStrategy ;
-}
-
 @header {
 	package net.certiv.adept.lang.java.parser.gen;
-	import net.certiv.adept.lang.LexerErrorStrategy;
 }
 
 BLOCKCOMMENT
@@ -167,15 +162,13 @@ fragment Vws			: '\r'? [\n\f]	;
 fragment DocComment		: '/**' .*? ('*/' | EOF)	;
 fragment BlockComment	: '/*'  .*? ('*/' | EOF)	;
 
-fragment LineComment	: '//' ~[\r\n]* 							;
-fragment LineCommentExt	: '//' ~[\r\n]* ( '\r'? '\n' Hws* '//' ~[\r\n]* )*	;
+fragment LineComment	: '//' ~[\r\n]* ;
 
 
 
 fragment DecimalFloatingPointLiteral
     : DecDigits DOT DecDigits? ExponentPart? FloatTypeSuffix?
     | DOT DecDigits ExponentPart? FloatTypeSuffix?
-    | DecDigits ExponentPart FloatTypeSuffix?
     | DecDigits ExponentPart FloatTypeSuffix?
     | DecDigits FloatTypeSuffix
     ;

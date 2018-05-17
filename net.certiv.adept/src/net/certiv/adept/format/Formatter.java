@@ -71,8 +71,15 @@ public class Formatter extends FormatterOps {
 			TextEdit edit = editSet.get(token.getTokenIndex());
 
 			if (edit != null) {
-				contents.append(edit.replacement());
-				idx = idx != edit.endIndex() ? edit.endIndex() : idx + 1;
+				if (idx != edit.endIndex()) {
+					contents.append(token.getText());
+					contents.append(edit.replacement()); // whitespace
+					idx = edit.endIndex();
+				} else {
+					contents.append(edit.replacement()); // comment
+					idx++;
+				}
+
 			} else {
 				contents.append(token.getText());
 				idx++;

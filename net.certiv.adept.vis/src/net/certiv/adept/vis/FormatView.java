@@ -1,21 +1,16 @@
 package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.prefs.Preferences;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -37,21 +32,20 @@ import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Strings;
-import net.certiv.adept.util.Time;
-import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.models.SourceListModel;
-import net.certiv.adept.vis.models.SourceListModel.Item;
 import net.certiv.adept.vis.panels.AbstractViewBase;
 import net.certiv.adept.vis.panels.FormatContentPanel;
 import net.certiv.adept.vis.panels.FormatInfoPanel;
+import net.certiv.adept.vis.panels.FormatSelectPanel;
 import net.certiv.adept.vis.utils.Point;
 
 public class FormatView extends AbstractViewBase {
 
-	private static final String name = "FormatView";
-	private static final String corpusRoot = "../net.certiv.adept/corpus";
-	private static final String rootDir = "../net.certiv.adept.test/test.snippets";
-	private static final String srcExt = ".g4";
+	public static final String name = "FormatView";
+	public static final String corpusRoot = "../net.certiv.adept/corpus";
+	public static final String rootDir = "../net.certiv.adept.test/test.snippets";
+	public static final String srcExt = ".g4";
+
 	private static final String KEY_FMT_CODE = "format_code";
 	private static final String KEY_FMT_COMMENTS = "format_comments";
 	private static final String KEY_FMT_HEADER = "format_header";
@@ -65,18 +59,9 @@ public class FormatView extends AbstractViewBase {
 	private String sourceContent;
 	private boolean enabled;
 
-	private JComboBox<Item> srcBox;
-	private FontChoiceBox fontBox;
-	private JComboBox<Integer> sizeBox;
-	private JComboBox<Integer> tabBox;
+	private FormatSelectPanel selectPanel;
 	private FormatContentPanel formatPanel;
 	private FormatInfoPanel info;
-	private JCheckBox fmtCodeBox;
-	private JCheckBox fmtBreakBox;
-	private JCheckBox fmtHeaderBox;
-	private JCheckBox fmtCommentsBox;
-	private JCheckBox alignFieldsBox;
-	private JCheckBox alignCommentsBox;
 
 	public static void main(String args[]) {
 		try {
@@ -96,77 +81,16 @@ public class FormatView extends AbstractViewBase {
 
 		applyPrefs();
 		frame.setVisible(true);
-
-		Integer fontsize = prefs.getInt(KEY_FONT_SIZE, 12);
-		sizeBox.setSelectedItem(fontsize);
-
-		Integer width = prefs.getInt(KEY_TAB_WIDTH, 4);
-		tabBox.setSelectedItem(width);
 	}
 
 	private void createSelectPanel() {
-		ActionListener run = new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Time.clear();
-				if (e.getSource() instanceof JCheckBox) {
-					loadTool();
-				} else {
-					process();
-				}
-			}
-		};
-
-		JPanel selectPanel = createPanel("Source");
-		selectPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 2));
-
-		srcBox = new JComboBox<>(new SourceListModel(rootDir, srcExt));
-		srcBox.setSize(300, 32);
-		srcBox.addActionListener(run);
-		selectPanel.add(new JLabel("Document: "));
-		selectPanel.add(srcBox);
-
-		// "Droid Sans Mono", "DejaVu Sans Mono", "Oxygen Mono", "NanumGothicCoding"
-		String fontname = prefs.get(KEY_FONT_NAME, "Droid Sans Mono");
-		fontBox = new FontChoiceBox(fontname, Font.PLAIN, true);
-		selectPanel.add(new JLabel("Font: "));
-		selectPanel.add(fontBox);
-
-		sizeBox = new JComboBox<>(SIZES);
-		selectPanel.add(new JLabel("    Font Size: "));
-		selectPanel.add(sizeBox);
-
-		tabBox = new JComboBox<>(WIDTHS);
-		selectPanel.add(new JLabel("    Tab Width: "));
-		selectPanel.add(tabBox);
-
-		fmtCodeBox = new JCheckBox("Format code");
-		fmtBreakBox = new JCheckBox("Format long lines");
-		fmtHeaderBox = new JCheckBox("Format header");
-		fmtCommentsBox = new JCheckBox("Format comments");
-		alignFieldsBox = new JCheckBox("Align fields");
-		alignCommentsBox = new JCheckBox("Align comments");
-
-		fmtCodeBox.addActionListener(run);
-		fmtBreakBox.addActionListener(run);
-		fmtHeaderBox.addActionListener(run);
-		fmtCommentsBox.addActionListener(run);
-		alignFieldsBox.addActionListener(run);
-		alignCommentsBox.addActionListener(run);
-
-		selectPanel.add(fmtCodeBox);
-		selectPanel.add(fmtBreakBox);
-		selectPanel.add(fmtHeaderBox);
-		selectPanel.add(fmtCommentsBox);
-		selectPanel.add(alignFieldsBox);
-		selectPanel.add(alignCommentsBox);
-
+		selectPanel = new FormatSelectPanel(this);
 		content.add(selectPanel, BorderLayout.NORTH);
 	}
 
 	private void createFormatPanel() {
-		formatPanel = new FormatContentPanel(800, 400, fontBox, sizeBox, tabBox, "Source", "Formatted");
+		formatPanel = new FormatContentPanel(800, 400, selectPanel.fontBox, selectPanel.sizeBox, selectPanel.tabBox,
+				"Source", "Formatted");
 		formatPanel.addPropertyChangeListener(FormatContentPanel.CLICK_LEFT, new PropertyChangeListener() {
 
 			@Override
@@ -189,24 +113,27 @@ public class FormatView extends AbstractViewBase {
 
 	@Override
 	protected void saveCustomPrefs(Preferences prefs) {
-		Font font = (Font) fontBox.getSelectedItem();
+		Font font = (Font) selectPanel.fontBox.getSelectedItem();
 		prefs.put(KEY_FONT_NAME, font.getName());
-		prefs.putInt(KEY_FONT_SIZE, (int) sizeBox.getSelectedItem());
-		prefs.putInt(KEY_TAB_WIDTH, (int) tabBox.getSelectedItem());
-		prefs.putBoolean(KEY_FMT_CODE, fmtCodeBox.isSelected());
-		prefs.putBoolean(KEY_FMT_COMMENTS, fmtCommentsBox.isSelected());
-		prefs.putBoolean(KEY_FMT_HEADER, fmtHeaderBox.isSelected());
-		prefs.putBoolean(KEY_ALIGN_FIELDS, alignFieldsBox.isSelected());
-		prefs.putBoolean(KEY_ALIGN_COMMENTS, alignCommentsBox.isSelected());
+		prefs.putInt(KEY_FONT_SIZE, (int) selectPanel.sizeBox.getSelectedItem());
+		prefs.putInt(KEY_TAB_WIDTH, (int) selectPanel.tabBox.getSelectedItem());
+		prefs.putBoolean(KEY_FMT_CODE, selectPanel.chkFormatCode.isSelected());
+		prefs.putBoolean(KEY_FMT_COMMENTS, selectPanel.chkFormatComments.isSelected());
+		prefs.putBoolean(KEY_FMT_HEADER, selectPanel.chkFormatHeader.isSelected());
+		prefs.putBoolean(KEY_ALIGN_FIELDS, selectPanel.chkAlignFields.isSelected());
+		prefs.putBoolean(KEY_ALIGN_COMMENTS, selectPanel.chkAlignComments.isSelected());
 	}
 
 	@Override
 	protected void applyCustomPrefs() {
-		fmtCodeBox.setSelected(prefs.getBoolean(KEY_FMT_CODE, false));
-		fmtCommentsBox.setSelected(prefs.getBoolean(KEY_FMT_COMMENTS, false));
-		fmtHeaderBox.setSelected(prefs.getBoolean(KEY_FMT_HEADER, false));
-		alignFieldsBox.setSelected(prefs.getBoolean(KEY_ALIGN_FIELDS, false));
-		alignCommentsBox.setSelected(prefs.getBoolean(KEY_ALIGN_COMMENTS, false));
+		selectPanel.sizeBox.setSelectedItem(prefs.getInt(KEY_FONT_SIZE, 12));
+		selectPanel.tabBox.setSelectedItem(prefs.getInt(KEY_TAB_WIDTH, 4));
+
+		selectPanel.chkFormatCode.setSelected(prefs.getBoolean(KEY_FMT_CODE, false));
+		selectPanel.chkFormatComments.setSelected(prefs.getBoolean(KEY_FMT_COMMENTS, false));
+		selectPanel.chkFormatHeader.setSelected(prefs.getBoolean(KEY_FMT_HEADER, false));
+		selectPanel.chkAlignFields.setSelected(prefs.getBoolean(KEY_ALIGN_FIELDS, false));
+		selectPanel.chkAlignComments.setSelected(prefs.getBoolean(KEY_ALIGN_COMMENTS, false));
 	}
 
 	protected void selectFeatureData(int line, int col) {
@@ -214,9 +141,11 @@ public class FormatView extends AbstractViewBase {
 			ParseRecord data = mgr.getDocModel().getParseRecord();
 			Integer start = data.lineStartIndex.get(line);
 			if (start != null) {
-				String text = data.charStream.getText(new Interval(start, start + col - 1));
+				// get text up to start of pointed to character!
+				int end = Math.max(start, start + col - 2);
+				String text = data.charStream.getText(new Interval(start, end));
 				int vcol = Strings.measureVisualWidth(text, mgr.getTabWidth());
-				AdeptToken token = data.getVisualToken(line, vcol);
+				AdeptToken token = findToken(line, vcol);
 				if (token != null && token.getType() != Token.EOF) {
 					Feature feature = data.getFeature(token);
 					RefToken ref = token.refToken();
@@ -237,18 +166,37 @@ public class FormatView extends AbstractViewBase {
 		}
 	}
 
-	private void loadTool() {
+	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (0..n-1). */
+	private AdeptToken findToken(int line, int vcol) {
+		ParseRecord data = mgr.getDocModel().getParseRecord();
+		List<AdeptToken> tokens = data.lineTokensIndex.get(line);
+		if (tokens == null || tokens.isEmpty()) return null;
+		if (tokens.size() == 1) return tokens.get(0);
+
+		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
+			AdeptToken token = tokens.get(idx);
+			AdeptToken tnext = tokens.get(idx + 1);
+			int beg = token.iVisCol();
+			int end = tnext.iVisCol();
+
+			if (idx == 0 && vcol < beg) return tokens.get(idx);
+			if (beg <= vcol && vcol < end) return tokens.get(idx);
+		}
+		return tokens.get(tokens.size() - 1);
+	}
+
+	public void loadTool() {
 		tool = new Tool();
 		tool.setCorpusRoot(corpusRoot);
 		tool.setLang("antlr");
 		tool.setTabWidth(4);
 		tool.setRebuild(true);
 
-		tool.setFormat(fmtCodeBox.isSelected());
-		tool.setFormatComments(fmtCommentsBox.isSelected());
-		tool.setFormatHdrComment(fmtHeaderBox.isSelected());
-		tool.setFormatAlignFields(alignFieldsBox.isSelected());
-		tool.setFormatAlignComments(alignCommentsBox.isSelected());
+		tool.setFormat(selectPanel.chkFormatCode.isSelected());
+		tool.setFormatComments(selectPanel.chkFormatComments.isSelected());
+		tool.setFormatHdrComment(selectPanel.chkFormatHeader.isSelected());
+		tool.setFormatAlignFields(selectPanel.chkAlignFields.isSelected());
+		tool.setFormatAlignComments(selectPanel.chkAlignComments.isSelected());
 
 		tool.setRemoveCommentBlankLines(true);
 
@@ -262,8 +210,8 @@ public class FormatView extends AbstractViewBase {
 		}
 	}
 
-	private void process() {
-		SourceListModel model = (SourceListModel) srcBox.getModel();
+	public void process() {
+		SourceListModel model = (SourceListModel) selectPanel.srcBox.getModel();
 		pathname = model.getSelectedPathname();
 		sourceContent = loadContent(pathname);
 		formatPanel.load(sourceContent, "");

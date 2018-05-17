@@ -1,13 +1,12 @@
 package net.certiv.adept.vis.panels;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-
 import javax.swing.JPanel;
-import javax.swing.UIManager;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.FormSpecs;
+import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.format.TextEdit;
@@ -22,55 +21,41 @@ public class FormatInfoPanel extends JPanel {
 	private FormatEditPanel editPane;
 	private FormatRealPanel srcPane;
 	private FormatRealPanel matchPane;
-	private FormatRealPanel resultPane;
 
 	/**
 	 * Create the panel.
 	 */
 	public FormatInfoPanel() {
 		super();
-		setLayout(new BorderLayout(0, 0));
-
-		JPanel panel = new JPanel();
-		add(panel, BorderLayout.WEST);
-		panel.setLayout(new BorderLayout(0, 0));
+		setLayout(new FormLayout(
+				new ColumnSpec[] { FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("195px"),
+						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, },
+				new RowSpec[] { FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, }));
 
 		perfPane = new FormatPerfPanel();
-		panel.add(perfPane, BorderLayout.NORTH);
-		perfPane.setBorder(new CompoundBorder(new EmptyBorder(4, 4, 4, 4),
-				new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Performance", TitledBorder.LEADING,
-						TitledBorder.TOP, null, new Color(0, 0, 0))));
-
-		editPane = new FormatEditPanel();
-		panel.add(editPane);
-		editPane.setBorder(new CompoundBorder(new EmptyBorder(4, 4, 4, 4),
-				new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Edits", TitledBorder.LEADING,
-						TitledBorder.TOP, null, new Color(0, 0, 0))));
-
-		JPanel realsPanel = new JPanel();
-		realsPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
-		add(realsPanel, BorderLayout.CENTER);
-		realsPanel.setLayout(new BorderLayout(0, 0));
+		add(perfPane, "3, 3, 1, 3");
+		perfPane.setBorder(new TitledBorder(null, "Performance", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		srcPane = new FormatRealPanel();
+		add(srcPane, "4, 3");
 		srcPane.setBorder(new TitledBorder(null, "Source", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		realsPanel.add(srcPane, BorderLayout.NORTH);
+
+		editPane = new FormatEditPanel();
+		add(editPane, "6, 3, default, top");
+		editPane.setBorder(new TitledBorder(null, "Edits", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		matchPane = new FormatRealPanel();
+		add(matchPane, "4, 5");
 		matchPane.setBorder(new TitledBorder(null, "Matched", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		realsPanel.add(matchPane, BorderLayout.CENTER);
-
-		resultPane = new FormatRealPanel();
-		resultPane.setBorder(new TitledBorder(null, "Results", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		realsPanel.add(resultPane, BorderLayout.SOUTH);
 	}
 
 	public FormatInfoPanel(FormatView view) {
 		this();
 		srcPane.hideSim();
+		matchPane.hideAncestors();
 		matchPane.hideLineCol();
-		resultPane.hideAncestors();
-		resultPane.hideSim();
 	}
 
 	public void loadPerfData(CoreMgr mgr) {
@@ -82,14 +67,12 @@ public class FormatInfoPanel extends JPanel {
 
 		srcPane.loadData(1, feature, token, ref, matched, sim, ledit, redit);
 		matchPane.loadData(2, feature, token, ref, matched, sim, ledit, redit);
-		resultPane.loadData(3, feature, token, ref, matched, sim, ledit, redit);
 		editPane.loadData(ref, matched, ledit, redit);
 	}
 
 	public void clearData() {
 		srcPane.clearData();
 		matchPane.clearData();
-		resultPane.clearData();
 	}
 
 	public void clearAll() {

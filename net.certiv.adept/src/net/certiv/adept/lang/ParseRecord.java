@@ -259,22 +259,6 @@ public class ParseRecord {
 		return index.get(token);
 	}
 
-	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (0..n-1). */
-	public AdeptToken getVisualToken(int line, int vcol) {
-		List<AdeptToken> tokens = lineTokensIndex.get(line);
-		if (tokens == null || tokens.isEmpty()) return null;
-		if (tokens.size() == 1) return tokens.get(0);
-
-		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
-			int beg = tokens.get(idx).iVisCol();
-			int end = tokens.get(idx + 1).iVisCol() - 1;
-
-			if (idx == 0 && vcol < beg) return tokens.get(idx);
-			if (beg <= vcol && vcol < end) return tokens.get(idx);
-		}
-		return tokens.get(tokens.size() - 1);
-	}
-
 	public boolean isBlankLine(int line) {
 		if (line < 0 && line >= blanklines.size()) return true;
 		return blanklines.get(line);

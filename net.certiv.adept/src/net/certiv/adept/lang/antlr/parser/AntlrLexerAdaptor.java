@@ -1,12 +1,12 @@
 package net.certiv.adept.lang.antlr.parser;
 
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 
-import net.certiv.adept.lang.LexerErrorStrategy;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Lexer;
 
-public abstract class AntlrLexerAdaptor extends LexerErrorStrategy {
+public abstract class AntlrLexerAdaptor extends Lexer {
 
 	private boolean rarrow;
 
