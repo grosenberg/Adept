@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2012-2018 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD 3-clause license that
+ * can be found in the LICENSE.txt file in the project root.
+ */
 package net.certiv.adept.tool;
 
 /**
@@ -9,10 +14,10 @@ package net.certiv.adept.tool;
 public enum ErrorSeverity {
 	WARNING("warning"),
 	ERROR("error"),
-	//	WARNING_ONE_OFF("warning"),
-	//	ERROR_ONE_OFF("error"),
-	//	INFO("info"),
-	//	FATAL("fatal"),
+	// WARNING_ONE_OFF("warning"),
+	// ERROR_ONE_OFF("error"),
+	// INFO("info"),
+	// FATAL("fatal"),
 	;
 
 	/**

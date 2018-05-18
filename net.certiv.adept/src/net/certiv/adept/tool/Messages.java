@@ -1,20 +1,7 @@
 /*
- * [The "BSD license"] Copyright (c) 2012 Terence Parr Copyright (c) 2012 Sam Harwell All rights
- * reserved. Redistribution and use in doc and binary forms, with or without modification, are
- * permitted provided that the following conditions are met: 1. Redistributions of doc code must
- * retain the above copyright notice, this list of conditions and the following disclaimer. 2.
- * Redistributions in binary Facet must reproduce the above copyright notice, this list of conditions
- * and the following disclaimer in the documentation and/or other materials provided with the
- * distribution. 3. The name of the author may not be used to endorse or promote products derived
- * from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE
- * AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
- * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
+ * Copyright (c) 2012-2018 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD 3-clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 package net.certiv.adept.tool;
 
@@ -102,10 +89,10 @@ public class Messages {
 
 	/**
 	 * A generic message from the tool such as "file not found" type errors; there is no reason to
-	 * create a special object for each error unlike the grammar errors, which may be rather
-	 * complex. Sometimes you need to pass in a filename or something to say it is "bad". Allow a
-	 * generic object to be passed in and the string template can deal with just printing it or
-	 * pulling a property out of it.
+	 * create a special object for each error unlike the grammar errors, which may be rather complex.
+	 * Sometimes you need to pass in a filename or something to say it is "bad". Allow a generic object
+	 * to be passed in and the string template can deal with just printing it or pulling a property out
+	 * of it.
 	 */
 	public static class ToolMessage extends Messages {
 
@@ -123,8 +110,8 @@ public class Messages {
 	}
 
 	/**
-	 * A problem with the syntax of your antlr grammar such as "The '{' came as a complete surprise
-	 * to me at this point in your program"
+	 * A problem with the syntax of your antlr grammar such as "The '{' came as a complete surprise to
+	 * me at this point in your program"
 	 */
 	public static class GrammarSyntaxMessage extends Messages {
 
@@ -146,8 +133,8 @@ public class Messages {
 	}
 
 	/**
-	 * A problem with the symbols and/or meaning of a grammar such as rule redefinition. Any msg
-	 * where we can point to a location in the grammar.
+	 * A problem with the symbols and/or meaning of a grammar such as rule redefinition. Any msg where
+	 * we can point to a location in the grammar.
 	 */
 	public static class GrammarSemanticsMessage extends Messages {
 
