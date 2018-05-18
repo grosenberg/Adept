@@ -3,7 +3,6 @@ package net.certiv.adept.vis.panels;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
@@ -14,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
@@ -52,10 +52,6 @@ public class FormatContentPanel extends JPanel {
 	}
 
 	private void createComponents() {
-		JPanel mainPanel = new JPanel();
-		mainPanel.setSize(width, height);
-		mainPanel.setLayout(new GridLayout(1, 2));
-
 		JPanel lhsPanel = new JPanel();
 		JPanel rhsPanel = new JPanel();
 		lhsPanel.setLayout(new BorderLayout());
@@ -115,11 +111,17 @@ public class FormatContentPanel extends JPanel {
 		rhsPanel.add(rhsLabel, BorderLayout.NORTH);
 		rhsPanel.add(rhsScroll, BorderLayout.CENTER);
 
-		mainPanel.add(lhsPanel);
-		mainPanel.add(rhsPanel);
+		JSplitPane splitPane = new JSplitPane();
+		splitPane.setSize(width, height);
+		splitPane.setResizeWeight(0.5);
+		splitPane.setOneTouchExpandable(false);
+		splitPane.setDividerSize(8);
+		splitPane.setContinuousLayout(true);
 
+		splitPane.setLeftComponent(lhsPanel);
+		splitPane.setRightComponent(rhsPanel);
 		setLayout(new BorderLayout());
-		add(mainPanel);
+		add(splitPane);
 	}
 
 	private void createComponentListeners(FontChoiceBox fontBox, JComboBox<Integer> sizeBox,

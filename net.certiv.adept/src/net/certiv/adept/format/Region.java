@@ -66,6 +66,11 @@ public class Region implements Comparator<Region>, Comparable<Region> {
 		return val >= min && val <= max ? true : false;
 	}
 
+	/** Range width of the region including end-points. */
+	public int range() {
+		return Math.max(0, max - min + 1);
+	}
+
 	public boolean adjacent(Region region) {
 		return region.min == max || region.max == min;
 	}

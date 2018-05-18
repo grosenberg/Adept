@@ -50,9 +50,9 @@ options {
 import JavaParser;
 
 typeDeclaration
-    :   classOrInterfaceModifier* classDeclaration
-    |   classOrInterfaceModifier* enumDeclaration
-    |   classOrInterfaceModifier* interfaceDeclaration
+    :   classOrInterfaceModifier* classDeclaration		// class
+    |   classOrInterfaceModifier* enumDeclaration		// enum
+    |   classOrInterfaceModifier* interfaceDeclaration	// interface
     |   classOrInterfaceModifier* annotationTypeDeclaration
     |	classOrInterfaceModifier* aspectDeclaration
     |   ';'
