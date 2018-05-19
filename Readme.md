@@ -12,13 +12,13 @@ of use.
 
 ![FormatView](FormatView.png)
 
-Current built-in language support
+## Current built-in language support
 
 - [x] ANTLR syntax
 - [ ] Java syntax
 - [ ] XVisitor syntax
 
-Formatting operations
+## Formatting operations
 
 - [x] Code formatter
 - [x] Comment formatter
@@ -27,7 +27,7 @@ Formatting operations
 - [x] Align comments
 - [ ] Break long lines
 
-Status
+## Status
 
 ANTLR syntax is implemented and partially tested. Java and XVisitor syntaxes partially 
 implemented and untested.
