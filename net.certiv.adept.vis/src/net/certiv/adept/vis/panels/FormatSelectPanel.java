@@ -15,6 +15,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import com.jgoodies.forms.layout.ColumnSpec;
@@ -25,6 +27,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import net.certiv.adept.util.Time;
 import net.certiv.adept.vis.FormatView;
 import net.certiv.adept.vis.components.FontChoiceBox;
+import net.certiv.adept.vis.models.LanguageListModel;
 import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
 
@@ -33,10 +36,16 @@ public class FormatSelectPanel extends JPanel {
 	private FormatView view;
 	private String fontname;
 
+	private SourceListModel srcModel;
+	private LanguageListModel langModel;
+
+	public JComboBox<String> langBox;
 	public JComboBox<Item> srcBox;
 	public FontChoiceBox fontBox;
 	public JComboBox<Integer> sizeBox;
 	public JComboBox<Integer> tabBox;
+
+	public JSeparator separator;
 
 	public JCheckBox chkFormatCode;
 	public JCheckBox chkFormatComments;
@@ -53,58 +62,69 @@ public class FormatSelectPanel extends JPanel {
 		initPanel(view);
 
 		setLayout(new FormLayout(
-				new ColumnSpec[] { FormSpecs.UNRELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
-						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(200dlu;default)"),
+				new ColumnSpec[] { FormSpecs.UNRELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
+						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
+						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(150dlu;default)"),
 						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(40dlu;default)"),
-						FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-						ColumnSpec.decode("max(40dlu;default)"), FormSpecs.RELATED_GAP_COLSPEC,
+						FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC,
 						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 						FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-						ColumnSpec.decode("default:grow"), },
+						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), },
 				new RowSpec[] { FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, }));
 
+		JLabel lblLanguage = new JLabel("Language");
+		add(lblLanguage, "2, 1");
+
+		langBox = new JComboBox<>();
+		add(langBox, "4, 1, fill, default");
+
 		JLabel lblDoc = new JLabel("Document");
-		add(lblDoc, "2, 1, right, default");
+		add(lblDoc, "6, 1, right, default");
 
 		srcBox = new JComboBox<>();
-		add(srcBox, "4, 1, fill, default");
+		add(srcBox, "8, 1, fill, default");
 
 		JLabel lblTabWidth = new JLabel("Tab Width");
-		add(lblTabWidth, "6, 1, right, default");
+		add(lblTabWidth, "10, 1, right, default");
 
 		tabBox = new JComboBox<>();
-		add(tabBox, "8, 1, fill, default");
+		add(tabBox, "12, 1, fill, default");
+
+		separator = new JSeparator();
+		separator.setOrientation(SwingConstants.VERTICAL);
+		add(separator, "14, 1, 1, 3");
 
 		chkFormatCode = new JCheckBox("Format Code");
-		add(chkFormatCode, "12, 1");
+		add(chkFormatCode, "16, 1");
 
 		chkFormatComments = new JCheckBox("Format Comments");
-		add(chkFormatComments, "14, 1");
+		add(chkFormatComments, "18, 1");
 
 		chkFormatHeader = new JCheckBox("Format Header");
-		add(chkFormatHeader, "16, 1");
+		add(chkFormatHeader, "20, 1");
 
 		JLabel lblFont = new JLabel("Font");
-		add(lblFont, "2, 3, right, default");
+		add(lblFont, "6, 3, right, default");
 
 		fontBox = new FontChoiceBox(fontname, Font.PLAIN, true);
-		add(fontBox, "4, 3, fill, default");
+		add(fontBox, "8, 3, fill, default");
 
 		JLabel lblFontSize = new JLabel("Font Size");
-		add(lblFontSize, "6, 3, right, default");
+		add(lblFontSize, "10, 3, right, default");
 
 		sizeBox = new JComboBox<>();
-		add(sizeBox, "8, 3, fill, default");
+		add(sizeBox, "12, 3, fill, default");
 
 		chkAlignFields = new JCheckBox("Align Fields");
-		add(chkAlignFields, "12, 3");
+		add(chkAlignFields, "16, 3");
 
 		chkAlignComments = new JCheckBox("Align Comments");
-		add(chkAlignComments, "14, 3");
+		add(chkAlignComments, "18, 3");
 
 		chkBreakLines = new JCheckBox("Break Long Lines");
-		add(chkBreakLines, "16, 3");
+		add(chkBreakLines, "20, 3");
 
 		complete();
 	}
@@ -117,7 +137,12 @@ public class FormatSelectPanel extends JPanel {
 	}
 
 	private void complete() {
-		srcBox.setModel(new SourceListModel(FormatView.rootDir, FormatView.srcExt));
+		langModel = new LanguageListModel(FormatView.corpusRoot);
+		langBox.setModel(langModel);
+
+		srcModel = new SourceListModel(FormatView.rootDir, langModel.getSelectedExt());
+		srcBox.setModel(srcModel);
+
 		tabBox.setModel(new DefaultComboBoxModel<>(FormatView.WIDTHS));
 		sizeBox.setModel(new DefaultComboBoxModel<>(FormatView.SIZES));
 
@@ -126,15 +151,23 @@ public class FormatSelectPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Time.clear();
-				if (e.getSource() instanceof JCheckBox) {
-					view.loadTool();
-				} else {
+
+				if (e.getSource() == srcBox) {
 					view.process();
+
+				} else {
+					if (e.getSource() == langBox) {
+						srcModel = new SourceListModel(FormatView.rootDir, langModel.getSelectedExt());
+						srcBox.setModel(srcModel);
+					}
+					view.loadTool(langModel.getSelected());
 				}
 			}
 		};
 
+		langBox.addActionListener(run);
 		srcBox.addActionListener(run);
+
 		chkFormatCode.addActionListener(run);
 		chkBreakLines.addActionListener(run);
 		chkFormatHeader.addActionListener(run);

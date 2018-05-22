@@ -61,8 +61,8 @@ public class JavaSourceParser implements ISourceParser {
 
 	private void setup(TokenFactory<?> factory, String content) {
 		builder.charStream = CharStreams.fromString(content);
-		builder.lexer.setTokenFactory(factory);
 		builder.lexer = new JavaLexer(builder.charStream);
+		builder.lexer.setTokenFactory(factory);
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
 		builder.parser = new JavaParser(builder.tokenStream);
 
@@ -70,7 +70,7 @@ public class JavaSourceParser implements ISourceParser {
 		builder.HWS = HWS;
 		builder.BLOCKCOMMENT = BLOCKCOMMENT;
 		builder.LINECOMMENT = LINECOMMENT;
-		builder.ERR_TOKEN = ERRCHAR;
+		// builder.ERR_TOKEN = ERRCHAR;
 		// featureBuilder.ERR_RULE = JavaParser.RULE_other << 16;
 	}
 
@@ -105,7 +105,7 @@ public class JavaSourceParser implements ISourceParser {
 	public List<Integer> excludedTypes() {
 		List<Integer> excludes = new ArrayList<>();
 		excludes.add(Token.EOF);
-		excludes.add(JavaParser.ERRCHAR);
+		// excludes.add(JavaParser.ERRCHAR);
 		// excludes.add(JavaParser.RULE_??? << 16);
 		return excludes;
 	}

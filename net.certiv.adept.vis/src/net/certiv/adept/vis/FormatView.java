@@ -74,8 +74,8 @@ public class FormatView extends AbstractViewBase {
 			UIManager.setLookAndFeel(new Plastic3DLookAndFeel());
 		} catch (Exception e) {}
 
-		FormatView view = new FormatView();
-		view.loadTool();
+		new FormatView();
+
 	}
 
 	public FormatView() {
@@ -87,6 +87,9 @@ public class FormatView extends AbstractViewBase {
 
 		applyPrefs();
 		frame.setVisible(true);
+
+		String lang = (String) selectPanel.langBox.getSelectedItem();
+		loadTool(lang);
 	}
 
 	private void createSelectPanel() {
@@ -191,10 +194,10 @@ public class FormatView extends AbstractViewBase {
 		return tokens.get(tokens.size() - 1);
 	}
 
-	public void loadTool() {
+	public void loadTool(String lang) {
 		tool = new Tool();
 		tool.setCorpusRoot(corpusRoot);
-		tool.setLang("antlr");
+		tool.setLang(lang);
 		tool.setTabWidth(4);
 		tool.setRebuild(true);
 

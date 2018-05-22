@@ -1,8 +1,179 @@
+/*
+ [The "BSD licence"]
+ Copyright (c) 2013 Terence Parr, Sam Harwell
+ Copyright (c) 2017 Ivan Kochurkin (upgrade to Java 8)
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 lexer grammar JavaLexer;
 
 @header {
 	package net.certiv.adept.lang.java.parser.gen;
 }
+
+
+// Keywords
+
+ABSTRACT:           'abstract';
+ASSERT:             'assert';
+BOOLEAN:            'boolean';
+BREAK:              'break';
+BYTE:               'byte';
+CASE:               'case';
+CATCH:              'catch';
+CHAR:               'char';
+CLASS:              'class';
+CONST:              'const';
+CONTINUE:           'continue';
+DEFAULT:            'default';
+DO:                 'do';
+DOUBLE:             'double';
+ELSE:               'else';
+ENUM:               'enum';
+EXTENDS:            'extends';
+FINAL:              'final';
+FINALLY:            'finally';
+FLOAT:              'float';
+FOR:                'for';
+IF:                 'if';
+GOTO:               'goto';
+IMPLEMENTS:         'implements';
+IMPORT:             'import';
+INSTANCEOF:         'instanceof';
+INT:                'int';
+INTERFACE:          'interface';
+LONG:               'long';
+NATIVE:             'native';
+NEW:                'new';
+PACKAGE:            'package';
+PRIVATE:            'private';
+PROTECTED:          'protected';
+PUBLIC:             'public';
+RETURN:             'return';
+SHORT:              'short';
+STATIC:             'static';
+STRICTFP:           'strictfp';
+SUPER:              'super';
+SWITCH:             'switch';
+SYNCHRONIZED:       'synchronized';
+THIS:               'this';
+THROW:              'throw';
+THROWS:             'throws';
+TRANSIENT:          'transient';
+TRY:                'try';
+VOID:               'void';
+VOLATILE:           'volatile';
+WHILE:              'while';
+
+// Literals
+
+DECIMAL_LITERAL:    ('0' | [1-9] (Digits? | '_'+ Digits)) [lL]?;
+HEX_LITERAL:        '0' [xX] [0-9a-fA-F] ([0-9a-fA-F_]* [0-9a-fA-F])? [lL]?;
+OCT_LITERAL:        '0' '_'* [0-7] ([0-7_]* [0-7])? [lL]?;
+BINARY_LITERAL:     '0' [bB] [01] ([01_]* [01])? [lL]?;
+                    
+FLOAT_LITERAL:      (Digits '.' Digits? | '.' Digits) ExponentPart? [fFdD]?
+             |       Digits (ExponentPart [fFdD]? | [fFdD])
+             ;
+
+HEX_FLOAT_LITERAL:  '0' [xX] (HexDigits '.'? | HexDigits? '.' HexDigits) [pP] [+-]? Digits [fFdD]?;
+
+BOOL_LITERAL:       'true'
+            |       'false'
+            ;
+
+CHAR_LITERAL:       '\'' (~['\\\r\n] | EscapeSequence) '\'';
+
+STRING_LITERAL:     '"' (~["\\\r\n] | EscapeSequence)* '"';
+
+NULL_LITERAL:       'null';
+
+// Separators
+
+LPAREN:             '(';
+RPAREN:             ')';
+LBRACE:             '{';
+RBRACE:             '}';
+LBRACK:             '[';
+RBRACK:             ']';
+SEMI:               ';';
+COMMA:              ',';
+DOT:                '.';
+
+// Operators
+
+ASSIGN:             '=';
+GT:                 '>';
+LT:                 '<';
+BANG:               '!';
+TILDE:              '~';
+QMARK:              '?';
+COLON:              ':';
+EQUAL:              '==';
+LE:                 '<=';
+GE:                 '>=';
+NOTEQUAL:           '!=';
+AND:                '&&';
+OR:                 '||';
+INC:                '++';
+DEC:                '--';
+ADD:                '+';
+SUB:                '-';
+STAR:               '*';
+DIV:                '/';
+BITAND:             '&';
+BITOR:              '|';
+CARET:              '^';
+MOD:                '%';
+
+ADD_ASSIGN:         '+=';
+SUB_ASSIGN:         '-=';
+MUL_ASSIGN:         '*=';
+DIV_ASSIGN:         '/=';
+AND_ASSIGN:         '&=';
+OR_ASSIGN:          '|=';
+XOR_ASSIGN:         '^=';
+MOD_ASSIGN:         '%=';
+LSHIFT_ASSIGN:      '<<=';
+RSHIFT_ASSIGN:      '>>=';
+URSHIFT_ASSIGN:     '>>>=';
+
+// Java 8 tokens
+
+ARROW:              '->';
+DCOLON:             '::';
+
+// Additional symbols not defined in the lexical specification
+
+AT:                 '@';
+ELLIPSIS:           '...';
+
+// Whitespace and comments
+
+HWS	:	Hws+	-> channel(HIDDEN)	;
+VWS	:	Vws		-> channel(HIDDEN)	;
 
 BLOCKCOMMENT
  	: ( DocComment | BlockComment ) -> channel(HIDDEN)
@@ -12,279 +183,49 @@ LINECOMMENT
  	: LineComment -> channel(HIDDEN)
 	;
 
-NUM	: DecimalNumeral IntSuffix?
-	| HexNumeral IntSuffix?
-	| OctalNumeral IntSuffix?
-	| BinaryNumeral IntSuffix?
-    | DecimalFloatingPointLiteral
-    | HexadecimalFloatingPointLiteral
-    | NULL
-    ;
-
-STRING
-	: SQuoteLiteral
-	| DQuoteLiteral
-	| CharLiteral
-	;
-
-ABSTRACT		: 'abstract'	;
-ASSERT			: 'assert'		;
-BOOLEAN			: 'boolean'		;
-BREAK			: 'break'		;
-BYTE			: 'byte'		;
-CASE			: 'case'		;
-CATCH			: 'catch'		;
-CHAR			: 'char'		;
-CLASS			: 'class'		;
-CONST			: 'const'		;
-CONTINUE		: 'continue'	;
-DEFAULT			: 'default'		;
-DO				: 'do'			;
-DOUBLE			: 'double'		;
-ELSE			: 'else'		;
-ENUM			: 'enum'		;
-EXTENDS			: 'extends'		;
-FINAL			: 'final'		;
-FINALLY			: 'finally'		;
-FLOAT			: 'float'		;
-FOR				: 'for'			;
-IF				: 'if'			;
-GOTO			: 'goto'		;
-IMPLEMENTS		: 'implements'	;
-IMPORT			: 'import'		;
-INSTANCEOF		: 'instanceof'	;
-INT				: 'int'			;
-INTERFACE		: 'interface'	;
-LONG			: 'long'		;
-NATIVE			: 'native'		;
-NEW				: 'new'			;
-NULL			: 'null'		;
-PACKAGE			: 'package'		;
-PRIVATE			: 'private'		;
-PROTECTED		: 'protected'	;
-PUBLIC			: 'public'		;
-RETURN			: 'return'		;
-SHORT			: 'short'		;
-STATIC			: 'static'		;
-STRICTFP		: 'strictfp'	;
-SUPER			: 'super'		;
-SWITCH			: 'switch'		;
-SYNCHRONIZED	: 'synchronized';
-THIS			: 'this'		;
-THROW			: 'throw'		;
-THROWS			: 'throws'		;
-TRANSIENT		: 'transient'	;
-TRY				: 'try'			;
-VOID			: 'void'		;
-VOLATILE		: 'volatile'	;
-WHILE			: 'while'		;
-
-TRUE			: 'true'		;
-FALSE			: 'false'		;
-
-AT			: '@'		;
-COLON		: ':'		;
-DCOLON		: '::'		;
-COMMA		: ','		;
-SEMI		: ';'		;
-LPAREN		: '('		;
-RPAREN		: ')'		;
-LBRACE		: '{'		;
-RBRACE		: '}'		;
-LBRACK		: '['		;
-RBRACK		: ']'		;
-RARROW		: '->'		;
-BANG		: '!'		;
-QMARK		: '?'		;
-// STAR		: '*'		;
-PLUS		: '+'		;
-MINUS		: '-'		;
-MULT		: '*'		;
-DIV			: '/'		;
-B_AND		: '&'		;
-B_OR		: '|'		;
-XOR			: '^'		;
-MOD			: '%'		;
-ASSIGN		: '='		;
-PLUS_ASSIGN	: '+='		;
-MINUS_ASSIGN: '-='		;
-MULT_ASSIGN	: '*='		;
-DIV_ASSIGN	: '/='		;
-AND_ASSIGN	: '&='		;
-OR_ASSIGN	: '|='		;
-XOR_ASSIGN	: '^='		;
-MOD_ASSIGN	: '%='		;
-LEFT_ASSIGN	: '<<='		;
-RIGHT_ASSIGN: '>>='		;
-UR_ASSIGN	: '>>>='	;
-LT			: '<'		;
-GT			: '>'		;
-EQ			: '=='		;
-LE			: '<='		;
-GE			: '>='		;
-NEQ			: '!='		;
-L_AND		: '&&'		;
-L_OR		: '||'		;
-INCREMENT	: '++'		;
-DECREMENT	: '--'		;
-L_SHIFT		: '<<'		;
-DIAMOND		: '<>'		;
-TILDE 		: '~'		;
-DOT			: '.'		;
-ELLIPSES	: '...'		;
-DOLLAR		: '$'		;
-POUND		: '#'		;
-
-ESC			: Esc		;
-SQUOTE		: SQuote	;
-DQUOTE		: DQuote	;
-
-
-ID	: NameStartChar NameChar* ;
-
-QID : ID ( DOT ID )*	;
-
-HWS	:	Hws+	-> channel(HIDDEN)	;
-VWS	:	Vws		-> channel(HIDDEN)	;
-
-ERRCHAR : .		-> channel(HIDDEN)	;
-
-// =======================
-
-
-fragment Esc			: '\\'	;
-fragment SQuote			: '\''	;
-fragment DQuote			: '"'	;
-
 fragment Hws			: [ \t]			;
 fragment Vws			: '\r'? [\n\f]	;
 
 fragment DocComment		: '/**' .*? ('*/' | EOF)	;
 fragment BlockComment	: '/*'  .*? ('*/' | EOF)	;
-
 fragment LineComment	: '//' ~[\r\n]* ;
 
 
+// Identifiers
 
-fragment DecimalFloatingPointLiteral
-    : DecDigits DOT DecDigits? ExponentPart? FloatTypeSuffix?
-    | DOT DecDigits ExponentPart? FloatTypeSuffix?
-    | DecDigits ExponentPart FloatTypeSuffix?
-    | DecDigits FloatTypeSuffix
-    ;
+IDENTIFIER:         Letter LetterOrDigit*;
+
+// Fragment rules
 
 fragment ExponentPart
-    : ExponentIndicator SignedInteger
+    : [eE] [+-]? Digits
     ;
 
-fragment ExponentIndicator
-    : [eE]
+fragment EscapeSequence
+    : '\\' [btnfr"'\\]
+    | '\\' ([0-3]? [0-7])? [0-7]
+    | '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
     ;
 
-fragment SignedInteger
-    : Sign? DecDigits
+fragment HexDigits
+    : HexDigit ((HexDigit | '_')* HexDigit)?
     ;
 
-fragment Sign
-    : [-+]
+fragment HexDigit
+    : [0-9a-fA-F]
     ;
 
-fragment FloatTypeSuffix
-    : [fFdD]
+fragment Digits
+    : [0-9] ([0-9_]* [0-9])?
     ;
 
-fragment HexadecimalFloatingPointLiteral
-    : HexSignificand BinaryExponent FloatTypeSuffix?
+fragment LetterOrDigit
+    : Letter
+    | [0-9]
     ;
 
-fragment HexSignificand
-    : HexNumeral '.'?
-    | '0' [xX] HexDigits? DOT HexDigits
+fragment Letter
+    : [a-zA-Z$_] // these are the "java letters" below 0x7F
+    | ~[\u0000-\u007F\uD800-\uDBFF] // covers all characters above 0x7F which are not a surrogate
+    | [\uD800-\uDBFF] [\uDC00-\uDFFF] // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
     ;
-
-fragment BinaryExponent
-    : BinaryExponentIndicator SignedInteger
-    ;
-
-fragment BinaryExponentIndicator
-    : [pP]
-    ;
-
-fragment EscSeq
-	:	Esc
-		( [btnfr"'\\]	// The standard escaped character set such as tab, newline, etc.
-		| UnicodeEsc	// A Unicode escape sequence
-		| OctalEsc		// An octal escape sequence
-		| .				// Invalid escape character
-		| EOF			// Incomplete at EOF
-		)
-	;
-
-fragment UnicodeEsc
-	:	'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)?
-	;
-
-fragment OctalEsc
-    : OctalDigit
-    | OctalDigit OctalDigit
-    | [0-3] OctalDigit OctalDigit
-	;
-
-fragment IntSuffix
-    : 'l'
-    | 'L'
-    ;
-
-fragment DecimalNumeral
-	: '0'
-	| [1-9] DecDigit*
-	;
-
-fragment HexNumeral
-	: '0' [xX] HexDigit+
-	;
-
-fragment OctalNumeral
-    : '0' OctalDigit+
-	;
-
-fragment BinaryNumeral
-    : '0' [bB] BinaryDigit+
-	;
-
-fragment DecDigits		: DecDigit+		;
-fragment HexDigits		: HexDigit+		;
-
-fragment DecDigit		: [0-9]			;
-fragment HexDigit		: [0-9a-fA-F]	;
-fragment OctalDigit		: [0-7]			;
-fragment BinaryDigit	: [0-1]			;
-
-fragment CharLiteral	: SQuote ( EscSeq | ~['\r\n\\] )  SQuote	;
-fragment SQuoteLiteral	: SQuote ( EscSeq | ~['\r\n\\] )* SQuote	;
-fragment DQuoteLiteral	: DQuote ( EscSeq | ~["\r\n\\] )* DQuote	;
-
-fragment NameChar
-	:	NameStartChar
-	|	'0'..'9'
-	|	'_'
-	|	'\u00B7'
-	|	'\u0300'..'\u036F'
-	|	'\u203F'..'\u2040'
-	;
-
-fragment NameStartChar
-	:	'A'..'Z'
-	|	'a'..'z'
-	|	'\u00C0'..'\u00D6'
-	|	'\u00D8'..'\u00F6'
-	|	'\u00F8'..'\u02FF'
-	|	'\u0370'..'\u037D'
-	|	'\u037F'..'\u1FFF'
-	|	'\u200C'..'\u200D'
-	|	'\u2070'..'\u218F'
-	|	'\u2C00'..'\u2FEF'
-	|	'\u3001'..'\uD7FF'
-	|	'\uF900'..'\uFDCF'
-	|	'\uFDF0'..'\uFFFD'
-	;	// ignores | ['\u10000-'\uEFFFF] ;
