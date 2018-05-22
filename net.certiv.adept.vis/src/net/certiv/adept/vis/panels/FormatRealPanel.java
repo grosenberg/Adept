@@ -134,7 +134,7 @@ public class FormatRealPanel extends JPanel {
 
 		switch (type) {
 			case 1:
-				txtLine.setText(String.format("%s:%s %s", token.iLine + 1, token.iCol + 1, token.iVisCol + 1));
+				txtLine.setText(String.format("%s:%s %s", token.iLine + 1, token.iCol, token.iVisCol + 1));
 				txtAncestors.setText(Refs.evalAncestors(feature.getAncestors()));
 				txtToken.setText(Refs.fType(ref.type));
 				txtPlace.setText(Refs.tPlace(ref));
@@ -160,6 +160,7 @@ public class FormatRealPanel extends JPanel {
 
 	public void clearData() {
 		txtLine.setText("");
+		txtSimularity.setText("");
 		txtPlace.setText("");
 		txtDent.setText("");
 		txtAncestors.setText("");

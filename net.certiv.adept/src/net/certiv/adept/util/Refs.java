@@ -21,7 +21,7 @@ import net.certiv.adept.model.RefToken;
 public class Refs {
 
 	private static final String DentMsg = "%s (%s: %s)";
-	private static final String AlignMsg = "%s {%s}  %s:%s (%s)";
+	private static final String AlignMsg = "%s: %s lines; %s gap;  %s group; line %s";
 	private static final String SpaceMsg = "%s  %s  <  %s  >  %s  %s";
 	private static final String LocMsg = "@%s:%s <%s>";
 
@@ -42,8 +42,8 @@ public class Refs {
 	}
 
 	public static String tAlign(RefToken ref) {
-		if (ref.scheme == Scheme.NONE) return "None --";
-		return String.format(AlignMsg, ref.scheme, ref.gap, ref.inGroup, ref.inLine, ref.grpTotal);
+		if (ref.scheme == Scheme.NONE) return "None";
+		return String.format(AlignMsg, ref.scheme, ref.lines, ref.gap, ref.inGroup, ref.inLine);
 	}
 
 	public static String tSpace(RefToken ref) {

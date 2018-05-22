@@ -36,24 +36,23 @@ public class FormatInfoPanel extends JPanel {
 		setLayout(new FormLayout(
 				new ColumnSpec[] { FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("195px"),
 						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, },
-				new RowSpec[] { FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, }));
+				new RowSpec[] { FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, }));
 
 		perfPane = new FormatPerfPanel();
-		add(perfPane, "3, 3, 1, 3");
+		add(perfPane, "3, 2, 1, 3");
 		perfPane.setBorder(new TitledBorder(null, "Performance", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		srcPane = new FormatRealPanel();
-		add(srcPane, "4, 3");
+		add(srcPane, "4, 2");
 		srcPane.setBorder(new TitledBorder(null, "Source", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		editPane = new FormatEditPanel();
-		add(editPane, "6, 3, default, top");
+		add(editPane, "6, 2, default, top");
 		editPane.setBorder(new TitledBorder(null, "Edits", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		matchPane = new FormatRealPanel();
-		add(matchPane, "4, 5");
+		add(matchPane, "4, 4");
 		matchPane.setBorder(new TitledBorder(null, "Matched", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 	}
 
@@ -79,6 +78,7 @@ public class FormatInfoPanel extends JPanel {
 	public void clearData() {
 		srcPane.clearData();
 		matchPane.clearData();
+		editPane.clearData();
 	}
 
 	public void clearAll() {

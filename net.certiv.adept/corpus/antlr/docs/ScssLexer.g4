@@ -28,46 +28,46 @@
 
 lexer grammar ScssLexer ;
 
-NULL    : 'null';
-IN      : 'in';
+NULL    : 'null' ;
+IN      : 'in' ;
 
 Unit
 	: ('%'|'px'|'cm'|'mm'|'in'|'pt'|'pc'|'em'|'ex'|'deg'|'rad'|'grad'|'ms'|'s'|'hz'|'khz')
 	;
 
-COMBINE_COMPARE : '&&' | '||';
+COMBINE_COMPARE : '&&' | '||' ;
 
-Ellipsis          : '...';
+Ellipsis          : '...' ;
 
 InterpolationStart
 	: HASH BlockStart -> pushMode(IDENTIFY)
 	;
 
 //Separators
-LPAREN          : '(';
-RPAREN          : ')';
-BlockStart      : '{';
-BlockEnd        : '}';
-LBRACK          : '[';
-RBRACK          : ']';
-GT              : '>';
-TIL             : '~';
+LPAREN          : '(' ;
+RPAREN          : ')' ;
+BlockStart      : '{' ;
+BlockEnd        : '}' ;
+LBRACK          : '[' ;
+RBRACK          : ']' ;
+GT              : '>' ;
+TIL             : '~' ;
 
-LT              : '<';
-COLON           : ':';
-SEMI            : ';';
-COMMA           : ',';
-DOT             : '.';
-DOLLAR          : '$';
-AT              : '@';
-AND             : '&';
-HASH            : '#';
-COLONCOLON      : '::';
-PLUS            : '+';
-TIMES           : '*';
-DIV             : '/';
-MINUS           : '-';
-PERC            : '%';
+LT              : '<' ;
+COLON           : ':' ;
+SEMI            : ';' ;
+COMMA           : ',' ;
+DOT             : '.' ;
+DOLLAR          : '$' ;
+AT              : '@' ;
+AND             : '&' ;
+HASH            : '#' ;
+COLONCOLON      : '::' ;
+PLUS            : '+' ;
+TIMES           : '*' ;
+DIV             : '/' ;
+MINUS           : '-' ;
+PERC            : '%' ;
 
 
 UrlStart
@@ -76,32 +76,32 @@ UrlStart
 
 
 
-EQEQ            : '==';
-NOTEQ           : '!=';
+EQEQ            : '==' ;
+NOTEQ           : '!=' ;
 
 
 
-EQ              : '=';
-PIPE_EQ         : '|=';
-TILD_EQ         : '~=';
+EQ              : '=' ;
+PIPE_EQ         : '|=' ;
+TILD_EQ         : '~=' ;
 
 
 
-MIXIN           : '@mixin';
-FUNCTION        : '@function';
-AT_ELSE         : '@else';
-IF              : 'if';
-AT_IF           : '@if';
-AT_FOR          : '@for';
-AT_WHILE        : '@while';
-AT_EACH         : '@each';
-INCLUDE         : '@include';
-IMPORT          : '@import';
-RETURN          : '@return';
+MIXIN           : '@mixin' ;
+FUNCTION        : '@function' ;
+AT_ELSE         : '@else' ;
+IF              : 'if' ;
+AT_IF           : '@if' ;
+AT_FOR          : '@for' ;
+AT_WHILE        : '@while' ;
+AT_EACH         : '@each' ;
+INCLUDE         : '@include' ;
+IMPORT          : '@import' ;
+RETURN          : '@return' ;
 
-FROM            : 'from';
-THROUGH         : 'through';
-POUND_DEFAULT   : '!default';
+FROM            : 'from' ;
+THROUGH         : 'through' ;
+POUND_DEFAULT   : '!default' ;
 
 
 Identifier

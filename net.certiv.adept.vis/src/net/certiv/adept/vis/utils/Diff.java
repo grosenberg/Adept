@@ -126,5 +126,4 @@ public class Diff {
 	public String toString() {
 		return diff();
 	}
-
 }

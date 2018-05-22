@@ -9,15 +9,12 @@ package net.certiv.adept.vis.panels;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.event.CaretEvent;
@@ -30,6 +27,7 @@ import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.components.LineRuler;
 import net.certiv.adept.vis.components.TabRuler;
 import net.certiv.adept.vis.utils.Point;
+import net.certiv.adept.vis.utils.Synchronizer;
 import net.certiv.adept.vis.utils.TextUtils;
 
 public class FormatContentPanel extends JPanel {
@@ -103,7 +101,7 @@ public class FormatContentPanel extends JPanel {
 		TabRuler rTabRuler = new TabRuler(rhs);
 		rhsScroll.setColumnHeaderView(rTabRuler);
 
-		new Synchronizer(lhsScroll, rhsScroll);
+		Synchronizer.link(lhsScroll, rhsScroll);
 
 		JLabel lhsLabel = new JLabel(lhsTitle, JLabel.CENTER);
 		lhsLabel.setForeground(Color.black);
@@ -175,36 +173,5 @@ public class FormatContentPanel extends JPanel {
 		clear();
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
-	}
-
-	private class Synchronizer implements AdjustmentListener {
-
-		private JScrollBar v1, h1, v2, h2;
-
-		public Synchronizer(JScrollPane sp1, JScrollPane sp2) {
-			v1 = sp1.getVerticalScrollBar();
-			h1 = sp1.getHorizontalScrollBar();
-			v2 = sp2.getVerticalScrollBar();
-			h2 = sp2.getHorizontalScrollBar();
-
-			v1.addAdjustmentListener(this);
-			h1.addAdjustmentListener(this);
-			v2.addAdjustmentListener(this);
-			h2.addAdjustmentListener(this);
-		}
-
-		@Override
-		public void adjustmentValueChanged(AdjustmentEvent e) {
-			JScrollBar scrollBar = (JScrollBar) e.getSource();
-			int value = scrollBar.getValue();
-			JScrollBar target = null;
-
-			if (scrollBar == v1) target = v2;
-			if (scrollBar == h1) target = h2;
-			if (scrollBar == v2) target = v1;
-			if (scrollBar == h2) target = h1;
-
-			target.setValue(value);
-		}
 	}
 }

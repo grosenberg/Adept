@@ -14,8 +14,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.gson.annotations.Expose;
 
+import net.certiv.adept.format.plan.Count;
 import net.certiv.adept.format.plan.Dent;
-import net.certiv.adept.format.plan.Gap;
 import net.certiv.adept.format.plan.Place;
 import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
@@ -60,10 +60,10 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	// aligns
 	@Expose public Scheme scheme = Scheme.NONE;	// type of align group
-	@Expose public Gap gap = Gap.VARIABLE;		// characterized number of real intra-aspect tokens
+	@Expose public Count gap = Count.NONE;		// number of reals between members
 	@Expose public Place inGroup = Place.ANY;	// in the lines of a group
 	@Expose public Place inLine = Place.ANY;	// within a line
-	@Expose public int grpTotal;				// number of group participants
+	@Expose public Count lines = Count.NONE;	// number of group lines
 
 	// left adjunct
 	@Expose public int lIndex = -1;
@@ -84,12 +84,12 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		this.text = Strings.shorten(token.getText(), TXTLIMIT);
 	}
 
-	public void setAlign(Scheme align, Gap gap, Place[] places, int grpTotal) {
+	public void setAlign(Scheme align, Count gap, Place[] places, Count lines) {
 		this.scheme = align;
 		this.gap = gap;
 		this.inGroup = places[0];
 		this.inLine = places[1];
-		this.grpTotal = grpTotal;
+		this.lines = lines;
 	}
 
 	public void setLeft(AdeptToken left, Spacing lSpacing, String lActual) {
@@ -191,10 +191,11 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 		if (scheme != Scheme.NONE) {	// TODO: refine
 			double aligns = 0;
-			if (gap != matchable.gap) aligns++;
-			if (inGroup != matchable.inGroup) aligns++;
-			if (inLine != matchable.inLine) aligns++;
-			score += aligns / 3;
+			if (gap == matchable.gap) aligns++;
+			if (inGroup == matchable.inGroup) aligns++;
+			if (inLine == matchable.inLine) aligns++;
+			if (lines == matchable.lines) aligns++;
+			score += aligns / 4;
 			cnt++;
 		}
 
@@ -216,15 +217,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 			Log.info(this, "Multiple identically scored choices!");
 		}
 		RefToken best = highest.get(0);
-
-		// keep indexes and types, etc.
-		this.matched = copy();
-
-		// correct for desired spacing
-		matched.lSpacing = best.lSpacing;
-		matched.lActual = best.lActual;
-		matched.rSpacing = best.rSpacing;
-		matched.rActual = best.rActual;
+		this.matched = best.copy();
 	}
 
 	/** Deep clone. */

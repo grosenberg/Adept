@@ -122,6 +122,10 @@ public abstract class AbstractViewBase {
 		return label;
 	}
 
+	protected JPanel createPanel() {
+		return createPanel(null);
+	}
+
 	protected JPanel createPanel(String title) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());

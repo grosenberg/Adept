@@ -55,7 +55,7 @@ public class CodePane extends JTextPane {
 					int col = offset - start;
 					String text = doc.getText(start, col);
 					int visCol = Strings.measureVisualWidth(text, _tabWidth);
-					return String.format("%s:%s %s  %s", line, col, visCol, Strings.encodeWS(text));
+					return String.format("%s:%s %s  %s", line + 1, col, visCol, Strings.encodeWS(text));
 				}
 
 			} catch (BadLocationException e1) {}

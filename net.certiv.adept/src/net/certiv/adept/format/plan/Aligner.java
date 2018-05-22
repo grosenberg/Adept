@@ -19,8 +19,6 @@ import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.util.Maths;
-import net.certiv.adept.util.Utils;
 
 public class Aligner {
 
@@ -107,11 +105,11 @@ public class Aligner {
 
 		for (Scheme align : members.keySet()) {
 			TreeMultilist<Integer, AdeptToken> lines = members.get(align);
-			Gap gap = findGap(lines);
-			int total = lines.valuesSize();
+			Count gap = findGap(lines);
+			Count cnt = Count.characterize(lines.size());
 			for (AdeptToken token : lines.valuesAll()) {
 				Place[] place = findPlace(lines, token);
-				token.refToken().setAlign(align, gap, place, total);
+				token.refToken().setAlign(align, gap, place, cnt);
 			}
 		}
 		groups.remove(ctx);
@@ -132,29 +130,23 @@ public class Aligner {
 		return tokens;
 	}
 
-	// characterize gap within the lines
-	private Gap findGap(TreeMultilist<Integer, AdeptToken> lines) {
-		List<Double> reals = new ArrayList<>();
-		for (Integer line : lines.keySet()) {
-			List<AdeptToken> aligns = lines.get(line);
-			AdeptToken[] tokens = aligns.toArray(new AdeptToken[aligns.size()]);
-			for (int idx = 1; idx < tokens.length; idx++) {
-				int beg = tokens[idx - 1].getTokenIndex() + 1;
-				int end = tokens[idx].getTokenIndex() - 1;
-				reals.add((double) data.getRealTokenCount(beg, end));
-			}
+	// characterize gap -- number of tokens -- between the members of a group
+	private Count findGap(TreeMultilist<Integer, AdeptToken> lines) {
+		List<AdeptToken> members = lines.valuesAll();
+		int gapCnt = members.size() - 1;
+		if (gapCnt < 1) return Count.NONE;
+
+		double[] gaps = new double[gapCnt];
+		for (int idx = 1; idx <= gapCnt; idx++) {
+			int beg = members.get(idx - 1).getTokenIndex() + 1;
+			int end = members.get(idx).getTokenIndex() - 1;
+			gaps[idx - 1] = data.getRealTokenCount(beg, end);
 		}
 
-		double[] vector = Utils.toPrimitiveArray(reals);
-		if (Maths.stdDeviation(vector) > 2) return Gap.VARIABLE;
-
-		double mean = Maths.mean(vector);
-		if (mean < 1) return Gap.NONE;
-		if (mean < 2) return Gap.ONE;
-		if (mean < 5) return Gap.SOME;
-		return Gap.MANY;
+		return Count.characterize(gaps);
 	}
 
+	// place[y,x] of member within a group
 	private Place[] findPlace(TreeMultilist<Integer, AdeptToken> lines, AdeptToken token) {
 		Place[] result = new Place[2];
 

@@ -25,8 +25,8 @@ public class FormatEditPanel extends JPanel {
 	private JTextField txtRRepl;
 	private JTextField txtLExist;
 	private JTextField txtLRepl;
-	private JLabel lblRArrow;
-	private JLabel lblLArrow;
+	private JLabel lblExisting;
+	private JLabel lblRepl;
 
 	public FormatEditPanel() {
 		setLayout(new FormLayout(
@@ -36,39 +36,39 @@ public class FormatEditPanel extends JPanel {
 						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"),
 						FormSpecs.UNRELATED_GAP_COLSPEC, },
 				new RowSpec[] { FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.UNRELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC, }));
+						FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC, FormSpecs.UNRELATED_GAP_ROWSPEC, }));
 
 		JLabel lblLeft = new JLabel("Left");
-		add(lblLeft, "2, 2, right, default");
+		add(lblLeft, "4, 2, center, default");
+
+		JLabel lblRight = new JLabel("Right");
+		add(lblRight, "8, 2, center, default");
+
+		lblExisting = new JLabel("Existing");
+		add(lblExisting, "2, 4, right, default");
 
 		txtLExist = new JTextField();
 		txtLExist.setEditable(false);
-		add(txtLExist, "4, 2, fill, default");
+		add(txtLExist, "4, 4, fill, default");
 		txtLExist.setColumns(10);
-
-		lblLArrow = new JLabel("=>");
-		add(lblLArrow, "6, 2, right, default");
-
-		txtLRepl = new JTextField();
-		txtLRepl.setEditable(false);
-		add(txtLRepl, "8, 2, fill, default");
-		txtLRepl.setColumns(10);
-
-		JLabel lblRight = new JLabel("Right");
-		add(lblRight, "2, 4, right, default");
 
 		txtRExist = new JTextField();
 		txtRExist.setEditable(false);
-		add(txtRExist, "4, 4, fill, default");
+		add(txtRExist, "8, 4, fill, default");
 		txtRExist.setColumns(10);
 
-		lblRArrow = new JLabel("=>");
-		add(lblRArrow, "6, 4, right, default");
+		lblRepl = new JLabel("Repl");
+		add(lblRepl, "2, 6, right, default");
+
+		txtLRepl = new JTextField();
+		txtLRepl.setEditable(false);
+		add(txtLRepl, "4, 6, fill, default");
+		txtLRepl.setColumns(10);
 
 		txtRRepl = new JTextField();
 		txtRRepl.setEditable(false);
-		add(txtRRepl, "8, 4, fill, default");
+		add(txtRRepl, "8, 6, fill, default");
 		txtRRepl.setColumns(10);
 	}
 
@@ -88,5 +88,12 @@ public class FormatEditPanel extends JPanel {
 			txtRExist.setText("");
 			txtRRepl.setText("");
 		}
+	}
+
+	public void clearData() {
+		txtLExist.setText("");
+		txtLRepl.setText("");
+		txtRExist.setText("");
+		txtRRepl.setText("");
 	}
 }

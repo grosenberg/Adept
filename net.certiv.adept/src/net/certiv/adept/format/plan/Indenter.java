@@ -132,8 +132,11 @@ public class Indenter {
 		}
 
 		if (beg.getLine() == end.getLine()) {
-			binds[1] = Bind.BEFORE;
+			binds[1] = Bind.AFTER;
 		} else if (end.atBol() && end.visCol() < beg.visCol()) {
+			// if (beg.getText().equals(":")) {
+			// Log.error(this, "");
+			// }
 			binds[1] = Bind.BEFORE;
 		} else {
 			binds[1] = Bind.AFTER;

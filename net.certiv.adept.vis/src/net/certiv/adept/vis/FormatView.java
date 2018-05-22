@@ -110,7 +110,7 @@ public class FormatView extends AbstractViewBase {
 	}
 
 	private void createInfoPanel() {
-		JPanel infoPanel = createPanel("Formatting details");
+		JPanel infoPanel = createPanel();
 		info = new FormatInfoPanel(this);
 		infoPanel.add(info);
 
