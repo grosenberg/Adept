@@ -7,11 +7,11 @@
 package net.certiv.adept.lang.java.parser;
 
 import net.certiv.adept.format.plan.Indenter;
-import net.certiv.adept.lang.java.parser.gen.JavaParser.BlockContext;
-import net.certiv.adept.lang.java.parser.gen.JavaParser.CompilationUnitContext;
-import net.certiv.adept.lang.java.parser.gen.JavaParserBaseListener;
+import net.certiv.adept.lang.java.parser.gen.Java8Parser.BlockContext;
+import net.certiv.adept.lang.java.parser.gen.Java8Parser.CompilationUnitContext;
+import net.certiv.adept.lang.java.parser.gen.Java8ParserBaseListener;
 
-public class JavaIndentVisitor extends JavaParserBaseListener {
+public class JavaIndentVisitor extends Java8ParserBaseListener {
 
 	private Indenter indenter;
 

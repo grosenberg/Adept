@@ -14,6 +14,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -92,7 +94,8 @@ public class CorpusDocView extends AbstractViewBase {
 	}
 
 	private JPanel createSelectPanel() {
-		SourceListModel model = new SourceListModel(rootDir, srcExt);
+		Path dir = Paths.get(rootDir, "antlr");
+		SourceListModel model = new SourceListModel(dir, srcExt);
 		JComboBox<Item> srcBox = new JComboBox<>(model);
 		srcBox.setMinimumSize(new Dimension(300, 0));
 		srcBox.addActionListener(new ActionListener() {

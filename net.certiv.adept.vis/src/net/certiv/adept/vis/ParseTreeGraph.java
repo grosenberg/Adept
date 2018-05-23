@@ -7,10 +7,8 @@
 package net.certiv.adept.vis;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.List;
 import java.util.prefs.Preferences;
 
@@ -33,19 +31,18 @@ import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 import net.certiv.adept.Tool;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.util.Log;
-import net.certiv.adept.vis.components.SliderDialog;
 import net.certiv.adept.vis.components.LineRuler;
+import net.certiv.adept.vis.components.SliderDialog;
 import net.certiv.adept.vis.components.TreeViewer;
+import net.certiv.adept.vis.models.SourceListModel;
 import net.certiv.adept.vis.models.TokenTableModel;
 import net.certiv.adept.vis.panels.AbstractViewBase;
+import net.certiv.adept.vis.panels.ParseTreeSelectPanel;
 
 public class ParseTreeGraph extends AbstractViewBase {
 
 	private static final String name = "ParseTreeGraph";
 	private static final String corpusRoot = "../net.certiv.adept/corpus";
-
-	private static final String KEY_SPLIT_VERT = "frame_split_vert";
-	private static final String KEY_SPLIT_HORZ = "frame_split_horz";
 
 	private JSplitPane mainPane;
 	private TreeViewer viewer;
@@ -54,6 +51,8 @@ public class ParseTreeGraph extends AbstractViewBase {
 	private JTable table;
 
 	private int level;
+	private ParseTreeSelectPanel selectPanel;
+	private Tool tool;
 
 	public static void main(String[] args) {
 		try {
@@ -63,8 +62,39 @@ public class ParseTreeGraph extends AbstractViewBase {
 	}
 
 	public ParseTreeGraph() {
-		super("ParseData tree visiualization", "tree.gif");
+		super(name, "tree.gif");
 
+		createSelectPane();
+		createMainPane();
+		createTreePane();
+		createTablePane();
+		createTextPane();
+
+		applyPrefs();
+		frame.setVisible(true);
+
+		String lang = (String) selectPanel.langBox.getSelectedItem();
+		loadTool(lang);
+	}
+
+	private void createSelectPane() {
+		selectPanel = new ParseTreeSelectPanel(this);
+		content.add(selectPanel, BorderLayout.NORTH);
+	}
+
+	private void createMainPane() {
+		mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		mainPane.setDividerLocation(0.5);
+
+		bottomPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		bottomPane.setDividerLocation(0.5);
+
+		mainPane.setBottomComponent(bottomPane);
+		content.add(mainPane, BorderLayout.CENTER);
+		// content.add(createToolBar(), BorderLayout.NORTH);
+	}
+
+	private void createTreePane() {
 		viewer = new TreeViewer();
 		viewer.addMouseListener(new MouseAdapter() {
 
@@ -78,42 +108,45 @@ public class ParseTreeGraph extends AbstractViewBase {
 			}
 		});
 		JScrollPane scrollTree = new JScrollPane(viewer);
+		mainPane.setTopComponent(scrollTree);
 
+		selectPanel.btnCapture.addActionListener(getPngAction(viewer));
+	}
+
+	private void createTablePane() {
 		table = new JTable();
-		JScrollPane scrollTable = new JScrollPane(table);
 		table.setFillsViewportHeight(true);
+		JScrollPane scrollTable = new JScrollPane(table);
+		bottomPane.setLeftComponent(scrollTable);
+	}
 
+	private void createTextPane() {
 		textPane = new JTextPane();
 		JScrollPane scrollText = new JScrollPane(textPane);
 		LineRuler nums = new LineRuler(textPane);
 		scrollText.setRowHeaderView(nums);
-
-		mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		bottomPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-
-		mainPane.setTopComponent(scrollTree);
-		mainPane.setBottomComponent(bottomPane);
-		bottomPane.setLeftComponent(scrollTable);
 		bottomPane.setRightComponent(scrollText);
+	}
 
-		Dimension minimumSize = new Dimension(100, 50);
-		scrollTree.setMinimumSize(minimumSize);
-		scrollText.setMinimumSize(minimumSize);
-		scrollTable.setMinimumSize(minimumSize);
-		mainPane.setDividerLocation(0.5);
-		bottomPane.setDividerLocation(0.5);
+	@SuppressWarnings("unused")
+	private JToolBar createToolBar() {
+		JToolBar bar = new JToolBar();
+		bar.add(getOpenAction()).setText("");
+		bar.addSeparator();
+		bar.add(getPngAction(viewer)).setText("");
+		return bar;
+	}
 
-		content.add(mainPane, BorderLayout.CENTER);
-		content.add(createToolBar(), BorderLayout.NORTH);
-
-		applyPrefs();
-
+	@Override
+	protected void applyCustomPrefs() {
+		// Dimension minimumSize = new Dimension(100, 50);
+		// scrollTree.setMinimumSize(minimumSize);
+		// scrollText.setMinimumSize(minimumSize);
+		// scrollTable.setMinimumSize(minimumSize);
 		int split = prefs.getInt(KEY_SPLIT_VERT, 300);
 		mainPane.setDividerLocation(split);
 		split = prefs.getInt(KEY_SPLIT_HORZ, 350);
 		bottomPane.setDividerLocation(split);
-
-		frame.setVisible(true);
 	}
 
 	@Override
@@ -127,10 +160,10 @@ public class ParseTreeGraph extends AbstractViewBase {
 		return name;
 	}
 
-	@Override
-	protected void handleFileOpen(File file) {
-		createData(file);
-	}
+	// @Override
+	// protected void handleFileOpen(File file) {
+	// createData(file);
+	// }
 
 	protected void handleScaleChange() {
 		int value = (int) ((viewer.getScale() - 1.0) * 1000);
@@ -163,41 +196,39 @@ public class ParseTreeGraph extends AbstractViewBase {
 		table.scrollRectToVisible(table.getCellRect(index, 0, true));
 	}
 
-	protected JToolBar createToolBar() {
-		JToolBar bar = new JToolBar();
-		bar.add(getOpenAction()).setText("");
-		bar.addSeparator();
-		bar.add(getPngAction(viewer)).setText("");
-		return bar;
-	}
-
-	void createData(File file) {
-		Tool tool = new Tool();
+	public void loadTool(String lang) {
+		tool = new Tool();
+		tool.setCorpusRoot(corpusRoot);
+		tool.setLang(lang);
+		tool.setTabWidth(4);
 		tool.setCheck(true);
 		tool.setRebuild(false);
-		tool.setCorpusRoot(corpusRoot);
-		tool.setLang("antlr");
-		tool.setTabWidth(4);
-		tool.setSourceFiles(file.getAbsolutePath());
 
 		boolean ok = tool.loadResources();
 		ok = ok && tool.validateOptions();
 
 		if (!ok) {
 			Log.error(this, "Failed to initialize model");
-			return;
+		} else {
+			process();
 		}
+	}
 
+	public void process() {
+		SourceListModel model = (SourceListModel) selectPanel.srcBox.getModel();
+		String pathname = model.getSelectedPathname();
+		tool.setSourceFiles(pathname);
 		tool.execute();
+
 		ParseRecord data = tool.getDocument().getParseRecord();
 
 		// graphical rep of tree
 		viewer.inspect(data.getParseTreeRoot(), data.getRuleNames());
 
 		// tokens table
-		TokenTableModel model = new TokenTableModel(data.getTokens(), data.getTokenNames());
-		table.setModel(model);
-		model.configCols(table);
+		TokenTableModel ttmodel = new TokenTableModel(data.getTokens(), data.getTokenNames());
+		table.setModel(ttmodel);
+		ttmodel.configCols(table);
 
 		// indented string tree
 		String tree = createTextTree(data.getParseTreeRoot(), data.getRuleNames());

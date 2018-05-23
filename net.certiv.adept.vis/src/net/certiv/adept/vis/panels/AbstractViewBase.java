@@ -200,6 +200,26 @@ public abstract class AbstractViewBase {
 		applyCustomPrefs();
 	}
 
+	protected void savePng(JComponent comp) {
+		JFileChooser chooser = new JFileChooser();
+		Path path = Paths.get("doc");
+		if (!path.toFile().exists()) {
+			try {
+				Files.createDirectory(path);
+			} catch (IOException e) {}
+		}
+
+		chooser.setSelectedFile(proposeName(path));
+		chooser.setCurrentDirectory(path.toFile());
+		chooser.addChoosableFileFilter(pngFilter);
+		chooser.setFileFilter(pngFilter);
+
+		if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
+		File file = chooser.getSelectedFile();
+
+		generatePng(comp, file);
+	}
+
 	protected Action getOpenAction() {
 		if (openAction == null) {
 			openAction = new OpenAction();
@@ -251,23 +271,7 @@ public abstract class AbstractViewBase {
 
 		@Override
 		public void actionPerformed(ActionEvent ev) {
-			JFileChooser chooser = new JFileChooser();
-			Path path = Paths.get("doc");
-			if (!path.toFile().exists()) {
-				try {
-					Files.createDirectory(path);
-				} catch (IOException e) {}
-			}
-
-			chooser.setSelectedFile(proposeName(path));
-			chooser.setCurrentDirectory(path.toFile());
-			chooser.addChoosableFileFilter(pngFilter);
-			chooser.setFileFilter(pngFilter);
-
-			if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
-			File file = chooser.getSelectedFile();
-
-			generatePng(comp, file);
+			savePng(comp);
 		}
 	}
 

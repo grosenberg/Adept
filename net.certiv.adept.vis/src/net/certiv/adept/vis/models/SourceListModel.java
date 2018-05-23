@@ -9,7 +9,6 @@ package net.certiv.adept.vis.models;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,14 +36,13 @@ public class SourceListModel extends DefaultComboBoxModel<Item> {
 		}
 	}
 
-	public SourceListModel(String rootDir, String srcExt) {
+	public SourceListModel(Path dir, String ext) {
 		super();
-		addElements(rootDir, srcExt);
+		addElements(dir, ext);
 	}
 
-	private void addElements(String dir, String ext) {
-		List<Path> paths = read(Paths.get(dir), ext);
-		for (Path path : paths) {
+	private void addElements(Path dir, String ext) {
+		for (Path path : read(dir, ext)) {
 			Item item = new Item(path.getFileName().toString(), path.toString());
 			addElement(item);
 		}
@@ -70,6 +68,7 @@ public class SourceListModel extends DefaultComboBoxModel<Item> {
 
 	public String getSelectedPathname() {
 		Item item = (Item) getSelectedItem();
+		if (item == null) return "";
 		return item.pathname;
 	}
 }

@@ -6,7 +6,7 @@
  *******************************************************************************/
 package net.certiv.adept.lang.java.parser;
 
-import static net.certiv.adept.lang.java.parser.gen.JavaLexer.*;
+import static net.certiv.adept.lang.java.parser.gen.Java8Lexer.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,8 +30,8 @@ import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.lang.ParserErrorListener;
-import net.certiv.adept.lang.java.parser.gen.JavaLexer;
-import net.certiv.adept.lang.java.parser.gen.JavaParser;
+import net.certiv.adept.lang.java.parser.gen.Java8Lexer;
+import net.certiv.adept.lang.java.parser.gen.Java8Parser;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.tool.ErrorType;
 
@@ -51,7 +51,7 @@ public class JavaSourceParser implements ISourceParser {
 		builder.parser.removeErrorListeners();
 		builder.parser.addErrorListener(new ParserErrorListener(this));
 
-		builder.tree = ((JavaParser) builder.parser).compilationUnit();
+		builder.tree = ((Java8Parser) builder.parser).compilationUnit();
 		builder.errCount = errCount;
 
 		if (builder.tree == null || builder.tree instanceof ErrorNode || builder.errCount > 0) {
@@ -61,10 +61,10 @@ public class JavaSourceParser implements ISourceParser {
 
 	private void setup(TokenFactory<?> factory, String content) {
 		builder.charStream = CharStreams.fromString(content);
-		builder.lexer = new JavaLexer(builder.charStream);
+		builder.lexer = new Java8Lexer(builder.charStream);
 		builder.lexer.setTokenFactory(factory);
 		builder.tokenStream = new CommonTokenStream(builder.lexer);
-		builder.parser = new JavaParser(builder.tokenStream);
+		builder.parser = new Java8Parser(builder.tokenStream);
 
 		builder.VWS = VWS;
 		builder.HWS = HWS;

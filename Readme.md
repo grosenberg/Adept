@@ -15,8 +15,8 @@ of use.
 ## Current built-in language support
 
 - [x] ANTLR syntax
-- [ ] Java syntax
-- [ ] XVisitor syntax
+- [x] Java syntax
+- [x] XVisitor syntax
 
 ## Formatting operations
 
@@ -29,7 +29,6 @@ of use.
 
 ## Status
 
-ANTLR syntax is implemented and partially tested. Java and XVisitor syntaxes partially 
-implemented and untested.
+ANTLR and XVisitor syntax implemented and tested. Java syntax partially implemented.
 
 

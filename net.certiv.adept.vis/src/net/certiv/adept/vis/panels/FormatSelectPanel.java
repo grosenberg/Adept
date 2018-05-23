@@ -9,6 +9,8 @@ package net.certiv.adept.vis.panels;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -140,7 +142,8 @@ public class FormatSelectPanel extends JPanel {
 		langModel = new LanguageListModel(FormatView.corpusRoot);
 		langBox.setModel(langModel);
 
-		srcModel = new SourceListModel(FormatView.rootDir, langModel.getSelectedExt());
+		Path dir = Paths.get(FormatView.rootDir, langModel.getSelected());
+		srcModel = new SourceListModel(dir, langModel.getSelectedExt());
 		srcBox.setModel(srcModel);
 
 		tabBox.setModel(new DefaultComboBoxModel<>(FormatView.WIDTHS));
@@ -157,7 +160,8 @@ public class FormatSelectPanel extends JPanel {
 
 				} else {
 					if (e.getSource() == langBox) {
-						srcModel = new SourceListModel(FormatView.rootDir, langModel.getSelectedExt());
+						Path dir = Paths.get(FormatView.rootDir, langModel.getSelected());
+						srcModel = new SourceListModel(dir, langModel.getSelectedExt());
 						srcBox.setModel(srcModel);
 					}
 					view.loadTool(langModel.getSelected());

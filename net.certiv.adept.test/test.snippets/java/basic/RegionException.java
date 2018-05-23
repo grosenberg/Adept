@@ -4,23 +4,21 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.lang.java.parser;
+package net.certiv.adept.format;
 
-import org.antlr.v4.runtime.ParserRuleContext;
+public class RegionException extends RuntimeException {
 
-import net.certiv.adept.lang.Builder;
-import net.certiv.adept.lang.java.parser.gen.Java8ParserBaseListener;
+	private Region o1;
+	private Region o2;
 
-public class JavaFeatureVisitor extends Java8ParserBaseListener {
-
-	private Builder builder;
-
-	public JavaFeatureVisitor(Builder builder) {
-		this.builder = builder;
+	public RegionException(Region o1, Region o2, String msg) {
+		super(msg);
+		this.o1 = o1;
+		this.o2 = o2;
 	}
 
 	@Override
-	public void enterEveryRule(ParserRuleContext ctx) {
-		builder.extractFeatures(ctx);
+	public String getMessage() {
+		return String.format("%s: %s %s", super.getMessage(), o1, o2);
 	}
 }

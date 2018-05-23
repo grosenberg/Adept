@@ -16,6 +16,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.prefs.Preferences;
 
 import javax.swing.JComboBox;
@@ -38,8 +40,8 @@ import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.models.ContextsTableModel;
 import net.certiv.adept.vis.models.MatchRefsTableModel;
 import net.certiv.adept.vis.models.SourceListModel;
-import net.certiv.adept.vis.models.SourceRefsTableModel;
 import net.certiv.adept.vis.models.SourceListModel.Item;
+import net.certiv.adept.vis.models.SourceRefsTableModel;
 import net.certiv.adept.vis.panels.AbstractViewBase;
 
 public class MatchView extends AbstractViewBase {
@@ -102,7 +104,8 @@ public class MatchView extends AbstractViewBase {
 
 	// ---- Top: control panel ----
 	private void createSelectPanel() {
-		SourceListModel model = new SourceListModel(rootDir, srcExt);
+		Path dir = Paths.get(rootDir, "antlr");
+		SourceListModel model = new SourceListModel(dir, srcExt);
 		srcBox = new JComboBox<>(model);
 		srcBox.setMinimumSize(new Dimension(300, 0));
 		srcBox.addActionListener(new ActionListener() {
