@@ -6,6 +6,7 @@
  *******************************************************************************/
 package net.certiv.adept.lang;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,16 +17,16 @@ import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 
-import net.certiv.adept.util.Log;
+import net.certiv.adept.util.Strings;
 
 public class ParserErrorListener extends BaseErrorListener {
 
 	private boolean debug = true;
 	private int lastErrorIdx = -1;
-	private IParseErrorReporter problemReporter;
+	private IParseErrorReporter reporter;
 
-	public ParserErrorListener(IParseErrorReporter problemReporter) {
-		this.problemReporter = problemReporter;
+	public ParserErrorListener(IParseErrorReporter reporter) {
+		this.reporter = reporter;
 	}
 
 	@Override
@@ -38,26 +39,29 @@ public class ParserErrorListener extends BaseErrorListener {
 		Token offendingToken = (Token) offendingSymbol;
 		int thisErrorIdx = offendingToken.getTokenIndex();
 		if (offendingToken.getType() == -1 && thisErrorIdx == tokens.size() - 1) {
-			Log.debug(this, "Incorrect error message: " + msg);
+			reporter.reportError("Incorrect error message: " + msg);
 		}
 
-		problemReporter.reportRecognitionError(offendingToken, thisErrorIdx, line, charPositionInLine, msg, e);
+		reporter.reportRecognitionError(parser, offendingToken, thisErrorIdx, line, charPositionInLine, msg, e);
 
 		if (debug) {
-			if (thisErrorIdx > lastErrorIdx + 20) {
-				lastErrorIdx = thisErrorIdx - 20;
+			if (thisErrorIdx > lastErrorIdx + 10) {
+				lastErrorIdx = thisErrorIdx - 10;
 			}
+			List<String> tokenStack = new ArrayList<>();
 			for (int idx = lastErrorIdx + 1; idx <= thisErrorIdx; idx++) {
 				Token token = tokens.get(idx);
-				if (token.getChannel() != Token.HIDDEN_CHANNEL) Log.error(this, token.toString());
+				String name = recognizer.getVocabulary().getDisplayName(token.getType());
+				String text = Strings.shorten(token.getText(), 12);
+				tokenStack.add(String.format("@%s %s[%s] %s:%s", token.getTokenIndex(), name, text, token.getLine(),
+						token.getCharPositionInLine()));
 			}
 			lastErrorIdx = thisErrorIdx;
 
-			List<String> stack = parser.getRuleInvocationStack();
-			Collections.reverse(stack);
+			List<String> ruleStack = parser.getRuleInvocationStack();
+			Collections.reverse(ruleStack);
 
-			Log.error(this, "rule stack: " + stack);
+			reporter.reportToken(parser, ruleStack, tokenStack, offendingToken, msg);
 		}
-		Log.error(this, "line " + line + ":" + charPositionInLine + " at " + offendingSymbol + ": " + msg);
 	}
 }

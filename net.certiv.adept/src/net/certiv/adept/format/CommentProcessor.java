@@ -108,7 +108,7 @@ public class CommentProcessor extends AbstractProcessor {
 	}
 
 	public boolean process(AdeptToken comment) {
-		return parser.process(comment);
+		return parser.process(ops.tool, comment);
 	}
 
 	public String getResult() {

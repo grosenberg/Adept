@@ -9,7 +9,6 @@ package net.certiv.adept.format;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class SpacingProcessor extends AbstractProcessor {
@@ -103,12 +102,12 @@ public class SpacingProcessor extends AbstractProcessor {
 		return lines;
 	}
 
-	protected void showWhere(RefToken prior, RefToken present, RefToken matched, RefToken next) {
-		String pname = prior != null ? ops.data.getTokenName(prior.type) : "{Nil}";
-		String nname = next != null ? ops.data.getTokenName(next.type) : "{Nil}";
-		String cname = ops.data.getTokenName(present.type);
-		cname += matched != null ? "+" : "-";
-
-		Log.debug(this, "   %s > %s > %s", pname, cname, nname);
-	}
+	// protected void showWhere(RefToken prior, RefToken present, RefToken matched, RefToken next) {
+	// String pname = prior != null ? ops.data.getTokenName(prior.type) : "{Nil}";
+	// String nname = next != null ? ops.data.getTokenName(next.type) : "{Nil}";
+	// String cname = ops.data.getTokenName(present.type);
+	// cname += matched != null ? "+" : "-";
+	//
+	// Log.debug(this, " %s > %s > %s", pname, cname, nname);
+	// }
 }

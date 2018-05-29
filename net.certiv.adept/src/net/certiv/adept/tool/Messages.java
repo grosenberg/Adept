@@ -17,7 +17,7 @@ public class Messages {
 
 	private static final Object[] EMPTY_ARGS = new Object[0];
 
-	private final ErrorType errorType;
+	private final ErrorDesc errorDesc;
 	private final Object[] args;
 	private final Throwable e;
 
@@ -27,23 +27,23 @@ public class Messages {
 	public int charPosition = -1;
 	public Token offendingToken;
 
-	public Messages(ErrorType errorType) {
-		this(errorType, (Throwable) null, Tool.INVALID_TOKEN);
+	public Messages(ErrorDesc errorDesc) {
+		this(errorDesc, (Throwable) null, Tool.INVALID_TOKEN);
 	}
 
-	public Messages(ErrorType errorType, Token offendingToken, Object... args) {
-		this(errorType, null, offendingToken, args);
+	public Messages(ErrorDesc errorDesc, Token offendingToken, Object... args) {
+		this(errorDesc, null, offendingToken, args);
 	}
 
-	public Messages(ErrorType errorType, Throwable e, Token offendingToken, Object... args) {
-		this.errorType = errorType;
+	public Messages(ErrorDesc errorDesc, Throwable e, Token offendingToken, Object... args) {
+		this.errorDesc = errorDesc;
 		this.e = e;
 		this.args = args;
 		this.offendingToken = offendingToken;
 	}
 
-	public ErrorType getErrorType() {
-		return errorType;
+	public ErrorDesc getErrorType() {
+		return errorDesc;
 	}
 
 	public Object[] getArgs() {
@@ -55,7 +55,7 @@ public class Messages {
 
 	public ST getMessageTemplate(boolean verbose) {
 		ST messageST = new ST(getErrorType().msg);
-		messageST.impl.name = errorType.name();
+		messageST.impl.name = errorDesc.name();
 		messageST.add("verbose", verbose);
 		Object[] args = getArgs();
 		for (int i = 0; i < args.length; i++) {
@@ -83,7 +83,7 @@ public class Messages {
 
 	@Override
 	public String toString() {
-		return "Message{" + "errorType=" + getErrorType() + ", args=" + Arrays.asList(getArgs()) + ", e=" + getCause()
+		return "Message{" + "errorDesc=" + getErrorType() + ", args=" + Arrays.asList(getArgs()) + ", e=" + getCause()
 				+ ", fileName='" + fileName + '\'' + ", line=" + line + ", charPosition=" + charPosition + '}';
 	}
 
@@ -96,16 +96,16 @@ public class Messages {
 	 */
 	public static class ToolMessage extends Messages {
 
-		public ToolMessage(ErrorType errorType) {
-			super(errorType);
+		public ToolMessage(ErrorDesc errorDesc) {
+			super(errorDesc);
 		}
 
-		public ToolMessage(ErrorType errorType, Object... args) {
-			super(errorType, null, Tool.INVALID_TOKEN, args);
+		public ToolMessage(ErrorDesc errorDesc, Object... args) {
+			super(errorDesc, null, Tool.INVALID_TOKEN, args);
 		}
 
-		public ToolMessage(ErrorType errorType, Throwable e, Object... args) {
-			super(errorType, e, Tool.INVALID_TOKEN, args);
+		public ToolMessage(ErrorDesc errorDesc, Throwable e, Object... args) {
+			super(errorDesc, e, Tool.INVALID_TOKEN, args);
 		}
 	}
 
@@ -115,7 +115,7 @@ public class Messages {
 	 */
 	public static class GrammarSyntaxMessage extends Messages {
 
-		public GrammarSyntaxMessage(ErrorType etype, String fileName, Token offendingToken,
+		public GrammarSyntaxMessage(ErrorDesc etype, String fileName, Token offendingToken,
 				RecognitionException antlrException, Object... args) {
 			super(etype, antlrException, offendingToken, args);
 			this.fileName = fileName;
@@ -138,7 +138,7 @@ public class Messages {
 	 */
 	public static class GrammarSemanticsMessage extends Messages {
 
-		public GrammarSemanticsMessage(ErrorType etype, String fileName, Token offendingToken, Object... args) {
+		public GrammarSemanticsMessage(ErrorDesc etype, String fileName, Token offendingToken, Object... args) {
 			super(etype, offendingToken, args);
 			this.fileName = fileName;
 			if (offendingToken != null) {

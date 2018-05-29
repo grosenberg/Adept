@@ -13,18 +13,19 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
+import net.certiv.adept.Tool;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
 public class FormatterOps {
 
+	Tool tool;
 	Document doc;
 	ParseRecord data;
 	Settings settings;
@@ -49,6 +50,7 @@ public class FormatterOps {
 	// ----------------------------------------------------------------
 
 	public FormatterOps(DocModel model, Settings settings) {
+		this.tool = model.getMgr().getTool();
 		this.doc = model.getDocument();
 		this.data = doc.getParseRecord();
 		this.settings = settings;
@@ -181,7 +183,7 @@ public class FormatterOps {
 			int from = prior.visCol() + prior.getText().length();
 			if (from > toVisCol) {
 				String msg = String.format("Err: shift %s to %s: %s", from, toVisCol, token.toString());
-				Log.error(this, msg);
+				tool.toolInfo(this, msg);
 				return;
 			}
 			edit.replUpdate(createWs(from, toVisCol));

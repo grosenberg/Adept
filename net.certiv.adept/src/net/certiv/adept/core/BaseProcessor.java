@@ -9,13 +9,11 @@ package net.certiv.adept.core;
 import org.antlr.v4.runtime.RecognitionException;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.Tool;
 import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
-import net.certiv.adept.tool.ErrorType;
-import net.certiv.adept.util.Log;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.util.Time;
 
 public abstract class BaseProcessor {
@@ -51,14 +49,12 @@ public abstract class BaseProcessor {
 		ISourceParser parser = mgr.getLanguageParser();
 		builder = new Builder(mgr, doc);
 		try {
-			parser.process(builder, doc);
+			parser.process(mgr.getTool(), builder, doc);
 		} catch (RecognitionException e) {
-			Log.error(this, ErrorType.PARSE_ERROR.msg + ": " + doc.getPathname());
-			Tool.errMgr.toolError(ErrorType.PARSE_ERROR, doc.getPathname());
+			mgr.getTool().toolError(this, ErrorDesc.PARSE_ERROR, doc.getPathname());
 			return false;
 		} catch (Exception e) {
-			Log.error(this, ErrorType.PARSE_FAILURE.msg + ": " + doc.getPathname());
-			Tool.errMgr.toolError(ErrorType.PARSE_FAILURE, e, doc.getPathname());
+			mgr.getTool().toolError(this, ErrorDesc.PARSE_FAILURE, e, doc.getPathname());
 			return false;
 		}
 
@@ -72,8 +68,7 @@ public abstract class BaseProcessor {
 			parser.extractFeatures(builder);
 			builder.extractCommentFeatures();
 		} catch (Exception e) {
-			Log.error(this, ErrorType.VISITOR_FAILURE.msg + ": " + doc.getPathname(), e);
-			Tool.errMgr.toolError(ErrorType.VISITOR_FAILURE, e, doc.getPathname());
+			mgr.getTool().toolError(this, ErrorDesc.VISITOR_FAILURE, e, doc.getPathname());
 			return false;
 		}
 

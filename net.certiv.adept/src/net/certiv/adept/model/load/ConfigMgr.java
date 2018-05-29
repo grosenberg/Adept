@@ -25,7 +25,7 @@ import com.google.gson.reflect.TypeToken;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.tool.LangDescriptor;
 
 public class ConfigMgr {
@@ -36,20 +36,21 @@ public class ConfigMgr {
 	static final String EXT = "json.gz";
 
 	/** Returns the tool version identifier. */
-	public static String loadVersion() {
+	public static String loadVersion(Tool tool) {
 		ClassLoader cl = Tool.class.getClassLoader();
 		try (InputStream in = cl.getResourceAsStream("adept.properties")) {
 			Properties prop = new Properties();
 			prop.load(in);
 			return (String) prop.get("version");
 		} catch (IOException e) {
-			Tool.errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading version property (" + e.getMessage() + ")");
+			tool.toolError(ConfigMgr.class, ErrorDesc.CONFIG_FAILURE, e,
+					"Failed reading version property (" + e.getMessage() + ")");
 			return null;
 		}
 	}
 
 	/** Returns a list of the language descriptors recognized by the tool. */
-	public static List<LangDescriptor> loadLanguages() {
+	public static List<LangDescriptor> loadLanguages(Tool tool) {
 		ClassLoader cl = Tool.class.getClassLoader();
 		try (Reader reader = new InputStreamReader(cl.getResourceAsStream("languages.json"), "UTF-8")) {
 			GsonBuilder builder = new GsonBuilder();
@@ -58,7 +59,8 @@ public class ConfigMgr {
 			Type collection = new TypeToken<Collection<LangDescriptor>>() {}.getType();
 			return gson.fromJson(reader, collection);
 		} catch (Exception e) {
-			Tool.errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading lang descriptors (" + e.getMessage() + ")");
+			tool.toolError(ConfigMgr.class, ErrorDesc.CONFIG_FAILURE, e,
+					"Failed reading lang descriptors (" + e.getMessage() + ")");
 			return null;
 		}
 	}
@@ -67,7 +69,7 @@ public class ConfigMgr {
 	 * Returns the settings read from the given pathname or the built-in default settings file located
 	 * in the jar root.
 	 */
-	public static Settings loadSettings(String pathname) {
+	public static Settings loadSettings(Tool tool, String pathname) {
 		if (pathname != null && !pathname.endsWith(".json")) {
 			pathname += ".json";
 		}
@@ -83,7 +85,8 @@ public class ConfigMgr {
 			}
 			return settings;
 		} catch (Exception e) {
-			Tool.errMgr.toolError(ErrorType.CONFIG_FAILURE, "Failed reading settings file (" + e.getMessage() + ")");
+			tool.toolError(ConfigMgr.class, ErrorDesc.CONFIG_FAILURE, e,
+					"Failed reading settings file (" + e.getMessage() + ")");
 		}
 		return null;
 	}

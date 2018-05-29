@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
@@ -28,7 +29,6 @@ import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class Builder extends ParseRecord {
@@ -38,6 +38,8 @@ public class Builder extends ParseRecord {
 	private CoreMgr mgr;
 	private List<Integer> exTypes;
 
+	private Tool tool;
+
 	public Builder() {
 		super(null);
 	}
@@ -45,6 +47,7 @@ public class Builder extends ParseRecord {
 	public Builder(CoreMgr mgr, Document doc) {
 		super(doc);
 		this.mgr = mgr;
+		this.tool = mgr.getTool();
 
 		if (doc != null) doc.setBuilder(this);
 		exTypes = mgr.excludedLangTypes();
@@ -127,7 +130,7 @@ public class Builder extends ParseRecord {
 		if (ctx.getChildCount() == 0) {
 			// glorious abundance of caution
 			String rule = getRuleName(ctx.getRuleIndex());
-			Log.error(this, rule + " has no children.");
+			tool.toolInfo(this, rule + " has no children.");
 			return;
 		}
 
@@ -140,7 +143,7 @@ public class Builder extends ParseRecord {
 			if (child instanceof ErrorNode) {
 				String err = ((ErrorNode) child).getText();
 				String msg = String.format("Failed to parse: %s", Utils.escapeWhitespace(err, false));
-				Log.debug(this, msg);
+				tool.toolInfo(this, msg);
 
 			} else if (child instanceof TerminalNode) {
 				TerminalNode node = (TerminalNode) child;
@@ -184,7 +187,7 @@ public class Builder extends ParseRecord {
 			int ruleType = rule << 16;
 			if (exTypes.contains(ruleType)) {
 				if (ruleType == ERR_RULE) {
-					Log.debug(this, String.format("Error rule: %s", Utils.escapeWhitespace(ctx.getText(), false)));
+					tool.toolInfo(this, String.format("Error rule: %s", Utils.escapeWhitespace(ctx.getText(), false)));
 				}
 				return;
 			}
@@ -194,7 +197,7 @@ public class Builder extends ParseRecord {
 		int type = token.getType();
 		if (exTypes.contains(type)) {
 			if (type == ERR_TOKEN) {
-				Log.debug(this, String.format("Error token: %s", Utils.escapeWhitespace(token.getText(), false)));
+				tool.toolInfo(this, String.format("Error token: %s", Utils.escapeWhitespace(token.getText(), false)));
 			}
 			return;
 		}
@@ -282,7 +285,7 @@ public class Builder extends ParseRecord {
 		try {
 			tokens.subList(idx, tokens.size()).clear();
 		} catch (Exception e) {
-			Log.error(this, "Invalid 'linesTokenIndex'.");
+			tool.toolInfo(this, "Invalid 'linesTokenIndex'.");
 		}
 
 		while (tokens.size() < AssocLimit && line > 0) {
@@ -355,14 +358,14 @@ public class Builder extends ParseRecord {
 			List<AdeptToken> tokens = lineTokensIndex.get(line);
 			if (tokens == null) {
 				String status = blanklines.get(line) ? "Blank" : "Does not agree with blanklines index";
-				Log.debug(this, String.format(LineMsg, line + 1, 0, status));
+				tool.toolInfo(this, String.format(LineMsg, line + 1, 0, status));
 
 			} else {
 				StringBuilder sb = new StringBuilder();
 				for (AdeptToken token : tokens) {
 					sb.append(String.format("%s(%s) ", token.place(), token.refToken().text));
 				}
-				Log.debug(this, String.format(LineMsg, line + 1, tokens.size(), sb.toString()));
+				tool.toolInfo(this, String.format(LineMsg, line + 1, tokens.size(), sb.toString()));
 			}
 		}
 	}

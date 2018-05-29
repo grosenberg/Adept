@@ -33,8 +33,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Feature;
-import net.certiv.adept.tool.ErrorType;
-import net.certiv.adept.util.Log;
+import net.certiv.adept.tool.ErrorDesc;
 
 public class CorpusData {
 
@@ -51,13 +50,14 @@ public class CorpusData {
 	public static CorpusModel loadModel(CoreMgr mgr, Path corpusDir, List<String> pathnames) throws Exception {
 		Path path = corpusDir.resolve(ConfigMgr.MODEL + ConfigMgr.DOT + ConfigMgr.EXT);
 		if (!Files.isRegularFile(path)) {
+			mgr.getTool().toolInfo(CorpusData.class, "Corpus directory does not exist: " + path.toString());
 			throw new IOException("Corpus directory does not exist: " + path.toString());
 		}
 
 		CorpusModel corModel;
 		Gson gson = configBuilder();
 		try {
-			Log.debug(CorpusData.class, "Loading " + path.toString());
+			mgr.getTool().toolInfo(CorpusData.class, "Loading " + path.toString());
 
 			InputStream is = new GZIPInputStream(Files.newInputStream(path));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -65,14 +65,15 @@ public class CorpusData {
 			corModel.setMgr(mgr);
 			corModel.setCorpusDir(corpusDir);
 		} catch (IOException | JsonSyntaxException e) {
-			Log.error(CorpusData.class, "Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
+			mgr.getTool().toolInfo(CorpusData.class,
+					"Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
 			throw e;
 		}
 
-		List<Path> paths = getDataFiles(corpusDir);
+		List<Path> paths = getDataFiles(mgr.getTool(), corpusDir);
 		for (Path dPath : paths) {
 			try {
-				Log.debug(CorpusData.class, "Loading " + dPath.toString());
+				mgr.getTool().toolInfo(CorpusData.class, "Loading " + dPath.toString());
 
 				InputStream is = new GZIPInputStream(Files.newInputStream(dPath));
 				BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
@@ -81,7 +82,7 @@ public class CorpusData {
 					corModel.merge(featureSet);
 				}
 			} catch (IOException | JsonSyntaxException e) {
-				Log.error(CorpusData.class,
+				mgr.getTool().toolInfo(CorpusData.class,
 						"Failed loading corpus data file " + path.toString() + ": " + e.getMessage());
 				throw e;
 			}
@@ -91,16 +92,16 @@ public class CorpusData {
 	}
 
 	/** Remove all of the data files that represent the corpus. */
-	public static boolean removeDataFiles(Path corpusDir) {
+	public static boolean removeDataFiles(Tool tool, Path corpusDir) {
 		boolean successful = true;
-		for (Path datafile : getDataFiles(corpusDir)) {
+		for (Path datafile : getDataFiles(tool, corpusDir)) {
 			successful = successful && datafile.toFile().delete();
 		}
 		return successful;
 	}
 
 	/* Returns a list of the corpus data file pathnames. */
-	private static List<Path> getDataFiles(Path corpusDir) {
+	private static List<Path> getDataFiles(Tool tool, Path corpusDir) {
 		try {
 			return Files.walk(corpusDir, 1) //
 					.filter(Files::isRegularFile) //
@@ -108,7 +109,7 @@ public class CorpusData {
 					.filter(p -> p.getFileName().toString().endsWith(ConfigMgr.DOT + ConfigMgr.EXT)) //
 					.collect(Collectors.toList());
 		} catch (IOException e) {
-			Tool.errMgr.toolError(ErrorType.CANNOT_OPEN_FILE, "Failed reading Data file names");
+			tool.toolError(CorpusData.class, ErrorDesc.CANNOT_OPEN_FILE, e, "Failed reading Data file names");
 		}
 		return Collections.emptyList();
 	}
@@ -157,6 +158,7 @@ public class CorpusData {
 	 * @throws Exception if an existing file cannot be overwritten
 	 */
 	public static void save(Path corpusDir, CorpusModel model, boolean inclDocs) throws Exception {
+		Tool tool = model.getMgr().getTool();
 		Gson gson = configBuilder();
 
 		Path path = corpusDir.resolve(ConfigMgr.MODEL + ConfigMgr.DOT + ConfigMgr.EXT);
@@ -166,10 +168,11 @@ public class CorpusData {
 			gson.toJson(model, CorpusModel.class, writer);
 			writer.close();
 		} catch (IOException | JsonSyntaxException e) {
-			Log.error(CorpusData.class, "Failed saving corpus model file " + path.toString() + ": " + e.getMessage());
+			tool.toolInfo(CorpusData.class,
+					"Failed saving corpus model file " + path.toString() + ": " + e.getMessage(), e);
 			throw e;
 		}
-		Log.debug(CorpusData.class, "Saved " + path.getFileName().toString());
+		tool.toolInfo(CorpusData.class, "Saved " + path.getFileName().toString());
 
 		if (inclDocs) {
 			int idx = 0;
@@ -181,8 +184,8 @@ public class CorpusData {
 				try {
 					writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
 				} catch (IOException e) {
-					Log.error(CorpusData.class,
-							"Failed accessing corpus data file " + path.toString() + ": " + e.getMessage());
+					tool.toolInfo(CorpusData.class,
+							"Failed accessing corpus data file " + path.toString() + ": " + e.getMessage(), e);
 					throw e;
 				}
 
@@ -190,13 +193,13 @@ public class CorpusData {
 					gson.toJson(new FeatureSet(docId, pathname, features), FeatureSet.class, writer);
 					writer.close();
 				} catch (IOException | JsonSyntaxException e) {
-					Log.error(CorpusData.class,
-							"Failed saving corpus data file " + path.toString() + ": " + e.getMessage());
+					tool.toolInfo(CorpusData.class,
+							"Failed saving corpus data file " + path.toString() + ": " + e.getMessage(), e);
 					throw e;
 				}
 				idx++;
 			}
-			Log.debug(ConfigMgr.class, "Saved " + idx + " data files");
+			tool.toolInfo(ConfigMgr.class, "Saved " + idx + " data files");
 		}
 	}
 

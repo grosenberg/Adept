@@ -18,7 +18,7 @@ import java.util.List;
 import net.certiv.adept.Tool;
 import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.ParseRecord;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 
 public class Document {
 
@@ -61,7 +61,11 @@ public class Document {
 	}
 
 	public String getFilename() {
-		return Paths.get(pathname).getFileName().toString();
+		try {
+			return Paths.get(pathname).getFileName().toString();
+		} catch (Exception e) {
+			return pathname;
+		}
 	}
 
 	/** Returns the id of this document */
@@ -111,14 +115,14 @@ public class Document {
 		this.modified = modified;
 	}
 
-	public boolean saveModified(boolean overwrite) {
+	public boolean saveModified(Tool tool, boolean overwrite) {
 		Path path = Paths.get(pathname);
 		if (!overwrite) {
 			Path backup = Paths.get(pathname + ".bak");
 			try {
 				Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
-				Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e, backup.toString());
+				tool.toolError(this, ErrorDesc.CANNOT_WRITE_FILE, e, backup.toString());
 				return false;
 			}
 		}
@@ -126,7 +130,7 @@ public class Document {
 		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
 			writer.write(modified);
 		} catch (IOException e) {
-			Tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE, e, path.toString());
+			tool.toolError(this, ErrorDesc.CANNOT_WRITE_FILE, e, path.toString());
 			return false;
 		}
 

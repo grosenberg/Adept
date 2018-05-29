@@ -27,13 +27,13 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
 public class CoreMgr {
 
+	private Tool tool;
 	private Settings settings;
 	private DocModel docModel;
 	private CorpusModel corModel;
@@ -42,8 +42,13 @@ public class CoreMgr {
 	// key=docId; value=document
 	private Map<Integer, Document> documents;
 
-	public CoreMgr() {
+	public CoreMgr(Tool tool) {
 		super();
+		this.tool = tool;
+	}
+
+	public Tool getTool() {
+		return tool;
 	}
 
 	/** Loads the corpus model. Builds the model if requested or required. */
@@ -66,10 +71,12 @@ public class CoreMgr {
 	 * @param settings configuration parameters and related data
 	 * @param pathnames identifies the documents to be evaluated
 	 */
-	public void execute(Settings settings, List<String> pathnames) {
+	public void execute(Settings settings, List<String> pathnames, String content) {
 		Time.start(Facet.EXECUTE);
-		documents = loadDocuments(pathnames);
-		Log.info(this, documents.size() + " source documents to process.");
+
+		documents = loadDocuments(pathnames, content);
+		tool.toolInfo(this, documents.size() + " source documents to process.");
+
 		for (Document doc : documents.values()) {
 			if (settings.learn) {
 				CorpusDocs.writeDocument(settings.corpusDir, doc);
@@ -89,21 +96,27 @@ public class CoreMgr {
 		Time.stop(Facet.EXECUTE);
 	}
 
-	private Map<Integer, Document> loadDocuments(List<String> pathnames) {
+	private Map<Integer, Document> loadDocuments(List<String> pathnames, String content) {
 		Map<Integer, Document> documents = new HashMap<>();
-		for (String pathname : pathnames) {
-			try {
-				Document doc = loadDocument(pathname);
-				documents.put(doc.getDocId(), doc);
-			} catch (IOException e) {}
+
+		if (content == null) {
+			for (String pathname : pathnames) {
+				try {
+					Document doc = loadFileDocument(pathname);
+					documents.put(doc.getDocId(), doc);
+				} catch (IOException e) {}
+			}
+		} else {
+			Document doc = new Document(pathnames.get(0), settings.tabWidth, content);
+			documents.put(doc.getDocId(), doc);
 		}
 		return documents;
 	}
 
-	private Document loadDocument(String pathname) throws IOException {
+	private Document loadFileDocument(String pathname) throws IOException {
 		File file = new File(pathname);
 		if (!file.exists()) {
-			Tool.errMgr.toolError(ErrorType.CANNOT_OPEN_FILE, pathname);
+			tool.toolError(this, ErrorDesc.CANNOT_OPEN_FILE, pathname);
 			throw new IOException("Source file does not exist: " + pathname);
 		}
 
@@ -111,7 +124,7 @@ public class CoreMgr {
 		try {
 			content = Files.readAllBytes(file.toPath());
 		} catch (IOException e) {
-			Tool.errMgr.toolError(ErrorType.CANNOT_READ_FILE, pathname);
+			tool.toolError(this, ErrorDesc.CANNOT_READ_FILE, pathname);
 			throw e;
 		}
 		return new Document(pathname, settings.tabWidth, new String(content, StandardCharsets.UTF_8));

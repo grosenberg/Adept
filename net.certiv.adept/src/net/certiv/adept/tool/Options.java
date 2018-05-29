@@ -9,6 +9,7 @@ package net.certiv.adept.tool;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.util.Reflect;
 
 public class Options implements Comparable<Options> {
@@ -41,7 +42,7 @@ public class Options implements Comparable<Options> {
 		return description;
 	}
 
-	public static boolean process(ITool tool, Options[] optionDefs, String[] args) {
+	public static boolean process(Tool tool, Options[] optionDefs, String[] args) {
 		remainder = new ArrayList<>();
 
 		boolean ok = true;
@@ -81,7 +82,7 @@ public class Options implements Comparable<Options> {
 				}
 			}
 			if (!found) {
-				tool.getErrMgr().toolError(ErrorType.INVALID_CMDLINE_ARG, arg);
+				tool.toolError(Options.class, ErrorDesc.INVALID_CMDLINE_ARG, arg);
 				ok = false;
 			}
 		}

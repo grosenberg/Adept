@@ -8,21 +8,23 @@ package net.certiv.adept.lang;
 
 import java.util.List;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.util.Calc;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Refs;
 
 public class Analyzer {
 
+	private static Tool _tool;
 	private static ParseRecord _data;
 	private static List<Feature> _features;
 
 	private Analyzer() {}
 
-	public static void evaluate(ParseRecord data, List<Feature> features) {
+	public static void evaluate(Tool tool, ParseRecord data, List<Feature> features) {
+		_tool = tool;
 		_data = data;
 		_features = features;
 
@@ -49,11 +51,11 @@ public class Analyzer {
 
 				if (ref.contexts == null) {
 					String msg = String.format("Null: %3d %s %s", tIndex, name, place);
-					Log.debug(Analyzer.class, msg);
+					_tool.toolInfo(Analyzer.class, msg);
 
 				} else if (ref.contexts.isEmpty()) {
 					String msg = String.format("None: %3d %s %s", tIndex, name, place);
-					Log.debug(Analyzer.class, msg);
+					_tool.toolInfo(Analyzer.class, msg);
 
 				} else {
 					Calc.delta(Form.CTX, ref.contexts.size());
@@ -62,7 +64,7 @@ public class Analyzer {
 					// if (context.lAssocs.isEmpty() || context.rAssocs.isEmpty()) {
 					// String assoc = Refs.tAssoc(ref.type, context);
 					// String msg = String.format("One.: %3d %s %s %s\t%s", tIndex, name, loc, place, assoc);
-					// Log.debug(Analyzer.class, msg);
+					// _tool.toolInfo(Analyzer.class, msg);
 					// }
 					// }
 				}
@@ -90,11 +92,11 @@ public class Analyzer {
 		String RMsg = "Refs     %5.0f : %5.2f %5.2f %4.0f (mean/median/max) per feature";
 		String CMsg = "Contexts %5.0f : %5.2f %5.2f %4.0f (mean/median/max) per ref";
 
-		Log.info(Analyzer.class, "=============================================================================");
-		Log.info(Analyzer.class, String.format(DMsg, docs, toks, toks / docs, mtoks, xtoks));
-		Log.info(Analyzer.class, String.format(FMsg, cfeats));
-		Log.info(Analyzer.class, String.format(RMsg, crefs, crefs / cfeats, mrefs, xrefs));
-		Log.info(Analyzer.class, String.format(CMsg, cctxs, cctxs / crefs, mctxs, xctxs));
-		Log.info(Analyzer.class, "=============================================================================");
+		_tool.toolInfo(Analyzer.class, "=============================================================================");
+		_tool.toolInfo(Analyzer.class, String.format(DMsg, docs, toks, toks / docs, mtoks, xtoks));
+		_tool.toolInfo(Analyzer.class, String.format(FMsg, cfeats));
+		_tool.toolInfo(Analyzer.class, String.format(RMsg, crefs, crefs / cfeats, mrefs, xrefs));
+		_tool.toolInfo(Analyzer.class, String.format(CMsg, cctxs, cctxs / crefs, mctxs, xctxs));
+		_tool.toolInfo(Analyzer.class, "=============================================================================");
 	}
 }

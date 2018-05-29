@@ -9,20 +9,19 @@ package net.certiv.adept;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.load.ConfigMgr;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.tool.LangDescriptor;
 import net.certiv.adept.tool.Level;
 import net.certiv.adept.tool.Options;
 import net.certiv.adept.tool.Options.OptionType;
 import net.certiv.adept.tool.ToolBase;
-import net.certiv.adept.util.Log;
 
 public class Tool extends ToolBase {
 
@@ -86,6 +85,7 @@ public class Tool extends ToolBase {
 
 	private String version;
 	private List<String> sourceFiles;
+	private String sourceContent;
 	private List<String> corpusFiles;
 	private List<LangDescriptor> languages;
 
@@ -128,7 +128,7 @@ public class Tool extends ToolBase {
 	 */
 	public Tool() {
 		super();
-		mgr = new CoreMgr();
+		mgr = new CoreMgr(this);
 	}
 
 	/**
@@ -145,10 +145,10 @@ public class Tool extends ToolBase {
 	}
 
 	public boolean loadResources() {
-		version = ConfigMgr.loadVersion();
+		version = ConfigMgr.loadVersion(this);
 		if (version == null) return false;
 
-		languages = ConfigMgr.loadLanguages();
+		languages = ConfigMgr.loadLanguages(this);
 		if (languages == null) return false;
 
 		return true;
@@ -167,7 +167,7 @@ public class Tool extends ToolBase {
 		}
 
 		if (lang == null && settings.lang == null) {
-			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Must specify the language type");
+			toolError(this, ErrorDesc.INVALID_CMDLINE_ARG, "Must specify the language type");
 			return false;
 		} else if (lang != null) {
 			settings.lang = lang;
@@ -185,12 +185,12 @@ public class Tool extends ToolBase {
 		}
 
 		if (!found) {
-			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Unrecognized language type: " + settings.lang);
+			toolError(this, ErrorDesc.INVALID_CMDLINE_ARG, "Unrecognized language type: " + settings.lang);
 			return false;
 		}
 
 		if (settings.corpusRoot == null) {
-			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Must specify a corpus root directory.");
+			toolError(this, ErrorDesc.INVALID_CMDLINE_ARG, "Must specify a corpus root directory.");
 			return false;
 		}
 
@@ -200,7 +200,7 @@ public class Tool extends ToolBase {
 			corpusFile.mkdirs();
 		}
 		if (corpusFile.isFile()) {
-			errMgr.toolError(ErrorType.INVALID_CMDLINE_ARG, "Model directory cannot be a file");
+			toolError(this, ErrorDesc.INVALID_CMDLINE_ARG, "Model directory cannot be a file");
 			return false;
 		}
 
@@ -294,16 +294,16 @@ public class Tool extends ToolBase {
 		// ---- verbose ----
 
 		if (verbose == null && settings.verbose == null) {
-			settings.verbose = "warn";
+			settings.verbose = "info";
 		} else if (verbose != null) {
 			settings.verbose = verbose;
 		}
 
 		try {
-			getDefaultListener().setLevel(Level.valueOf(settings.verbose.trim().toUpperCase()));
+			defaultListener.setLevel(Level.valueOf(settings.verbose.trim().toUpperCase()));
 		} catch (IllegalArgumentException e) {
-			Log.error(this, ErrorType.INVALID_VERBOSE_LEVEL.msg + ": " + settings.verbose);
-			errMgr.toolError(ErrorType.INVALID_VERBOSE_LEVEL, settings.verbose);
+			// Log.error(this, ErrorDesc.INVALID_VERBOSE_LEVEL.msg + ": " + settings.verbose);
+			toolError(this, ErrorDesc.INVALID_VERBOSE_LEVEL, settings.verbose);
 		}
 
 		// ---- load and validate the corpus model ----
@@ -311,14 +311,14 @@ public class Tool extends ToolBase {
 		boolean ok = mgr.loadCorpusModel(settings, corpusFiles);
 		if (ok && mgr.getCorpusModel().isConsistent()) return true;
 
-		Log.error(this, ErrorType.MODEL_VALIDATE_FAILURE.msg);
-		errMgr.toolError(ErrorType.MODEL_VALIDATE_FAILURE, "Invalid corpus error.");
+		// Log.error(this, ErrorDesc.MODEL_VALIDATE_FAILURE.msg);
+		toolError(this, ErrorDesc.MODEL_VALIDATE_FAILURE, "Invalid corpus error.");
 		return false;
 	}
 
 	private boolean chkSettings() {
 		if (settings == null) {
-			settings = ConfigMgr.loadSettings(config);
+			settings = ConfigMgr.loadSettings(this, config);
 		}
 		return settings != null;
 	}
@@ -336,13 +336,13 @@ public class Tool extends ToolBase {
 	}
 
 	/**
-	 * Execute and optionally wait (max 10 secs) for the corpus save thread to complete before exiting
-	 * the application.
+	 * Execute and optionally wait (max 10 secs) for the corpus save thread to complete before returning
+	 * and possibly exiting the application.
 	 *
 	 * @param wait for save to complete
 	 */
 	public void execute(boolean wait) {
-		mgr.execute(settings, sourceFiles);
+		mgr.execute(settings, sourceFiles, sourceContent);
 
 		if (wait) {
 			for (int cnt = 0; mgr.getThreadGroup().activeCount() > 0 && cnt < 20; cnt++) {
@@ -376,8 +376,8 @@ public class Tool extends ToolBase {
 	 * Returns a list of {@code ITextEdit} that can be used to apply the formatting changes created for
 	 * the last document parsed.
 	 */
-	public List<TextEdit> getFormatEdits() {
-		return mgr.getDocModel().getDocument().getEdits();
+	public List<ITextEdit> getFormatEdits() {
+		return new ArrayList<>(mgr.getDocModel().getDocument().getEdits());
 	}
 
 	public Path getCorpusDir() {
@@ -471,14 +471,22 @@ public class Tool extends ToolBase {
 		config = pathname;
 	}
 
+	/** Provides the doc pathname and content of a file, possibly virtual, to be processed */
+	public void setSource(String pathname, String content) {
+		sourceFiles = Arrays.asList(pathname);
+		sourceContent = content;
+	}
+
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(String... pathnames) {
 		sourceFiles = Arrays.asList(pathnames);
+		sourceContent = null;
 	}
 
 	/** Provides the set of doc pathnames of the files to be processed */
 	public void setSourceFiles(List<String> pathnames) {
 		sourceFiles = pathnames;
+		sourceContent = null;
 	}
 
 	/** Provides the set of corpus filenames to be used. */
@@ -508,13 +516,13 @@ public class Tool extends ToolBase {
 		for (Options o : optionDefs) {
 			String name = o.name + (o.argType != OptionType.BOOL ? " ___" : "");
 			String s = String.format(" %-19s %s", name, o.description);
-			info(s);
+			toolInfo(s);
 		}
 	}
 
 	@Override
 	public void version() {
-		info("Adept Version " + version);
+		toolInfo("Adept Version " + version);
 	}
 
 	public void exit(int e) {

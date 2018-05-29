@@ -16,7 +16,6 @@ import com.google.gson.annotations.Expose;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.util.Damerau;
-import net.certiv.adept.util.Log;
 
 public class Feature implements Comparable<Feature>, Cloneable {
 
@@ -147,7 +146,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 		for (RefToken ref : refs) {
 			if (ref.index == index) return ref;
 		}
-		Log.error(this, "Problem: ref is null.");
+		mgr.getTool().toolInfo(this, "Problem: ref is null.");
 		return null;
 	}
 

@@ -62,7 +62,7 @@ public class DocProcessor extends BaseProcessor {
 		if (formatter.execute()) {
 			doc.setEdits(formatter.getTextEdits());
 			doc.setModified(formatter.getFormatted());
-			if (settings.save) doc.saveModified(settings.backup);
+			if (settings.save) doc.saveModified(mgr.getTool(), settings.backup);
 		}
 		formatter.dispose();
 		Time.stop(Facet.FORMAT);

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.DefaultComboBoxModel;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.model.load.ConfigMgr;
 import net.certiv.adept.tool.LangDescriptor;
 
@@ -22,7 +23,7 @@ public class LanguageListModel extends DefaultComboBoxModel<String> {
 	public LanguageListModel(String corpusRoot) {
 		super();
 		languages = new HashMap<>();
-		for (LangDescriptor desc : ConfigMgr.loadLanguages()) {
+		for (LangDescriptor desc : ConfigMgr.loadLanguages(new Tool())) {
 			languages.put(desc.name, desc);
 		}
 		addLangs(corpusRoot);

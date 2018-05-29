@@ -9,7 +9,6 @@ package net.certiv.adept.core;
 import java.util.List;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.Tool;
 import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.CorpusModel;
@@ -17,9 +16,8 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.CorpusDocs;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.util.Calc;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Time;
 
 public class CorpusProcessor extends BaseProcessor {
@@ -52,8 +50,7 @@ public class CorpusProcessor extends BaseProcessor {
 				corModel = CorpusData.loadModel(mgr, settings.corpusDir, pathnames);
 			} catch (Exception e) {
 				corModel.setConsistent(false);
-				Tool.errMgr.toolError(ErrorType.MODEL_LOAD_FAILURE, e.getMessage());
-				Log.error(this, "Corpus model load failure: ", e);
+				mgr.getTool().toolError(this, ErrorDesc.MODEL_LOAD_FAILURE, e, e.getMessage());
 			}
 			if (!corModel.isConsistent()) {
 				buildCorpusModel();
@@ -64,9 +61,9 @@ public class CorpusProcessor extends BaseProcessor {
 
 	public void buildCorpusModel() {
 		Time.start(Facet.BUILD);
-		Log.info(this, "Building corpus model ...");
+		mgr.getTool().toolInfo(this, "Building corpus model ...");
 
-		CorpusData.removeDataFiles(settings.corpusDir);
+		CorpusData.removeDataFiles(mgr.getTool(), settings.corpusDir);
 		corModel = new CorpusModel(mgr, settings.corpusDir);
 
 		List<Document> documents = CorpusDocs.readDocuments(settings.corpusDir, settings.corpusExt, settings.tabWidth);

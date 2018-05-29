@@ -9,8 +9,10 @@ package net.certiv.adept.lang;
 import java.util.List;
 
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.TokenFactory;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import net.certiv.adept.Tool;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.model.Document;
@@ -23,7 +25,7 @@ public interface ISourceParser extends IParseErrorReporter {
 	 * @throws RecognitionException source parsing failure
 	 * @throws Exception everything else
 	 */
-	void process(Builder builder, Document doc) throws RecognitionException, Exception;
+	void process(Tool tool, Builder builder, Document doc) throws RecognitionException, Exception;
 
 	/** Tree walker: build dentation profile and annotate the given builder. */
 	void defineIndentation(Indenter indenter);
@@ -36,6 +38,8 @@ public interface ISourceParser extends IParseErrorReporter {
 
 	/** Returns the language specific list of feature types that are to be excluded. */
 	List<Integer> excludedTypes();
+
+	void setup(TokenFactory<?> factory, String content);
 
 	ParseTree getParseTree();
 

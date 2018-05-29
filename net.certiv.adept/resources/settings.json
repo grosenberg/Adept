@@ -9,7 +9,7 @@
 	"lang": null,
 	"output": null,
 	"trust": "3",
-	"verbose": "warn",
+	"verbose": "info",
 	"tabWidth": "4",
 	"useTabs": "true",
 	"removeBlankLines": "true",

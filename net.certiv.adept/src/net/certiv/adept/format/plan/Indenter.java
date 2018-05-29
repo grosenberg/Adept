@@ -9,7 +9,6 @@ package net.certiv.adept.format.plan;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -19,13 +18,11 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
-import net.certiv.adept.util.Log;
-import net.certiv.adept.util.Strings;
 
 public class Indenter {
 
-	private static final String ProfileMsg = "%s \t @%d:%d";
-	private static final String IndentMsg = "%3d %s %s %s";
+	// private static final String ProfileMsg = "%s \t @%d:%d";
+	// private static final String IndentMsg = "%3d %s %s %s";
 
 	private static final Comparator<ParseTree> PtComp = new Comparator<ParseTree>() {
 
@@ -206,38 +203,38 @@ public class Indenter {
 		// checkIndents();
 	}
 
-	void checkProfile() {
-		for (Entry<Integer, Mark> entry : profile.entrySet()) {
-			int index = entry.getKey();
-			Mark mark = entry.getValue();
-			String dent = mark.createDent(index).toString();
-			int line = 0;
-			int col = 0;
-			if (index > -1) {
-				AdeptToken token = data.getToken(index);
-				line = token.getLine() + 1;
-				col = token.getCharPositionInLine() + 1;
-			}
-			Log.debug(this, String.format(ProfileMsg, dent, line, col));
-		}
-	}
-
-	void checkIndents() {
-		int len = data.blanklines.size();
-
-		for (int line = 0; line < len; line++) {
-			List<AdeptToken> tokens = data.lineTokensIndex.get(line);
-			if (tokens != null) {
-				int tIndex = tokens.get(0).getTokenIndex();
-				int lIndex = tokens.get(tokens.size() - 1).getTokenIndex();
-				String range = String.format("<%s..%s>", tIndex, lIndex);
-				Dent dent = getDent(tIndex);
-				String indents = dent.toString();
-				String graphic = Strings.getN(dent.indents, "--");
-				Log.debug(this, String.format(IndentMsg, line + 1, indents, range, graphic));
-			} else {
-				Log.debug(this, String.format(IndentMsg, line + 1, "", "", "Blank"));
-			}
-		}
-	}
+	// void checkProfile() {
+	// for (Entry<Integer, Mark> entry : profile.entrySet()) {
+	// int index = entry.getKey();
+	// Mark mark = entry.getValue();
+	// String dent = mark.createDent(index).toString();
+	// int line = 0;
+	// int col = 0;
+	// if (index > -1) {
+	// AdeptToken token = data.getToken(index);
+	// line = token.getLine() + 1;
+	// col = token.getCharPositionInLine() + 1;
+	// }
+	// Log.debug(this, String.format(ProfileMsg, dent, line, col));
+	// }
+	// }
+	//
+	// void checkIndents() {
+	// int len = data.blanklines.size();
+	//
+	// for (int line = 0; line < len; line++) {
+	// List<AdeptToken> tokens = data.lineTokensIndex.get(line);
+	// if (tokens != null) {
+	// int tIndex = tokens.get(0).getTokenIndex();
+	// int lIndex = tokens.get(tokens.size() - 1).getTokenIndex();
+	// String range = String.format("<%s..%s>", tIndex, lIndex);
+	// Dent dent = getDent(tIndex);
+	// String indents = dent.toString();
+	// String graphic = Strings.getN(dent.indents, "--");
+	// Log.debug(this, String.format(IndentMsg, line + 1, indents, range, graphic));
+	// } else {
+	// Log.debug(this, String.format(IndentMsg, line + 1, "", "", "Blank"));
+	// }
+	// }
+	// }
 }

@@ -1,21 +1,16 @@
-/*
- * Copyright (c) 2012-2018 The ANTLR Project. All rights reserved.
- * Use of this file is governed by the BSD 3-clause license that
- * can be found in the LICENSE.txt file in the project root.
- */
 package net.certiv.adept.tool;
 
-import org.stringtemplate.v4.ST;
+import javax.tools.Tool;
+
+import net.certiv.adept.IToolListener;
+import net.certiv.adept.util.Log;
 
 public class DefaultToolListener implements IToolListener {
 
 	private Level level;
 
-	public ITool tool;
-
-	public DefaultToolListener(ITool tool) {
-		this.tool = tool;
-		this.level = Level.WARN;
+	public DefaultToolListener() {
+		this.level = Level.INFO;
 	}
 
 	public void setLevel(Level level) {
@@ -24,48 +19,38 @@ public class DefaultToolListener implements IToolListener {
 
 	@Override
 	public void info(String msg) {
+		info(Tool.class, msg, null);
+	}
+
+	@Override
+	public void warn(String msg) {
+		warn(Tool.class, msg, null);
+	}
+
+	@Override
+	public void error(String msg) {
+		error(Tool.class, msg, null);
+	}
+
+	@Override
+	public void info(Object source, String msg, Throwable e) {
 		if (skip(Level.INFO)) return;
-		if (tool.getErrMgr().formatWantsSingleLineMessage()) {
-			msg = msg.replace('\n', ' ');
-		}
-		System.out.println(msg);
+		Log.info(source, msg, e);
 	}
 
 	@Override
-	public void warn(Messages msg) {
+	public void warn(Object source, String msg, Throwable e) {
 		if (skip(Level.WARN)) return;
-		ST msgST = tool.getErrMgr().getMessageTemplate(msg);
-		String outputMsg = msgST.render();
-		if (tool.getErrMgr().formatWantsSingleLineMessage()) {
-			outputMsg = outputMsg.replace('\n', ' ');
-		}
-		System.err.println(outputMsg);
+		Log.info(source, msg, e);
 	}
 
 	@Override
-	public void error(Messages msg) {
+	public void error(Object source, String msg, Throwable e) {
 		if (skip(Level.ERROR)) return;
-		ST msgST = tool.getErrMgr().getMessageTemplate(msg);
-		String outputMsg = msgST.render();
-		if (tool.getErrMgr().formatWantsSingleLineMessage()) {
-			outputMsg = outputMsg.replace('\n', ' ');
-		}
-		System.err.println(outputMsg);
+		Log.error(source, msg, e);
 	}
 
 	private boolean skip(Level target) {
-		switch (this.level) {
-			default:
-			case INFO:
-				return false;
-			case WARN:
-				if (target != Level.INFO) return false;
-				return true;
-			case ERROR:
-				if (target == Level.ERROR) return false;
-				return true;
-			case QUIET:
-				return true;
-		}
+		return level.ordinal() > target.ordinal() ? true : false;
 	}
 }

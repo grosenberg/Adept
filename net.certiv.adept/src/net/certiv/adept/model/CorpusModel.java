@@ -19,17 +19,15 @@ import java.util.Map;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.Analyzer;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
-import net.certiv.adept.tool.ErrorType;
+import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Utils;
 
 public class CorpusModel {
@@ -85,7 +83,7 @@ public class CorpusModel {
 	 */
 	public boolean isValid(List<Document> corpusDocs) {
 		if (pathnames.size() != corpusDocs.size()) {
-			Log.info(this, "Model invalid: different number of documents");
+			mgr.getTool().toolInfo(this, "Model invalid: different number of documents");
 			return false;
 		}
 
@@ -93,7 +91,7 @@ public class CorpusModel {
 		for (Document doc : corpusDocs) {
 			String docname = doc.getPathname();
 			if (Utils.getLastModified(Paths.get(docname)) > lastModified + TIME_OUT) {
-				Log.info(this, "Model invalid: later modified document " + docname);
+				mgr.getTool().toolInfo(this, "Model invalid: later modified document " + docname);
 				return false;
 			}
 			docnames.add(docname);
@@ -102,7 +100,7 @@ public class CorpusModel {
 		ArrayList<String> pn = new ArrayList<>(pathnames.values());
 		pn.removeAll(docnames);
 		if (!pn.isEmpty()) {
-			Log.info(this, "Model invalid: difference in sets of documents " + pn);
+			mgr.getTool().toolInfo(this, "Model invalid: difference in sets of documents " + pn);
 			return false;
 		}
 		return true;
@@ -216,7 +214,7 @@ public class CorpusModel {
 	/** Perform operations to finalize the (re)built corpus. */
 	public void postBuild(ParseRecord data, Settings settings) {
 		Feature.clearPool();
-		Analyzer.evaluate(data, getCorpusFeatures());
+		Analyzer.evaluate(mgr.getTool(), data, getCorpusFeatures());
 		consistent = true;
 		save(settings.corpusDir);
 	}
@@ -232,8 +230,7 @@ public class CorpusModel {
 					CorpusData.save(corpusDir, CorpusModel.this, true);
 				} catch (Exception e) {
 					consistent = false;
-					Tool.errMgr.toolError(ErrorType.MODEL_SAVE_FAILURE, e.getMessage());
-					Log.error(this, "Cannot write file(s): ", e);
+					mgr.getTool().toolError(this, ErrorDesc.MODEL_SAVE_FAILURE, e, e.getMessage());
 				}
 			};
 		});
@@ -273,17 +270,19 @@ public class CorpusModel {
 
 	/**
 	 * For the given document feature, match each contained ref token to a corresponding corpus 'best'
-	 * matching feature/ref token. The document ref tokens are update with the match found or
+	 * matching feature/ref token. The document ref tokens are updated with the match found or
 	 * {@code null} if no suitable match is found in the corpus.
 	 */
 	public void match(Feature feature) {
 		if (!feature.isMatched()) {
 			// corpus features that might contain a valid match
 			Feature matched = corpus.get(feature.getKey());
-			for (RefToken ref : feature.getRefs()) {
-				// key=similarity, value=match ref tokens; descending order
-				TreeMultiset<Double, RefToken> scored = matches(ref, matched);
-				ref.chooseBest(scored);
+			if (matched != null) { // TODO: no feature match, so find nearest
+				for (RefToken ref : feature.getRefs()) {
+					// key=similarity, value=match ref tokens; descending order
+					TreeMultiset<Double, RefToken> scored = matches(ref, matched);
+					ref.chooseBest(scored);
+				}
 			}
 			feature.setMatched(true);
 		}
@@ -296,15 +295,16 @@ public class CorpusModel {
 
 	/** For visualization: find the refs that might be a match; results in descending order. */
 	public TreeMultiset<Double, RefToken> getScoredMatches(Feature feature, RefToken ref) {
-		Feature featMatch = corpus.get(feature.getKey());
-		return matches(ref, featMatch);
+		Feature matched = corpus.get(feature.getKey());
+		return matches(ref, matched);
 	}
 
 	// scores the given token ref against each of the token refs of the given feature
 	// results are provided in a descending score keyed multiset
 	private TreeMultiset<Double, RefToken> matches(RefToken ref, Feature feature) {
 		TreeMultiset<Double, RefToken> scored = new TreeMultiset<>(Collections.reverseOrder());
-		double[] maxRank = feature.maxRank();
+		double[] maxRank = null;
+		maxRank = feature.maxRank();
 		for (RefToken match : feature.getRefs()) {
 			scored.put(ref.score(match, maxRank), match);
 		}
@@ -338,8 +338,8 @@ public class CorpusModel {
 	}
 
 	private int[] reportDoc(int[] docCnt, String name) {
-		Log.info(this, "=============================================================================");
-		Log.debug(this, String.format(DocMsg, docCnt[0], docCnt[1], name));
+		mgr.getTool().toolInfo(this, "=============================================================================");
+		mgr.getTool().toolInfo(this, String.format(DocMsg, docCnt[0], docCnt[1], name));
 		return docCnt;
 	}
 
@@ -347,13 +347,13 @@ public class CorpusModel {
 		double upercent = unqCnt[0] * 100.0 / docCnt[0];
 		double rpercent = unqCnt[1] * 100.0 / docCnt[1];
 
-		Log.debug(this, String.format(UnqMsg, unqCnt[0], unqCnt[1], upercent, rpercent));
+		mgr.getTool().toolInfo(this, String.format(UnqMsg, unqCnt[0], unqCnt[1], upercent, rpercent));
 	}
 
 	private void reportCor(int[] before, int[] after) {
 		double chgFeatures = (after[0] - before[0]) * 100.0 / after[0];
 		double chgRefs = (after[1] - before[1]) * 100.0 / after[1];
-		Log.debug(this, String.format(CorMsg, after[0], after[1], chgFeatures, chgRefs));
+		mgr.getTool().toolInfo(this, String.format(CorMsg, after[0], after[1], chgFeatures, chgRefs));
 	}
 
 	private int[] featureSetSize(Collection<Feature> features) {

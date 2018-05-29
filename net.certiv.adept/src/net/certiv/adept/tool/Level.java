@@ -7,5 +7,8 @@
 package net.certiv.adept.tool;
 
 public enum Level {
-	QUIET, INFO, WARN, ERROR;
+	QUIET,
+	INFO,
+	WARN,
+	ERROR;
 }
