@@ -336,7 +336,7 @@ public class Tool extends ToolBase {
 	}
 
 	/**
-	 * Execute and optionally wait (max 10 secs) for the corpus save thread to complete before returning
+	 * Execute and optionally wait (max 2 secs) for the corpus save thread to complete before returning
 	 * and possibly exiting the application.
 	 *
 	 * @param wait for save to complete
@@ -347,10 +347,20 @@ public class Tool extends ToolBase {
 		if (wait) {
 			for (int cnt = 0; mgr.getThreadGroup().activeCount() > 0 && cnt < 20; cnt++) {
 				try {
-					Thread.sleep(500);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {}
 			}
 		}
+	}
+
+	@Override
+	public void addListener(IToolListener listener) {
+		super.addListener(listener);
+	}
+
+	@Override
+	public void removeListeners() {
+		super.removeListeners();
 	}
 
 	public CoreMgr getMgr() {
