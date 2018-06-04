@@ -16,6 +16,7 @@ of use.
 
 - [x] ANTLR syntax
 - [x] Java syntax
+- [x] StringTemplate syntax
 - [x] XVisitor syntax
 
 ## Formatting operations
@@ -25,10 +26,10 @@ of use.
 - [x] Skip header comment formatting option
 - [x] Align code fields
 - [x] Align comments
-- [ ] Break long lines
+- [ ] Wrap long lines
 
 ## Status
 
-ANTLR and XVisitor syntax implemented and tested. Java syntax partially implemented.
+Adept engine implemented and tested. 
 
 

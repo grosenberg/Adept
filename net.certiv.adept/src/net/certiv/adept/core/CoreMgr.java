@@ -21,6 +21,7 @@ import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;
+import net.certiv.adept.lang.stg.parser.STGSourceParser;
 import net.certiv.adept.lang.xvisitor.parser.XVisitorSourceParser;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
@@ -199,6 +200,8 @@ public class CoreMgr {
 				return new AntlrSourceParser();
 			case "java":
 				return new JavaSourceParser();
+			case "stg":
+				return new STGSourceParser();
 			case "xvisitor":
 				return new XVisitorSourceParser();
 		}

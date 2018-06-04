@@ -49,7 +49,7 @@ public class Tool extends ToolBase {
 
 			new Options("config", "-c", OptionType.STRING, "config settings file pathname"),
 			new Options("corpusRoot", "-d", OptionType.STRING, "corpus root directory"),
-			new Options("lang", "-g", OptionType.STRING, "grammar language ('antlr', 'java', 'xvisitor'"),
+			new Options("lang", "-g", OptionType.STRING, "grammar language ('antlr', 'java', 'stg', 'xvisitor'"),
 			new Options("rebuild", "-r", OptionType.BOOL, "force rebuild of the corpus model"),
 			new Options("tabWidth", "-t", OptionType.INT, "tab width"),
 			new Options("verbose", "-v", OptionType.STRING, "verbosity ('quiet', 'info', 'warn', 'error')"),
