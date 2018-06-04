@@ -6,12 +6,6 @@ comment syntax, including formal JavaDoc.
 
 The Adept tool is designed for both stand-alone (CLI) and embedded use.
 
-A suite of visualization tools serve as development aids as well as examples of embedded 
-use. The `FormatView` visualization tool provides the most complete demonstration 
-of use.
-
-![FormatView](FormatView.png)
-
 ## Current built-in language support
 
 - [x] ANTLR syntax
@@ -28,8 +22,18 @@ of use.
 - [x] Align comments
 - [ ] Wrap long lines
 
+## License
+
+EPL v1
+
 ## Status
 
-Adept engine implemented and tested. 
+Adept engine core implemented and tested. 
+
+A suite of visualization tools serve as development aids as well as examples of embedded 
+use. The `FormatView` visualization tool provides a working demonstration of embedded 
+use.
+
+![FormatView](FormatView.png)
 
 
