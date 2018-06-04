@@ -11,6 +11,12 @@
 				"corpusRoot": "corpus",
 				"tabWidth": "4"
 			},
+    		{
+    			"name": "string template group",
+				"ext": "stg",
+				"corpusRoot": "corpus",
+				"tabWidth": "4"
+			},
 			{
     			"name": "xvisitor",
 				"ext": "xv",

@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;
+import net.certiv.adept.lang.stg.parser.STGSourceParser;
 import net.certiv.adept.lang.xvisitor.parser.XVisitorSourceParser;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
@@ -32,6 +34,8 @@ import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Time;
 
 public class CoreMgr {
+
+	private static final String DOCS = "docs";
 
 	private Tool tool;
 	private Settings settings;
@@ -79,7 +83,9 @@ public class CoreMgr {
 
 		for (Document doc : documents.values()) {
 			if (settings.learn) {
-				CorpusDocs.writeDocument(settings.corpusDir, doc);
+				Path dir = settings.corpusDir;
+				dir = dir.resolve(DOCS);
+				CorpusDocs.writeDocument(dir, doc);
 			} else {
 				DocProcessor proc = new DocProcessor(this, doc, settings);
 				boolean ok = proc.processDocument(doc, settings.check);
@@ -194,6 +200,8 @@ public class CoreMgr {
 				return new AntlrSourceParser();
 			case "java":
 				return new JavaSourceParser();
+			case "stg":
+				return new STGSourceParser();
 			case "xvisitor":
 				return new XVisitorSourceParser();
 		}
