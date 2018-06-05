@@ -37,6 +37,27 @@ import net.certiv.adept.tool.ErrorDesc;
 
 public class CorpusData {
 
+	public static final int OLD = 8;
+
+	public static boolean validModelStore(CoreMgr mgr, Path corpusDir) {
+		if (!Files.isDirectory(corpusDir)) return false;
+
+		try {
+			CorpusModel model = loadCorModel(mgr, archiveBuilder(), corpusDir);
+			if (model == null) return false;
+
+			List<Path> paths = getDataFiles(mgr.getTool(), corpusDir);
+			if (paths.isEmpty()) return false;
+			if (paths.size() != model.getPathnames().size()) return false;
+			if (model.modified()) return false;
+
+		} catch (Exception e) {
+			return false;
+		}
+
+		return true;
+	}
+
 	/**
 	 * Load the corpus model from persistent store. The model is stored in two parts: (1) the base model
 	 * file; and (2) a plurality of feature set data files.
@@ -48,47 +69,53 @@ public class CorpusData {
 	 * @throws Exception if any persisted file cannot found or read
 	 */
 	public static CorpusModel loadModel(CoreMgr mgr, Path corpusDir, List<String> pathnames) throws Exception {
-		Path path = corpusDir.resolve(ConfigMgr.MODEL + ConfigMgr.DOT + ConfigMgr.EXT);
-		if (!Files.isRegularFile(path)) {
-			mgr.getTool().toolInfo(CorpusData.class, "Corpus directory does not exist: " + path.toString());
-			throw new IOException("Corpus directory does not exist: " + path.toString());
+		Tool tool = mgr.getTool();
+		if (!Files.isDirectory(corpusDir)) {
+			tool.toolInfo(CorpusData.class, "Corpus directory does not exist: " + corpusDir.toString());
+			throw new IOException("Corpus directory does not exist: " + corpusDir.toString());
 		}
 
-		CorpusModel corModel;
-		Gson gson = configBuilder();
-		try {
-			mgr.getTool().toolInfo(CorpusData.class, "Loading " + path.toString());
-
-			InputStream is = new GZIPInputStream(Files.newInputStream(path));
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-			corModel = gson.fromJson(reader, CorpusModel.class);
-			corModel.setMgr(mgr);
-			corModel.setCorpusDir(corpusDir);
-		} catch (IOException | JsonSyntaxException e) {
-			mgr.getTool().toolInfo(CorpusData.class,
-					"Failed loading corpus model file " + path.toString() + ": " + e.getMessage());
-			throw e;
-		}
+		Gson gson = archiveBuilder();
+		CorpusModel corModel = loadCorModel(mgr, gson, corpusDir);
+		corModel.setConsistent(false);
 
 		List<Path> paths = getDataFiles(mgr.getTool(), corpusDir);
-		for (Path dPath : paths) {
-			try {
-				mgr.getTool().toolInfo(CorpusData.class, "Loading " + dPath.toString());
+		if (paths.isEmpty()) return corModel;
 
-				InputStream is = new GZIPInputStream(Files.newInputStream(dPath));
+		for (Path path : paths) {
+			try {
+				InputStream is = new GZIPInputStream(Files.newInputStream(path));
 				BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 				FeatureSet featureSet = gson.fromJson(reader, FeatureSet.class);
 				if (pathnames.contains(featureSet.getPathname())) {
 					corModel.merge(featureSet);
 				}
 			} catch (IOException | JsonSyntaxException e) {
-				mgr.getTool().toolInfo(CorpusData.class,
-						"Failed loading corpus data file " + path.toString() + ": " + e.getMessage());
+				tool.toolInfo(CorpusData.class, "Failed loading " + path.toString() + ": " + e.getMessage());
 				throw e;
 			}
 		}
 		corModel.setConsistent(true);
 		return corModel;
+	}
+
+	public static CorpusModel loadCorModel(CoreMgr mgr, Gson gson, Path corpusDir) throws Exception {
+		Tool tool = mgr.getTool();
+
+		Path path = corpusDir.resolve(ConfigMgr.MODEL + ConfigMgr.DOT + ConfigMgr.EXT);
+		if (!Files.isRegularFile(path)) return null;
+
+		try {
+			InputStream is = new GZIPInputStream(Files.newInputStream(path));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+			CorpusModel corModel = gson.fromJson(reader, CorpusModel.class);
+			corModel.setMgr(mgr);
+			corModel.setCorpusDir(corpusDir);
+			return corModel;
+		} catch (Exception e) {
+			tool.toolInfo(CorpusData.class, "Failed loading model base " + path.toString() + ": " + e.getMessage());
+			throw e;
+		}
 	}
 
 	/** Remove all of the data files that represent the corpus. */
@@ -101,7 +128,7 @@ public class CorpusData {
 	}
 
 	/* Returns a list of the corpus data file pathnames. */
-	private static List<Path> getDataFiles(Tool tool, Path corpusDir) {
+	public static List<Path> getDataFiles(Tool tool, Path corpusDir) {
 		try {
 			return Files.walk(corpusDir, 1) //
 					.filter(Files::isRegularFile) //
@@ -114,7 +141,7 @@ public class CorpusData {
 		return Collections.emptyList();
 	}
 
-	private static Gson configBuilder() {
+	private static Gson archiveBuilder() {
 		GsonBuilder builder = new GsonBuilder();
 		builder.enableComplexMapKeySerialization() //
 				.disableHtmlEscaping() //
@@ -130,7 +157,7 @@ public class CorpusData {
 	}
 
 	/** Configure writer for 2-space indents */
-	private static JsonWriter configWriter(OutputStream out) throws IOException {
+	private static JsonWriter archiveWriter(OutputStream out) throws IOException {
 		JsonWriter writer = new JsonWriter(new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
 		writer.setIndent("  ");
 		return writer;
@@ -159,10 +186,10 @@ public class CorpusData {
 	 */
 	public static void save(Path corpusDir, CorpusModel model, boolean inclDocs) throws Exception {
 		Tool tool = model.getMgr().getTool();
-		Gson gson = configBuilder();
+		Gson gson = archiveBuilder();
 
 		Path path = corpusDir.resolve(ConfigMgr.MODEL + ConfigMgr.DOT + ConfigMgr.EXT);
-		JsonWriter writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
+		JsonWriter writer = archiveWriter(new GZIPOutputStream(Files.newOutputStream(path)));
 
 		try {
 			gson.toJson(model, CorpusModel.class, writer);
@@ -182,7 +209,7 @@ public class CorpusData {
 
 				path = corpusDir.resolve(String.format("%s%03d%s", ConfigMgr.DATA, idx, ConfigMgr.DOT + ConfigMgr.EXT));
 				try {
-					writer = configWriter(new GZIPOutputStream(Files.newOutputStream(path)));
+					writer = archiveWriter(new GZIPOutputStream(Files.newOutputStream(path)));
 				} catch (IOException e) {
 					tool.toolInfo(CorpusData.class,
 							"Failed accessing corpus data file " + path.toString() + ": " + e.getMessage(), e);

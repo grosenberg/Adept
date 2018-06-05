@@ -74,8 +74,8 @@ public class Utils {
 
 	public static long getLastModified(Path path) {
 		try {
-			FileTime time = Files.getLastModifiedTime(path);
-			return Date.from(time.toInstant()).getTime();
+			FileTime mod = Files.getLastModifiedTime(path);
+			return Date.from(mod.toInstant()).getTime();
 		} catch (IOException e) {
 			return 0;
 		}

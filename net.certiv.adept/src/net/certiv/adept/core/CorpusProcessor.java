@@ -30,12 +30,13 @@ public class CorpusProcessor extends BaseProcessor {
 	public CorpusProcessor(CoreMgr mgr, Settings settings, List<String> pathnames) {
 		super(mgr, settings);
 
-		if (pathnames == null || pathnames.isEmpty()) {
-			this.pathnames = CorpusDocs.readPathnames(settings.corpusDir, settings.corpusExt);
-			this.forceBuild = false;
-		} else {
+		if (pathnames != null && !pathnames.isEmpty()) {
 			this.pathnames = pathnames;
 			this.forceBuild = true;
+
+		} else {
+			this.pathnames = CorpusDocs.readPathnames(settings.corpusDir, settings.corpusExt);
+			this.forceBuild = !CorpusData.validModelStore(mgr, settings.corpusDir);
 		}
 	}
 

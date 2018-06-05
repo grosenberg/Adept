@@ -98,8 +98,8 @@ ID
 	;
 
 LITERAL
-	:	SglQuoteLiteral
-	|	DblQuoteLiteral
+	:	SQLiteral
+	|	DQLiteral
 	;
 
 // ----------
@@ -128,7 +128,7 @@ mode Options;
 	OPT_RBRACE	: RBrace	-> popMode		;
 
 	OPT_ID		: NameStartChar NameChar*			;
-	OPT_LITERAL	: DblQuoteLiteral | SglQuoteLiteral	;
+	OPT_LITERAL	: DQLiteral | SQLiteral	;
 
 	OPT_DOT		: Dot		;
 	OPT_ASSIGN	: Assign	;
@@ -157,8 +157,8 @@ mode ActionBlock;
 	ONENTRY			: ( Hws | Vws )* 'onEntry:' ;
 	ONEXIT			: ( Hws | Vws )* 'onExit:'  ;
 
-	ABLOCK_STRING	: DblQuoteLiteral 	->	type(TEXT)		;
-	ABLOCK_CHAR		: SglQuoteLiteral	->	type(TEXT)		;
+	ABLOCK_STRING	: DQLiteral 	->	type(TEXT)		;
+	ABLOCK_CHAR		: SQLiteral	->	type(TEXT)		;
 
 	REFERENCE		: Dollar NameChar+ ( Dot NameChar+ )?	;
 
@@ -216,15 +216,21 @@ NameStartChar
 	|   '\u3001'..'\uD7FF'
 	|   '\uF900'..'\uFDCF'
 	|   '\uFDF0'..'\uFFFD'
-	; 	// ignores | ['\u10000-'\uEFFFF] ;
+	;
 
 
-fragment SglQuoteLiteral	:	'\'' ( EscSeq | ~['\\] )* '\''	;
-fragment DblQuoteLiteral	:	'"'  ( EscSeq | ~["\\] )* '"'	;
+fragment SQLiteral	:	'\'' ( EscSeq | ~['\\] )* '\''	;
+fragment DQLiteral	:	'"'  ( EscSeq | ~["\\] )* '"'	;
+
+fragment EscSeq
+	: '\\'
+	( 'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)?
+	| .
+	)
+	;
 
 fragment Int		: [0-9]+		;
 fragment HexDigit	: [0-9a-fA-F]	;
 
-fragment EscSeq		:	'\\' ( EscUnicode | . )		;
-fragment EscUnicode :   'u' (HexDigit (HexDigit (HexDigit HexDigit?)?)?)? 	;
+
 

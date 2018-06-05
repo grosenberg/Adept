@@ -85,5 +85,4 @@ public class CorpusDocs {
 			Log.error(ConfigMgr.class, "Failed to write corpus file" + path.toString() + ": " + e.getMessage());
 		}
 	}
-
 }

@@ -32,8 +32,6 @@ import net.certiv.adept.util.Utils;
 
 public class CorpusModel {
 
-	private static final long TIME_OUT = 500000;
-
 	private static final String DocMsg = "Merging  %3d %5d ------------------- %s";
 	private static final String UnqMsg = "  Unique %3d %5d %7.2f%% %9.4f%%";
 	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%";
@@ -90,7 +88,7 @@ public class CorpusModel {
 		List<String> docnames = new ArrayList<>();
 		for (Document doc : corpusDocs) {
 			String docname = doc.getPathname();
-			if (Utils.getLastModified(Paths.get(docname)) > lastModified + TIME_OUT) {
+			if (Utils.getLastModified(Paths.get(docname)) > lastModified) {
 				mgr.getTool().toolInfo(this, "Model invalid: later modified document " + docname);
 				return false;
 			}
@@ -104,6 +102,19 @@ public class CorpusModel {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Determines whether the corpus model document set, as stored, has been modified relative to the
+	 * processed corpus.
+	 */
+	public boolean modified() {
+		for (String pathname : pathnames.values()) {
+			Path path = Paths.get(pathname);
+			if (!path.toFile().isFile()) return true;
+			if (Utils.getLastModified(path) > lastModified) return true;
+		}
+		return false;
 	}
 
 	public void setCorpusDir(Path corpusDir) {
@@ -228,6 +239,7 @@ public class CorpusModel {
 			public void run() {
 				try {
 					CorpusData.save(corpusDir, CorpusModel.this, true);
+					lastModified = Utils.getLastModified(corpusDir);
 				} catch (Exception e) {
 					consistent = false;
 					mgr.getTool().toolError(this, ErrorDesc.MODEL_SAVE_FAILURE, e, e.getMessage());
@@ -235,8 +247,6 @@ public class CorpusModel {
 			};
 		});
 		t.start();
-
-		lastModified = Utils.getLastModified(corpusDir);
 	}
 
 	public HashMultilist<Integer, Feature> getDocFeatures() {
