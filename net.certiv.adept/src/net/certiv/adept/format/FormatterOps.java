@@ -14,6 +14,8 @@ import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
+import net.certiv.adept.format.plan.Group;
+import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.model.DocModel;
@@ -24,6 +26,8 @@ import net.certiv.adept.util.Strings;
 
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
 public class FormatterOps {
+
+	private static final String ErrVisCol = "Err: viscol %s should have been %s for %s";
 
 	Tool tool;
 	Document doc;
@@ -88,10 +92,37 @@ public class FormatterOps {
 
 	// -----------------------------------------------------------------------------
 
+	/** Find and add a meta group for each set of linear groups. */
+	protected void collectLinears() {
+		Group linears = new Group();
+		for (Group group : data.groupIndex) {
+			for (Scheme scheme : group.getSchemes()) {
+				if (group.linear(scheme)) {
+					TreeMultilist<Integer, AdeptToken> members = group.get(scheme);
+					Integer key = members.firstKey();
+					linears.addMembers(Scheme.LINEAR, key, members.get(key));
+				}
+			}
+		}
+
+		Group group = new Group();
+		TreeMultilist<Integer, AdeptToken> members = linears.get(Scheme.LINEAR);
+		for (int lnum : members.keySet()) {
+			if (group.isEmpty() || group.contiguous(Scheme.LINEAR, lnum)) {
+				group.addMembers(Scheme.LINEAR, lnum, members.get(lnum));
+			} else {
+				data.groupIndex.add(group);
+				group = new Group();
+				group.addMembers(Scheme.LINEAR, lnum, members.get(lnum));
+			}
+		}
+		if (!group.isEmpty()) data.groupIndex.add(group);
+	}
+
 	/**
 	 * Rebuilds the line indexes to reflect edits between real tokens. Appends each real token to the
-	 * modLineTokenIndex. Creates new lines as appropriate. Updates the {@code visCol} field of the
-	 * given token to refect any formatting edits.
+	 * lineTokenIndex. Creates new lines as appropriate. Updates the {@code visCol} field of the given
+	 * token to refect any formatting edits.
 	 */
 	protected void buildLinesIndexes() {
 		lineTokensIndex.clear();
@@ -152,23 +183,51 @@ public class FormatterOps {
 	 * @param token
 	 * @param toVisCol
 	 */
-	protected void prepEditAndShiftLine(int lineNum, AdeptToken token, int toVisCol) {
-		if (token.visCol() == toVisCol) return;
+	protected void prepEditAndShiftLine(int lnum, AdeptToken token, int toVisCol) {
+		int from = calcVisCol(token);
+		if (token.visCol() != from) {
+			tool.toolInfo(this, String.format(ErrVisCol, token.visCol(), from, token.toString()));
+			token.setVisCol(from);
+		}
 
-		List<AdeptToken> fullLine = lineTokensIndex.get(lineNum);
+		if (from == toVisCol) return;
+
+		List<AdeptToken> fullLine = lineTokensIndex.get(lnum);
 		int idx = fullLine.indexOf(token);
 		updateOrCreateEditLeft(token, idx, toVisCol);
+		updateLineVisCols(token);
+	}
 
-		ListIterator<AdeptToken> remainder = fullLine.listIterator(idx + 1);
-		AdeptToken prior = token;
-		while (remainder.hasNext()) {
-			AdeptToken next = remainder.next();
-			int from = prior.visCol() + prior.getText().length();
-			String ws = findWsLeft(token);
-			int width = Strings.measureVisualWidth(ws, settings.tabWidth, from);
-			token.setVisCol(from + width);
-			prior = next;
+	// -----------------------------------------------------------------------------
+
+	protected void updateLineVisCols(AdeptToken token) {
+		int col = calcVisCol(token) + token.getText().length();
+
+		int lnum = tokenLineIndex.get(token.getTokenIndex());
+		List<AdeptToken> fullLine = lineTokensIndex.get(lnum);
+		int idx = fullLine.indexOf(token);
+		ListIterator<AdeptToken> reals = fullLine.listIterator(idx + 1);
+		while (reals.hasNext()) {
+			AdeptToken real = reals.next();
+			String lead = findWsLeft(real);
+			col += Strings.measureVisualWidth(lead, settings.tabWidth, col);
+			real.setVisCol(col);
+			col += real.getText().length();
 		}
+	}
+
+	protected int calcVisCol(AdeptToken token) {
+		int lnum = tokenLineIndex.get(token.getTokenIndex());
+		List<AdeptToken> reals = lineTokensIndex.get(lnum);
+		int idx = reals.indexOf(token);
+
+		StringBuilder sb = new StringBuilder();
+		for (AdeptToken real : reals.subList(0, idx)) {
+			sb.append(findWsLeft(real));
+			sb.append(real.getText());
+		}
+		sb.append(findWsLeft(token));
+		return Strings.measureVisualWidth(sb, settings.tabWidth);
 	}
 
 	// -----------------------------------------------------------------------------

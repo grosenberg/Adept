@@ -170,12 +170,28 @@ public class ParseRecord {
 	}
 
 	/** Returns a count of the real tokens in the given token index range, inclusive. */
-	public int getRealTokenCount(int begIndex, int endIndex) {
+	public int getRealTokenCount(int begIndex, int endIndex, boolean excludeComments) {
 		int cnt = 0;
 		for (AdeptToken token : getTokenInterval(begIndex, endIndex)) {
-			if (!token.isComment()) cnt++;
+			if (token.isWhitespace()) continue;
+			if (excludeComments && token.isComment()) continue;
+			cnt++;
 		}
 		return cnt;
+	}
+
+	/**
+	 * Returns a list of the real tokens in the given token index range, inclusive. Will not return
+	 * {@code null}.
+	 */
+	public List<AdeptToken> getRealTokenInterval(int begIndex, int endIndex, boolean excludeComments) {
+		List<AdeptToken> reals = new ArrayList<>();
+		for (AdeptToken token : getTokenInterval(begIndex, endIndex)) {
+			if (token.isWhitespace()) continue;
+			if (excludeComments && token.isComment()) continue;
+			reals.add(token);
+		}
+		return reals;
 	}
 
 	/**

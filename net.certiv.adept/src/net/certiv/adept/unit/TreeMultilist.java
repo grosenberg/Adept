@@ -139,6 +139,7 @@ public class TreeMultilist<K, V> {
 		return map.lastKey();
 	}
 
+	@Deprecated
 	public int keySize() {
 		return map.size();
 	}

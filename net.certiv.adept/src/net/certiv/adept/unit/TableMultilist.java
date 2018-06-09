@@ -157,7 +157,7 @@ public class TableMultilist<K, N, V> {
 
 	public int size(K key) {
 		TreeMultilist<N, V> keyMap = map.get(key);
-		return keyMap != null ? keyMap.keySize() : 0;
+		return keyMap != null ? keyMap.size() : 0;
 	}
 
 	public TreeMultilist<N, V> remove(K key) {

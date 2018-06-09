@@ -14,6 +14,10 @@ public class Maths {
 	/** The small deviation allowed in double comparisons */
 	public static double SMALL = 1e-6;
 
+	public static int delta(int a, int b) {
+		return Math.abs(a - b);
+	}
+
 	/**
 	 * Computes the sum of the elements of an array of integers.
 	 *

@@ -17,7 +17,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.ParseRecord;
-import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
 
 public class Aligner {
@@ -38,7 +37,7 @@ public class Aligner {
 	public void comment(int line, AdeptToken token) {
 		if (lastCmtGroup != null) {
 			if (lastCmtGroup.contiguous(Scheme.COMMENT, line)) {
-				lastCmtGroup.addGroupMembers(Scheme.COMMENT, line, token);
+				lastCmtGroup.addMembers(Scheme.COMMENT, line, token);
 				return;
 			}
 		}
@@ -51,7 +50,7 @@ public class Aligner {
 
 	public void groupBeg(ParserRuleContext ctx) {
 		Group group = groups.get(ctx);
-		if (group != null) throw new IllegalStateException("Invalid inLine group parentage.");
+		if (group != null) throw new IllegalStateException("Invalid group parentage.");
 
 		groups.put(ctx, new Group());
 	}
@@ -82,7 +81,7 @@ public class Aligner {
 
 		Group group = groups.get(ctx);
 		for (AdeptToken token : symbols(nodes)) {
-			group.addGroupMembers(scheme, token.getLine(), token);
+			group.addMembers(scheme, token.getLine(), token);
 		}
 
 		if (scheme != Scheme.GROUP) groupEnd(ctx);
@@ -101,15 +100,13 @@ public class Aligner {
 		if (group == null) throw new IllegalStateException("Non-existant inLine group.");
 
 		data.groupIndex.add(group);
-		TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
-
-		for (Scheme align : members.keySet()) {
-			TreeMultilist<Integer, AdeptToken> lines = members.get(align);
+		for (Scheme scheme : group.getSchemes()) {
+			TreeMultilist<Integer, AdeptToken> lines = group.get(scheme);
 			Count gap = findGap(lines);
 			Count cnt = Count.characterize(lines.size());
 			for (AdeptToken token : lines.valuesAll()) {
 				Place[] place = findPlace(lines, token);
-				token.refToken().setAlign(align, gap, place, cnt);
+				token.refToken().setAlign(scheme, gap, place, cnt);
 			}
 		}
 		groups.remove(ctx);
@@ -130,7 +127,7 @@ public class Aligner {
 		return tokens;
 	}
 
-	// characterize gap -- number of tokens -- between the members of a group
+	// characterize gap -- number of real tokens excluding comments -- between the members of a group
 	private Count findGap(TreeMultilist<Integer, AdeptToken> lines) {
 		List<AdeptToken> members = lines.valuesAll();
 		int gapCnt = members.size() - 1;
@@ -140,7 +137,7 @@ public class Aligner {
 		for (int idx = 1; idx <= gapCnt; idx++) {
 			int beg = members.get(idx - 1).getTokenIndex() + 1;
 			int end = members.get(idx).getTokenIndex() - 1;
-			gaps[idx - 1] = data.getRealTokenCount(beg, end);
+			gaps[idx - 1] = data.getRealTokenCount(beg, end, true);
 		}
 
 		return Count.characterize(gaps);

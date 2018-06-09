@@ -10,8 +10,10 @@ import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltListContext;
+import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AntlrContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AssignStmtContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.ElementsContext;
+import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.FunctionContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4ParserBaseListener;
 
@@ -22,6 +24,9 @@ public class AlignVisitor extends Antlr4ParserBaseListener {
 	public AlignVisitor(Aligner aligner) {
 		this.aligner = aligner;
 	}
+
+	@Override
+	public void enterAntlr(AntlrContext ctx) {}
 
 	// ---- Symbols ----
 
@@ -57,6 +62,12 @@ public class AlignVisitor extends Antlr4ParserBaseListener {
 		if (ctx.OR() != null) aligner.align(Scheme.GROUP, ctx.getParent(), ctx.OR());
 	}
 
+	// align list - include in parent group
+	@Override
+	public void enterFunction(FunctionContext ctx) {
+		aligner.align(Scheme.GROUP, ctx.getParent(), ctx.RARROW());
+	}
+
 	// ----
 
 	@Override
@@ -68,4 +79,7 @@ public class AlignVisitor extends Antlr4ParserBaseListener {
 	public void exitRuleBlock(RuleBlockContext ctx) {
 		aligner.groupEnd(ctx);
 	}
+
+	@Override
+	public void exitAntlr(AntlrContext ctx) {}
 }
