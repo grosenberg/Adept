@@ -9,7 +9,7 @@
 
 	<groupId>net.certiv</groupId>
 	<artifactId>adept.parent</artifactId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.3.0</version>
 
 	<name>net.certiv.adept :: parent</name>
 	<description>net.certiv.adept parent</description>

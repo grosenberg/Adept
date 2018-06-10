@@ -4,7 +4,7 @@ A universal code formatter implemented using machine learning of aesthetic prefe
 Includes a dedicated comment formatter that supports C/Java style block and line 
 comment syntax, including formal JavaDoc. 
 
-The Adept tool is designed for both stand-alone (CLI) and embedded use.
+The Adept tool is designed for both command line and embedded use.
 
 ## Current built-in language support
 
@@ -16,11 +16,33 @@ The Adept tool is designed for both stand-alone (CLI) and embedded use.
 ## Formatting operations
 
 - [x] Code formatter
-- [x] Comment formatter
+- [x] Comment formatter 
 - [x] Skip header comment formatting option
 - [x] Align code fields
 - [x] Align comments
 - [ ] Wrap long lines
+
+## Installation
+
+[![](https://jitpack.io/v/net.certiv/adept.svg)](https://jitpack.io/#net.certiv/adept)
+
+### For Maven
+
+```xml
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+```
+```xml
+    <dependency>
+        <groupId>net.certiv</groupId>
+        <artifactId>adept</artifactId>
+        <version>0.3.0</version>
+    </dependency>
+```
 
 ## License
 
