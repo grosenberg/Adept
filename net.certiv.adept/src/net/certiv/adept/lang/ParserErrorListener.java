@@ -21,7 +21,7 @@ import net.certiv.adept.util.Strings;
 
 public class ParserErrorListener extends BaseErrorListener {
 
-	private boolean debug = true;
+	private boolean debug = false;
 	private int lastErrorIdx = -1;
 	private IParseErrorReporter reporter;
 

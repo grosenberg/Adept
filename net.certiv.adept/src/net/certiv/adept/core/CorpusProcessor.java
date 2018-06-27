@@ -44,8 +44,16 @@ public class CorpusProcessor extends BaseProcessor {
 		Time.clear();
 		Calc.clear();
 		Time.start(Facet.LOAD);
-		if (settings.rebuild || forceBuild) {
+
+		if (settings.check) {
+			corModel = new CorpusModel();
+			corModel.setMgr(mgr);
+			corModel.setCorpusDir(settings.corpusDir);
+			corModel.setConsistent(true);
+
+		} else if (settings.rebuild || forceBuild) {
 			buildCorpusModel();
+
 		} else {
 			try {
 				corModel = CorpusData.loadModel(mgr, settings.corpusDir, pathnames);

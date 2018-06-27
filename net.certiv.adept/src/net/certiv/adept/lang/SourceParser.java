@@ -8,10 +8,12 @@ import org.antlr.v4.runtime.CommonTokenFactory;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.tool.ErrorDesc;
+import net.certiv.adept.util.Strings;
 
 public abstract class SourceParser implements ISourceParser {
 
@@ -54,7 +56,15 @@ public abstract class SourceParser implements ISourceParser {
 	public void reportRecognitionError(Parser parser, Token offendingToken, int errorIdx, int line,
 			int charPositionInLine, String msg, RecognitionException e) {
 		builder.errCount++;
-		tool.syntaxError(this, ErrorDesc.SYNTAX_ERROR, parser.getSourceName(), offendingToken, e, msg);
+
+		if (e != null) {
+			IntervalSet expected = e.getExpectedTokens();
+			if (expected != null) {
+				String txt = "Expected: " + expected.toString(parser.getVocabulary());
+				msg += Strings.EOL + Strings.wrap(txt, 100, "\t", Strings.EOL, " ");
+			}
+		}
+		tool.syntaxError(this, ErrorDesc.SYNTAX_ERROR, parser.getSourceName(), offendingToken, null, msg);
 	}
 
 	@Override
@@ -62,10 +72,10 @@ public abstract class SourceParser implements ISourceParser {
 			String msg) {
 
 		String rules = String.join("->", ruleStack);
-		String tokes = String.join("=>", tokenStack);
+		String tokens = String.join("=>", Strings.encodeWS(tokenStack));
 
 		tool.toolInfo(this, String.format("%s: %s\n\tRules  : %s\n\tTokens : %s\n", msg,
-				((CommonToken) offendingToken).toString(parser), rules, tokes));
+				((CommonToken) offendingToken).toString(parser), rules, tokens));
 	}
 
 	@Override

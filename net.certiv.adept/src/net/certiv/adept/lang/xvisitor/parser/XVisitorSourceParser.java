@@ -22,10 +22,10 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import net.certiv.adept.Tool;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
-import net.certiv.adept.lang.SourceParser;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParserErrorListener;
+import net.certiv.adept.lang.SourceParser;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorLexer;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser;
 import net.certiv.adept.model.Document;
@@ -35,6 +35,7 @@ public class XVisitorSourceParser extends SourceParser {
 
 	@Override
 	public void process(Tool tool, Builder builder, Document doc) throws RecognitionException, Exception {
+		this.tool = tool;
 		this.builder = builder;
 
 		AdeptTokenFactory factory = new AdeptTokenFactory();

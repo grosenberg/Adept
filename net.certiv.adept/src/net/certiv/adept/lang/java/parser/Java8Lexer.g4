@@ -2,6 +2,7 @@
  * [The "BSD license"]
  *  Copyright (c) 2014 Terence Parr
  *  Copyright (c) 2014 Sam Harwell
+ *  Copyright (c) 2018 Gerald Rosenberg
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,10 +29,6 @@
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * A Java 8 grammar for ANTLR 4 derived from the Java Language Specification
- * chapter 19. Derived from the CodeBuff reference Java grammar.
- */
 lexer grammar Java8Lexer ;
 
 @header {
@@ -95,212 +92,18 @@ WHILE:              'while';
 // §3.10.1 Integer Literals
 
 IntegerLiteral
-	:	DecimalIntegerLiteral
-	|	HexIntegerLiteral
-	|	OctalIntegerLiteral
-	|	BinaryIntegerLiteral
-	;
-
-fragment
-DecimalIntegerLiteral
-	:	DecimalNumeral IntegerTypeSuffix?
-	;
-
-fragment
-HexIntegerLiteral
-	:	HexNumeral IntegerTypeSuffix?
-	;
-
-fragment
-OctalIntegerLiteral
-	:	OctalNumeral IntegerTypeSuffix?
-	;
-
-fragment
-BinaryIntegerLiteral
-	:	BinaryNumeral IntegerTypeSuffix?
-	;
-
-fragment
-IntegerTypeSuffix
-	:	[lL]
-	;
-
-fragment
-DecimalNumeral
-	:	'0'
-	|	NonZeroDigit (Digits? | Underscores Digits)
-	;
-
-fragment
-Digits
-	:	Digit (DigitsAndUnderscores? Digit)?
-	;
-
-fragment
-Digit
-	:	'0'
-	|	NonZeroDigit
-	;
-
-fragment
-NonZeroDigit
-	:	[1-9]
-	;
-
-fragment
-DigitsAndUnderscores
-	:	DigitOrUnderscore+
-	;
-
-fragment
-DigitOrUnderscore
-	:	Digit
-	|	'_'
-	;
-
-fragment
-Underscores
-	:	'_'+
-	;
-
-fragment
-HexNumeral
-	:	'0' [xX] HexDigits
-	;
-
-fragment
-HexDigits
-	:	HexDigit (HexDigitsAndUnderscores? HexDigit)?
-	;
-
-fragment
-HexDigit
-	:	[0-9a-fA-F]
-	;
-
-fragment
-HexDigitsAndUnderscores
-	:	HexDigitOrUnderscore+
-	;
-
-fragment
-HexDigitOrUnderscore
-	:	HexDigit
-	|	'_'
-	;
-
-fragment
-OctalNumeral
-	:	'0' Underscores? OctalDigits
-	;
-
-fragment
-OctalDigits
-	:	OctalDigit (OctalDigitsAndUnderscores? OctalDigit)?
-	;
-
-fragment
-OctalDigit
-	:	[0-7]
-	;
-
-fragment
-OctalDigitsAndUnderscores
-	:	OctalDigitOrUnderscore+
-	;
-
-fragment
-OctalDigitOrUnderscore
-	:	OctalDigit
-	|	'_'
-	;
-
-fragment
-BinaryNumeral
-	:	'0' [bB] BinaryDigits
-	;
-
-fragment
-BinaryDigits
-	:	BinaryDigit (BinaryDigitsAndUnderscores? BinaryDigit)?
-	;
-
-fragment
-BinaryDigit
-	:	[01]
-	;
-
-fragment
-BinaryDigitsAndUnderscores
-	:	BinaryDigitOrUnderscore+
-	;
-
-fragment
-BinaryDigitOrUnderscore
-	:	BinaryDigit
-	|	'_'
+	:	('0' | [1-9] ( Digits? | '_'+ Digits )) [lL]?				// decimal
+	|	'0' [xX] [0-9a-fA-F] ([0-9a-fA-F_]* [0-9a-fA-F])? [lL]?		// hex
+	|	'0' '_'* [0-7] ([0-7_]* [0-7])? [lL]?						// octal
+	|	'0' [bB] [01] ([01_]* [01])? [lL]?							// binary
 	;
 
 // §3.10.2 Floating-Point Literals
 
 FloatingPointLiteral
-	:	DecimalFloatingPointLiteral
-	|	HexadecimalFloatingPointLiteral
-	;
-
-fragment
-DecimalFloatingPointLiteral
-	:	Digits '.' Digits? ExponentPart? FloatTypeSuffix?
-	|	'.' Digits ExponentPart? FloatTypeSuffix?
-	|	Digits ExponentPart FloatTypeSuffix?
-	|	Digits FloatTypeSuffix
-	;
-
-fragment
-ExponentPart
-	:	ExponentIndicator SignedInteger
-	;
-
-fragment
-ExponentIndicator
-	:	[eE]
-	;
-
-fragment
-SignedInteger
-	:	Sign? Digits
-	;
-
-fragment
-Sign
-	:	[+-]
-	;
-
-fragment
-FloatTypeSuffix
-	:	[fFdD]
-	;
-
-fragment
-HexadecimalFloatingPointLiteral
-	:	HexSignificand BinaryExponent FloatTypeSuffix?
-	;
-
-fragment
-HexSignificand
-	:	HexNumeral '.'?
-	|	'0' [xX] HexDigits? '.' HexDigits
-	;
-
-fragment
-BinaryExponent
-	:	BinaryExponentIndicator SignedInteger
-	;
-
-fragment
-BinaryExponentIndicator
-	:	[pP]
+	: (Digits '.' Digits? | '.' Digits) ExponentPart? [fFdD]?
+    | Digits (ExponentPart [fFdD]? | [fFdD])
+	| '0' [xX] (HexDigits '.'? | HexDigits? '.' HexDigits) [pP] [+-]? Digits [fFdD]?
 	;
 
 // §3.10.3 Boolean Literals
@@ -313,58 +116,46 @@ BooleanLiteral
 // §3.10.4 Character Literals
 
 CharacterLiteral
-	:	'\'' SingleCharacter '\''
-	|	'\'' EscapeSequence '\''
-	;
-
-fragment
-SingleCharacter
-	:	~['\\]
+	:	'\'' (~['\\\r\n] | EscSeq) '\''
 	;
 
 // §3.10.5 String Literals
 
 StringLiteral
-	:	'"' StringCharacters? '"'
-	;
-
-fragment
-StringCharacters
-	:	StringCharacter+
-	;
-
-fragment
-StringCharacter
-	:	~["\\]
-	|	EscapeSequence
+	:	'"' (~["\\\r\n] | EscSeq)* '"'
 	;
 
 // §3.10.6 Escape Sequences for Character and String Literals
 
-fragment
-EscapeSequence
-	:	'\\' [btnfr"'\\]
-	|	OctalEscape
-    |   UnicodeEscape // This is not in the spec but prevents having to preprocess the input
-	;
-
-fragment
-OctalEscape
-	:	'\\' OctalDigit
-	|	'\\' OctalDigit OctalDigit
-	|	'\\' ZeroToThree OctalDigit OctalDigit
-	;
-
-fragment
-ZeroToThree
-	:	[0-3]
-	;
-
-// This is not in the spec but prevents having to preprocess the input
-fragment
-UnicodeEscape
-    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+fragment 
+EscSeq
+    : '\\' [btnfr"'\\]
+    | '\\' ([0-3]? [0-7])? [0-7]
+    | '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
     ;
+
+// Fragment rules
+
+fragment 
+Digits
+    : [0-9] ([0-9_]* [0-9])?
+    ;
+
+fragment 
+ExponentPart
+    : [eE] [+-]? Digits
+    ;
+
+fragment 
+HexDigit
+    : [0-9a-fA-F]
+    ;
+
+fragment 
+HexDigits
+    : HexDigit ((HexDigit | '_')* HexDigit)?
+    ;
+
 
 // §3.10.7 The Null Literal
 
@@ -388,78 +179,69 @@ DOT    : '.';
 
 // §3.12 Operators
 
-ASSIGN : '=';
-GT : '>';
-LT : '<';
-BANG : '!';
-TILDE : '~';
-QUESTION : '?';
-COLON : ':';
-EQUAL : '==';
-LE : '<=';
-GE : '>=';
-NOTEQUAL : '!=';
-AND : '&&';
-OR : '||';
-INC : '++';
-DEC : '--';
-ADD : '+';
-SUB : '-';
-MUL : '*';
-DIV : '/';
-BITAND : '&';
-BITOR : '|';
-CARET : '^';
-MOD : '%';
-ARROW : '->';
-COLONCOLON : '::';
+ASSIGN		: '=';
+GT			: '>';
+LT			: '<';
+BANG		: '!';
+TILDE		: '~';
+QMARK		: '?';
+COLON		: ':';
+DCOLON		: '::';
+EQUAL		: '==';
+LE			: '<=';
+GE			: '>=';
+NOTEQUAL	: '!=';
+AND			: '&&';
+OR			: '||';
+INC			: '++';
+DEC			: '--';
+ADD			: '+';
+SUB			: '-';
+STAR		: '*';
+DIV			: '/';
+BITAND		: '&';
+BITOR		: '|';
+CARET		: '^';
+MOD			: '%';
+ARROW		: '->';
 
-ADD_ASSIGN : '+=';
-SUB_ASSIGN : '-=';
-MUL_ASSIGN : '*=';
-DIV_ASSIGN : '/=';
-AND_ASSIGN : '&=';
-OR_ASSIGN : '|=';
-XOR_ASSIGN : '^=';
-MOD_ASSIGN : '%=';
-LSHIFT_ASSIGN : '<<=';
-RSHIFT_ASSIGN : '>>=';
-URSHIFT_ASSIGN : '>>>=';
+ADD_ASSIGN		: '+=';
+SUB_ASSIGN		: '-=';
+MUL_ASSIGN		: '*=';
+DIV_ASSIGN		: '/=';
+AND_ASSIGN		: '&=';
+OR_ASSIGN		: '|=';
+XOR_ASSIGN		: '^=';
+MOD_ASSIGN		: '%=';
+LSHIFT_ASSIGN	: '<<=';
+RSHIFT_ASSIGN	: '>>=';
+URSHIFT_ASSIGN	: '>>>=';
 
-// §3.8 Identifiers (must appear after all keywords in the grammar)
+// Additional symbols not defined in the lexical specification
+
+AT			: '@';
+ELLIPSIS	: '...';
+
+
+// §3.8 Identifiers
 
 Identifier
-	:	JavaLetter JavaLetterOrDigit*
+	:	Letter LetterOrDigit*
 	;
 
-fragment
-JavaLetter
-	:	[a-zA-Z$_] // these are the "java letters" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF]
-		{Character.isJavaIdentifierStart(_input.LA(-1))}?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF]
-		{Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
-	;
+fragment 
+Letter
+    : [a-zA-Z$_] 						// "java letters" below 0x7F
+    | ~[\u0000-\u007F\uD800-\uDBFF] 	// all non-surrogate characters above 0x7F 
+    | [\uD800-\uDBFF] [\uDC00-\uDFFF] 	// UTF-16 surrogates for U+10000 to U+10FFFF
+    ;
 
-fragment
-JavaLetterOrDigit
-	:	[a-zA-Z0-9$_] // these are the "java letters or digits" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF]
-		{Character.isJavaIdentifierPart(_input.LA(-1))}?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF]
-		{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
-	;
+fragment 
+LetterOrDigit
+    : Letter
+    | [0-9]
+    ;
 
-//
-// Additional symbols not defined in the lexical specification
-//
-
-AT : '@';
-ELLIPSIS : '...';
 
 //
 // Whitespace and comments
