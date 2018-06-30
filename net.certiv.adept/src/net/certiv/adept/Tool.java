@@ -532,7 +532,7 @@ public class Tool extends ToolBase {
 
 	@Override
 	public void version() {
-		toolInfo("Adept Version " + version);
+		toolInfo(this, "Adept Version " + version);
 	}
 
 	public void exit(int e) {

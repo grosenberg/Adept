@@ -6,6 +6,8 @@
  *******************************************************************************/
 package net.certiv.adept.util;
 
+import java.util.Collection;
+
 public class Maths {
 
 	/** The natural logarithm of 2. */
@@ -36,6 +38,14 @@ public class Maths {
 	public static double sum(double[] vals) {
 		double sum = 0;
 		for (double val : vals) {
+			sum += val;
+		}
+		return sum;
+	}
+
+	public static int sum(Collection<Integer> values) {
+		int sum = 0;
+		for (int val : values) {
 			sum += val;
 		}
 		return sum;
@@ -230,9 +240,9 @@ public class Maths {
 		if (vals == null) throw new IllegalArgumentException("Argument cannot be null");
 
 		double max = Double.MIN_VALUE;
-		for (int idx = 0; idx < vals.length; idx++) {
-			if (!Double.isNaN(vals[idx])) {
-				max = (max > vals[idx]) ? max : vals[idx];
+		for (double val : vals) {
+			if (!Double.isNaN(val)) {
+				max = (max > val) ? max : val;
 			}
 		}
 		return max;
@@ -248,9 +258,9 @@ public class Maths {
 		if (vals == null) throw new IllegalArgumentException("Argument cannot be null");
 
 		double min = Double.MAX_VALUE;
-		for (int idx = 0; idx < vals.length; idx++) {
-			if (!Double.isNaN(vals[idx])) {
-				min = (min > vals[idx]) ? vals[idx] : min;
+		for (double val : vals) {
+			if (!Double.isNaN(val)) {
+				min = (min > val) ? val : min;
 			}
 		}
 		return min;

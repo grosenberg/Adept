@@ -8,7 +8,9 @@ package net.certiv.adept.model;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
 
@@ -49,6 +51,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public int rank = 1;
 
 	// feature token - intrinsic
+	@Expose public Set<Integer> docIds;
 	@Expose public int type;
 	@Expose public int index;
 	@Expose public boolean isComment;
@@ -77,7 +80,14 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public Spacing rSpacing = Spacing.UNKNOWN;
 	@Expose public String rActual = "";
 
-	public RefToken(AdeptToken token) {
+	public RefToken() {
+		docIds = new HashSet<>();
+		contexts = new ArrayList<>();
+	}
+
+	public RefToken(int docId, AdeptToken token) {
+		this();
+		this.docIds.add(docId);
 		this.type = token.getType();
 		this.index = token.getTokenIndex();
 		this.isComment = token.isComment();
@@ -135,8 +145,9 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		contexts.add(new Context(lAssocs, rAssocs));
 	}
 
-	public void mergeContexts(List<Context> assocs) {
-		for (Context assoc : assocs) {
+	public void merge(RefToken ref) {
+		docIds.addAll(ref.docIds);
+		for (Context assoc : ref.contexts) {
 			Context existing = Context.find(contexts, assoc);
 			if (existing != null) {
 				existing.addRank(assoc.getRank());

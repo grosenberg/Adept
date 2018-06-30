@@ -53,7 +53,7 @@ packageDeclaration
 	;
 
 importDeclaration
-    : IMPORT STATIC? qualifiedName (DOT STAR)? SEMI
+    : IMPORT STATIC? qualifiedName ( DOT STAR )? SEMI
 	;
 
 typeDeclaration
@@ -91,11 +91,11 @@ classDeclaration
 	;
 
 typeParameters
-	: LT typeParameter (COMMA typeParameter)* GT
+	: LT typeParameter ( COMMA typeParameter )* GT
 	;
 
 classTypeList
-	:	annotation* classType (COMMA annotation* classType)*
+	:	annotation* classType ( COMMA annotation* classType )*
 	;
 
 classBody
@@ -133,11 +133,11 @@ fieldModifier
 	;
 
 variableDeclaratorList
-	:	variableDeclarator (COMMA variableDeclarator)*
+	:	variableDeclarator ( COMMA variableDeclarator )*
 	;
 
 variableDeclarator
-	:	Identifier dims? (ASSIGN variableInitializer)?
+	:	Identifier dims? ( ASSIGN variableInitializer )?
 	;
 
 variableInitializer
@@ -189,7 +189,7 @@ classType
 	;
 
 classOrInterfaceType
-	:	Identifier typeArguments? (DOT annotation* Identifier typeArguments?)*
+	:	Identifier typeArguments? ( DOT annotation* Identifier typeArguments?)*
 	;
 
 arrayType
@@ -199,7 +199,7 @@ arrayType
 	;
 
 dims
-	:	annotation* LBRACK RBRACK (annotation* LBRACK RBRACK)*
+	:	annotation* LBRACK RBRACK ( annotation* LBRACK RBRACK )*
 	;
 
 typeParameter
@@ -222,7 +222,7 @@ typeArguments
 	;
 
 typeArgumentList
-	:	typeArgument (COMMA typeArgument)*
+	:	typeArgument ( COMMA typeArgument )*
 	;
 
 typeArgument
@@ -271,21 +271,21 @@ formalParameterList
 	;
 
 formalParameters
-	:	formalParameter (COMMA formalParameter)*
-	|	receiverParameter (COMMA formalParameter)*
+	:	formalParameter ( COMMA formalParameter )*
+	|	receiverParameter ( COMMA formalParameter )*
 	;
 
 formalParameter
-	:	(FINAL | annotation)* baseType Identifier dims?
+	:	( FINAL | annotation )* baseType Identifier dims?
 	;
 
 lastFormalParameter
-	:	(FINAL | annotation)* baseType annotation* ELLIPSIS Identifier dims?
+	:	( FINAL | annotation )* baseType annotation* ELLIPSIS Identifier dims?
 	|	formalParameter
 	;
 
 receiverParameter
-	:	annotation* baseType (Identifier DOT)? THIS
+	:	annotation* baseType ( Identifier DOT )? THIS
 	;
 
 throws_
@@ -293,7 +293,7 @@ throws_
 	;
 
 exceptionTypeList
-	:	exceptionType (COMMA exceptionType)*
+	:	exceptionType ( COMMA exceptionType )*
 	;
 
 exceptionType
@@ -339,15 +339,15 @@ enumDeclaration
 	;
 
 enumBody
-	:	LBRACE enumConstantList? COMMA? (SEMI classBodyDeclaration*)? RBRACE
+	:	LBRACE enumConstantList? COMMA? ( SEMI classBodyDeclaration*)? RBRACE
 	;
 
 enumConstantList
-	:	enumConstant (COMMA enumConstant)*
+	:	enumConstant ( COMMA enumConstant )*
 	;
 
 enumConstant
-	:	annotation* Identifier (LPAREN argumentList? RPAREN)? classBody?
+	:	annotation* Identifier ( LPAREN argumentList? RPAREN )? classBody?
 	;
 
 // Productions from §9 (Interfaces)
@@ -411,7 +411,7 @@ annotationTypeMemberDeclaration
 	;
 
 annotationTypeElementDeclaration
-	:	(PUBLIC|ABSTRACT)* annotation* baseType Identifier LPAREN RPAREN dims? defaultValue? SEMI
+	:	( PUBLIC | ABSTRACT )* annotation* baseType Identifier LPAREN RPAREN dims? defaultValue? SEMI
 	;
 
 defaultValue
@@ -429,7 +429,7 @@ normalAnnotation
 	;
 
 elementValuePairList
-	:	elementValuePair (COMMA elementValuePair)*
+	:	elementValuePair ( COMMA elementValuePair )*
 	;
 
 elementValuePair
@@ -447,7 +447,7 @@ elementValueArrayInitializer
 	;
 
 elementValueList
-	:	elementValue (COMMA elementValue)*
+	:	elementValue ( COMMA elementValue )*
 	;
 
 markerAnnotation
@@ -467,7 +467,7 @@ arrayInitializer
 	;
 
 variableInitializerList
-	:	variableInitializer (COMMA variableInitializer)*
+	:	variableInitializer ( COMMA variableInitializer )*
 	;
 
 /*
@@ -551,7 +551,7 @@ forInit
 	;
 
 statementExpressionList
-	:	statementExpression (COMMA statementExpression)*
+	:	statementExpression ( COMMA statementExpression )*
 	;
 
 catches
@@ -563,15 +563,15 @@ catchFormalParameter
 	;
 
 catchType
-	:	classType (BITOR annotation* classType)*
+	:	classType ( BITOR annotation* classType )*
 	;
 
 resourceList
-	:	resource (SEMI resource)*
+	:	resource ( SEMI resource )*
 	;
 
 resource
-	:	(FINAL | annotation)* baseType Identifier dims? ASSIGN expression
+	:	( FINAL | annotation )* baseType Identifier dims? ASSIGN expression
 	;
 
 
@@ -581,23 +581,9 @@ primary
 	:	( primaryNoNewArray_lfno_primary | arrayCreationExpression ) primaryNoNewArray_lf_primary*
 	;
 
-primaryNoNewArray
-	:	literal
-	|	qualifiedName (LBRACK RBRACK)* DOT CLASS
-	|	VOID DOT CLASS
-	|	THIS
-	|	qualifiedName DOT THIS
-	|	LPAREN expression RPAREN
-	|	classInstanceCreationExpression
-	|	fieldAccess
-	|	arrayAccess
-	|	methodInvocation
-	|	methodReference
-	;
-
 primaryNoNewArray_lfno_arrayAccess
 	:	literal
-	|	qualifiedName (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
 	|	qualifiedName DOT THIS
@@ -625,8 +611,8 @@ primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary
 
 primaryNoNewArray_lfno_primary
 	:	literal
-	|	qualifiedName (LBRACK RBRACK)* DOT CLASS
-	|	primitiveType (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
+	|	primitiveType ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
 	|	qualifiedName DOT THIS
@@ -640,8 +626,8 @@ primaryNoNewArray_lfno_primary
 
 primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary
 	:	literal
-	|	qualifiedName (LBRACK RBRACK)* DOT CLASS
-	|	primitiveType (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
+	|	primitiveType ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
 	|	qualifiedName DOT THIS
@@ -688,7 +674,8 @@ classInstanceCreationExpression_lfno_primary
 	;
 
 instanceCreationExpression
-	:	NEW typeArguments? annotation* Identifier (DOT annotation* Identifier)* typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
+	:	NEW typeArguments? annotation* Identifier ( DOT annotation* Identifier )*
+			typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
 	;
 
 typeArgumentsOrDiamond
@@ -727,7 +714,7 @@ methodInvocation_lfno_primary
 	;
 
 argumentList
-	:	expression (COMMA expression)*
+	:	expression ( COMMA expression )*
 	;
 
 methodReference
@@ -759,10 +746,10 @@ expression
 	|	castExpression
 	|	qualifiedName
 	|	unaryExpression
-	|	expression op=(ADD|SUB|STAR|DIV|MOD) expression
-    | 	expression op=(LE|GE|LT|GT) expression
-    | 	expression (LT LT | GT GT GT | GT GT) expression
-	|	expression op=(AND|OR|BITAND|BITOR|CARET|EQUAL|NOTEQUAL) expression
+	|	expression op=( ADD | SUB | STAR | DIV | MOD ) expression
+    | 	expression op=( LE | GE | LT | GT ) expression
+    | 	expression ( LT LT | GT GT GT | GT GT ) expression
+	|	expression op=( AND | OR | BITAND | BITOR | CARET | EQUAL | NOTEQUAL ) expression
 	|	expression op=QMARK expression COLON expression
 	|	expression INSTANCEOF annotation* referenceType
 	|	lambdaExpression
@@ -790,12 +777,12 @@ lambdaExpression
 lambdaParameters
 	:	Identifier
 	|	LPAREN formalParameterList? RPAREN
-	|	LPAREN Identifier (COMMA Identifier)* RPAREN
+	|	LPAREN Identifier ( COMMA Identifier )* RPAREN
 	;
 
 unaryExpression
-	:	op=(INC|DEC|ADD|SUB) unaryExpression
-	|	op=(TILDE|BANG) unaryExpression
+	:	op=( INC | DEC | ADD | SUB ) unaryExpression
+	|	op=( TILDE | BANG ) unaryExpression
 	|	postfixExpression
 	;
 

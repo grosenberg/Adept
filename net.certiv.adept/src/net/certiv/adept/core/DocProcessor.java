@@ -52,6 +52,7 @@ public class DocProcessor extends BaseProcessor {
 					break;
 			}
 		}
+		mgr.getTool().toolInfo(this, corModel.getMatchStat());
 		Time.stop(Facet.MATCH);
 	}
 

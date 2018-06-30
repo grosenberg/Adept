@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.gson.annotations.Expose;
 
@@ -28,6 +29,7 @@ import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Utils;
 
 public class CorpusModel {
@@ -35,6 +37,7 @@ public class CorpusModel {
 	private static final String DocMsg = "Merging  %3d %5d ------------------- %s";
 	private static final String UnqMsg = "  Unique %3d %5d %7.2f%% %9.4f%%";
 	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%";
+	private static final String StatMSG = "%s: %5.2f%% of %s hits (%s documents)";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -55,6 +58,9 @@ public class CorpusModel {
 	// the document feature sets
 	// key = docId; value = feature list
 	private HashMultilist<Integer, Feature> sources;
+
+	// key=docId; value=ref count;
+	private Map<Integer, Integer> freq = new HashMap<>();
 
 	public CorpusModel() {
 		pathnames = new LinkedHashMap<>();
@@ -188,7 +194,7 @@ public class CorpusModel {
 			if (equiv == null) {
 				results.add(ref);
 			} else {
-				equiv.mergeContexts(ref.contexts);
+				equiv.merge(ref);
 				equiv.addRank(ref.getRank());
 			}
 		}
@@ -206,7 +212,7 @@ public class CorpusModel {
 			if (equiv == null) {
 				existing.add(ref);
 			} else {
-				equiv.mergeContexts(ref.contexts);
+				equiv.merge(ref);
 				equiv.addRank(ref.getRank());
 			}
 		}
@@ -292,10 +298,47 @@ public class CorpusModel {
 					// key=similarity, value=match ref tokens; descending order
 					TreeMultiset<Double, RefToken> scored = matches(ref, matched);
 					ref.chooseBest(scored);
+					recordMatch(ref.matched);
 				}
 			}
 			feature.setMatched(true);
 		}
+	}
+
+	private void recordMatch(RefToken matched) {
+		if (matched != null) {
+			for (Integer docId : matched.docIds) {
+				if (freq.containsKey(docId)) {
+					freq.put(docId, freq.get(docId) + 1);
+				} else {
+					freq.put(docId, 1);
+				}
+			}
+		}
+	}
+
+	public String getMatchStat() {
+		int docId = getPrimaryMatchDocId();
+		String docName = getPathname(docId);
+		docName = Paths.get(docName).getFileName().toString();
+
+		double total = Maths.sum(freq.values());
+		int cnt = freq.get(docId);
+		double pct = cnt * 100 / total;
+		int docCnt = freq.size();
+		return String.format(StatMSG, docName, pct, total, docCnt);
+	}
+
+	private int getPrimaryMatchDocId() {
+		int docId = -1;
+		int primary = -1;
+		for (Entry<Integer, Integer> entry : freq.entrySet()) {
+			if (entry.getValue() > primary) {
+				docId = entry.getKey();
+				primary = entry.getValue();
+			}
+		}
+		return docId;
 	}
 
 	/** For visualization: find the corpus feature matching the given document feature. */

@@ -980,16 +980,6 @@ public interface Java8ParserListener extends ParseTreeListener {
 	 */
 	void exitPrimary(Java8Parser.PrimaryContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Java8Parser#primaryNoNewArray}.
-	 * @param ctx the parse tree
-	 */
-	void enterPrimaryNoNewArray(Java8Parser.PrimaryNoNewArrayContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Java8Parser#primaryNoNewArray}.
-	 * @param ctx the parse tree
-	 */
-	void exitPrimaryNoNewArray(Java8Parser.PrimaryNoNewArrayContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link Java8Parser#primaryNoNewArray_lfno_arrayAccess}.
 	 * @param ctx the parse tree
 	 */

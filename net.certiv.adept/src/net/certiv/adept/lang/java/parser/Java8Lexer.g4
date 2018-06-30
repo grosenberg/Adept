@@ -116,13 +116,13 @@ BooleanLiteral
 // §3.10.4 Character Literals
 
 CharacterLiteral
-	:	'\'' (~['\\\r\n] | EscSeq) '\''
+	:	'\'' ( ~['\\\r\n] | EscSeq ) '\''
 	;
 
 // §3.10.5 String Literals
 
 StringLiteral
-	:	'"' (~["\\\r\n] | EscSeq)* '"'
+	:	'"' ( ~["\\\r\n] | EscSeq )* '"'
 	;
 
 // §3.10.6 Escape Sequences for Character and String Literals
@@ -130,7 +130,7 @@ StringLiteral
 fragment 
 EscSeq
     : '\\' [btnfr"'\\]
-    | '\\' ([0-3]? [0-7])? [0-7]
+    | '\\' ( [0-3]? [0-7] )? [0-7]
     | '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
     ;
 
@@ -153,7 +153,7 @@ HexDigit
 
 fragment 
 HexDigits
-    : HexDigit ((HexDigit | '_')* HexDigit)?
+    : HexDigit (( HexDigit | '_' )* HexDigit )?
     ;
 
 
@@ -261,6 +261,6 @@ LINECOMMENT
 fragment Hws			: [ \t]			;
 fragment Vws			: '\r'? [\n\f]	;
 
-fragment DocComment		: '/**' .*? ('*/' | EOF)	;
-fragment BlockComment	: '/*'  .*? ('*/' | EOF)	;
+fragment DocComment		: '/**' .*? ( '*/' | EOF )	;
+fragment BlockComment	: '/*'  .*? ( '*/' | EOF )	;
 fragment LineComment	: '//' ~[\r\n]* ;

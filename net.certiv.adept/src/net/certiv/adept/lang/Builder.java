@@ -80,7 +80,7 @@ public class Builder extends ParseRecord {
 			int type = token.getType();
 			token.setKind(evalKind(type));
 			if (!token.isWhitespace()) {			// formattable only
-				token.setRefToken(new RefToken(token));
+				token.setRefToken(new RefToken(doc.getDocId(), token));
 				token.setVisCol(calcVisualColumn(start, token, tabWidth));
 
 				tokenIndex.put(token.getTokenIndex(), token);
