@@ -32,6 +32,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 	@Expose private int key;					// document independent, unique feature hash key
 
 	@Expose private List<Integer> ancestors;	// ancestors
+	@Expose private int ancestorsKey;			// ancestors reference Key
 	@Expose private Kind kind;					// feature category
 	@Expose private int type;					// feature node token type
 	@Expose private int weight;					// count of equivalent feature tokens
@@ -89,6 +90,7 @@ public class Feature implements Comparable<Feature>, Cloneable {
 
 		this.docId = doc.getDocId();
 		this.ancestors = ancestors;
+		this.ancestorsKey = ancestors.hashCode();
 		this.kind = token.kind();
 		this.type = token.getType();
 		this.refs.add(token.refToken());
@@ -130,6 +132,11 @@ public class Feature implements Comparable<Feature>, Cloneable {
 	 */
 	public List<Integer> getAncestors() {
 		return ancestors;
+	}
+
+	/** Returns the ancestorsKey */
+	public int getAncestorsKey() {
+		return ancestorsKey;
 	}
 
 	/** Returns the type of the feature */

@@ -6,6 +6,10 @@
  *******************************************************************************/
 package net.certiv.adept.core;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import net.certiv.adept.Settings;
 import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.format.Formatter;
@@ -13,12 +17,14 @@ import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
+import net.certiv.adept.unit.HashMultilist;
 import net.certiv.adept.util.Time;
 
 public class DocProcessor extends BaseProcessor {
 
 	private Document doc;
 	private DocModel docModel;
+	private HashMultilist<Integer, Feature> paths = new HashMultilist<>();
 
 	public DocProcessor(CoreMgr mgr, Document doc, Settings settings) {
 		super(mgr, settings);
@@ -41,18 +47,28 @@ public class DocProcessor extends BaseProcessor {
 	 */
 	public void match(CorpusModel corModel) {
 		Time.start(Facet.MATCH);
+		paths.clear();
 		for (Feature feature : docModel.getFeatures()) {
 			switch (feature.getKind()) {
 				case BLOCKCOMMENT:
 				case LINECOMMENT:
 				case TERMINAL:
+					paths.put(feature.getAncestorsKey(), feature);
 					corModel.match(feature);
 					break;
 				case WHITESPACE:
 					break;
 			}
 		}
-		mgr.getTool().toolInfo(this, corModel.getMatchStat());
+		for (Integer path : paths.keySet()) {
+			List<Feature> features = paths.get(path);
+			List<Integer> ancestors = features.get(0).getAncestors();
+			Set<Integer> types = new HashSet<>();
+			for (Feature feature : features) {
+				types.add(feature.getType());
+			}
+			mgr.getTool().toolInfo(this, corModel.getMatchStat(path, ancestors, types));
+		}
 		Time.stop(Facet.MATCH);
 	}
 

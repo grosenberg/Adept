@@ -100,20 +100,20 @@ public class FormatterOps {
 				if (group.linear(scheme)) {
 					TreeMultilist<Integer, AdeptToken> members = group.get(scheme);
 					Integer key = members.firstKey();
-					linears.addMembers(Scheme.LINEAR, key, members.get(key));
+					linears.addMembers(Scheme.AFIL, key, members.get(key));
 				}
 			}
 		}
 
 		Group group = new Group();
-		TreeMultilist<Integer, AdeptToken> members = linears.get(Scheme.LINEAR);
+		TreeMultilist<Integer, AdeptToken> members = linears.get(Scheme.AFIL);
 		for (int lnum : members.keySet()) {
-			if (group.isEmpty() || group.contiguous(Scheme.LINEAR, lnum)) {
-				group.addMembers(Scheme.LINEAR, lnum, members.get(lnum));
+			if (group.isEmpty() || group.contiguous(Scheme.AFIL, lnum)) {
+				group.addMembers(Scheme.AFIL, lnum, members.get(lnum));
 			} else {
 				data.groupIndex.add(group);
 				group = new Group();
-				group.addMembers(Scheme.LINEAR, lnum, members.get(lnum));
+				group.addMembers(Scheme.AFIL, lnum, members.get(lnum));
 			}
 		}
 		if (!group.isEmpty()) data.groupIndex.add(group);
