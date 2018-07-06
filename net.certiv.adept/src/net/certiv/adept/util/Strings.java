@@ -477,6 +477,15 @@ public class Strings {
 		return sb.toString();
 	}
 
+	public static List<String> encodeWS(List<String> in) {
+		if (in != null) {
+			for (int idx = 0; idx < in.size(); idx++) {
+				in.set(idx, encodeWS(in.get(idx)));
+			}
+		}
+		return in;
+	}
+
 	/** Split all lines, preserving blank last line, if any. */
 	public static String[] splitLines(String text) {
 		return text.split("\\R", -1);
@@ -510,5 +519,63 @@ public class Strings {
 		int rem = col % tabWidth;
 		if (rem / 2 >= tabWidth / 2) return col + tabWidth - rem;
 		return col - rem;
+	}
+
+	public static String wrap(String txt, int wrap, String prefix, String terminal, String splits) {
+		if (txt == null || txt.isEmpty()) return "";
+		if (prefix == null) prefix = "";
+		if (terminal == null) terminal = EOL;
+		if (splits == null || splits.isEmpty()) splits = SPACE;
+		if (wrap < 1) wrap = 80;
+
+		final Pattern splitter = Pattern.compile(splits);
+		int len = txt.length();
+		StringBuilder sb = new StringBuilder(len);
+		sb.append(prefix);
+
+		int beg = 0;
+		while (beg < len) {
+			int wrapAt = -1;
+			int end = Math.min((int) Math.min(Integer.MAX_VALUE, beg + wrap + 1L), len);
+			Matcher matcher = splitter.matcher(txt.substring(beg, end));
+			if (matcher.find()) {
+				if (matcher.start() == 0) {
+					beg += matcher.end();
+					continue;
+				}
+				wrapAt = matcher.start() + beg;
+			}
+			// only last line without leading spaces is left
+			if (len - beg <= wrap) break;
+
+			while (matcher.find()) {
+				wrapAt = matcher.start() + beg;
+			}
+
+			if (wrapAt >= beg) {	// normal case
+				sb.append(txt, beg, wrapAt);
+				sb.append(terminal + prefix);
+				beg = wrapAt + 1;
+
+			} else {
+				matcher = splitter.matcher(txt.substring(beg + wrap));
+				if (matcher.find()) {
+					wrapAt = matcher.start() + beg + wrap;
+				}
+
+				if (wrapAt >= 0) {
+					sb.append(txt, beg, wrapAt);
+					sb.append(terminal);
+					beg = wrapAt + 1;
+				} else {
+					sb.append(txt, beg, txt.length());
+					beg = len;
+				}
+			}
+		}
+
+		// append remainder
+		sb.append(txt, beg, txt.length());
+		return sb.toString();
 	}
 }

@@ -6,6 +6,9 @@
  *******************************************************************************/
 package net.certiv.adept.lang.comment.parser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.IntStream;
@@ -14,7 +17,24 @@ import org.antlr.v4.runtime.LexerNoViableAltException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
+import net.certiv.adept.util.Utils;
+
 public abstract class CommentLexerAdaptor extends Lexer {
+
+	private final Map<String, String> doc = new HashMap<>();
+	private final Map<String, String> block = new HashMap<>();
+	private final Map<String, String> line = new HashMap<>();
+
+	public static enum CTYPE {
+		DOC,
+		BLOCK,
+		LINE;
+	}
+
+	public static enum CPOS {
+		BEG,
+		END;
+	}
 
 	private boolean _mmore;	// modified more mode flag
 	private int _mtype;		// token type to emit with content of 'mmore' matches
@@ -27,6 +47,58 @@ public abstract class CommentLexerAdaptor extends Lexer {
 	public CommentLexerAdaptor(CharStream input) {
 		super(input);
 	}
+
+	// ---------------------------
+	// Comment mark specialization
+
+	public void setDocStyles(String[][] doc) {
+		this.doc.clear();
+		if (doc != null) Utils.loadPairs(this.doc, doc);
+	}
+
+	public void setBlockStyles(String[][] block) {
+		this.block.clear();
+		if (block != null) Utils.loadPairs(this.block, block);
+	}
+
+	public void setLineStyles(String[][] line) {
+		this.line.clear();
+		if (line != null) Utils.loadPairs(this.line, line);
+	}
+
+	public boolean is(CTYPE type, CPOS pos) {
+		Map<String, String> style = null;
+		switch (type) {
+			case DOC:
+				style = doc;
+				break;
+			case BLOCK:
+				style = block;
+				break;
+			case LINE:
+				style = line;
+				break;
+		}
+
+		String word = _input.getText(new Interval(_input.index(), _input.index() + 5));
+		switch (pos) {
+			case BEG:
+				for (String beg : style.keySet()) {
+					if (word.startsWith(beg)) return true;
+				}
+				break;
+			case END:
+				for (String end : style.values()) {
+					if (word.startsWith(end)) return true;
+				}
+				break;
+		}
+
+		return false;
+	}
+
+	// ----------------------
+	// Enhanced 'more'
 
 	@Override
 	public void more() {

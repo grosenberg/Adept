@@ -8,7 +8,10 @@ package net.certiv.adept.model;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
 
@@ -21,7 +24,6 @@ import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -44,11 +46,14 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	// derived from a corpus ref token
 	public RefToken matched;
+	// key = match score; value list of corpus refs
+	public TreeMultiset<Double, RefToken> scored;
 
 	// corpus frequency
 	@Expose public int rank = 1;
 
 	// feature token - intrinsic
+	@Expose public Set<Integer> docIds;
 	@Expose public int type;
 	@Expose public int index;
 	@Expose public boolean isComment;
@@ -77,7 +82,14 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	@Expose public Spacing rSpacing = Spacing.UNKNOWN;
 	@Expose public String rActual = "";
 
-	public RefToken(AdeptToken token) {
+	public RefToken() {
+		docIds = new HashSet<>();
+		contexts = new ArrayList<>();
+	}
+
+	public RefToken(int docId, AdeptToken token) {
+		this();
+		this.docIds.add(docId);
 		this.type = token.getType();
 		this.index = token.getTokenIndex();
 		this.isComment = token.isComment();
@@ -135,8 +147,9 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		contexts.add(new Context(lAssocs, rAssocs));
 	}
 
-	public void mergeContexts(List<Context> assocs) {
-		for (Context assoc : assocs) {
+	public void merge(RefToken ref) {
+		docIds.addAll(ref.docIds);
+		for (Context assoc : ref.contexts) {
 			Context existing = Context.find(contexts, assoc);
 			if (existing != null) {
 				existing.addRank(assoc.getRank());
@@ -168,7 +181,6 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 * {@code 0..1}, where {@code 0} means no similarity and {@code 1} means effective identify.
 	 *
 	 * @param matchable the ref token to consider
-	 * @param featWeight weight of the containing matchable feature
 	 * @param maxRank maximum ranking of the ref tokens in the matchable features
 	 * @return similarity value normalized to {@code 0..1}, where {@code 0} is no similarity and
 	 *         {@code 1} is effective identify
@@ -210,14 +222,33 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 * @param scored descending valued key multiset of possible choices
 	 */
 	public void chooseBest(TreeMultiset<Double, RefToken> scored) {
-
 		// choose highest scored set of corpus ref tokens
 		List<RefToken> highest = scored.getList(scored.firstKey());
-		if (highest.size() > 1) {
-			Log.info(this, "Multiple identically scored choices!");
-		}
+		// if (highest.size() > 1) {
+		// Log.info(this, "Multiple identically scored choices!");
+		// }
 		RefToken best = highest.get(0);
 		this.matched = best.copy();
+		this.scored = scored;
+	}
+
+	/**
+	 * Re-evaluates the 'best' choice of {@code matched}. Selects the highest scored corpus ref token
+	 * from the set of possible choices subject to the given document Id.
+	 */
+	public boolean chooseBest(int docId) {
+		for (Entry<Double, Set<RefToken>> entry : scored.entrySet()) {
+			for (RefToken best : entry.getValue()) {
+				if (best.docIds.contains(docId)) {
+					if (!matched.equals(best)) {
+						// Log.debug(this, String.format("Replacing %s with %s", matched, best));
+						this.matched = best.copy();
+					}
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/** Deep clone. */
@@ -328,18 +359,18 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	@Override
 	public String toString() {
+		String la = Strings.encodeWS(lActual);
+		String ra = Strings.encodeWS(rActual);
 		switch (place) {
 			case SOLO:
 				return String.format(MIDL, type, inGroup, inLine, index);
 			case BEG:
-				return String.format("BOL" + MIDL + RGHT, type, inGroup, inLine, index, rSpacing, rActual, rType,
-						rIndex);
+				return String.format("BOL" + MIDL + RGHT, type, inGroup, inLine, index, rSpacing, ra, rType, rIndex);
 			case END:
-				return String.format(LEFT + MIDL + "EOL", lType, lIndex, lSpacing, lActual, type, inGroup, inLine,
-						index);
+				return String.format(LEFT + MIDL + "EOL", lType, lIndex, lSpacing, la, type, inGroup, inLine, index);
 			default:
-				return String.format("%s[%s] %s(%s) > %s[%s] > %s(%s) %s[%s]", lType, lIndex, lSpacing, lActual, type,
-						inGroup, inLine, index, rSpacing, rActual, rType, rIndex);
+				return String.format("%s[%s] %s(%s) > %s[%s] > %s(%s) %s[%s]", lType, lIndex, lSpacing, la, type,
+						inGroup, inLine, index, rSpacing, ra, rType, rIndex);
 		}
 	}
 }

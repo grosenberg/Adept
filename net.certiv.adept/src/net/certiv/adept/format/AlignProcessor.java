@@ -36,7 +36,6 @@ public class AlignProcessor extends AbstractProcessor {
 		ops.collectLinears();
 
 		for (Group group : ops.data.groupIndex) {
-
 			TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
 			for (Scheme align : members.keySet()) {
 				TreeMultilist<Integer, AdeptToken> lines = members.get(align);
@@ -54,8 +53,8 @@ public class AlignProcessor extends AbstractProcessor {
 						handleListAlign(lines, false);
 						break;
 
-					case LINEAR:
-						handleLikeAlign(lines, true);
+					case AFIL:
+						handleAfilAlign(lines, true);
 						break;
 
 					default:
@@ -123,7 +122,7 @@ public class AlignProcessor extends AbstractProcessor {
 		}
 	}
 
-	private void handleLikeAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabAlignFirst) {
+	private void handleAfilAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabAlignFirst) {
 		Grid grid = new Grid(ops, lines);
 
 		for (int cIdx = 0; cIdx < grid.size(); cIdx++) {

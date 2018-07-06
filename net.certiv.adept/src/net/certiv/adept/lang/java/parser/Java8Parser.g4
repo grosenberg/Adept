@@ -2,6 +2,7 @@
  * [The "BSD license"]
  *  Copyright (c) 2014 Terence Parr
  *  Copyright (c) 2014 Sam Harwell
+ *  Copyright (c) 2018 Gerald Rosenberg
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,10 +29,6 @@
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * A Java 8 grammar for ANTLR 4 derived from the Java Language Specification
- * chapter 19.  Derived from the CodeBuff reference Java grammar.
- */
 parser grammar Java8Parser ;
 
 options {
@@ -42,233 +39,29 @@ options {
 	package net.certiv.adept.lang.java.parser.gen;
 }
 
-/*
- * Productions from §3 (Lexical Structure)
- */
-
-literal
-	:	IntegerLiteral
-	|	FloatingPointLiteral
-	|	BooleanLiteral
-	|	CharacterLiteral
-	|	StringLiteral
-	|	NullLiteral
-	;
-
-/*
- * Productions from §4 (Types, Values, and Variables)
- */
-
-type
-	:	primitiveType
-	|	referenceType
-	;
-
-primitiveType
-	:	annotation* numericType
-	|	annotation* BOOLEAN
-	;
-
-numericType
-	:	integralType
-	|	floatingPointType
-	;
-
-integralType
-    : CHAR
-    | BYTE
-    | SHORT
-    | INT
-    | LONG
-	;
-
-floatingPointType
-    : FLOAT
-    | DOUBLE
-	;
-
-referenceType
-	:	classOrInterfaceType
-	|	typeVariable
-	|	arrayType
-	;
-
-classOrInterfaceType
-	:	(	classType_lfno_classOrInterfaceType
-		|	interfaceType_lfno_classOrInterfaceType
-		)
-		(	classType_lf_classOrInterfaceType
-		|	interfaceType_lf_classOrInterfaceType
-		)*
-	;
-
-classType
-	:	annotation* Identifier typeArguments?
-	|	classOrInterfaceType DOT annotation* Identifier typeArguments?
-	;
-
-classType_lf_classOrInterfaceType
-	:	DOT annotation* Identifier typeArguments?
-	;
-
-classType_lfno_classOrInterfaceType
-	:	annotation* Identifier typeArguments?
-	;
-
-interfaceType
-	:	classType
-	;
-
-interfaceType_lf_classOrInterfaceType
-	:	classType_lf_classOrInterfaceType
-	;
-
-interfaceType_lfno_classOrInterfaceType
-	:	classType_lfno_classOrInterfaceType
-	;
-
-typeVariable
-	:	annotation* Identifier
-	;
-
-arrayType
-	:	primitiveType dims
-	|	classOrInterfaceType dims
-	|	typeVariable dims
-	;
-
-dims
-	:	annotation* LBRACK RBRACK (annotation* LBRACK RBRACK)*
-	;
-
-typeParameter
-	:	typeParameterModifier* Identifier typeBound?
-	;
-
-typeParameterModifier
-	:	annotation
-	;
-
-typeBound
-	:	EXTENDS typeVariable
-	|	EXTENDS classOrInterfaceType additionalBound*
-	;
-
-additionalBound
-	:	BITAND interfaceType
-	;
-
-typeArguments
-	:	LT typeArgumentList GT
-	;
-
-typeArgumentList
-	:	typeArgument (COMMA typeArgument)*
-	;
-
-typeArgument
-	:	referenceType
-	|	wildcard
-	;
-
-wildcard
-	:	annotation* QUESTION wildcardBounds?
-	;
-
-wildcardBounds
-	:	EXTENDS referenceType
-	|	SUPER referenceType
-	;
-
-/*
- * Productions from §6 (Names)
- */
-
-packageName
-	:	Identifier
-	|	packageName DOT Identifier
-	;
-
-typeName
-	:	Identifier
-	|	packageOrTypeName DOT Identifier
-	;
-
-packageOrTypeName
-	:	Identifier
-	|	packageOrTypeName DOT Identifier
-	;
-
-expressionName
-	:	Identifier
-	|	ambiguousName DOT Identifier
-	;
-
-methodName
-	:	Identifier
-	;
-
-ambiguousName
-	:	Identifier
-	|	ambiguousName DOT Identifier
-	;
-
-/*
- * Productions from §7 (Packages)
- */
+// Productions from §7 (Packages)
 
 compilationUnit
-	:	packageDeclaration? importDeclaration* typeDeclaration* EOF
+	:	packageDeclaration?
+		importDeclaration*
+		typeDeclaration*
+		EOF
 	;
 
 packageDeclaration
-	:	packageModifier* PACKAGE Identifier (DOT Identifier)* SEMI
-	;
-
-packageModifier
-	:	annotation
+	:	annotation* PACKAGE qualifiedName SEMI
 	;
 
 importDeclaration
-	:	singleTypeImportDeclaration
-	|	typeImportOnDemandDeclaration
-	|	singleStaticImportDeclaration
-	|	staticImportOnDemandDeclaration
-	;
-
-singleTypeImportDeclaration
-	:	IMPORT typeName SEMI
-	;
-
-typeImportOnDemandDeclaration
-	:	IMPORT packageOrTypeName DOT MUL SEMI
-	;
-
-singleStaticImportDeclaration
-	:	IMPORT STATIC typeName DOT Identifier SEMI
-	;
-
-staticImportOnDemandDeclaration
-	:	IMPORT STATIC typeName DOT MUL SEMI
+    : IMPORT STATIC? qualifiedName ( DOT STAR )? SEMI
 	;
 
 typeDeclaration
-	:	classDeclaration
-	|	interfaceDeclaration
-	|	SEMI
-	;
-
-/*
- * Productions from §8 (Classes)
- */
-
-classDeclaration
-	:	normalClassDeclaration
-	|	enumDeclaration
-	;
-
-normalClassDeclaration
-	:	classModifier* CLASS Identifier typeParameters? superclass? superinterfaces? classBody
+	: classDeclaration
+	| enumDeclaration
+	| interfaceDeclaration
+	| annotationTypeDeclaration
+	| SEMI
 	;
 
 classModifier
@@ -282,24 +75,27 @@ classModifier
 	|	STRICTFP
 	;
 
+// Productions from §6 (Names)
+
+qualifiedName
+	:	Identifier ( DOT Identifier )*
+	;
+
+// Productions from §8 (Classes)
+
+classDeclaration
+	: classModifier* CLASS Identifier typeParameters?
+		( EXTENDS annotation* classType )?
+		( IMPLEMENTS classTypeList )?
+		classBody
+	;
+
 typeParameters
-	:	LT typeParameterList GT
+	: LT typeParameter ( COMMA typeParameter )* GT
 	;
 
-typeParameterList
-	:	typeParameter (COMMA typeParameter)*
-	;
-
-superclass
-	:	EXTENDS classType
-	;
-
-superinterfaces
-	:	IMPLEMENTS interfaceTypeList
-	;
-
-interfaceTypeList
-	:	interfaceType (COMMA interfaceType)*
+classTypeList
+	:	annotation* classType ( COMMA annotation* classType )*
 	;
 
 classBody
@@ -308,21 +104,21 @@ classBody
 
 classBodyDeclaration
 	:	classMemberDeclaration
-	|	instanceInitializer
-	|	staticInitializer
+	|	STATIC? block
 	|	constructorDeclaration
 	;
 
 classMemberDeclaration
 	:	fieldDeclaration
 	|	methodDeclaration
+	|	enumDeclaration
 	|	classDeclaration
 	|	interfaceDeclaration
 	|	SEMI
 	;
 
 fieldDeclaration
-	:	fieldModifier* unannType variableDeclaratorList SEMI
+	:	fieldModifier* baseType variableDeclaratorList SEMI
 	;
 
 fieldModifier
@@ -337,15 +133,11 @@ fieldModifier
 	;
 
 variableDeclaratorList
-	:	variableDeclarator (COMMA variableDeclarator)*
+	:	variableDeclarator ( COMMA variableDeclarator )*
 	;
 
 variableDeclarator
-	:	variableDeclaratorId (ASSIGN variableInitializer)?
-	;
-
-variableDeclaratorId
-	:	Identifier dims?
+	:	Identifier dims? ( ASSIGN variableInitializer )?
 	;
 
 variableInitializer
@@ -353,64 +145,93 @@ variableInitializer
 	|	arrayInitializer
 	;
 
-unannType
-	:	unannPrimitiveType
-	|	unannReferenceType
+// Productions from §3 (Lexical Structure)
+
+literal
+	:	IntegerLiteral
+	|	FloatingPointLiteral
+	|	BooleanLiteral
+	|	CharacterLiteral
+	|	StringLiteral
+	|	NullLiteral
 	;
 
-unannPrimitiveType
+// Productions from §4 (Types, Values, and Variables)
+
+baseType
+	:	primitiveType
+	|	referenceType
+	;
+
+primitiveType
 	:	numericType
 	|	BOOLEAN
 	;
 
-unannReferenceType
-	:	unannClassOrInterfaceType
-	|	unannTypeVariable
-	|	unannArrayType
+numericType
+    : CHAR
+    | BYTE
+    | SHORT
+    | INT
+    | LONG
+    | FLOAT
+    | DOUBLE
 	;
 
-unannClassOrInterfaceType
-	:	(	unannClassType_lfno_unannClassOrInterfaceType
-		|	unannInterfaceType_lfno_unannClassOrInterfaceType
+referenceType
+	:	classOrInterfaceType
+	|	Identifier
+	|	arrayType
+	;
+
+classType
+	:	( classOrInterfaceType DOT )? annotation* Identifier typeArguments?
+	;
+
+classOrInterfaceType
+	:	Identifier typeArguments? ( DOT annotation* Identifier typeArguments?)*
+	;
+
+arrayType
+	:	primitiveType dims
+	|	classOrInterfaceType dims
+	|	Identifier dims
+	;
+
+dims
+	:	annotation* LBRACK RBRACK ( annotation* LBRACK RBRACK )*
+	;
+
+typeParameter
+	:	annotation* Identifier typeBound?
+	;
+
+typeBound
+	:	EXTENDS
+		( annotation* Identifier
+		| annotation* classOrInterfaceType additionalBound*
 		)
-		(	unannClassType_lf_unannClassOrInterfaceType
-		|	unannInterfaceType_lf_unannClassOrInterfaceType
-		)*
 	;
 
-unannClassType
-	:	Identifier typeArguments?
-	|	unannClassOrInterfaceType DOT annotation* Identifier typeArguments?
+additionalBound
+	:	BITAND annotation* classType
 	;
 
-unannClassType_lf_unannClassOrInterfaceType
-	:	DOT annotation* Identifier typeArguments?
+typeArguments
+	:	LT typeArgumentList GT
 	;
 
-unannClassType_lfno_unannClassOrInterfaceType
-	:	Identifier typeArguments?
+typeArgumentList
+	:	typeArgument ( COMMA typeArgument )*
 	;
 
-unannInterfaceType
-	:	unannClassType
+typeArgument
+	:	annotation* referenceType
+	|	wildcard
 	;
 
-unannInterfaceType_lf_unannClassOrInterfaceType
-	:	unannClassType_lf_unannClassOrInterfaceType
-	;
-
-unannInterfaceType_lfno_unannClassOrInterfaceType
-	:	unannClassType_lfno_unannClassOrInterfaceType
-	;
-
-unannTypeVariable
-	:	Identifier
-	;
-
-unannArrayType
-	:	unannPrimitiveType dims
-	|	unannClassOrInterfaceType dims
-	|	unannTypeVariable dims
+wildcard
+	:	annotation* QMARK ( EXTENDS annotation* referenceType |	SUPER annotation* referenceType )?
 	;
 
 methodDeclaration
@@ -436,7 +257,7 @@ methodHeader
 	;
 
 result
-	:	unannType
+	:	baseType
 	|	VOID
 	;
 
@@ -450,26 +271,21 @@ formalParameterList
 	;
 
 formalParameters
-	:	formalParameter (COMMA formalParameter)*
-	|	receiverParameter (COMMA formalParameter)*
+	:	formalParameter ( COMMA formalParameter )*
+	|	receiverParameter ( COMMA formalParameter )*
 	;
 
 formalParameter
-	:	variableModifier* unannType variableDeclaratorId
-	;
-
-variableModifier
-	:	annotation
-	|	FINAL
+	:	( FINAL | annotation )* baseType Identifier dims?
 	;
 
 lastFormalParameter
-	:	variableModifier* unannType annotation* ELLIPSIS variableDeclaratorId
+	:	( FINAL | annotation )* baseType annotation* ELLIPSIS Identifier dims?
 	|	formalParameter
 	;
 
 receiverParameter
-	:	annotation* unannType (Identifier DOT)? THIS
+	:	annotation* baseType ( Identifier DOT )? THIS
 	;
 
 throws_
@@ -477,25 +293,17 @@ throws_
 	;
 
 exceptionTypeList
-	:	exceptionType (COMMA exceptionType)*
+	:	exceptionType ( COMMA exceptionType )*
 	;
 
 exceptionType
-	:	classType
-	|	typeVariable
+	:	annotation* classType
+	|	annotation* Identifier
 	;
 
 methodBody
 	:	block
 	|	SEMI
-	;
-
-instanceInitializer
-	:	block
-	;
-
-staticInitializer
-	:	STATIC block
 	;
 
 constructorDeclaration
@@ -510,73 +318,44 @@ constructorModifier
 	;
 
 constructorDeclarator
-	:	typeParameters? simpleTypeName LPAREN formalParameterList? RPAREN
-	;
-
-simpleTypeName
-	:	Identifier
+	:	typeParameters? Identifier LPAREN formalParameterList? RPAREN
 	;
 
 constructorBody
-	:	LBRACE explicitConstructorInvocation? blockStatements? RBRACE
+	:	LBRACE explicitConstructorInvocation? blockStatement* RBRACE
 	;
 
 explicitConstructorInvocation
 	:	typeArguments? THIS LPAREN argumentList? RPAREN SEMI
 	|	typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
-	|	expressionName DOT typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
+	|	qualifiedName DOT typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
 	|	primary DOT typeArguments? SUPER LPAREN argumentList? RPAREN SEMI
 	;
 
 enumDeclaration
-	:	classModifier* ENUM Identifier superinterfaces? enumBody
+	: classModifier* ENUM Identifier
+		( IMPLEMENTS classTypeList )?
+		enumBody
 	;
 
 enumBody
-	:	LBRACE enumConstantList? COMMA? enumBodyDeclarations? RBRACE
+	:	LBRACE enumConstantList? COMMA? ( SEMI classBodyDeclaration*)? RBRACE
 	;
 
 enumConstantList
-	:	enumConstant (COMMA enumConstant)*
+	:	enumConstant ( COMMA enumConstant )*
 	;
 
 enumConstant
-	:	enumConstantModifier* Identifier (LPAREN argumentList? RPAREN)? classBody?
+	:	annotation* Identifier ( LPAREN argumentList? RPAREN )? classBody?
 	;
 
-enumConstantModifier
-	:	annotation
-	;
-
-enumBodyDeclarations
-	:	SEMI classBodyDeclaration*
-	;
-
-/*
- * Productions from §9 (Interfaces)
- */
+// Productions from §9 (Interfaces)
 
 interfaceDeclaration
-	:	normalInterfaceDeclaration
-	|	annotationTypeDeclaration
-	;
-
-normalInterfaceDeclaration
-	:	interfaceModifier* INTERFACE Identifier typeParameters? extendsInterfaces? interfaceBody
-	;
-
-interfaceModifier
-	:	annotation
-	|	PUBLIC
-	|	PROTECTED
-	|	PRIVATE
-	|	ABSTRACT
-	|	STATIC
-	|	STRICTFP
-	;
-
-extendsInterfaces
-	:	EXTENDS interfaceTypeList
+	: classModifier* INTERFACE Identifier typeParameters?
+		( EXTENDS classTypeList )?
+		interfaceBody
 	;
 
 interfaceBody
@@ -592,7 +371,7 @@ interfaceMemberDeclaration
 	;
 
 constantDeclaration
-	:	constantModifier* unannType variableDeclaratorList SEMI
+	:	constantModifier* baseType variableDeclaratorList SEMI
 	;
 
 constantModifier
@@ -616,7 +395,7 @@ interfaceMethodModifier
 	;
 
 annotationTypeDeclaration
-	:	interfaceModifier* AT INTERFACE Identifier annotationTypeBody
+	:	classModifier* AT INTERFACE Identifier annotationTypeBody
 	;
 
 annotationTypeBody
@@ -632,13 +411,7 @@ annotationTypeMemberDeclaration
 	;
 
 annotationTypeElementDeclaration
-	:	annotationTypeElementModifier* unannType Identifier LPAREN RPAREN dims? defaultValue? SEMI
-	;
-
-annotationTypeElementModifier
-	:	annotation
-	|	PUBLIC
-	|	ABSTRACT
+	:	( PUBLIC | ABSTRACT )* annotation* baseType Identifier LPAREN RPAREN dims? defaultValue? SEMI
 	;
 
 defaultValue
@@ -652,11 +425,11 @@ annotation
 	;
 
 normalAnnotation
-	:	AT typeName LPAREN elementValuePairList? RPAREN
+	:	AT qualifiedName LPAREN elementValuePairList? RPAREN
 	;
 
 elementValuePairList
-	:	elementValuePair (COMMA elementValuePair)*
+	:	elementValuePair ( COMMA elementValuePair )*
 	;
 
 elementValuePair
@@ -664,7 +437,7 @@ elementValuePair
 	;
 
 elementValue
-	:	conditionalExpression
+	:	expression
 	|	elementValueArrayInitializer
 	|	annotation
 	;
@@ -674,15 +447,15 @@ elementValueArrayInitializer
 	;
 
 elementValueList
-	:	elementValue (COMMA elementValue)*
+	:	elementValue ( COMMA elementValue )*
 	;
 
 markerAnnotation
-	:	AT typeName
+	:	AT qualifiedName
 	;
 
 singleElementAnnotation
-	:	AT typeName LPAREN elementValue RPAREN
+	:	AT qualifiedName LPAREN elementValue RPAREN
 	;
 
 /*
@@ -694,7 +467,7 @@ arrayInitializer
 	;
 
 variableInitializerList
-	:	variableInitializer (COMMA variableInitializer)*
+	:	variableInitializer ( COMMA variableInitializer )*
 	;
 
 /*
@@ -702,104 +475,49 @@ variableInitializerList
  */
 
 block
-	:	LBRACE blockStatements? RBRACE
-	;
-
-blockStatements
-	:	blockStatement blockStatement*
+	:	LBRACE blockStatement* RBRACE
 	;
 
 blockStatement
-	:	localVariableDeclarationStatement
+	:	localVariableDeclaration SEMI
 	|	classDeclaration
+	|	enumDeclaration
+	|	interfaceDeclaration
 	|	statement
 	;
 
-localVariableDeclarationStatement
-	:	localVariableDeclaration SEMI
-	;
 
 localVariableDeclaration
-	:	variableModifier* unannType variableDeclaratorList
+	:	( FINAL | annotation )* baseType variableDeclaratorList
 	;
 
 statement
-	:	statementWithoutTrailingSubstatement
-	|	labeledStatement
-	|	ifThenStatement
-	|	ifThenElseStatement
-	|	whileStatement
-	|	forStatement
-	;
-
-statementNoShortIf
-	:	statementWithoutTrailingSubstatement
-	|	labeledStatementNoShortIf
-	|	ifThenElseStatementNoShortIf
-	|	whileStatementNoShortIf
-	|	forStatementNoShortIf
-	;
-
-statementWithoutTrailingSubstatement
 	:	block
-	|	emptyStatement
-	|	expressionStatement
-	|	assertStatement
-	|	switchStatement
-	|	doStatement
-	|	breakStatement
-	|	continueStatement
-	|	returnStatement
-	|	synchronizedStatement
-	|	throwStatement
+	|	SEMI
+	|	statementExpression SEMI
+	|	ASSERT expression ( COLON expression )? SEMI
+	|	SWITCH LPAREN expression RPAREN switchBlock
+	|	DO statement WHILE LPAREN expression RPAREN SEMI
+	|	BREAK Identifier? SEMI
+	|	CONTINUE Identifier? SEMI
+	|	RETURN expression? SEMI
+	|	SYNCHRONIZED LPAREN expression RPAREN block
+	|	THROW expression SEMI
 	|	tryStatement
-	;
-
-emptyStatement
-	:	SEMI
-	;
-
-labeledStatement
-	:	Identifier COLON statement
-	;
-
-labeledStatementNoShortIf
-	:	Identifier COLON statementNoShortIf
-	;
-
-expressionStatement
-	:	statementExpression SEMI
+	|	Identifier COLON statement
+	|	IF LPAREN expression RPAREN statement ( ELSE statement )?
+	|	WHILE LPAREN expression RPAREN statement
+	|	FOR LPAREN forControl RPAREN statement
 	;
 
 statementExpression
 	:	assignment
-	|	preIncrementExpression
-	|	preDecrementExpression
-	|	postIncrementExpression
-	|	postDecrementExpression
+	|	INC unaryExpression
+	|	DEC unaryExpression
+	|	postfixExpression INC
+	|	postfixExpression DEC
 	|	methodInvocation
 	|	classInstanceCreationExpression
-	;
-
-ifThenStatement
-	:	IF LPAREN expression RPAREN statement
-	;
-
-ifThenElseStatement
-	:	IF LPAREN expression RPAREN statementNoShortIf ELSE statement
-	;
-
-ifThenElseStatementNoShortIf
-	:	IF LPAREN expression RPAREN statementNoShortIf ELSE statementNoShortIf
-	;
-
-assertStatement
-	:	ASSERT expression SEMI
-	|	ASSERT expression COLON expression SEMI
-	;
-
-switchStatement
-	:	SWITCH LPAREN expression RPAREN switchBlock
 	;
 
 switchBlock
@@ -807,51 +525,24 @@ switchBlock
 	;
 
 switchBlockStatementGroup
-	:	switchLabels blockStatements
-	;
-
-switchLabels
-	:	switchLabel switchLabel*
+	:	switchLabel+ blockStatement+
 	;
 
 switchLabel
-	:	CASE constantExpression COLON
-	|	CASE enumConstantName COLON
+	:	CASE expression COLON
+	|	CASE Identifier COLON
 	|	DEFAULT COLON
 	;
 
-enumConstantName
-	:	Identifier
+tryStatement
+	:	TRY block catches
+	|	TRY block catches? FINALLY block
+	|	TRY LPAREN resourceList SEMI? RPAREN block catches? ( FINALLY block )?
 	;
 
-whileStatement
-	:	WHILE LPAREN expression RPAREN statement
-	;
-
-whileStatementNoShortIf
-	:	WHILE LPAREN expression RPAREN statementNoShortIf
-	;
-
-doStatement
-	:	DO statement WHILE LPAREN expression RPAREN SEMI
-	;
-
-forStatement
-	:	basicForStatement
-	|	enhancedForStatement
-	;
-
-forStatementNoShortIf
-	:	basicForStatementNoShortIf
-	|	enhancedForStatementNoShortIf
-	;
-
-basicForStatement
-	:	FOR LPAREN forInit? SEMI expression? SEMI forUpdate? RPAREN statement
-	;
-
-basicForStatementNoShortIf
-	:	FOR LPAREN forInit? SEMI expression? SEMI forUpdate? RPAREN statementNoShortIf
+forControl
+	:	forInit? SEMI expression? SEMI statementExpressionList?
+	|	FINAL? annotation* baseType Identifier dims? COLON expression
 	;
 
 forInit
@@ -859,120 +550,43 @@ forInit
 	|	localVariableDeclaration
 	;
 
-forUpdate
-	:	statementExpressionList
-	;
-
 statementExpressionList
-	:	statementExpression (COMMA statementExpression)*
-	;
-
-enhancedForStatement
-	:	FOR LPAREN variableModifier* unannType variableDeclaratorId COLON expression RPAREN statement
-	;
-
-enhancedForStatementNoShortIf
-	:	FOR LPAREN variableModifier* unannType variableDeclaratorId COLON expression RPAREN statementNoShortIf
-	;
-
-breakStatement
-	:	BREAK Identifier? SEMI
-	;
-
-continueStatement
-	:	CONTINUE Identifier? SEMI
-	;
-
-returnStatement
-	:	RETURN expression? SEMI
-	;
-
-throwStatement
-	:	THROW expression SEMI
-	;
-
-synchronizedStatement
-	:	SYNCHRONIZED LPAREN expression RPAREN block
-	;
-
-tryStatement
-	:	TRY block catches
-	|	TRY block catches? finally_
-	|	tryWithResourcesStatement
+	:	statementExpression ( COMMA statementExpression )*
 	;
 
 catches
-	:	catchClause catchClause*
-	;
-
-catchClause
-	:	CATCH LPAREN catchFormalParameter RPAREN block
+	:	( CATCH LPAREN catchFormalParameter RPAREN block )+
 	;
 
 catchFormalParameter
-	:	variableModifier* catchType variableDeclaratorId
+	:	FINAL? annotation* catchType Identifier dims?
 	;
 
 catchType
-	:	unannClassType (BITOR classType)*
-	;
-
-finally_
-	:	FINALLY block
-	;
-
-tryWithResourcesStatement
-	:	TRY resourceSpecification block catches? finally_?
-	;
-
-resourceSpecification
-	:	LPAREN resourceList SEMI? RPAREN
+	:	classType ( BITOR annotation* classType )*
 	;
 
 resourceList
-	:	resource (SEMI resource)*
+	:	resource ( SEMI resource )*
 	;
 
 resource
-	:	variableModifier* unannType variableDeclaratorId ASSIGN expression
+	:	( FINAL | annotation )* baseType Identifier dims? ASSIGN expression
 	;
 
-/*
- * Productions from §15 (Expressions)
- */
+
+// Productions from §15 (Expressions)
 
 primary
-	:	(	primaryNoNewArray_lfno_primary
-		|	arrayCreationExpression
-		)
-		(	primaryNoNewArray_lf_primary
-		)*
-	;
-
-primaryNoNewArray
-	:	literal
-	|	typeName (LBRACK RBRACK)* DOT CLASS
-	|	VOID DOT CLASS
-	|	THIS
-	|	typeName DOT THIS
-	|	LPAREN expression RPAREN
-	|	classInstanceCreationExpression
-	|	fieldAccess
-	|	arrayAccess
-	|	methodInvocation
-	|	methodReference
-	;
-
-primaryNoNewArray_lf_arrayAccess
-	:
+	:	( primaryNoNewArray_lfno_primary | arrayCreationExpression ) primaryNoNewArray_lf_primary*
 	;
 
 primaryNoNewArray_lfno_arrayAccess
 	:	literal
-	|	typeName (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
-	|	typeName DOT THIS
+	|	qualifiedName DOT THIS
 	|	LPAREN expression RPAREN
 	|	classInstanceCreationExpression
 	|	fieldAccess
@@ -984,28 +598,24 @@ primaryNoNewArray_lf_primary
 	:	classInstanceCreationExpression_lf_primary
 	|	fieldAccess_lf_primary
 	|	arrayAccess_lf_primary
-	|	methodInvocation_lf_primary
-	|	methodReference_lf_primary
-	;
-
-primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary
-	:
+	|	DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	|	DCOLON typeArguments? Identifier
 	;
 
 primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary
 	:	classInstanceCreationExpression_lf_primary
 	|	fieldAccess_lf_primary
-	|	methodInvocation_lf_primary
-	|	methodReference_lf_primary
+	|	DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	|	DCOLON typeArguments? Identifier
 	;
 
 primaryNoNewArray_lfno_primary
 	:	literal
-	|	typeName (LBRACK RBRACK)* DOT CLASS
-	|	unannPrimitiveType (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
+	|	primitiveType ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
-	|	typeName DOT THIS
+	|	qualifiedName DOT THIS
 	|	LPAREN expression RPAREN
 	|	classInstanceCreationExpression_lfno_primary
 	|	fieldAccess_lfno_primary
@@ -1014,17 +624,13 @@ primaryNoNewArray_lfno_primary
 	|	methodReference_lfno_primary
 	;
 
-primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary
-	:
-	;
-
 primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary
 	:	literal
-	|	typeName (LBRACK RBRACK)* DOT CLASS
-	|	unannPrimitiveType (LBRACK RBRACK)* DOT CLASS
+	|	qualifiedName ( LBRACK RBRACK )* DOT CLASS
+	|	primitiveType ( LBRACK RBRACK )* DOT CLASS
 	|	VOID DOT CLASS
 	|	THIS
-	|	typeName DOT THIS
+	|	qualifiedName DOT THIS
 	|	LPAREN expression RPAREN
 	|	classInstanceCreationExpression_lfno_primary
 	|	fieldAccess_lfno_primary
@@ -1032,19 +638,44 @@ primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary
 	|	methodReference_lfno_primary
 	;
 
+arrayCreationExpression
+	:	NEW annotation*
+		( primitiveType ( dimExpr+ dims? | dims arrayInitializer )
+		| classOrInterfaceType ( dimExpr+ dims? | dims arrayInitializer )
+		)
+	;
+
+arrayAccess
+	:	( qualifiedName | primaryNoNewArray_lfno_arrayAccess ) arrayAccessExpression+
+	;
+
+arrayAccess_lf_primary
+	:	( primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary )? arrayAccessExpression+
+	;
+
+arrayAccess_lfno_primary
+	:	( qualifiedName | primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary ) arrayAccessExpression+
+	;
+
+arrayAccessExpression
+	:	( LBRACK expression RBRACK )+
+	;
+
 classInstanceCreationExpression
-	:	NEW typeArguments? annotation* Identifier (DOT annotation* Identifier)* typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
-	|	expressionName DOT NEW typeArguments? annotation* Identifier typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
-	|	primary DOT NEW typeArguments? annotation* Identifier typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
+	:	( qualifiedName DOT	| primary DOT )? instanceCreationExpression
 	;
 
 classInstanceCreationExpression_lf_primary
-	:	DOT NEW typeArguments? annotation* Identifier typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
+	:	DOT instanceCreationExpression
 	;
 
 classInstanceCreationExpression_lfno_primary
-	:	NEW typeArguments? annotation* Identifier (DOT annotation* Identifier)* typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
-	|	expressionName DOT NEW typeArguments? annotation* Identifier typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
+	:	( qualifiedName DOT )? instanceCreationExpression
+	;
+
+instanceCreationExpression
+	:	NEW typeArguments? annotation* Identifier ( DOT annotation* Identifier )*
+			typeArgumentsOrDiamond? LPAREN argumentList? RPAREN classBody?
 	;
 
 typeArgumentsOrDiamond
@@ -1055,7 +686,7 @@ typeArgumentsOrDiamond
 fieldAccess
 	:	primary DOT Identifier
 	|	SUPER DOT Identifier
-	|	typeName DOT SUPER DOT Identifier
+	|	qualifiedName DOT SUPER DOT Identifier
 	;
 
 fieldAccess_lf_primary
@@ -1064,259 +695,98 @@ fieldAccess_lf_primary
 
 fieldAccess_lfno_primary
 	:	SUPER DOT Identifier
-	|	typeName DOT SUPER DOT Identifier
-	;
-
-arrayAccess
-	:	(	expressionName LBRACK expression RBRACK
-		|	primaryNoNewArray_lfno_arrayAccess LBRACK expression RBRACK
-		)
-		(	primaryNoNewArray_lf_arrayAccess LBRACK expression RBRACK
-		)*
-	;
-
-arrayAccess_lf_primary
-	:	(	primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary LBRACK expression RBRACK
-		)
-		(	primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary LBRACK expression RBRACK
-		)*
-	;
-
-arrayAccess_lfno_primary
-	:	(	expressionName LBRACK expression RBRACK
-		|	primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary LBRACK expression RBRACK
-		)
-		(	primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary LBRACK expression RBRACK
-		)*
+	|	qualifiedName DOT SUPER DOT Identifier
 	;
 
 methodInvocation
-	:	methodName LPAREN argumentList? RPAREN
-	|	typeName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
-	|	expressionName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	:	Identifier LPAREN argumentList? RPAREN
+	|	qualifiedName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
 	|	primary DOT typeArguments? Identifier LPAREN argumentList? RPAREN
 	|	SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
-	|	typeName DOT SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
-	;
-
-methodInvocation_lf_primary
-	:	DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	|	qualifiedName DOT SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
 	;
 
 methodInvocation_lfno_primary
-	:	methodName LPAREN argumentList? RPAREN
-	|	typeName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
-	|	expressionName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	:	Identifier LPAREN argumentList? RPAREN
+	|	qualifiedName DOT typeArguments? Identifier LPAREN argumentList? RPAREN
 	|	SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
-	|	typeName DOT SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
+	|	qualifiedName DOT SUPER DOT typeArguments? Identifier LPAREN argumentList? RPAREN
 	;
 
 argumentList
-	:	expression (COMMA expression)*
+	:	expression ( COMMA expression )*
 	;
 
 methodReference
-	:	expressionName COLONCOLON typeArguments? Identifier
-	|	referenceType COLONCOLON typeArguments? Identifier
-	|	primary COLONCOLON typeArguments? Identifier
-	|	SUPER COLONCOLON typeArguments? Identifier
-	|	typeName DOT SUPER COLONCOLON typeArguments? Identifier
-	|	classType COLONCOLON typeArguments? NEW
-	|	arrayType COLONCOLON NEW
-	;
-
-methodReference_lf_primary
-	:	COLONCOLON typeArguments? Identifier
+	:	primary DCOLON typeArguments? Identifier
+	|	qualifiedName DCOLON typeArguments? Identifier
+	|	annotation* referenceType DCOLON typeArguments? Identifier
+	|	SUPER DCOLON typeArguments? Identifier
+	|	qualifiedName DOT SUPER DCOLON typeArguments? Identifier
+	|	annotation* classType DCOLON typeArguments? NEW
+	|	annotation* arrayType DCOLON NEW
 	;
 
 methodReference_lfno_primary
-	:	expressionName COLONCOLON typeArguments? Identifier
-	|	referenceType COLONCOLON typeArguments? Identifier
-	|	SUPER COLONCOLON typeArguments? Identifier
-	|	typeName DOT SUPER COLONCOLON typeArguments? Identifier
-	|	classType COLONCOLON typeArguments? NEW
-	|	arrayType COLONCOLON NEW
-	;
-
-arrayCreationExpression
-	:	NEW primitiveType dimExprs dims?
-	|	NEW classOrInterfaceType dimExprs dims?
-	|	NEW primitiveType dims arrayInitializer
-	|	NEW classOrInterfaceType dims arrayInitializer
-	;
-
-dimExprs
-	:	dimExpr dimExpr*
+	:	qualifiedName DCOLON typeArguments? Identifier
+	|	annotation* referenceType DCOLON typeArguments? Identifier
+	|	SUPER DCOLON typeArguments? Identifier
+	|	qualifiedName DOT SUPER DCOLON typeArguments? Identifier
+	|	annotation* classType DCOLON typeArguments? NEW
+	|	annotation* arrayType DCOLON NEW
 	;
 
 dimExpr
 	:	annotation* LBRACK expression RBRACK
 	;
 
-constantExpression
-	:	expression
+expression
+	:	literal
+	|	assignment
+	|	castExpression
+	|	qualifiedName
+	|	unaryExpression
+	|	expression op=( ADD | SUB | STAR | DIV | MOD ) expression
+    | 	expression op=( LE | GE | LT | GT ) expression
+    | 	expression ( LT LT | GT GT GT | GT GT ) expression
+	|	expression op=( AND | OR | BITAND | BITOR | CARET | EQUAL | NOTEQUAL ) expression
+	|	expression op=QMARK expression COLON expression
+	|	expression INSTANCEOF annotation* referenceType
+	|	lambdaExpression
 	;
 
-expression
-	:	lambdaExpression
-	|	assignmentExpression
+assignment
+	:	<assoc=right>
+		( qualifiedName | fieldAccess | arrayAccess )
+		 op=( ASSIGN | ADD_ASSIGN | SUB_ASSIGN | MUL_ASSIGN
+    		| DIV_ASSIGN | AND_ASSIGN | OR_ASSIGN | XOR_ASSIGN
+    		| RSHIFT_ASSIGN | URSHIFT_ASSIGN | LSHIFT_ASSIGN | MOD_ASSIGN
+    		)
+    	expression
+	;
+
+castExpression
+	:	LPAREN annotation* primitiveType RPAREN unaryExpression
+	|	LPAREN annotation* referenceType additionalBound* RPAREN ( postfixExpression | lambdaExpression )
 	;
 
 lambdaExpression
-	:	lambdaParameters ARROW lambdaBody
+	:	lambdaParameters ARROW ( expression | block )
 	;
 
 lambdaParameters
 	:	Identifier
 	|	LPAREN formalParameterList? RPAREN
-	|	LPAREN inferredFormalParameterList RPAREN
-	;
-
-inferredFormalParameterList
-	:	Identifier (COMMA Identifier)*
-	;
-
-lambdaBody
-	:	expression
-	|	block
-	;
-
-assignmentExpression
-	:	conditionalExpression
-	|	assignment
-	;
-
-assignment
-	:	leftHandSide assignmentOperator expression
-	;
-
-leftHandSide
-	:	expressionName
-	|	fieldAccess
-	|	arrayAccess
-	;
-
-assignmentOperator
-	:	ASSIGN | ADD_ASSIGN|SUB_ASSIGN|MUL_ASSIGN
-    |   DIV_ASSIGN|AND_ASSIGN|OR_ASSIGN|XOR_ASSIGN
-    |   RSHIFT_ASSIGN|URSHIFT_ASSIGN|LSHIFT_ASSIGN|MOD_ASSIGN
-	;
-
-conditionalExpression
-	:	conditionalOrExpression
-	|	conditionalOrExpression QUESTION expression COLON conditionalExpression
-	;
-
-conditionalOrExpression
-	:	conditionalAndExpression
-	|	conditionalOrExpression OR conditionalAndExpression
-	;
-
-conditionalAndExpression
-	:	inclusiveOrExpression
-	|	conditionalAndExpression AND inclusiveOrExpression
-	;
-
-inclusiveOrExpression
-	:	exclusiveOrExpression
-	|	inclusiveOrExpression BITOR exclusiveOrExpression
-	;
-
-exclusiveOrExpression
-	:	andExpression
-	|	exclusiveOrExpression CARET andExpression
-	;
-
-andExpression
-	:	equalityExpression
-	|	andExpression BITAND equalityExpression
-	;
-
-equalityExpression
-	:	relationalExpression
-	|	equalityExpression EQUAL relationalExpression
-	|	equalityExpression NOTEQUAL relationalExpression
-	;
-
-relationalExpression
-	:	shiftExpression
-	|	relationalExpression LT shiftExpression
-	|	relationalExpression GT shiftExpression
-	|	relationalExpression LE shiftExpression
-	|	relationalExpression GE shiftExpression
-	|	relationalExpression INSTANCEOF referenceType
-	;
-
-shiftExpression
-	:	additiveExpression
-	|	shiftExpression LT LT additiveExpression
-	|	shiftExpression GT GT additiveExpression
-	|	shiftExpression GT GT GT additiveExpression
-	;
-
-additiveExpression
-	:	multiplicativeExpression
-	|	additiveExpression ADD multiplicativeExpression
-	|	additiveExpression SUB multiplicativeExpression
-	;
-
-multiplicativeExpression
-	:	unaryExpression
-	|	multiplicativeExpression MUL unaryExpression
-	|	multiplicativeExpression DIV unaryExpression
-	|	multiplicativeExpression MOD unaryExpression
+	|	LPAREN Identifier ( COMMA Identifier )* RPAREN
 	;
 
 unaryExpression
-	:	preIncrementExpression
-	|	preDecrementExpression
-	|	ADD unaryExpression
-	|	SUB unaryExpression
-	|	unaryExpressionNotPlusMinus
-	;
-
-preIncrementExpression
-	:	INC unaryExpression
-	;
-
-preDecrementExpression
-	:	DEC unaryExpression
-	;
-
-unaryExpressionNotPlusMinus
-	:	postfixExpression
-	|	TILDE unaryExpression
-	|	BANG unaryExpression
-	|	castExpression
+	:	op=( INC | DEC | ADD | SUB ) unaryExpression
+	|	op=( TILDE | BANG ) unaryExpression
+	|	postfixExpression
 	;
 
 postfixExpression
-	:	(	primary
-		|	expressionName
-		)
-		(	postIncrementExpression_lf_postfixExpression
-		|	postDecrementExpression_lf_postfixExpression
-		)*
+	:	( primary |	qualifiedName ) ( INC |	DEC )*
 	;
 
-postIncrementExpression
-	:	postfixExpression INC
-	;
-
-postIncrementExpression_lf_postfixExpression
-	:	INC
-	;
-
-postDecrementExpression
-	:	postfixExpression DEC
-	;
-
-postDecrementExpression_lf_postfixExpression
-	:	DEC
-	;
-
-castExpression
-	:	LPAREN primitiveType RPAREN unaryExpression
-	|	LPAREN referenceType additionalBound* RPAREN unaryExpressionNotPlusMinus
-	|	LPAREN referenceType additionalBound* RPAREN lambdaExpression
-	;

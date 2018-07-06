@@ -44,7 +44,7 @@ public enum Scheme {
 	 * <ul>
 	 * <li>proximity is defined as GROUP occurence on contiguous lines
 	 */
-	LINEAR,
+	AFIL,
 
 	/**
 	 * Describes a line comment.

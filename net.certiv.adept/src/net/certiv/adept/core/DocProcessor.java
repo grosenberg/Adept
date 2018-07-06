@@ -6,9 +6,14 @@
  *******************************************************************************/
 package net.certiv.adept.core;
 
+import java.util.List;
+
 import net.certiv.adept.Settings;
 import net.certiv.adept.core.util.Facet;
 import net.certiv.adept.format.Formatter;
+import net.certiv.adept.format.plan.Group;
+import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
@@ -52,7 +57,25 @@ public class DocProcessor extends BaseProcessor {
 					break;
 			}
 		}
+		normalizeMatches(corModel);
 		Time.stop(Facet.MATCH);
+	}
+
+	private void normalizeMatches(CorpusModel corModel) {
+		List<Group> groups = docModel.getParseRecord().groupIndex;
+		for (Group group : groups) {
+			for (Scheme scheme : group.getSchemes()) {
+				int docId = group.findPrimaryDocId(scheme);
+				List<AdeptToken> tokens = group.getAll(scheme);
+				for (AdeptToken token : tokens) {
+					token.refToken().chooseBest(docId);
+				}
+			}
+		}
+		// String ancs = Refs.evalAncestors(features.get(0).getAncestors());
+		// String docName = corModel.getFilename(docId);
+		// String msg = String.format("All %s elements come from %s", ancs, docName);
+		// getMgr().getTool().toolInfo(this, msg);
 	}
 
 	/** Applies the docModel to format the doc content. */

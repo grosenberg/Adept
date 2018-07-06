@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import net.certiv.adept.unit.HashMultilist;
 
@@ -43,6 +44,12 @@ public class Utils {
 			}
 		}
 		return map;
+	}
+
+	public static void loadPairs(Map<String, String> map, String[][] in) {
+		for (String[] pair : in) {
+			map.put(pair[0], pair[1]);
+		}
 	}
 
 	/** Returns the concatenation of the two given arrays. */
