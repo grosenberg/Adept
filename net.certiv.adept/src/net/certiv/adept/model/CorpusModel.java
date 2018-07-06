@@ -15,8 +15,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.google.gson.annotations.Expose;
 
@@ -29,9 +27,7 @@ import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.unit.HashMultilist;
-import net.certiv.adept.unit.TreeMultimap;
 import net.certiv.adept.unit.TreeMultiset;
-import net.certiv.adept.util.Maths;
 import net.certiv.adept.util.Utils;
 
 public class CorpusModel {
@@ -39,7 +35,7 @@ public class CorpusModel {
 	private static final String DocMsg = "Merging  %3d %5d ------------------- %s";
 	private static final String UnqMsg = "  Unique %3d %5d %7.2f%% %9.4f%%";
 	private static final String CorMsg = "  Corpus %3d %5d %7.2f%% %9.4f%%";
-	private static final String StatMSG = "%s: %5.2f%% of %s hits (%s documents) %s %s";
+	// private static final String StatMSG = "%s: %5.2f%% of %s hits (%s documents) %s %s";
 
 	@Expose private String corpusDirname;
 	@Expose private long lastModified;
@@ -61,14 +57,14 @@ public class CorpusModel {
 	// key = docId; value = feature list
 	private HashMultilist<Integer, Feature> sources;
 
-	// key=docId; value=ref count;
-	private TreeMultimap<Integer, Integer, Integer> freq;
+	// // key=docId; value=ref count;
+	// private TreeMultimap<Integer, Integer, Integer> freq;
 
 	public CorpusModel() {
 		pathnames = new LinkedHashMap<>();
 		corpus = new HashMap<>();
 		sources = new HashMultilist<>();
-		freq = new TreeMultimap<>();
+		// freq = new TreeMultimap<>();
 	}
 
 	/** Constructor for creating a scratch corpus model. */
@@ -288,6 +284,16 @@ public class CorpusModel {
 	}
 
 	/**
+	 * Returns the file name of the document identified by the given document id, or {@code null} if
+	 * there is no matching document.
+	 */
+	public String getFilename(int docId) {
+		String name = pathnames.get(docId);
+		if (name == null) return "";
+		return Paths.get(name).getFileName().toString();
+	}
+
+	/**
 	 * For the given document feature, match each contained ref token to a corresponding corpus 'best'
 	 * matching feature/ref token. The document ref tokens are updated with the match found or
 	 * {@code null} if no suitable match is found in the corpus.
@@ -297,63 +303,14 @@ public class CorpusModel {
 			// corpus features that might contain a valid match
 			Feature matched = corpus.get(feature.getKey());
 			if (matched != null) { // TODO: if no feature match, find nearest
-				int path = feature.getAncestors().hashCode();
 				for (RefToken ref : feature.getRefs()) {
 					// key=similarity, value=match ref tokens; descending order
 					TreeMultiset<Double, RefToken> scored = matches(ref, matched);
 					ref.chooseBest(scored);
-					recordMatch(path, ref.matched);
 				}
 			}
 			feature.setMatched(true);
 		}
-	}
-
-	private void recordMatch(int path, RefToken matched) {
-		if (matched != null) {
-			for (Integer docId : matched.docIds) {
-				if (freq.containsKey(path, docId)) {
-					freq.put(path, docId, freq.get(path, docId) + 1);
-				} else {
-					freq.put(path, docId, 1);
-				}
-			}
-		}
-	}
-
-	public String getMatchStat(int path, List<Integer> ancestors, Set<Integer> types) {
-		int docId = getPrimaryMatchDocId(path);
-		String docName = getPathname(docId);
-		docName = Paths.get(docName).getFileName().toString();
-
-		double total = Maths.sum(freq.get(path).values());
-		int cnt = freq.get(path, docId);
-		double pct = cnt * 100 / total;
-		int docCnt = freq.size();
-		return String.format(StatMSG, docName, pct, total, docCnt, ancestors, types);
-	}
-
-	private int getPrimaryMatchDocId(int path) {
-		int docId = -1;
-		int primary = -1;
-		for (Entry<Integer, Integer> entry : freq.get(path).entrySet()) {
-			if (entry.getValue() > primary) {
-				docId = entry.getKey();
-				primary = entry.getValue();
-			}
-		}
-		return docId;
-	}
-
-	/** For visualization: find the corpus feature matching the given document feature. */
-	public Feature getMatchingFeature(Feature srcFeature) {
-		return corpus.get(srcFeature.getKey());
-	}
-
-	/** For visualization: find the refs that might be a match; results in descending order. */
-	public TreeMultiset<Double, RefToken> getScoredMatches(Feature feature, RefToken ref) {
-		Feature matched = corpus.get(feature.getKey());
-		return matches(ref, matched);
 	}
 
 	// scores the given token ref against each of the token refs of the given feature
@@ -366,6 +323,17 @@ public class CorpusModel {
 			scored.put(ref.score(match, maxRank), match);
 		}
 		return scored;
+	}
+
+	/** For visualization: find the corpus feature matching the given document feature. */
+	public Feature getMatchingFeature(Feature srcFeature) {
+		return corpus.get(srcFeature.getKey());
+	}
+
+	/** For visualization: find the refs that might be a match; results in descending order. */
+	public TreeMultiset<Double, RefToken> getScoredMatches(Feature feature, RefToken ref) {
+		Feature matched = corpus.get(feature.getKey());
+		return matches(ref, matched);
 	}
 
 	public boolean isConsistent() {

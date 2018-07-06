@@ -8,7 +8,10 @@ package net.certiv.adept.format.plan;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import net.certiv.adept.lang.AdeptToken;
@@ -40,14 +43,22 @@ public class Group {
 		members.put(scheme, line, tokens);
 	}
 
+	// --------------------------------------------------
+
 	public TableMultilist<Scheme, Integer, AdeptToken> getMembers() {
 		return members;
 	}
 
-	// --------------------------------------------------
-
 	public TreeMultilist<Integer, AdeptToken> get(Scheme scheme) {
 		return members.get(scheme);
+	}
+
+	public List<AdeptToken> getAll(Scheme scheme) {
+		List<AdeptToken> tokens = new ArrayList<>();
+		for (Entry<Integer, List<AdeptToken>> group : members.get(scheme).entrySet()) {
+			tokens.addAll(group.getValue());
+		}
+		return tokens;
 	}
 
 	public Set<Scheme> getSchemes() {
@@ -74,5 +85,29 @@ public class Group {
 
 	public boolean isEmpty() {
 		return members.isEmpty();
+	}
+
+	public int findPrimaryDocId(Scheme scheme) {
+		Map<Integer, Integer> cntr = new HashMap<>();
+		for (AdeptToken token : members.get(scheme).valuesAll()) {
+			for (Integer docId : token.refToken().matched.docIds) {
+				Integer cnt = cntr.get(docId);
+				if (cnt == null) {
+					cntr.put(docId, 1);
+				} else {
+					cntr.put(docId, cnt + 1);
+				}
+			}
+		}
+
+		int docId = -1;
+		int max = -1;
+		for (Entry<Integer, Integer> entry : cntr.entrySet()) {
+			if (entry.getValue() > max) {
+				docId = entry.getKey();
+				max = entry.getValue();
+			}
+		}
+		return docId;
 	}
 }

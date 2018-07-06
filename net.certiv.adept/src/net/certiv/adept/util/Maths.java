@@ -123,7 +123,6 @@ public class Maths {
 			sumSquared += (element * element);
 		}
 		double result = (sumSquared - (sum * sum / vector.length)) / (vector.length - 1);
-
 		return Math.max(0, result);
 	}
 
