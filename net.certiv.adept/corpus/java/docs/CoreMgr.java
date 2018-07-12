@@ -16,7 +16,7 @@ import java.util.Map;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;

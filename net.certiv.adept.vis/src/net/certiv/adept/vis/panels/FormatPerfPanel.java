@@ -19,7 +19,7 @@ import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.ParseRecord;
 import net.certiv.adept.util.Refs;
 import net.certiv.adept.util.Time;
@@ -150,12 +150,12 @@ public class FormatPerfPanel extends JPanel {
 		ParseRecord rec = mgr.getDocModel().getParseRecord();
 		Refs.setup(rec.getRuleNames(), rec.getTokenNames());
 
-		txtLoad.setText(Time.elapsed(Facet.LOAD, MsFmt));
-		txtBuild.setText(Time.elapsed(Facet.BUILD, MsFmt));
-		txtParse.setText(Time.elapsed(Facet.PARSE, MsFmt));
-		txtMatch.setText(Time.elapsed(Facet.MATCH, MsFmt));
-		txtFormat.setText(Time.elapsed(Facet.FORMAT, MsFmt));
-		txtExecute.setText(Time.elapsed(Facet.EXECUTE, MsFmt));
+		txtLoad.setText(Time.elapsed(Function.LOAD, MsFmt));
+		txtBuild.setText(Time.elapsed(Function.BUILD, MsFmt));
+		txtParse.setText(Time.elapsed(Function.PARSE, MsFmt));
+		txtMatch.setText(Time.elapsed(Function.MATCH, MsFmt));
+		txtFormat.setText(Time.elapsed(Function.FORMAT, MsFmt));
+		txtExecute.setText(Time.elapsed(Function.EXECUTE, MsFmt));
 
 		txtDocFeatures.setText(String.valueOf(mgr.getDocModel().getFeaturesCount()));
 		txtDocRefs.setText(String.valueOf(mgr.getDocModel().getTokenRefsCount()));

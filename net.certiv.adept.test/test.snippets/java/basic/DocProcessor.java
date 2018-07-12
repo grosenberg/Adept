@@ -7,7 +7,7 @@
 package net.certiv.adept.core;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.format.Formatter;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;

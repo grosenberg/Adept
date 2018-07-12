@@ -9,7 +9,7 @@ package net.certiv.adept.core;
 import java.util.List;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.format.Formatter;
 import net.certiv.adept.format.plan.Group;
 import net.certiv.adept.format.plan.Scheme;
@@ -45,7 +45,7 @@ public class DocProcessor extends BaseProcessor {
 	 * feature.
 	 */
 	public void match(CorpusModel corModel) {
-		Time.start(Facet.MATCH);
+		Time.start(Function.MATCH);
 		for (Feature feature : docModel.getFeatures()) {
 			switch (feature.getKind()) {
 				case BLOCKCOMMENT:
@@ -58,7 +58,7 @@ public class DocProcessor extends BaseProcessor {
 			}
 		}
 		normalizeMatches(corModel);
-		Time.stop(Facet.MATCH);
+		Time.stop(Function.MATCH);
 	}
 
 	private void normalizeMatches(CorpusModel corModel) {
@@ -68,10 +68,13 @@ public class DocProcessor extends BaseProcessor {
 				int docId = group.findPrimaryDocId(scheme);
 				List<AdeptToken> tokens = group.getAll(scheme);
 				for (AdeptToken token : tokens) {
-					token.refToken().chooseBest(docId);
+					if (token.refToken().isMatched()) {
+						token.refToken().chooseBest(docId);
+					}
 				}
 			}
 		}
+
 		// String ancs = Refs.evalAncestors(features.get(0).getAncestors());
 		// String docName = corModel.getFilename(docId);
 		// String msg = String.format("All %s elements come from %s", ancs, docName);
@@ -80,7 +83,7 @@ public class DocProcessor extends BaseProcessor {
 
 	/** Applies the docModel to format the doc content. */
 	public void formatDocument() {
-		Time.start(Facet.FORMAT);
+		Time.start(Function.FORMAT);
 		Formatter formatter = new Formatter(docModel, settings);
 		if (formatter.execute()) {
 			doc.setEdits(formatter.getTextEdits());
@@ -88,7 +91,7 @@ public class DocProcessor extends BaseProcessor {
 			if (settings.save) doc.saveModified(mgr.getTool(), settings.backup);
 		}
 		formatter.dispose();
-		Time.stop(Facet.FORMAT);
+		Time.stop(Function.FORMAT);
 	}
 
 	public void dispose() {

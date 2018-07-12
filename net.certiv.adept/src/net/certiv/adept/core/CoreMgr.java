@@ -17,7 +17,7 @@ import java.util.Map;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;
@@ -76,7 +76,7 @@ public class CoreMgr {
 	 * @param pathnames identifies the documents to be evaluated
 	 */
 	public void execute(Settings settings, List<String> pathnames, String content) {
-		Time.start(Facet.EXECUTE);
+		Time.start(Function.EXECUTE);
 
 		documents = loadDocuments(pathnames, content);
 		tool.toolInfo(this, documents.size() + " source documents to process.");
@@ -99,7 +99,7 @@ public class CoreMgr {
 				// docModel.dispose();
 			}
 		}
-		Time.stop(Facet.EXECUTE);
+		Time.stop(Function.EXECUTE);
 	}
 
 	private Map<Integer, Document> loadDocuments(List<String> pathnames, String content) {

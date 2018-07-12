@@ -1,7 +1,5 @@
 package net.certiv.adept.tool;
 
-import javax.tools.Tool;
-
 import net.certiv.adept.IToolListener;
 import net.certiv.adept.util.Log;
 
@@ -18,18 +16,18 @@ public class DefaultToolListener implements IToolListener {
 	}
 
 	@Override
-	public void info(String msg) {
-		info(Tool.class, msg, null);
+	public void info(Object source, String msg) {
+		info(source, msg, null);
 	}
 
 	@Override
-	public void warn(String msg) {
-		warn(Tool.class, msg, null);
+	public void warn(Object source, String msg) {
+		warn(source, msg, null);
 	}
 
 	@Override
-	public void error(String msg) {
-		error(Tool.class, msg, null);
+	public void error(Object source, String msg) {
+		error(source, msg, null);
 	}
 
 	@Override

@@ -10,7 +10,7 @@ import java.util.List;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Document;

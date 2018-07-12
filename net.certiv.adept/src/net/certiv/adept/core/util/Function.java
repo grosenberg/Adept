@@ -7,7 +7,7 @@
 package net.certiv.adept.core.util;
 
 /** Keys for use with performance timing. */
-public enum Facet {
+public enum Function {
 	LOAD,
 	BUILD,
 	PARSE,

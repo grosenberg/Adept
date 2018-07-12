@@ -26,6 +26,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.tool.Messages.GrammarSemanticsMessage;
 import net.certiv.adept.tool.Messages.GrammarSyntaxMessage;
 import net.certiv.adept.tool.Messages.ToolMessage;
+import net.certiv.adept.util.Log;
 
 public abstract class ToolBase {
 
@@ -50,6 +51,7 @@ public abstract class ToolBase {
 	public ToolBase() {
 		super();
 		setFormat(MSG_FORMAT);
+		Log.setRoot(ToolBase.class);
 	}
 
 	public abstract void version();
@@ -82,10 +84,6 @@ public abstract class ToolBase {
 
 	public int getNumErrors() {
 		return errors;
-	}
-
-	public void toolInfo(String text) {
-		toolInfo(null, text, null);
 	}
 
 	public void toolInfo(Object source, String text) {
@@ -230,10 +228,10 @@ public abstract class ToolBase {
 			url = cl.getResource(fileName);
 		}
 		if (url == null && formatName.equals("adept")) {
-			toolInfo("Adept installation corrupted; cannot find Adept messages format file " + fileName);
+			toolInfo(this, "Adept installation corrupted; cannot find Adept messages format file " + fileName);
 			panic();
 		} else if (url == null) {
-			toolInfo("no such message format file " + fileName + " retrying with default ANTLR format");
+			toolInfo(this, "no such message format file " + fileName + " retrying with default ANTLR format");
 			setFormat("adept"); // recurse on this rule, trying the default message format
 			return;
 		}
@@ -242,13 +240,15 @@ public abstract class ToolBase {
 		format.load();
 
 		if (!initSTListener.errors.isEmpty()) {
-			toolInfo("ANTLR installation corrupted; can't load messages format file:\n" + initSTListener.toString());
+			toolInfo(this,
+					"ANTLR installation corrupted; can't load messages format file:\n" + initSTListener.toString());
 			panic();
 		}
 
 		boolean formatOK = verifyFormat();
 		if (!formatOK && formatName.equals("antlr")) {
-			toolInfo("ANTLR installation corrupted; ANTLR messages format file " + formatName + ".stg incomplete");
+			toolInfo(this,
+					"ANTLR installation corrupted; ANTLR messages format file " + formatName + ".stg incomplete");
 			panic();
 		} else if (!formatOK) {
 			setFormat("antlr"); // recurse on this rule, trying the default message format

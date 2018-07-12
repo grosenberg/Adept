@@ -526,7 +526,7 @@ public class Tool extends ToolBase {
 		for (Options o : optionDefs) {
 			String name = o.name + (o.argType != OptionType.BOOL ? " ___" : "");
 			String s = String.format(" %-19s %s", name, o.description);
-			toolInfo(s);
+			toolInfo(this, s);
 		}
 	}
 

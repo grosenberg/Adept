@@ -161,6 +161,10 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 
 	// ---- Formatter support ----
 
+	public boolean isMatched() {
+		return matched != null;
+	}
+
 	public boolean isComment() {
 		return isComment;
 	}
@@ -201,7 +205,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 		if (rType == matchable.rType) score++;
 		if (scheme == matchable.scheme) score++;
 
-		if (scheme != Scheme.NONE) {	// TODO: refine
+		if (scheme != Scheme.NONE) {
 			double aligns = 0;
 			if (gap == matchable.gap) aligns++;
 			if (inGroup == matchable.inGroup) aligns++;
@@ -222,11 +226,7 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 * @param scored descending valued key multiset of possible choices
 	 */
 	public void chooseBest(TreeMultiset<Double, RefToken> scored) {
-		// choose highest scored set of corpus ref tokens
 		List<RefToken> highest = scored.getList(scored.firstKey());
-		// if (highest.size() > 1) {
-		// Log.info(this, "Multiple identically scored choices!");
-		// }
 		RefToken best = highest.get(0);
 		this.matched = best.copy();
 		this.scored = scored;
@@ -237,14 +237,15 @@ public class RefToken implements Comparator<RefToken>, Ranked, Cloneable {
 	 * from the set of possible choices subject to the given document Id.
 	 */
 	public boolean chooseBest(int docId) {
-		for (Entry<Double, Set<RefToken>> entry : scored.entrySet()) {
-			for (RefToken best : entry.getValue()) {
-				if (best.docIds.contains(docId)) {
-					if (!matched.equals(best)) {
-						// Log.debug(this, String.format("Replacing %s with %s", matched, best));
-						this.matched = best.copy();
+		if (scored != null && scored.entrySet() != null) {
+			for (Entry<Double, Set<RefToken>> entry : scored.entrySet()) {
+				for (RefToken best : entry.getValue()) {
+					if (best.docIds.contains(docId)) {
+						if (!matched.equals(best)) {
+							this.matched = best.copy();
+						}
+						return true;
 					}
-					return true;
 				}
 			}
 		}

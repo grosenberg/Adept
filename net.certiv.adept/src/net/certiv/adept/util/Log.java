@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2008-2018 G Rosenberg.
- * 
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,14 +8,11 @@
  *
  * Contributors:
  *		G Rosenberg - initial API and implementation
- * 
  *
  * Versions:
  * 		1.0 - 2014.03.26: First release verbose code
  * 		1.1 - 2014.08.26: Updates, add Tests support
  * 		1.2 - 2014.11.01: Fixed default logger bug
- * 
- *
  *******************************************************************************/
 package net.certiv.adept.util;
 
@@ -43,7 +40,7 @@ public class Log extends ExtendedLoggerWrapper {
 	private static final Target OUTPUT = Target.SYSTEM_OUT;
 
 	private static Logger logger;
-	private static final String FQCN = Log.class.getName();
+	private static String FQCN = Log.class.getName();
 
 	private static HashMap<Integer, LogLevel> logLevels = new HashMap<>();
 	private static int LogId = Log.class.hashCode();
@@ -58,12 +55,15 @@ public class Log extends ExtendedLoggerWrapper {
 
 	public Log(ExtendedLogger logger, String name, MessageFactory messageFactory) {
 		super(logger, name, messageFactory);
-		// this.messageFactory = messageFactory;
 	}
 
 	@Override
 	public void logMessage(String fqcn, Level level, Marker marker, Message message, Throwable t) {
 		super.logMessage(FQCN, level, marker, message, t);
+	}
+
+	public static void setRoot(Object root) {
+		FQCN = getFqcn(root);
 	}
 
 	/**
@@ -212,8 +212,8 @@ public class Log extends ExtendedLoggerWrapper {
 
 	private static void log(Object source, LogLevel srcLevel, String message, Throwable e) {
 		if (loggable(source, srcLevel)) {
-			if (source == null) source = Log.class;
-			logger = PrivateManager.getLogger(source.getClass().getName());
+			String name = getFqcn(source);
+			logger = PrivateManager.getLogger(name);
 			switch (srcLevel) {
 				case Trace:
 					logger.trace(message, e);
@@ -236,6 +236,19 @@ public class Log extends ExtendedLoggerWrapper {
 					break;
 			}
 		}
+	}
+
+	private static String getFqcn(Object source) {
+		if (source != null) {
+			if (source instanceof String) {
+				return (String) source;
+			} else if (source instanceof Class) {
+				return ((Class<?>) source).getName();
+			} else {
+				return source.getClass().getName();
+			}
+		}
+		return getFqcn(FQCN);
 	}
 
 	public static enum LogLevel {
@@ -265,7 +278,7 @@ public class Log extends ExtendedLoggerWrapper {
 	private static class PrivateManager extends LogManager {
 
 		public static LoggerContext getContext() {
-			return (LoggerContext) getContext(FQCN, false);
+			return (LoggerContext) getContext(FQCN, true);
 		}
 
 		public static ExtendedLogger getLogger(final String name) {

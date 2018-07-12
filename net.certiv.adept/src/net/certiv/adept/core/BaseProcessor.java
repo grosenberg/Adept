@@ -9,7 +9,7 @@ package net.certiv.adept.core;
 import org.antlr.v4.runtime.RecognitionException;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
@@ -45,7 +45,7 @@ public abstract class BaseProcessor {
 	 * @return {@code true} on success
 	 */
 	public boolean processDocument(Document doc, boolean check) {
-		Time.start(Facet.PARSE);
+		Time.start(Function.PARSE);
 		ISourceParser parser = mgr.getLanguageParser();
 		builder = new Builder(mgr, doc);
 		try {
@@ -72,7 +72,7 @@ public abstract class BaseProcessor {
 			return false;
 		}
 
-		Time.stop(Facet.PARSE);
+		Time.stop(Function.PARSE);
 		return true;
 	}
 

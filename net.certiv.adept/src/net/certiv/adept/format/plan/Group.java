@@ -90,12 +90,14 @@ public class Group {
 	public int findPrimaryDocId(Scheme scheme) {
 		Map<Integer, Integer> cntr = new HashMap<>();
 		for (AdeptToken token : members.get(scheme).valuesAll()) {
-			for (Integer docId : token.refToken().matched.docIds) {
-				Integer cnt = cntr.get(docId);
-				if (cnt == null) {
-					cntr.put(docId, 1);
-				} else {
-					cntr.put(docId, cnt + 1);
+			if (token.refToken().matched != null) {
+				for (Integer docId : token.refToken().matched.docIds) {
+					Integer cnt = cntr.get(docId);
+					if (cnt == null) {
+						cntr.put(docId, 1);
+					} else {
+						cntr.put(docId, cnt + 1);
+					}
 				}
 			}
 		}

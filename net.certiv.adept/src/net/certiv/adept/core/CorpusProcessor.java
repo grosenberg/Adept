@@ -9,7 +9,7 @@ package net.certiv.adept.core;
 import java.util.List;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Facet;
+import net.certiv.adept.core.util.Function;
 import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Document;
@@ -43,7 +43,7 @@ public class CorpusProcessor extends BaseProcessor {
 	public void loadModel() {
 		Time.clear();
 		Calc.clear();
-		Time.start(Facet.LOAD);
+		Time.start(Function.LOAD);
 
 		if (settings.check) {
 			corModel = new CorpusModel();
@@ -65,11 +65,11 @@ public class CorpusProcessor extends BaseProcessor {
 				buildCorpusModel();
 			}
 		}
-		Time.stop(Facet.LOAD);
+		Time.stop(Function.LOAD);
 	}
 
 	public void buildCorpusModel() {
-		Time.start(Facet.BUILD);
+		Time.start(Function.BUILD);
 		mgr.getTool().toolInfo(this, "Building corpus model ...");
 
 		CorpusData.removeDataFiles(mgr.getTool(), settings.corpusDir);
@@ -86,7 +86,7 @@ public class CorpusProcessor extends BaseProcessor {
 			}
 		}
 		corModel.postBuild(builder, settings);
-		Time.stop(Facet.BUILD);
+		Time.stop(Function.BUILD);
 	}
 
 	public CorpusModel getCorpusModel() {

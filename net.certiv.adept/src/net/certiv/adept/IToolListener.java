@@ -2,15 +2,15 @@ package net.certiv.adept;
 
 public interface IToolListener {
 
-	void info(String msg);
-
-	void warn(String msg);
-
-	void error(String msg);
+	void info(Object source, String msg);
 
 	void info(Object source, String msg, Throwable e);
 
+	void warn(Object source, String msg);
+
 	void warn(Object source, String msg, Throwable e);
+
+	void error(Object source, String msg);
 
 	void error(Object source, String msg, Throwable e);
 
