@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -236,9 +236,6 @@ public class LineRuler extends JPanel implements CaretListener, DocumentListener
 		}
 	}
 
-	//
-	// Implement CaretListener interface
-	//
 	@Override
 	public void caretUpdate(CaretEvent e) {
 		// Get the line the caret is positioned on
@@ -255,7 +252,6 @@ public class LineRuler extends JPanel implements CaretListener, DocumentListener
 		}
 	}
 
-	// Implement DocumentListener interface
 	@Override
 	public void changedUpdate(DocumentEvent e) {
 		documentChanged();
@@ -290,7 +286,6 @@ public class LineRuler extends JPanel implements CaretListener, DocumentListener
 		});
 	}
 
-	// Implement PropertyChangeListener interface
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		if (evt.getNewValue() instanceof Font) {

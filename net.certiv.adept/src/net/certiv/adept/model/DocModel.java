@@ -12,7 +12,7 @@ import java.util.TreeMap;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Builder;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 
 public class DocModel {
 
@@ -51,7 +51,7 @@ public class DocModel {
 		return features;
 	}
 
-	public ParseRecord getParseRecord() {
+	public Record getParseRecord() {
 		return builder;
 	}
 

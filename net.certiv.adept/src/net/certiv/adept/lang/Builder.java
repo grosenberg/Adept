@@ -31,7 +31,7 @@ import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
 import net.certiv.adept.util.Strings;
 
-public class Builder extends ParseRecord {
+public class Builder extends Record {
 
 	private static final String LineMsg = "%3d: %2d > %s";
 
@@ -55,21 +55,14 @@ public class Builder extends ParseRecord {
 
 	// ---------------------------------------------------------------------
 
-	/**
-	 * Build indexes prior to feature construction.
-	 * <ul>
-	 * <li>tokenIndex: token index -> formattable token
-	 * <li>lineTokensIndex: line# -> formattable tokens
-	 * <li>commentIndex: line# -> block comment tokens
-	 * <li>blanklines: line# -> blankline?
-	 */
+	/** Create indexes prior to feature construction. */
 	public void index() {
 		int tabWidth = doc.getTabWidth();
 		int current = -1;			// current line (0..n)
 		AdeptToken start = null;	// start of current line
 
 		for (AdeptToken token : getTokens()) {
-			int line = token.getLine();
+			int line = token.getLinePos();
 			if (line > current) {	// track line changes
 				current = line;
 				start = token;
@@ -81,7 +74,7 @@ public class Builder extends ParseRecord {
 			token.setKind(evalKind(type));
 			if (!token.isWhitespace()) {			// formattable only
 				token.setRefToken(new RefToken(doc.getDocId(), token));
-				token.setVisCol(calcVisualColumn(start, token, tabWidth));
+				token.setVisPos(calcVisualPosition(start, token, tabWidth));
 
 				tokenIndex.put(token.getTokenIndex(), token);
 				lineTokensIndex.put(current, token);
@@ -279,7 +272,7 @@ public class Builder extends ParseRecord {
 	}
 
 	private List<Integer> leftAssociates(AdeptToken token) {
-		int line = token.getLine();
+		int line = token.getLinePos();
 		List<AdeptToken> tokens = new ArrayList<>(lineTokensIndex.get(line));
 		int idx = tokens.indexOf(token);
 		try {
@@ -300,7 +293,7 @@ public class Builder extends ParseRecord {
 	}
 
 	private List<Integer> rightAssociates(AdeptToken token) {
-		int line = token.getLine();
+		int line = token.getLinePos();
 		List<AdeptToken> tokens = new ArrayList<>(lineTokensIndex.get(line));
 		int idx = tokens.indexOf(token);
 		tokens.subList(0, idx + 1).clear();
@@ -339,15 +332,15 @@ public class Builder extends ParseRecord {
 		return parents;
 	}
 
-	// 'start' is token at BOL - returns the visual offset of 'token' (0..n-1)
-	private int calcVisualColumn(Token start, Token token, int tabWidth) {
+	// 'start' is token at BOL - returns the visual offset of 'token' (0..n+)
+	private int calcVisualPosition(Token start, Token token, int tabWidth) {
 		if (start == null || start == token) return 0;
 
 		int beg = start.getStartIndex();
 		int end = token.getStartIndex() - 1;
-		String text = token.getInputStream().getText(new Interval(beg, end));
-		int vis = Strings.measureVisualWidth(text, tabWidth);
-		return vis;
+		String text = token.getInputStream().getText(Interval.of(beg, end));
+		int vpos = Strings.measureVisualWidth(text, tabWidth);
+		return vpos;
 	}
 
 	// --------------------

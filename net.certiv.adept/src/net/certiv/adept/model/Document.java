@@ -17,13 +17,13 @@ import java.util.List;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.format.TextEdit;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.tool.ErrorDesc;
 
 public class Document {
 
 	private DocModel model;
-	private ParseRecord data;
+	private Record data;
 
 	private String pathname;
 	private int docId;
@@ -48,11 +48,11 @@ public class Document {
 		this.model = model;
 	}
 
-	public ParseRecord getParseRecord() {
+	public Record getParseRecord() {
 		return data;
 	}
 
-	public void setBuilder(ParseRecord data) {
+	public void setBuilder(Record data) {
 		this.data = data;
 	}
 

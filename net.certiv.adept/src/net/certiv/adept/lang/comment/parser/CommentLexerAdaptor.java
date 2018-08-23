@@ -80,7 +80,7 @@ public abstract class CommentLexerAdaptor extends Lexer {
 				break;
 		}
 
-		String word = _input.getText(new Interval(_input.index(), _input.index() + 5));
+		String word = _input.getText(Interval.of(_input.index(), _input.index() + 5));
 		switch (pos) {
 			case BEG:
 				for (String beg : style.keySet()) {
@@ -211,7 +211,7 @@ public abstract class CommentLexerAdaptor extends Lexer {
 
 	public boolean at(String s) {
 		int len = s.length();
-		String txt = _input.getText(new Interval(_input.index(), _input.index() + len - 1));
+		String txt = _input.getText(Interval.of(_input.index(), _input.index() + len - 1));
 		System.err.println(String.format("%s == %s", s, txt));
 		return s.equals(txt);
 	}

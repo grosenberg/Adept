@@ -12,9 +12,16 @@ import net.certiv.adept.ITextEdit;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.util.Strings;
 
-public class TextEdit implements ITextEdit, Comparator<TextEdit> {
+public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<TextEdit> {
 
 	private static final String Msg = "%6s @%s:%s [%s-%s] %s:%s '%s' -> '%s'";
+	public static final Comparator<TextEdit> Comp = new Comparator<TextEdit>() {
+
+		@Override
+		public int compare(TextEdit e1, TextEdit e2) {
+			return e1.compareTo(e2);
+		}
+	};
 
 	private int begIndex;			// beg token index exclusive
 	private int endIndex;			// end token index exclusive
@@ -55,7 +62,7 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 		endIndex = end.getTokenIndex();
 		if (beg != null) {
 			replOffset = beg.getStopIndex() + 1;
-			replLine = beg.getLine();
+			replLine = beg.getLinePos();
 			replCol = beg.getCharPositionInLine();
 		}
 		replLen = end.getStartIndex() - replOffset;
@@ -78,7 +85,7 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 
 		begIndex = endIndex = token.getTokenIndex();
 		replOffset = token.getStartIndex();
-		replLine = token.getLine();
+		replLine = token.getLinePos();
 		replCol = token.getCharPositionInLine();
 		replLen = token.getStopIndex() - replOffset + 1;
 
@@ -167,6 +174,11 @@ public class TextEdit implements ITextEdit, Comparator<TextEdit> {
 	public void replUpdate(String replacement) {
 		this.replacement = Strings.trimTrailinglHWs(this.replacement);
 		this.replacement += replacement;
+	}
+
+	@Override
+	public int compareTo(TextEdit te) {
+		return compare(this, te);
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -134,7 +134,7 @@ public class FormatRealPanel extends JPanel {
 
 		switch (type) {
 			case 1:
-				txtLine.setText(String.format("%s:%s %s", token.iLine + 1, token.iCol, token.iVisCol + 1));
+				txtLine.setText(String.format("%s:%s %s", token.pos[0], token.pos[1], token.getVisPos()));
 				txtAncestors.setText(Refs.evalAncestors(feature.getAncestors()));
 				txtToken.setText(Refs.fType(ref.type));
 				txtPlace.setText(Refs.tPlace(ref));

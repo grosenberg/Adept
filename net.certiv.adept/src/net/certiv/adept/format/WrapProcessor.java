@@ -6,9 +6,9 @@
  *******************************************************************************/
 package net.certiv.adept.format;
 
-public class LineBreakProcessor extends AbstractProcessor {
+public class WrapProcessor extends AbstractProcessor {
 
-	public LineBreakProcessor(FormatterOps ops) {
+	public WrapProcessor(FormatterOps ops) {
 		super(ops);
 	}
 

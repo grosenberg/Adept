@@ -53,7 +53,7 @@ public abstract class XVLexerAdaptor extends Lexer {
 	public boolean bcSuffix() {
 		CodePointCharStream ais = (CodePointCharStream) _input;
 		int offset = ais.index();
-		Interval i = new Interval(offset, offset + 2);
+		Interval i = Interval.of(offset, offset + 2);
 		String la = ais.getText(i);
 		if (la.equals("/*/")) return false;
 		return true;

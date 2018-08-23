@@ -22,7 +22,7 @@ import net.certiv.adept.Settings;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.lang.Analyzer;
 import net.certiv.adept.lang.Builder;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
 import net.certiv.adept.tool.ErrorDesc;
@@ -228,7 +228,7 @@ public class CorpusModel {
 	}
 
 	/** Perform operations to finalize the (re)built corpus. */
-	public void postBuild(ParseRecord data, Settings settings) {
+	public void postBuild(Record data, Settings settings) {
 		Feature.clearPool();
 		Analyzer.evaluate(mgr.getTool(), data, getCorpusFeatures());
 		consistent = true;

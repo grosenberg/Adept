@@ -40,7 +40,7 @@ lexer grammar STGLexer;
 
 DOC_COMMENT			: DocComment		-> channel(HIDDEN)	;
 BLOCK_COMMENT		: BlockComment		-> channel(HIDDEN)	;
-LINE_COMMENT		: LineCommentExt	-> channel(HIDDEN)	;
+LINE_COMMENT		: LineComment		-> channel(HIDDEN)	;
 
 TMPL_COMMENT		: LBang .? RBang	-> channel(HIDDEN)	;
 
@@ -101,13 +101,12 @@ fragment RDAngle	: RShift	;
 // -----------------------------------
 // Whitespace & Comments
 
-fragment Hws			: [ \t] ;
-fragment Vws			: [\r\n\f] ;
+fragment Hws			: [ \t]			;
+fragment Vws			: '\r'? [\n\f]	;
 
-fragment DocComment		: '/**' .*? ('*/' | EOF) ;
-fragment BlockComment	: '/*'  .*? ('*/' | EOF) ;
-fragment LineComment	: '//' ~[\r\n]*			 ;
-fragment LineCommentExt	: '//' ~[\r\n]* ( '\r'? '\n' Hws* '//' ~[\r\n]* )*	;
+fragment DocComment		: '/**' .*? ( '*/'   | EOF )	;
+fragment BlockComment	: '/*'  .*? ( '*/'   | EOF )	;
+fragment LineComment	: '//'  ( ~[\r\n\f]* | EOF )	;
 
 
 // -----------------------------------

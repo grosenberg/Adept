@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -11,21 +11,33 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import org.antlr.v4.runtime.RecognitionException;
+
+import net.certiv.adept.core.CoreMgr;
+import net.certiv.adept.lang.AdeptToken;
+import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.vis.components.CodePane;
 import net.certiv.adept.vis.components.FontChoiceBox;
 import net.certiv.adept.vis.components.LineRuler;
 import net.certiv.adept.vis.components.TabRuler;
+import net.certiv.adept.vis.diff.Action;
+import net.certiv.adept.vis.diff.Delta;
+import net.certiv.adept.vis.diff.Myers;
+import net.certiv.adept.vis.diff.Transform;
 import net.certiv.adept.vis.utils.Point;
 import net.certiv.adept.vis.utils.Synchronizer;
 import net.certiv.adept.vis.utils.TextUtils;
@@ -41,6 +53,8 @@ public class FormatContentPanel extends JPanel {
 	private String rhsTitle;
 	private CodePane lhs;
 	private CodePane rhs;
+
+	private CoreMgr mgr;
 
 	public FormatContentPanel(int width, int height, FontChoiceBox fontBox, JComboBox<Integer> sizeBox,
 			JComboBox<Integer> tabBox, String lhsTitle, String rhsTitle) {
@@ -82,8 +96,8 @@ public class FormatContentPanel extends JPanel {
 		rhs.setEditable(false);
 
 		JScrollPane lhsScroll = new JScrollPane(lhs);
-		lhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		lhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		lhsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		lhsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		LineRuler lLineRuler = new LineRuler(lhs);
 		lhsScroll.setRowHeaderView(lLineRuler);
@@ -92,8 +106,8 @@ public class FormatContentPanel extends JPanel {
 		lhsScroll.setColumnHeaderView(lTagRuler);
 
 		JScrollPane rhsScroll = new JScrollPane(rhs);
-		rhsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		rhsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		rhsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		rhsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		LineRuler rLineRuler = new LineRuler(rhs);
 		rhsScroll.setRowHeaderView(rLineRuler);
@@ -103,10 +117,10 @@ public class FormatContentPanel extends JPanel {
 
 		Synchronizer.link(lhsScroll, rhsScroll);
 
-		JLabel lhsLabel = new JLabel(lhsTitle, JLabel.CENTER);
+		JLabel lhsLabel = new JLabel(lhsTitle, SwingConstants.CENTER);
 		lhsLabel.setForeground(Color.black);
 
-		JLabel rhsLabel = new JLabel(rhsTitle, JLabel.CENTER);
+		JLabel rhsLabel = new JLabel(rhsTitle, SwingConstants.CENTER);
 		rhsLabel.setForeground(Color.black);
 
 		lhsPanel.add(lhsLabel, BorderLayout.NORTH);
@@ -164,14 +178,50 @@ public class FormatContentPanel extends JPanel {
 		});
 	}
 
-	public void clear() {
-		lhs.clear();
-		rhs.clear();
+	public void setMgr(CoreMgr mgr) {
+		this.mgr = mgr;
 	}
 
 	public void load(String lhsContent, String rhsContent) {
 		clear();
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
+
+		diff();
+	}
+
+	private void diff() {
+		if (mgr != null) {
+			ISourceParser parser = mgr.getLanguageParser();
+
+			String lhsText = lhs.getText();
+			String rhsText = rhs.getText();
+
+			try {
+				List<AdeptToken> lhsTokens = parser.lex(lhsText);
+				List<AdeptToken> rhsTokens = parser.lex(rhsText);
+
+				Transform transform = Myers.INST.diff(lhsTokens, rhsTokens);
+				for (Delta delta : transform) {
+					int[][] locs = transform.getLocations(delta);
+					// Log.debug(this, String.format("@%s:%s", locs[0][0], locs[0][1]));
+
+					Action action = delta.getAction();
+					if (locs[0][1] > 0) lhs.changeStyle(action, locs[0]);
+					if (locs[1][1] > 0) rhs.changeStyle(action, locs[1]);
+				}
+
+			} catch (RecognitionException e) {}
+		}
+	}
+
+	/** Returns the formatted content. */
+	public String getContent() {
+		return rhs.getText();
+	}
+
+	public void clear() {
+		lhs.clear();
+		rhs.clear();
 	}
 }

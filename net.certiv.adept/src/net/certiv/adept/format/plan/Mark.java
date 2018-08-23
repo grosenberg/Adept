@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 
 /**
  * Description of the indentation at the specific token index of a change. The indentation level
@@ -19,13 +19,13 @@ import net.certiv.adept.lang.ParseRecord;
  */
 public class Mark implements Comparator<Mark> {
 
-	private static ParseRecord _data;
+	private static Record _data;
 	int index;
 	int indents;	// nominal indent level at a token index
 	Op op;			// indent direction
 	Bind bind;		// indenting hint
 
-	public static void init(TreeMap<Integer, Mark> profile, ParseRecord data) {
+	public static void init(TreeMap<Integer, Mark> profile, Record data) {
 		_data = data;
 		create(profile, null, Op.ROOT);
 	}

@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 
 public class Indenter {
 
@@ -55,9 +55,9 @@ public class Indenter {
 
 	// key=token index; value=dent
 	private final TreeMap<Integer, Mark> profile = new TreeMap<>();
-	private ParseRecord data;
+	private Record data;
 
-	public Indenter(ParseRecord data) {
+	public Indenter(Record data) {
 		this.data = data;
 
 		// initialize profile
@@ -113,27 +113,24 @@ public class Indenter {
 	private Bind[] calcBinds(AdeptToken beg, AdeptToken end) {
 		Bind[] binds = new Bind[] { Bind.AFTER, Bind.BEFORE };
 
-		int pLine = beg.getLine();
-		if (beg.atBol() && !data.blanklines.get(beg.getLine() - 1)) {
+		int pLine = beg.getLinePos();
+		if (beg.atBol() && !data.blanklines.get(beg.getLinePos() - 1)) {
 			pLine--;	// key to prior line bol
 		}
 		AdeptToken first = data.lineTokensIndex.get(pLine).get(0);
-		int pOff = first.visCol();
+		int pOff = first.getVisPos();
 
-		if (pLine == beg.getLine()) {
+		if (pLine == beg.getLinePos()) {
 			binds[0] = Bind.AFTER;
-		} else if (beg.atBol() && beg.visCol() < pOff) {
+		} else if (beg.atBol() && beg.getVisPos() < pOff) {
 			binds[0] = Bind.AFTER;
 		} else {
 			binds[0] = Bind.BEFORE;
 		}
 
-		if (beg.getLine() == end.getLine()) {
+		if (beg.getLinePos() == end.getLinePos()) {
 			binds[1] = Bind.AFTER;
-		} else if (end.atBol() && end.visCol() < beg.visCol()) {
-			// if (beg.getText().equals(":")) {
-			// Log.error(this, "");
-			// }
+		} else if (end.atBol() && end.getVisPos() < beg.getVisPos()) {
 			binds[1] = Bind.BEFORE;
 		} else {
 			binds[1] = Bind.AFTER;

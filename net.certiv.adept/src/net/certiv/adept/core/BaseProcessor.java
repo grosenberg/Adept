@@ -9,11 +9,11 @@ package net.certiv.adept.core;
 import org.antlr.v4.runtime.RecognitionException;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.tool.ErrorDesc;
+import net.certiv.adept.util.Function;
 import net.certiv.adept.util.Time;
 
 public abstract class BaseProcessor {

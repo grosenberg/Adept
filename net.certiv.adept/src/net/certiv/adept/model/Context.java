@@ -12,12 +12,12 @@ import java.util.List;
 
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.unit.Ranked;
 
 public class Context implements Ranked, Comparable<Context>, Cloneable {
 
-	public static double RankFactor = 1.0 / ParseRecord.AssocLimit / 2;
+	public static double RankFactor = 1.0 / Record.AssocLimit / 2;
 
 	// context frequency
 	@Expose public int rank = 1;

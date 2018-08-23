@@ -17,7 +17,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.format.plan.Group;
 import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Spacing;
@@ -27,11 +27,9 @@ import net.certiv.adept.util.Strings;
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */
 public class FormatterOps {
 
-	private static final String ErrVisCol = "Err: viscol %s should have been %s for %s";
-
 	Tool tool;
 	Document doc;
-	ParseRecord data;
+	Record data;
 	Settings settings;
 	String tabEquiv;
 
@@ -49,7 +47,7 @@ public class FormatterOps {
 	TreeMap<Integer, Integer> tokenLineIndex;
 
 	// key=token index; value=align col
-	HashMap<Integer, Integer> tokenAlignColIndex;
+	HashMap<Integer, Integer> tokenAlignPosIndex;
 
 	// ----------------------------------------------------------------
 
@@ -65,7 +63,7 @@ public class FormatterOps {
 
 		lineTokensIndex = new TreeMultilist<>();
 		tokenLineIndex = new TreeMap<>();
-		tokenAlignColIndex = new HashMap<>();
+		tokenAlignPosIndex = new HashMap<>();
 	}
 
 	public void dispose() {
@@ -76,52 +74,55 @@ public class FormatterOps {
 		contents = null;
 		lineTokensIndex.clear();
 		tokenLineIndex.clear();
-		tokenAlignColIndex.clear();
+		tokenAlignPosIndex.clear();
 	}
 
 	// -----------------------------------------------------------------------------
 
 	protected void addToAlignIndex(int index, int align) {
-		tokenAlignColIndex.put(index, align);
+		tokenAlignPosIndex.put(index, align);
 	}
 
 	protected int getAlign(int index) {
-		Integer align = tokenAlignColIndex.get(index);
+		Integer align = tokenAlignPosIndex.get(index);
 		return align != null ? align : 0;
 	}
 
 	// -----------------------------------------------------------------------------
 
-	/** Find and add a meta group for each set of linear groups. */
-	protected void collectLinears() {
-		Group linears = new Group();
+	/** Create a meta group for each set of serial groups. */
+	protected void collectSerials() {
+		Group serials = new Group();
 		for (Group group : data.groupIndex) {
 			for (Scheme scheme : group.getSchemes()) {
-				if (group.linear(scheme)) {
+				if (group.colinear(scheme)) {
 					TreeMultilist<Integer, AdeptToken> members = group.get(scheme);
 					Integer key = members.firstKey();
-					linears.addMembers(Scheme.AFIL, key, members.get(key));
+					serials.addMembers(Scheme.SERIAL, key, members.get(key));
 				}
 			}
 		}
 
+		TreeMultilist<Integer, AdeptToken> members = serials.get(Scheme.SERIAL);
+		if (members == null) return;
+
 		Group group = new Group();
-		TreeMultilist<Integer, AdeptToken> members = linears.get(Scheme.AFIL);
 		for (int lnum : members.keySet()) {
-			if (group.isEmpty() || group.contiguous(Scheme.AFIL, lnum)) {
-				group.addMembers(Scheme.AFIL, lnum, members.get(lnum));
+			if (group.isEmpty() || group.contiguous(Scheme.SERIAL, lnum)) {
+				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			} else {
 				data.groupIndex.add(group);
 				group = new Group();
-				group.addMembers(Scheme.AFIL, lnum, members.get(lnum));
+				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			}
 		}
 		if (!group.isEmpty()) data.groupIndex.add(group);
+
 	}
 
 	/**
 	 * Rebuilds the line indexes to reflect edits between real tokens. Appends each real token to the
-	 * lineTokenIndex. Creates new lines as appropriate. Updates the {@code visCol} field of the given
+	 * lineTokenIndex. Creates new lines as appropriate. Updates the {@code visPos} field of the given
 	 * token to refect any formatting edits.
 	 */
 	protected void buildLinesIndexes() {
@@ -134,35 +135,31 @@ public class FormatterOps {
 			String ws = findWsLeft(token);
 			int nls = Strings.countVWS(ws);
 
-			int line = prior != null ? prior.getLine() : 0;
-			line += nls + 1;	// native 1..n
-			token.setLine(line);
+			int line0 = prior != null ? prior.getLinePos() : 0;
+			line0 += nls;
+			token.setLine(line0 + 1); // native 1..n
 
 			int from = 0;
 			if (prior != null && nls == 0) {
-				from = prior.visCol() + prior.getText().length();
+				from = prior.getVisPos() + prior.getText().length();
 			}
 			int width = Strings.measureVisualWidth(ws, settings.tabWidth, from);
-			token.setVisCol(from + width);
+			token.setVisPos(from + width);
 
-			lineTokensIndex.put(line, token);
-			tokenLineIndex.put(token.getTokenIndex(), line);
+			lineTokensIndex.put(line0, token);
+			tokenLineIndex.put(token.getTokenIndex(), line0);
 
 			prior = token;
 		}
 	}
 
 	/**
-	 * Define an edit to replace the existing text (should be ws only) between the given tokens
-	 * (exclusive) with the new given string value.
+	 * Define an edit to replace the existing comment text with the new given string value.
 	 *
-	 * @param beg left token
-	 * @param end right token
-	 * @param existing existing text
+	 * @param token the comment token
 	 * @param replacement replacement text
 	 * @param priority relative edit priority
 	 * @param msg edit description
-	 * @throws IllegalArgumentException
 	 */
 	protected TextEdit updateOrCreateCommentEdit(AdeptToken token, String replacement, int priority, String msg) {
 		TextEdit edit = edits.get(Region.key(token, token));
@@ -181,42 +178,21 @@ public class FormatterOps {
 	 *
 	 * @param lineNum
 	 * @param token
-	 * @param toVisCol
+	 * @param toVisPos
 	 */
-	protected void prepEditAndShiftLine(int lnum, AdeptToken token, int toVisCol) {
-		int from = calcVisCol(token);
-		if (token.visCol() != from) {
-			tool.toolInfo(this, String.format(ErrVisCol, token.visCol(), from, token.toString()));
-			token.setVisCol(from);
-		}
-
-		if (from == toVisCol) return;
+	protected void prepEditAndShiftLine(int lnum, AdeptToken token, int toVisPos) {
+		int vpos = calcVisPosition(token);
+		if (vpos == toVisPos) return;
 
 		List<AdeptToken> fullLine = lineTokensIndex.get(lnum);
 		int idx = fullLine.indexOf(token);
-		updateOrCreateEditLeft(token, idx, toVisCol);
-		updateLineVisCols(token);
+		updateOrCreateEditLeft(token, idx, toVisPos);
+		updateLineVisPositions(token);
 	}
 
 	// -----------------------------------------------------------------------------
 
-	protected void updateLineVisCols(AdeptToken token) {
-		int col = calcVisCol(token) + token.getText().length();
-
-		int lnum = tokenLineIndex.get(token.getTokenIndex());
-		List<AdeptToken> fullLine = lineTokensIndex.get(lnum);
-		int idx = fullLine.indexOf(token);
-		ListIterator<AdeptToken> reals = fullLine.listIterator(idx + 1);
-		while (reals.hasNext()) {
-			AdeptToken real = reals.next();
-			String lead = findWsLeft(real);
-			col += Strings.measureVisualWidth(lead, settings.tabWidth, col);
-			real.setVisCol(col);
-			col += real.getText().length();
-		}
-	}
-
-	protected int calcVisCol(AdeptToken token) {
+	protected int calcVisPosition(AdeptToken token) {
 		int lnum = tokenLineIndex.get(token.getTokenIndex());
 		List<AdeptToken> reals = lineTokensIndex.get(lnum);
 		int idx = reals.indexOf(token);
@@ -230,24 +206,40 @@ public class FormatterOps {
 		return Strings.measureVisualWidth(sb, settings.tabWidth);
 	}
 
+	protected void updateLineVisPositions(AdeptToken token) {
+		int col = calcVisPosition(token) + token.getText().length();
+
+		int lnum = tokenLineIndex.get(token.getTokenIndex());
+		List<AdeptToken> fullLine = lineTokensIndex.get(lnum);
+		int idx = fullLine.indexOf(token);
+		ListIterator<AdeptToken> reals = fullLine.listIterator(idx + 1);
+		while (reals.hasNext()) {
+			AdeptToken real = reals.next();
+			String lead = findWsLeft(real);
+			col += Strings.measureVisualWidth(lead, settings.tabWidth, col);
+			real.setVisPos(col);
+			col += real.getText().length();
+		}
+	}
+
 	// -----------------------------------------------------------------------------
 
-	protected void updateOrCreateEditLeft(AdeptToken token, int pos, int toVisCol) {
+	protected void updateOrCreateEditLeft(AdeptToken token, int pos, int toVisPos) {
 		TextEdit edit = findOrCreateEditLeft(token);
 		if (pos == 0) { // at BOL
-			String ws = createWs(0, toVisCol);
+			String ws = createWs(0, toVisPos);
 			edit.replUpdate(ws);
 		} else {
 			AdeptToken prior = data.tokenIndex.get(edit.begIndex());
-			int from = prior.visCol() + prior.getText().length();
-			if (from > toVisCol) {
-				String msg = String.format("Err: shift %s to %s: %s", from, toVisCol, token.toString());
+			int from = prior.getVisPos() + prior.getText().length();
+			if (from > toVisPos) {
+				String msg = String.format("Err: shift %s to %s: %s", from, toVisPos, token.toString());
 				tool.toolInfo(this, msg);
 				return;
 			}
-			edit.replUpdate(createWs(from, toVisCol));
+			edit.replUpdate(createWs(from, toVisPos));
 		}
-		token.setVisCol(toVisCol);
+		token.setVisPos(toVisPos);
 	}
 
 	private String createWs(int from, int to) {

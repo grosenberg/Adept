@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -32,7 +32,7 @@ import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.unit.TreeMultiset;
@@ -52,7 +52,7 @@ public class MatchView extends AbstractViewBase {
 	private static final String srcExt = ".g4";
 
 	private Tool tool;
-	private ParseRecord data;
+	private Record data;
 
 	private JComboBox<Item> srcBox;
 	private JSplitPane split;

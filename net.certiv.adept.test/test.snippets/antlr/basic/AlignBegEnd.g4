@@ -1,6 +1,6 @@
-grammar AlignBegEnd ;
+grammar  AlignBegEnd  ;
 
-comment		: DocComment
+ comment		: DocComment
 		| BlockComment
 			|   LineComment
 |		LineCommentExt

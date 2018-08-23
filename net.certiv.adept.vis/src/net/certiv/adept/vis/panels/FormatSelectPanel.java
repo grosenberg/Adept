@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -47,7 +48,8 @@ public class FormatSelectPanel extends JPanel {
 	public JComboBox<Integer> sizeBox;
 	public JComboBox<Integer> tabBox;
 
-	public JSeparator separator;
+	private JSeparator separator;
+	private JSeparator separator_1;
 
 	public JCheckBox chkFormatCode;
 	public JCheckBox chkFormatComments;
@@ -55,6 +57,8 @@ public class FormatSelectPanel extends JPanel {
 	public JCheckBox chkAlignFields;
 	public JCheckBox chkAlignComments;
 	public JCheckBox chkBreakLines;
+
+	private JButton btnFormat;
 
 	/**
 	 * Create the panel.
@@ -64,20 +68,22 @@ public class FormatSelectPanel extends JPanel {
 		initPanel(view);
 
 		setLayout(new FormLayout(
-				new ColumnSpec[] { FormSpecs.UNRELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+				new ColumnSpec[] { FormSpecs.UNRELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
 						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
 						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(50dlu;default)"),
 						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(150dlu;default)"),
-						FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("max(40dlu;default)"),
+						FormSpecs.UNRELATED_GAP_COLSPEC, ColumnSpec.decode("max(40dlu;default)"),
 						FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC,
-						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+						FormSpecs.DEFAULT_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
 						FormSpecs.RELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
-						FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), },
+						FormSpecs.DEFAULT_COLSPEC, FormSpecs.UNRELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC,
+						FormSpecs.UNRELATED_GAP_COLSPEC, FormSpecs.DEFAULT_COLSPEC, FormSpecs.RELATED_GAP_COLSPEC,
+						ColumnSpec.decode("default:grow"), },
 				new RowSpec[] { FormSpecs.DEFAULT_ROWSPEC, FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC,
 						FormSpecs.RELATED_GAP_ROWSPEC, }));
 
 		JLabel lblLanguage = new JLabel("Language");
-		add(lblLanguage, "2, 1");
+		add(lblLanguage, "2, 1, right, default");
 
 		langBox = new JComboBox<>();
 		add(langBox, "4, 1, fill, default");
@@ -107,6 +113,13 @@ public class FormatSelectPanel extends JPanel {
 		chkFormatHeader = new JCheckBox("Format Header");
 		add(chkFormatHeader, "20, 1");
 
+		separator_1 = new JSeparator();
+		separator_1.setOrientation(SwingConstants.VERTICAL);
+		add(separator_1, "22, 1, 1, 3");
+
+		btnFormat = new JButton("Re-Format");
+		add(btnFormat, "24, 1");
+
 		JLabel lblFont = new JLabel("Font");
 		add(lblFont, "6, 3, right, default");
 
@@ -125,7 +138,7 @@ public class FormatSelectPanel extends JPanel {
 		chkAlignComments = new JCheckBox("Align Comments");
 		add(chkAlignComments, "18, 3");
 
-		chkBreakLines = new JCheckBox("Break Long Lines");
+		chkBreakLines = new JCheckBox("Wrap Lines");
 		add(chkBreakLines, "20, 3");
 
 		complete();
@@ -158,6 +171,9 @@ public class FormatSelectPanel extends JPanel {
 				if (e.getSource() == srcBox) {
 					view.process();
 
+				} else if (e.getSource() == btnFormat) {
+					view.reprocess();
+
 				} else {
 					if (e.getSource() == langBox) {
 						Path dir = Paths.get(FormatView.rootDir, langModel.getSelected());
@@ -178,5 +194,7 @@ public class FormatSelectPanel extends JPanel {
 		chkFormatComments.addActionListener(run);
 		chkAlignFields.addActionListener(run);
 		chkAlignComments.addActionListener(run);
+
+		btnFormat.addActionListener(run);
 	}
 }

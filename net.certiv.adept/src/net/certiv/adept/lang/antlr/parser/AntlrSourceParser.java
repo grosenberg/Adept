@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
@@ -22,14 +23,15 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import net.certiv.adept.Tool;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
-import net.certiv.adept.lang.SourceParser;
-import net.certiv.adept.lang.AdeptTokenFactory;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParserErrorListener;
+import net.certiv.adept.lang.SourceParser;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Lexer;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.tool.ErrorDesc;
+import net.certiv.adept.util.Utils;
 
 public class AntlrSourceParser extends SourceParser {
 
@@ -38,10 +40,10 @@ public class AntlrSourceParser extends SourceParser {
 		this.tool = tool;
 		this.builder = builder;
 
-		AdeptTokenFactory factory = new AdeptTokenFactory();
+		TokenFactory<?> factory = getTokenFactory();
 		setup(factory, doc.getContent());
 
-		builder.parser.setTokenFactory(factory);
+		builder.parser.setTokenFactory(getTokenFactory());
 		builder.parser.removeErrorListeners();
 		builder.parser.addErrorListener(new ParserErrorListener(this));
 
@@ -98,5 +100,16 @@ public class AntlrSourceParser extends SourceParser {
 		excludes.add(Antlr4Parser.ARG_CONTENT);
 		excludes.add(Antlr4Parser.RULE_other << 16);
 		return excludes;
+	}
+
+	@Override
+	public List<AdeptToken> lex(String content) throws RecognitionException {
+		CodePointCharStream cs = CharStreams.fromString(content);
+		Antlr4Lexer lexer = new Antlr4Lexer(cs);
+		lexer.setTokenFactory(getTokenFactory());
+		lexer.addErrorListener(syntaxErrListener);
+		CommonTokenStream ts = new CommonTokenStream(lexer);
+		ts.fill();
+		return Utils.upconvert(ts.getTokens());
 	}
 }

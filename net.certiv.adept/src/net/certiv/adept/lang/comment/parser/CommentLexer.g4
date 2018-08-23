@@ -137,7 +137,7 @@ fragment Item
 fragment Esc	: '\\'			;
 fragment Nl		: '\r'? '\n'	;
 fragment HWs	: [ \t]			;
-fragment VWs	: [\r\n]		;
+fragment VWs	: [\r\n\f]		;
 
 fragment Underscore	: '_'	;
 fragment LBrace		: '{'	;

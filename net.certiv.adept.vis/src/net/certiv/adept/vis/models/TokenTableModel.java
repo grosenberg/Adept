@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -33,7 +33,7 @@ public class TokenTableModel extends AbstractTableModel {
 			String hide = token.getChannel() > 0 ? "Hdn" : "";
 			String name = type == Token.EOF ? "EOF" : tokenNames.get(type);
 			String text = Utils.escapeWhitespace(token.getText(), true);
-			String line = String.valueOf(token.getLine());
+			String line = String.valueOf(token.getLinePos());
 			String col = String.valueOf(token.getCharPositionInLine() + 1);
 
 			String[] row = { index, hide, name, text, line, col };

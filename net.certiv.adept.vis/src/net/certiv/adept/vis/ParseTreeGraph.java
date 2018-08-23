@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -29,7 +29,7 @@ import org.antlr.v4.runtime.tree.Trees;
 import com.jgoodies.looks.plastic.Plastic3DLookAndFeel;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.vis.components.LineRuler;
 import net.certiv.adept.vis.components.SliderDialog;
@@ -220,7 +220,7 @@ public class ParseTreeGraph extends AbstractViewBase {
 		tool.setSourceFiles(pathname);
 		tool.execute();
 
-		ParseRecord data = tool.getDocument().getParseRecord();
+		Record data = tool.getDocument().getParseRecord();
 
 		// graphical rep of tree
 		viewer.inspect(data.getParseTreeRoot(), data.getRuleNames());

@@ -39,6 +39,8 @@ public interface ISourceParser extends IParseErrorReporter {
 	/** Returns the language specific list of feature types that are to be excluded. */
 	List<Integer> excludedTypes();
 
+	TokenFactory<?> getTokenFactory();
+
 	void setup(TokenFactory<?> factory, String content);
 
 	ParseTree getParseTree();
@@ -47,5 +49,7 @@ public interface ISourceParser extends IParseErrorReporter {
 
 	List<String> getTokenNames();
 
-	ParseRecord getParseData();
+	Record getParseData();
+
+	List<AdeptToken> lex(String content) throws RecognitionException;
 }

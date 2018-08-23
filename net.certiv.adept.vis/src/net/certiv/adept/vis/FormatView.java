@@ -30,7 +30,7 @@ import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
 import net.certiv.adept.format.TextEdit;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
@@ -147,7 +147,7 @@ public class FormatView extends AbstractViewBase {
 
 	protected void selectFeatureData(int line, int col) {
 		if (enabled) {
-			ParseRecord data = mgr.getDocModel().getParseRecord();
+			Record data = mgr.getDocModel().getParseRecord();
 			Integer start = data.lineStartIndex.get(line);
 			if (start != null) {
 				// get text up to start of pointed to character!
@@ -177,7 +177,7 @@ public class FormatView extends AbstractViewBase {
 
 	/** Returns the token on the given line (0..n-1) that overlaps the given visual column (0..n-1). */
 	private AdeptToken findToken(int line, int vcol) {
-		ParseRecord data = mgr.getDocModel().getParseRecord();
+		Record data = mgr.getDocModel().getParseRecord();
 		List<AdeptToken> tokens = data.lineTokensIndex.get(line);
 		if (tokens == null || tokens.isEmpty()) return null;
 		if (tokens.size() == 1) return tokens.get(0);
@@ -185,8 +185,8 @@ public class FormatView extends AbstractViewBase {
 		for (int idx = 0, len = tokens.size(); idx < len - 1; idx++) {
 			AdeptToken token = tokens.get(idx);
 			AdeptToken tnext = tokens.get(idx + 1);
-			int beg = token.iVisCol();
-			int end = tnext.iVisCol();
+			int beg = token.getVisPos();
+			int end = tnext.getVisPos();
 
 			if (idx == 0 && vcol < beg) return tokens.get(idx);
 			if (beg <= vcol && vcol < end) return tokens.get(idx);
@@ -225,8 +225,20 @@ public class FormatView extends AbstractViewBase {
 		sourceContent = loadContent(pathname);
 		formatPanel.load(sourceContent, "");
 
-		// Time.wait(1);
 		FormatWorker worker = new FormatWorker();
+		worker.execute();
+	}
+
+	public void reprocess() {
+		sourceContent = formatPanel.getContent();
+		if (sourceContent == null || sourceContent.isEmpty()) {
+			process();
+			return;
+		}
+
+		formatPanel.load(sourceContent, "");
+		FormatWorker worker = new FormatWorker();
+		worker.setContent(sourceContent);
 		worker.execute();
 	}
 
@@ -242,16 +254,26 @@ public class FormatView extends AbstractViewBase {
 
 	private class FormatWorker extends SwingWorker<String, Object> {
 
+		private String content = null;
+
 		@Override
 		protected String doInBackground() throws Exception {
 			try {
-				tool.setSourceFiles(pathname);
+				if (content == null) {
+					tool.setSourceFiles(pathname);
+				} else {
+					tool.setSource(pathname, content);
+				}
 				tool.execute();
 			} catch (Exception e) {
 				Log.error(this, "Error in tool execution", e);
 				throw e;
 			}
 			return null;
+		}
+
+		public void setContent(String content) {
+			this.content = content;
 		}
 
 		@Override
@@ -265,6 +287,7 @@ public class FormatView extends AbstractViewBase {
 		mgr = tool.getMgr();
 		doc = mgr.getDocModel().getDocument();
 
+		formatPanel.setMgr(mgr);
 		formatPanel.load(sourceContent, tool.getFormatted());
 		info.loadPerfData(mgr);
 		enabled = true;

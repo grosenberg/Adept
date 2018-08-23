@@ -1,11 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>net.certiv</groupId>
 		<artifactId>adept.parent</artifactId>
-		<version>0.3.1-SNAPSHOT</version>
+		<version>0.4.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>adept.vis</artifactId>
@@ -48,15 +49,15 @@
 			<version>24.0-jre</version>
 		</dependency>
 
+		<!-- <dependency> <groupId>com.github.wumpz</groupId> <artifactId>diffutils</artifactId> 
+			<version>2.2</version> </dependency> -->
+
 		<!-- <dependency> <groupId>net.sf.jung</groupId> <artifactId>jung-visualization</artifactId> 
 			<version>2.1.1</version> </dependency> <dependency> <groupId>net.sf.jung</groupId> 
 			<artifactId>jung-graph-impl</artifactId> <version>2.1.1</version> </dependency> -->
 
 		<!-- https://github.com/timmolter/XChart <dependency> <groupId>org.knowm.xchart</groupId> 
 			<artifactId>xchart</artifactId> <version>3.5.0</version> </dependency> -->
-
-		<!-- <dependency> <groupId>com.googlecode.java-diff-utils</groupId> <artifactId>diffutils</artifactId> 
-			<version>1.3.0</version> </dependency> -->
 
 	</dependencies>
 

@@ -261,6 +261,7 @@ LINECOMMENT
 fragment Hws			: [ \t]			;
 fragment Vws			: '\r'? [\n\f]	;
 
-fragment DocComment		: '/**' .*? ( '*/' | EOF )	;
-fragment BlockComment	: '/*'  .*? ( '*/' | EOF )	;
-fragment LineComment	: '//' ~[\r\n]* ;
+fragment DocComment		: '/**'  .*? ( '*/' | EOF )	;
+fragment BlockComment	: '/*'   .*? ( '*/' | EOF )	;
+fragment LineComment	: '//' ( ~[\r\n\f]* | EOF ) ;
+

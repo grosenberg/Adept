@@ -51,7 +51,7 @@ public class Refs {
 	}
 
 	public static String tLocation(AdeptToken token) {
-		return String.format(LocMsg, token.getLine(), token.getCharPositionInLine(), token.visCol());
+		return String.format(LocMsg, token.getLine(), token.getCol(), token.getVisPos());
 	}
 
 	public static String tText(int type, String text) {

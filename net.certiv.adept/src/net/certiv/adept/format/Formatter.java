@@ -8,19 +8,18 @@ package net.certiv.adept.format;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.DocModel;
+import net.certiv.adept.unit.HashMultilist;
 
 /** Document formatter. */
 public class Formatter extends FormatterOps {
 
 	private SpacingProcessor spacer;
-	private LineBreakProcessor breaker;
+	private WrapProcessor breaker;
 	private AlignProcessor aligner;
 	private CommentProcessor commenter;
 
@@ -28,7 +27,7 @@ public class Formatter extends FormatterOps {
 		super(model, settings);
 
 		spacer = new SpacingProcessor(this);
-		breaker = new LineBreakProcessor(this);
+		breaker = new WrapProcessor(this);
 		aligner = new AlignProcessor(this);
 		commenter = new CommentProcessor(this);
 	}
@@ -66,25 +65,27 @@ public class Formatter extends FormatterOps {
 	}
 
 	public boolean applyEdits(List<TextEdit> edits) {
-		Map<Integer, TextEdit> editSet = new HashMap<>();
+		HashMultilist<Integer, TextEdit> editsIdx = new HashMultilist<>();
 		for (TextEdit edit : edits) {
-			editSet.put(edit.begIndex(), edit);
+			editsIdx.put(edit.begIndex(), edit);
 		}
+		editsIdx.sort(TextEdit.Comp);
 
 		List<AdeptToken> tokens = data.getTokens();
 		for (int idx = 0, len = tokens.size() - 1; idx < len;) {
 			AdeptToken token = tokens.get(idx);
-			TextEdit edit = editSet.get(token.getTokenIndex());
+			List<TextEdit> editSet = editsIdx.get(token.getTokenIndex());
+			if (editSet != null) {
+				for (TextEdit edit : editSet) {
+					if (token.isComment() && edit.getRegion().range() == 1) {
+						contents.append(edit.replacement());
+						idx++;
 
-			if (edit != null) {
-				if (token.isComment() && edit.getRegion().range() == 1) {
-					contents.append(edit.replacement());
-					idx++;
-
-				} else {
-					contents.append(token.getText());
-					contents.append(edit.replacement());
-					idx = edit.endIndex();
+					} else {
+						contents.append(token.getText());
+						contents.append(edit.replacement());
+						idx = edit.endIndex();
+					}
 				}
 
 			} else {

@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
+ *
  * Use of this file is governed by the Eclipse Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
@@ -90,8 +91,7 @@ public class CommentProcessor extends AbstractProcessor {
 			for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
 				AdeptToken token = ops.data.commentIndex.get(idx);
 				if (process(token)) {
-					// token.setText(this.comment);
-					ops.updateOrCreateCommentEdit(token, this.comment, 1, "");
+					ops.updateOrCreateCommentEdit(token, getResult(), 1, "");
 				}
 			}
 		}
@@ -107,8 +107,9 @@ public class CommentProcessor extends AbstractProcessor {
 		return idx;
 	}
 
-	public boolean process(AdeptToken comment) {
-		return parser.process(ops.tool, comment);
+	/** Sets {@code this.comment} as a side-effect! */
+	public boolean process(AdeptToken token) {
+		return parser.process(ops.tool, token);
 	}
 
 	public String getResult() {

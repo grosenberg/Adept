@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -21,6 +21,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.border.Border;
 import javax.swing.event.CaretEvent;
@@ -34,49 +35,38 @@ import javax.swing.text.TabStop;
 import javax.swing.text.View;
 
 /**
- * A ruler that shows the tabs for the current paragraph, as well as allowing the user to manipulate
- * the tabs.
+ * A ruler that displays tabs for the document.
  *
  * @author Scott Violet
  */
 public class TabRuler extends JPanel implements CaretListener, PropertyChangeListener {
 
-	// Some defines used in painting the ruler.
-	protected static final int DPI = 72;
-	protected static final int H_DPI = DPI / 2;
-	protected static final int Q_DPI = DPI / 4;
-	protected static final int E_DPI = DPI / 8;
+	protected int DPI = Toolkit.getDefaultToolkit().getScreenResolution();
+	protected final int H_DPI = DPI / 2;
+	protected final int Q_DPI = DPI / 4;
+	protected final int E_DPI = DPI / 8;
 
-	// Sizes for drawing tabs.
+	// Sizes for drawing tab glyphs.
 	protected static final int TabSize = 2;
 	protected static final int TabWidth = 6;
 	protected static final int TabHeight = 4;
 
-	/** Shared instance of default border. */
-	protected static final Border DefaultBorder = new RulerBorder();
+	private static final Border DefaultBorder = new RulerBorder();
+	private static final Color DefaultBackground = new JTextField().getBackground();
 
-	/** TextPane showing tabs for. */
 	private JTextPane editor;
-	/** Current TabSet showing. */
 	private TabSet tabs;
 
-	/** Current paragraph element at character position. */
 	private Element paragraph;
-	/** Offset to start drawing tabs from. */
-	private int xOffset;
-	/** If false, the value of xOffset is not valid. */
-	private boolean validOffset;
+	private int pOffset;
+	private boolean offsetValid;
 
-	/** Font using for the units. */
 	private Font unitsFont;
-	/** Total font height. */
 	private int fontHeight;
-	/** Font ascent. */
 	private int fontAscent;
 
 	public TabRuler() {
-		// setBackground(Color.white);
-
+		setBackground(DefaultBackground);
 		setBorder(DefaultBorder);
 	}
 
@@ -85,9 +75,7 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		setTextPane(editor);
 	}
 
-	/**
-	 * Sets the text pane tabs are rendered for.
-	 */
+	/** Sets the text pane tabs are rendered for. */
 	public void setTextPane(JTextPane editor) {
 		if (this.editor != null) {
 			this.editor.removeCaretListener(this);
@@ -103,9 +91,7 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		}
 	}
 
-	/**
-	 * Gets the text pane tabs are being rendered for.
-	 */
+	/** Gets the text pane tabs are being rendered for. */
 	public JTextPane getTextPane() {
 		return editor;
 	}
@@ -137,13 +123,11 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 				paragraph = pe;
 				newTabs = StyleConstants.getTabSet(pe.getAttributes());
 				if (newOffset == null) {
-					validOffset = false;
-				} else if (newOffset.intValue() != xOffset) {
-					validOffset = true;
-					xOffset = newOffset.intValue();
-					if (tabs == newTabs) {
-						repaint();
-					}
+					offsetValid = false;
+				} else if (newOffset.intValue() != pOffset) {
+					offsetValid = true;
+					pOffset = newOffset.intValue();
+					if (tabs == newTabs) repaint();
 				}
 			} else {
 				newTabs = tabs;
@@ -177,15 +161,15 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 	 * Returns the offset, along the x axis, tabs are to start from.
 	 */
 	protected int getXOffset() {
-		if (!validOffset && getParagraphElement() != null) {
+		if (!offsetValid && getParagraphElement() != null) {
 			Integer offset = determineOffset(getParagraphElement());
 			if (offset == null) return 0;
 
-			xOffset = offset.intValue();
-			validOffset = true;
+			pOffset = offset;
+			offsetValid = true;
 			repaint();
 		}
-		return xOffset;
+		return pOffset;
 	}
 
 	/**
@@ -196,9 +180,8 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		return paragraph;
 	}
 
-	//
+	// ================================================
 	// Painting methods
-	//
 
 	/**
 	 * Messaged to paint the Component, will fill the background and message paintUnits and paintTabs.
@@ -208,15 +191,18 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		Rectangle clip = g.getClipBounds();
 		Insets insets = getInsets();
 
-		updateFontIfNecessary();
+		updateFont();
 		g.setColor(getBackground());
 		g.fillRect(clip.x, clip.y, clip.width, clip.height);
 		paintUnits(g, clip, insets);
 		paintTabMarks(g, clip, insets);
 	}
 
-	/** Paints the unit indicators. */
+	/** Paint tics. */
 	protected void paintUnits(Graphics g, Rectangle clip, Insets insets) {
+		g.setFont(getUnitsFont());
+		g.setColor(getUnitsColor());
+
 		int xOffset = getXOffset();
 		int fontY = getUnitsFontAscent();
 		int midY = getUnitsFontHeight() / 2;
@@ -226,24 +212,24 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 			fontY += insets.top;
 			midY += insets.top;
 		}
-		g.setColor(getUnitsColor());
-		g.setFont(getUnitsFont());
 
 		FontMetrics fm = g.getFontMetrics();
-		// int width = fm.charWidth('0') ;
-
-		for (int x = Math.max(xOffset, clip.x / DPI * DPI + dpiOffset), maxX = clip.x
-				+ clip.width; x <= maxX; x += E_DPI) {
-			int tempX = x - dpiOffset;
+		int beg = Math.max(xOffset, clip.x / DPI * DPI + dpiOffset);
+		int maxX = clip.x + clip.width;
+		for (int tic = beg; tic <= maxX; tic += E_DPI) {
+			int tempX = tic - dpiOffset;
 			if (tempX % DPI == 0) {
-				String numString = Integer.toString((x - xOffset) / DPI);
-				g.drawString(numString, x - fm.stringWidth(numString) / 2, fontY);
+				String numString = Integer.toString((tic - xOffset) / DPI);
+				g.drawString(numString, tic - fm.stringWidth(numString) / 2, fontY);
+
 			} else if (tempX % H_DPI == 0) {
-				g.drawLine(x, midY - 3, x, midY + 3);
+				g.drawLine(tic, midY - 3, tic, midY + 3);
+
 			} else if (tempX % Q_DPI == 0) {
-				g.drawLine(x, midY - 2, x, midY + 2);
+				g.drawLine(tic, midY - 2, tic, midY + 2);
+
 			} else {
-				g.drawLine(x, midY - 1, x, midY + 1);
+				g.drawLine(tic, midY - 1, tic, midY + 1);
 			}
 		}
 	}
@@ -262,8 +248,6 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		if (tabs == null) {
 			g.setColor(getSynthesizedTabColor());
 			// Paragraph treats a null tabset as a tab at every 72 pixels.
-			// Different implementations of View used to represent a
-			// Paragraph may not due this.
 			lastX = Math.max(xOffset, lastX / DPI * DPI + xOffset % DPI);
 			while (lastX <= maxX) {
 				paintTabMark(g, clip, lastX, maxY, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
@@ -290,25 +274,24 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 	 * Paints a particular tab marker. <code>tab</code> may be null, indicating a synthesized tab is
 	 * being painted.
 	 */
-	protected void paintTabMark(Graphics g, Rectangle clip, int x, int y, int alignment, int leader) {
+	protected void paintTabMark(Graphics g, Rectangle clip, int xPos, int maxY, int alignment, int leader) {
 		switch (alignment) {
 			case TabStop.ALIGN_LEFT:
-				int[] xx = { x, x - 3, x + 3 };
-				int[] yy = { y - TabHeight, y, y };
+				int[] xx = { xPos, xPos - 3, xPos + 3 };
+				int[] yy = { maxY - TabHeight, maxY, maxY };
 				g.fillPolygon(xx, yy, 3);
-
-				// g.fillRect(x, y - TabHeight, TabSize, TabHeight);
-				// g.fillRect(pos, maxY - TabSize, TabWidth + TabSize, TabSize);
+				// g.fillRect(xPos, maxY - TabHeight, TabSize, TabHeight);
+				// g.fillRect(xPos, maxY - TabSize, TabWidth + TabSize, TabSize);
 				break;
 			case TabStop.ALIGN_RIGHT:
-				g.fillRect(x, y - TabHeight, TabSize, TabHeight);
-				g.fillRect(x - TabWidth, y - TabSize, TabWidth, TabSize);
+				g.fillRect(xPos, maxY - TabHeight, TabSize, TabHeight);
+				g.fillRect(xPos - TabWidth, maxY - TabSize, TabWidth, TabSize);
 				break;
 			case TabStop.ALIGN_DECIMAL:
-				g.fillRect(x, y - TabHeight - TabSize - 2, TabSize, TabSize);
+				g.fillRect(xPos, maxY - TabHeight - TabSize - 2, TabSize, TabSize);
 			case TabStop.ALIGN_CENTER:
-				g.fillRect(x, y - TabHeight, TabSize, TabHeight);
-				g.fillRect(x - TabWidth, y - TabSize, TabWidth * 2 + TabSize, TabSize);
+				g.fillRect(xPos, maxY - TabHeight, TabSize, TabHeight);
+				g.fillRect(xPos - TabWidth, maxY - TabSize, TabWidth * 2 + TabSize, TabSize);
 				break;
 			default:
 				break;
@@ -350,7 +333,7 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 
 	@Override
 	public Dimension getPreferredSize() {
-		updateFontIfNecessary();
+		updateFont();
 
 		Insets insets = getInsets();
 
@@ -371,33 +354,24 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		return getPreferredSize();
 	}
 
-	/**
-	 * The ascent of the units font.
-	 */
+	/** The ascent of the units font. */
 	protected int getUnitsFontAscent() {
 		return fontAscent;
 	}
 
-	/**
-	 * Returns the height of the tray.
-	 */
+	/** Returns the height of the ruler tray. */
 	protected int getUnitsFontHeight() {
 		return fontHeight;
 	}
 
-	/**
-	 * Updates font height information.
-	 */
-	private void updateFontIfNecessary() {
+	/** Updates font height information. */
+	private void updateFont() {
 		Font font = getUnitsFont();
-
 		if (unitsFont != font) {
 			fontHeight = fontAscent = 0;
 			if (font != null) {
-				Toolkit tk = getToolkit();
-
-				if (tk != null) {
-					// FontMetrics fm = tk.getFontMetrics(font);
+				Toolkit kit = getToolkit();
+				if (kit != null) {
 					LineMetrics fm = font.getLineMetrics("Ag", FontChoiceBox.FRC);
 					if (fm != null) {
 						fontHeight = Math.round(fm.getHeight());
@@ -492,9 +466,7 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		TabSet tabs = getTabSet();
 
 		xLocation -= getXOffset();
-
 		float xFloat = xLocation;
-
 		if (tabs == null) {
 			if (xLocation % DPI <= 5) {
 				return new TabStop(xLocation / DPI * DPI);
@@ -547,17 +519,8 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 		}
 	}
 
-	/**
-	 * Returns the default border to use.
-	 */
-	protected Border createBorder() {
-		return DefaultBorder;
-	}
-
-	/**
-	 * Draws a little border around the TabRuler.
-	 */
-	protected static class RulerBorder implements Border {
+	/** Draws a little border around the TabRuler. */
+	private static class RulerBorder implements Border {
 		protected static final Insets DefaultInsets = new Insets(2, 0, 4, 0);
 
 		/**
@@ -598,222 +561,4 @@ public class TabRuler extends JPanel implements CaretListener, PropertyChangeLis
 			return false;
 		}
 	}
-
-	// /**
-	// * Creates and returns the listener to use for moving around tabs.
-	// */
-	// protected MouseInputListener createMouseInputListener() {
-	// return new MouseInputHandler();
-	// }
-
-	// /**
-	// * MouseInputHandler is responsible for receiving mouse events and translating that into adjusting
-	// * the TabSet. A mouse down on an existing tab allows the user to move that tab around, if the
-	// shift
-	// * key is held down on the initial click the type of tab will change to the next type of alignment
-	// * (cycling through left, right, centered, and decimal). A mouse down not near an exising tab
-	// causes
-	// * a new tab to be created. A tab can be removed by dragging it outside the bounds of the
-	// TabRuler.
-	// */
-	// protected class MouseInputHandler extends MouseInputAdapter {
-	// /**
-	// * The tab the user is dragging, non null indicates a valid tab has been selected.
-	// */
-	// protected TabStop tab;
-	// /** Original TabSet. */
-	// protected TabSet originalTabs;
-	// /**
-	// * Tab user clicked on. Null indicates the user is creating a new tab.
-	// */
-	// protected TabStop originalTab;
-	// /** While the mouse is down this will be true. */
-	// protected boolean dragging;
-	// /** Specifies the alignment passed into createTabStop. */
-	// protected int newAlignment;
-	//
-	// /**
-	// * Invoked when a mouse button has been pressed on a component.
-	// */
-	// @Override
-	// public void mousePressed(MouseEvent e) {
-	// dragging = true;
-	// originalTabs = getTabSet();
-	// originalTab = getTabClosestTo(e.getX(), e.getY());
-	// newAlignment = TabStop.ALIGN_LEFT;
-	// if (originalTab == null) {
-	// tab = createTabStop(e.getX(), e.getY(), newAlignment);
-	// resetTabs();
-	// } else {
-	// tab = originalTab;
-	// if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
-	// // Shift mask changes the alignment of the tab.
-	// switch (tab.getAlignment()) {
-	// case TabStop.ALIGN_LEFT:
-	// newAlignment = TabStop.ALIGN_RIGHT;
-	// break;
-	// case TabStop.ALIGN_RIGHT:
-	// newAlignment = TabStop.ALIGN_CENTER;
-	// break;
-	// case TabStop.ALIGN_CENTER:
-	// newAlignment = TabStop.ALIGN_DECIMAL;
-	// break;
-	// default:
-	// newAlignment = TabStop.ALIGN_LEFT;
-	// }
-	// tab = new TabStop(tab.getPosition(), newAlignment, tab.getLeader());
-	// resetTabs();
-	// } else {
-	// newAlignment = tab.getAlignment();
-	// }
-	// }
-	// }
-	//
-	// /**
-	// * Invoked when a mouse button has been released on a component.
-	// */
-	// @Override
-	// public void mouseReleased(MouseEvent e) {
-	// dragging = false;
-	//
-	// // Push the tabs to the text pane (we may not need to do this
-	// // if the tabs haven't changed).
-	// TabSet tabs = getTabSet();
-	//
-	// if (tabs == null) {
-	// SimpleAttributeSet sas = new SimpleAttributeSet(getParagraphElement().getAttributes());
-	//
-	// sas.removeAttribute(StyleConstants.TabSet);
-	// getTextPane().setParagraphAttributes(sas, true);
-	// } else {
-	// SimpleAttributeSet sas = new SimpleAttributeSet();
-	//
-	// StyleConstants.setTabSet(sas, tabs);
-	// getTextPane().setParagraphAttributes(sas, false);
-	// }
-	// }
-	//
-	// /**
-	// * Invoked when a mouse button is pressed on a component and then dragged. Mouse drag events will
-	// * continue to be delivered to the component where the first originated until the mouse button is
-	// * released (regardless of whether the mouse position is within the bounds of the component).
-	// */
-	// @Override
-	// public void mouseDragged(MouseEvent e) {
-	// if (dragging) {
-	// TabStop newTab = createTabStop(e.getX(), e.getY(), newAlignment);
-	//
-	// // Workaround for TabStop.equals not handling null being
-	// // passed in.
-	// if (newTab != tab && ((newTab != null && tab != null && !newTab.equals(tab))
-	// || (newTab == null || tab == null))) {
-	// tab = newTab;
-	// resetTabs();
-	// }
-	// }
-	// }
-	//
-	// /**
-	// * Creates a new TabSet and messages setTabSet.
-	// */
-	// protected void resetTabs() {
-	// TabStop[] stops;
-	//
-	// if (tab == null) {
-	// // The tab has been moved off screen, indicating we should
-	// // remove it.
-	// if (originalTab != null && originalTabs != null) {
-	// int tabCount = originalTabs.getTabCount();
-	//
-	// if (tabCount > 1) {
-	// stops = new TabStop[tabCount - 1];
-	// for (int counter = 0, index = 0; counter < tabCount; counter++) {
-	// TabStop tab = originalTabs.getTab(counter);
-	//
-	// if (tab != originalTab) {
-	// stops[index++] = tab;
-	// }
-	// }
-	// setTabSet(new TabSet(stops));
-	// } else {
-	// setTabSet(null);
-	// }
-	// } else {
-	// setTabSet(originalTabs);
-	// }
-	// return;
-	// }
-	//
-	// if (originalTabs == null) {
-	// // No starting TabSet, create a new one.
-	// stops = new TabStop[1];
-	// stops[0] = tab;
-	//
-	// } else if (originalTab == null) {
-	// // Adding a new tab.
-	// int numTabs = originalTabs.getTabCount();
-	// int nextIndex = originalTabs.getTabIndexAfter(tab.getPosition());
-	//
-	// stops = new TabStop[numTabs + 1];
-	// if (nextIndex == -1) {
-	// for (int counter = 0; counter < numTabs; counter++) {
-	// stops[counter] = originalTabs.getTab(counter);
-	// }
-	// stops[numTabs] = tab;
-	// } else {
-	// for (int counter = 0; counter < nextIndex; counter++) {
-	// stops[counter] = originalTabs.getTab(counter);
-	// }
-	// stops[nextIndex] = tab;
-	// for (int counter = nextIndex; counter < numTabs; counter++) {
-	// stops[counter + 1] = originalTabs.getTab(counter);
-	// }
-	// }
-	//
-	// } else {
-	// // Moving an existing tab.
-	// int numTabs = originalTabs.getTabCount();
-	// int nextIndex = originalTabs.getTabIndexAfter(tab.getPosition());
-	// int index = 0;
-	//
-	// stops = new TabStop[numTabs];
-	// if (nextIndex == -1) {
-	// for (int counter = 0; counter < numTabs; counter++) {
-	// stops[index] = originalTabs.getTab(counter);
-	// if (stops[index] != originalTab) {
-	// index++;
-	// }
-	// }
-	// stops[index] = tab;
-	// } else {
-	// for (int counter = 0; counter < nextIndex; counter++) {
-	// stops[index] = originalTabs.getTab(counter);
-	// if (stops[index] != originalTab) {
-	// index++;
-	// }
-	// }
-	// stops[index++] = tab;
-	// for (int counter = nextIndex; counter < numTabs && index < numTabs; counter++) {
-	// stops[index] = originalTabs.getTab(counter);
-	// if (stops[index] != originalTab) {
-	// index++;
-	// }
-	// }
-	// }
-	// }
-	// setTabSet(new TabSet(stops));
-	// }
-	//
-	// /**
-	// * Creates a tab stop at the passed in visual location. This should be offset from any margins.
-	// */
-	// protected TabStop createTabStop(int x, int y, int alignment) {
-	// if (x < 0 || x > getBounds().width || y < 0 || y > getBounds().height) {
-	// return null;
-	// }
-	// // Constrain the x to 1/8 of an inch.
-	// x = (x - getXOffset()) / E_DPI * E_DPI;
-	// return new TabStop(x, alignment, TabStop.LEAD_NONE);
-	// }
-	// }
 }

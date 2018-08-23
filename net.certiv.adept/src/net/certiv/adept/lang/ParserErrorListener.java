@@ -54,7 +54,7 @@ public class ParserErrorListener extends BaseErrorListener {
 				String name = recognizer.getVocabulary().getDisplayName(token.getType());
 				String text = Strings.shorten(token.getText(), 12);
 				tokenStack.add(String.format("@%s %s[%s] %s:%s", token.getTokenIndex(), name, text, token.getLine(),
-						token.getCharPositionInLine()));
+						token.getCharPositionInLine() + 1));
 			}
 			lastErrorIdx = thisErrorIdx;
 

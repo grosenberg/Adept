@@ -31,15 +31,23 @@
        /*
 	This grammar builds on top of the ANTLR4 Java grammar, but it uses
 	lexical modes to lex the annotation form of AspectJ; hence in order to use it
-	you need to break Java.g4 into Separate Lexer (JavaLexer.g4) and Parser (JavaParser.g4) grammars.
+	you need to break Java.g4 into separate Lexer (JavaLexer.g4) and Parser (JavaParser.g4) grammars.
   */
-     grammar Comments ;
+  
+     	  grammar Comments ;
 
 // hello<b>  there </b> {@   code	 blue       bonnet 		}    end
 rule
 	: A			// A
 	| B						//   B
 	;
+
+
+//PackageClause  = "package" PackageName .
+//PackageName    = identifier .
+packageClause
+    : 'package' IDENTIFIER
+    ;
 
 //   Eclipse Public License 	-      v 1.0, http://www.eclipse.org/legal/epl-v10.html
 //		Copyright (c) 2013, Christian Wulf (chwchw@gmx.de)

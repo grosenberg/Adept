@@ -8,6 +8,7 @@ package net.certiv.adept.unit;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -44,11 +45,10 @@ public class TreeMultilist<K, V> {
 		this.valComp = valComp;
 	}
 
-	/** Get the values for the given key. Sort the values if the value comparator is not null. */
+	/** Returns the values for the given key. Will not return {@code null}. */
 	public List<V> get(K key) {
 		List<V> values = map.get(key);
-		if (values != null && valComp != null) values.sort(valComp);
-		return values;
+		return values != null ? values : Collections.emptyList();
 	}
 
 	public boolean put(K key, V value) {
@@ -57,7 +57,9 @@ public class TreeMultilist<K, V> {
 			list = new ArrayList<>();
 			map.put(key, list);
 		}
-		return list.add(value);
+		boolean ok = list.add(value);
+		if (ok) list.sort(valComp);
+		return ok;
 	}
 
 	public boolean put(K key, Collection<V> values) {
@@ -66,7 +68,9 @@ public class TreeMultilist<K, V> {
 			list = new ArrayList<>();
 			map.put(key, list);
 		}
-		return list.addAll(values);
+		boolean ok = list.addAll(values);
+		if (ok) list.sort(valComp);
+		return ok;
 	}
 
 	public boolean put(TreeMultilist<K, V> map) {

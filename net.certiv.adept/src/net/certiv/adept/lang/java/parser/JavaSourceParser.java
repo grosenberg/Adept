@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
@@ -22,6 +23,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import net.certiv.adept.Tool;
 import net.certiv.adept.format.plan.Aligner;
 import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.AdeptTokenFactory;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParserErrorListener;
@@ -30,6 +32,7 @@ import net.certiv.adept.lang.java.parser.gen.Java8Lexer;
 import net.certiv.adept.lang.java.parser.gen.Java8Parser;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.tool.ErrorDesc;
+import net.certiv.adept.util.Utils;
 
 public class JavaSourceParser extends SourceParser {
 
@@ -98,4 +101,16 @@ public class JavaSourceParser extends SourceParser {
 		// excludes.add(JavaParser.RULE_??? << 16);
 		return excludes;
 	}
+
+	@Override
+	public List<AdeptToken> lex(String content) throws RecognitionException {
+		CodePointCharStream cs = CharStreams.fromString(content);
+		Java8Lexer lexer = new Java8Lexer(cs);
+		lexer.setTokenFactory(getTokenFactory());
+		lexer.addErrorListener(syntaxErrListener);
+		CommonTokenStream ts = new CommonTokenStream(lexer);
+		ts.fill();
+		return Utils.upconvert(ts.getTokens());
+	}
+
 }

@@ -12,14 +12,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.Token;
+
+import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.HashMultilist;
 
 public class Utils {
+
+	/** upconvert type and protect against null */
+	@SuppressWarnings("unchecked")
+	public static List<AdeptToken> upconvert(List<? extends Token> tokens) {
+		if (tokens == null) return new ArrayList<>();
+		return (List<AdeptToken>) tokens;
+	}
 
 	public static boolean notEmpty(List<? extends Object> elems) {
 		return elems != null && !elems.isEmpty();

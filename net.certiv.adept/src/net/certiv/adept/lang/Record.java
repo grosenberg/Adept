@@ -18,7 +18,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -28,15 +27,15 @@ import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.unit.TreeTable;
+import net.certiv.adept.util.Utils;
 
 /** Record of the information generated through the parsing of a single Document. */
-public class ParseRecord {
+public class Record {
 
-	public static final int AncesLimit = 6; // ancestor path limit; TODO: tune parameter
-	public static final int AssocLimit = 3; // associated token limit; TODO: tune parameter
+	public static final int AncesLimit = 6; // ancestor path limit
+	public static final int AssocLimit = 3; // associated token limit
 
 	public Document doc;
 
@@ -46,6 +45,7 @@ public class ParseRecord {
 	public Lexer lexer;
 	public CommonTokenStream tokenStream;
 	public CodePointCharStream charStream;
+	public int errCount;
 
 	public int VWS;
 	public int HWS;
@@ -54,8 +54,6 @@ public class ParseRecord {
 	public int ERR_RULE = -2 << 16;
 	public int ERR_TOKEN = -2;
 
-	public int errCount;
-
 	// ---------------------------------------------------------
 
 	public Indenter indenter;
@@ -63,44 +61,47 @@ public class ParseRecord {
 
 	// ---------------------------------------------------------
 
-	/** Primary index of a parsed document. Ordered by token index. */
-	// key=real token; value=feature
+	/**
+	 * Primary index of a parsed document. Ordered by token index.
+	 * <p>
+	 * key=real token; value=feature
+	 */
 	public TreeMap<AdeptToken, Feature> index;
 
-	// key=real token index; value=token
+	/** key=real token index; value=token */
 	public TreeMap<Integer, AdeptToken> tokenIndex;
 
-	// key=feature id; value=feature
+	/** key=feature id; value=feature */
 	public HashMap<Integer, Feature> featureIndex;
 
-	// value=list of block comments
+	/** value=comment tokens */
 	public List<AdeptToken> commentIndex;
 
-	// row=start token index; col=stop token index; value=context ancestors
+	/** row=start token index; col=stop token index; value=context ancestors */
 	public TreeTable<Integer, Integer, List<ParseTree>> contextIndex;
 
-	// alignment groups
+	/** alignment groups */
 	public List<Group> groupIndex;
 
-	// key=line number; value=bol char offset
+	/** key=line number; value=bol char offset */
 	public HashMap<Integer, Integer> lineStartIndex;
 
-	// key=line number; value=blank?
+	/** key=line number; value=blank? */
 	public HashMap<Integer, Boolean> blanklines;
 
-	// key=line number; value=list of real tokens
+	/** key=line number; value=list of real tokens */
 	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
 
 	// ---------------------------------------------------------
 
-	public ParseRecord(Document doc) {
+	public Record(Document doc) {
 		super();
 		this.doc = doc;
-		index = new TreeMap<>(AdeptComp.Instance);
+		index = new TreeMap<>();
 		tokenIndex = new TreeMap<>();
 		featureIndex = new HashMap<>();
 		groupIndex = new ArrayList<>();
-		lineTokensIndex = new TreeMultilist<>(null, AdeptComp.Instance);
+		lineTokensIndex = new TreeMultilist<>();
 		lineStartIndex = new HashMap<>();
 		blanklines = new HashMap<>();
 		commentIndex = new ArrayList<>();
@@ -127,14 +128,6 @@ public class ParseRecord {
 
 	public Document getDocument() {
 		return doc;
-	}
-
-	public CommonTokenStream getTokenStream() {
-		return tokenStream;
-	}
-
-	public List<AdeptToken> getTokens() {
-		return convert(tokenStream.getTokens());
 	}
 
 	public String getTokenName(int type) {
@@ -194,13 +187,22 @@ public class ParseRecord {
 		return reals;
 	}
 
+	public CommonTokenStream getTokenStream() {
+		return tokenStream;
+	}
+
+	/** Returns the list of tokens; will not be null. */
+	public List<AdeptToken> getTokens() {
+		return Utils.upconvert(tokenStream.getTokens());
+	}
+
 	/**
 	 * Returns a list of the tokens in the given token index range, inclusive. Will not return
 	 * {@code null}.
 	 */
 	public List<AdeptToken> getTokenInterval(int begIndex, int endIndex) {
 		if (begIndex == -1) begIndex++;		// at BOF
-		return convert(tokenStream.get(begIndex, endIndex));
+		return Utils.upconvert(tokenStream.get(begIndex, endIndex));
 	}
 
 	/** Returns the token at the given token index. */
@@ -232,15 +234,7 @@ public class ParseRecord {
 	 * {@code end} character index (exclusive).
 	 */
 	public String getTextSpan(int beg, int end) {
-		return charStream.getText(new Interval(beg, end - 1));
-	}
-
-	// upconvert type and protect against null
-	@SuppressWarnings("unchecked")
-	private List<AdeptToken> convert(List<? extends Token> tokens) {
-		List<AdeptToken> adepts = new ArrayList<>();
-		if (tokens != null) adepts.addAll((List<AdeptToken>) tokens);
-		return adepts;
+		return charStream.getText(Interval.of(beg, end - 1));
 	}
 
 	public ParserRuleContext getParseTreeRoot() {
@@ -267,7 +261,7 @@ public class ParseRecord {
 
 	/** Returns the token feature index for the document, ordered by token index. */
 	public TreeMap<AdeptToken, Feature> getIndex() {
-		TreeMap<AdeptToken, Feature> clone = new TreeMap<>(AdeptComp.Instance);
+		TreeMap<AdeptToken, Feature> clone = new TreeMap<>();
 		clone.putAll(index);
 		return clone;
 	}

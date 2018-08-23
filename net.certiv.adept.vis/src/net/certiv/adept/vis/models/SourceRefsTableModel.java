@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -20,7 +20,7 @@ import javax.swing.table.TableRowSorter;
 import org.antlr.runtime.Token;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.vis.renderers.AlignCellRenderer;
@@ -39,7 +39,7 @@ public class SourceRefsTableModel extends BaseTableModel {
 		super(ruleNames, tokenNames);
 	}
 
-	public void addAll(ParseRecord data) {
+	public void addAll(Record data) {
 		List<Object[]> rows = new ArrayList<>();
 		int num = 0;
 		for (AdeptToken token : data.tokenIndex.values()) {

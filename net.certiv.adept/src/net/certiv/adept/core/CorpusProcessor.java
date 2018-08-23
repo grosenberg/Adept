@@ -9,8 +9,6 @@ package net.certiv.adept.core;
 import java.util.List;
 
 import net.certiv.adept.Settings;
-import net.certiv.adept.core.util.Function;
-import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
@@ -18,6 +16,8 @@ import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.util.Calc;
+import net.certiv.adept.util.Form;
+import net.certiv.adept.util.Function;
 import net.certiv.adept.util.Time;
 
 public class CorpusProcessor extends BaseProcessor {

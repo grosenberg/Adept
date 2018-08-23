@@ -439,8 +439,14 @@ public class Strings {
 			throw new IllegalArgumentException(String.format("%d:%d", from, to));
 		}
 
-		int tabs = to / tabWidth - from / tabWidth;
-		int spcs = to % tabWidth;
+		int ftabs = from / tabWidth;
+		int fspcs = from % tabWidth;
+
+		int ttabs = to / tabWidth;
+		int tspcs = to % tabWidth;
+
+		int tabs = ttabs - ftabs;
+		int spcs = tabs > 0 ? tspcs : tspcs - fspcs;
 		return Strings.getN(tabs, TAB) + Strings.getN(spcs, SPC);
 	}
 

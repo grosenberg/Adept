@@ -122,7 +122,7 @@ public class Messages {
 			this.offendingToken = offendingToken;
 			if (offendingToken != null) {
 				line = offendingToken.getLine();
-				charPosition = offendingToken.getCharPositionInLine();
+				charPosition = offendingToken.getCharPositionInLine() + 1;
 			}
 		}
 
@@ -143,7 +143,7 @@ public class Messages {
 			this.fileName = fileName;
 			if (offendingToken != null) {
 				line = offendingToken.getLine();
-				charPosition = offendingToken.getCharPositionInLine();
+				charPosition = offendingToken.getCharPositionInLine() + 1;
 			}
 		}
 	}

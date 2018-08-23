@@ -15,7 +15,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
 
@@ -25,7 +24,7 @@ public class Group {
 	private final TableMultilist<Scheme, Integer, AdeptToken> members = new TableMultilist<>();
 
 	public Group() {
-		members.setValueComp(AdeptComp.Instance);
+		// members.setValueComp(AdeptComp.Instance);
 	}
 
 	public Group(Scheme scheme, int line, AdeptToken token) {
@@ -79,7 +78,7 @@ public class Group {
 	 * Returns {@code true} if all members of the given {@code scheme} are present on the same source
 	 * line.
 	 */
-	public boolean linear(Scheme scheme) {
+	public boolean colinear(Scheme scheme) {
 		return members.get(scheme).size() == 1;
 	}
 
@@ -111,5 +110,20 @@ public class Group {
 			}
 		}
 		return docId;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (Scheme scheme : members.keySet()) {
+			for (Entry<Integer, List<AdeptToken>> lines : members.entrySet(scheme)) {
+				List<String> values = new ArrayList<>();
+				for (AdeptToken token : lines.getValue()) {
+					values.add(token.getText());
+				}
+				sb.append(String.format("%s: %2s %s\n", scheme, lines.getKey(), values));
+			}
+		}
+		return sb.toString();
 	}
 }

@@ -11,7 +11,6 @@ import java.util.List;
 import net.certiv.adept.format.plan.Group;
 import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.AdeptComp;
 import net.certiv.adept.unit.TableMultilist;
 import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Maths;
@@ -33,7 +32,7 @@ public class AlignProcessor extends AbstractProcessor {
 
 	public void alignFields() {
 		ops.buildLinesIndexes();
-		ops.collectLinears();
+		ops.collectSerials();
 
 		for (Group group : ops.data.groupIndex) {
 			TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
@@ -42,19 +41,19 @@ public class AlignProcessor extends AbstractProcessor {
 				lines = update(lines);
 				switch (align) {
 					case PAIR:
-						handlePairAlign(lines);
+						pairAlign(lines);
 						break;
 
 					case LIST:
-						handleListAlign(lines, false);
+						listAlign(lines, false);
 						break;
 
 					case GROUP:
-						handleListAlign(lines, false);
+						listAlign(lines, false);
 						break;
 
-					case AFIL:
-						handleAfilAlign(lines, true);
+					case SERIAL:
+						gridAlign(lines, false);
 						break;
 
 					default:
@@ -72,7 +71,7 @@ public class AlignProcessor extends AbstractProcessor {
 			TreeMultilist<Integer, AdeptToken> lines = group.get(Scheme.COMMENT);
 			if (lines != null) {
 				lines = update(lines);
-				handleListAlign(lines, true);
+				listAlign(lines, true);
 			}
 		}
 	}
@@ -80,41 +79,32 @@ public class AlignProcessor extends AbstractProcessor {
 	/**
 	 * Align on common nearest minimum, non-overlapping position.
 	 * <p>
-	 * TODO: for a single line pair, need to consider the prior line to determine alignment cols.
+	 * For an isolated single line pair, do nothing. Where affiliated with other single line pairs, need
+	 * to consider the sequential set of lines to determine alignment cols.
 	 */
-	private void handlePairAlign(TreeMultilist<Integer, AdeptToken> lines) {
+	private void pairAlign(TreeMultilist<Integer, AdeptToken> lines) {
 		if (lines.isEmpty()) return;
 		if (lines.size() > 1) {
-			handleListAlign(lines, false);
-			return;
-		}
-
-		int modLine = lines.lastKey();
-		for (AdeptToken token : lines.get(modLine)) {
-			int rem = token.visCol() % ops.settings.tabWidth;
-			if (rem > 0) {
-				int toVisCol = token.visCol() + ops.settings.tabWidth - rem;
-				ops.prepEditAndShiftLine(modLine, token, toVisCol);
-			}
+			listAlign(lines, false);
 		}
 	}
 
-	private void handleListAlign(TreeMultilist<Integer, AdeptToken> alignables, boolean tabAlignFirst) {
-		int colsToAlign = countMaxCols(alignables);
+	private void listAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabFirst) {
+		int colsToAlign = countMaxCols(lines);
 
 		for (int col = 0; col < colsToAlign; col++) {
 			int alignCol = 0;
-			if (col == 0 && tabAlignFirst) {
-				alignCol = minTabCol(alignables, col);
+			if (col == 0 && tabFirst) {
+				alignCol = minTabCol(lines, col);
 			} else {
-				alignCol = minCol(alignables, col);
+				alignCol = minCol(lines, col);
 			}
 
-			for (int lineNum : alignables.keySet()) {
-				List<AdeptToken> tokens = alignables.get(lineNum);
+			for (int lineNum : lines.keySet()) {
+				List<AdeptToken> tokens = lines.get(lineNum);
 				if (tokens.size() > col) {
 					AdeptToken alignToken = tokens.get(col);
-					if (alignCol != alignToken.visCol()) {
+					if (alignCol != alignToken.getVisPos()) {
 						ops.prepEditAndShiftLine(lineNum, alignToken, alignCol);
 					}
 				}
@@ -122,26 +112,24 @@ public class AlignProcessor extends AbstractProcessor {
 		}
 	}
 
-	private void handleAfilAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabAlignFirst) {
+	private void gridAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabFirst) {
 		Grid grid = new Grid(ops, lines);
 
-		for (int cIdx = 0; cIdx < grid.size(); cIdx++) {
+		for (int col = 0; col < grid.size(); col++) {
 			int alignCol = 0;
-			if (cIdx == 0 && tabAlignFirst) {
-				alignCol = grid.minTabCol(cIdx);
+			if (col == 0 && tabFirst) {
+				alignCol = grid.minTabCol(col);
 			} else {
-				alignCol = grid.minCol(cIdx);
+				alignCol = grid.minCol(col);
 			}
 
 			for (int lnum : lines.keySet()) {
-				if (!grid.isEmpty(cIdx, lnum)) {
-					AdeptToken token = grid.get(cIdx, lnum);
-					if (alignCol != token.visCol()) {
-						boolean mid = cIdx != 0 && cIdx != grid.size() - 1;
-						int delt = Maths.delta(alignCol, token.visCol());
-						if (!mid || (mid && delt < 7)) {
-							ops.prepEditAndShiftLine(lnum, token, alignCol);
-						}
+				if (!grid.isEmpty(col, lnum)) {
+					AdeptToken token = grid.get(col, lnum);
+					boolean mid = col != 0 && col != grid.size() - 1;
+					int excess = Maths.delta(alignCol, token.getVisPos());
+					if (!mid || (mid && excess <= ops.settings.tabWidth)) {
+						ops.prepEditAndShiftLine(lnum, token, alignCol);
 					}
 				}
 			}
@@ -162,7 +150,7 @@ public class AlignProcessor extends AbstractProcessor {
 				AdeptToken prior = ops.priorInLine(line, alignable);
 
 				if (prior != null) {
-					min = Math.max(min, prior.visCol() + prior.getText().length() + 1);
+					min = Math.max(min, prior.getVisPos() + prior.getText().length() + 1);
 				} else {
 					min = Math.max(min, alignable.dent().indents * ops.settings.tabWidth);
 				}
@@ -182,7 +170,7 @@ public class AlignProcessor extends AbstractProcessor {
 	// Update line numers to account for edits
 	private TreeMultilist<Integer, AdeptToken> update(TreeMultilist<Integer, AdeptToken> lines) {
 		TreeMultilist<Integer, AdeptToken> updated = new TreeMultilist<>();
-		updated.setValueComparator(AdeptComp.Instance);
+		// updated.setValueComparator(AdeptComp.Instance);
 		for (AdeptToken token : lines.valuesAll()) {
 			Integer modLine = ops.tokenLineIndex.get(token.getTokenIndex());
 			updated.put(modLine, token);

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.TreeMultilist;
+import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 public class Grid {
@@ -16,7 +17,7 @@ public class Grid {
 	private int lcnt;
 	private List<Col> grid = new ArrayList<>();
 
-	class Col {
+	private class Col {
 
 		// the identifying 'mark' for this column
 		final String mark;
@@ -28,8 +29,8 @@ public class Grid {
 			this.mark = mark;
 		}
 
-		void add(int lnum, AdeptToken token) {
-			cells.put(lnum, token);
+		void add(int row, AdeptToken token) {
+			cells.put(row, token);
 		}
 	}
 
@@ -41,19 +42,19 @@ public class Grid {
 	}
 
 	private void build(TreeMultilist<Integer, AdeptToken> lines) {
-		for (Integer lnum : lines.keySet()) {
-			List<AdeptToken> tokens = lines.get(lnum);
-			addRow(lnum, tokens);
+		for (Integer row : lines.keySet()) {
+			List<AdeptToken> tokens = lines.get(row);
+			addRow(row, tokens);
 		}
 	}
 
-	private void addRow(int lnum, List<AdeptToken> tokens) {
+	private void addRow(int row, List<AdeptToken> tokens) {
 		int at = 0;
 		for (int idx = 0; idx < tokens.size(); idx++) {
 			String mark = tokens.get(idx).getText();
 			at = findCol(at, mark);
 			Col col = grid.get(at);
-			col.add(lnum, tokens.get(idx));
+			col.add(row, tokens.get(idx));
 			at++;
 		}
 	}
@@ -66,9 +67,9 @@ public class Grid {
 		return grid.size() - 1;
 	}
 
-	public AdeptToken get(int cIdx, int lnum) {
+	public AdeptToken get(int cIdx, int row) {
 		Col col = grid.get(cIdx);
-		return col.cells.get(lnum);
+		return col.cells.get(row);
 	}
 
 	public int minTabCol(int cIdx) {
@@ -79,12 +80,12 @@ public class Grid {
 		int min = 0;
 		Col col = grid.get(cIdx);
 
-		for (int lnum : col.cells.keySet()) {
-			AdeptToken token = col.cells.get(lnum);
-			AdeptToken prior = ops.priorInLine(lnum, token);
+		for (int row : col.cells.keySet()) {
+			AdeptToken token = col.cells.get(row);
+			AdeptToken prior = ops.priorInLine(row, token);
 
 			if (prior != null) {
-				min = Math.max(min, prior.visCol() + prior.getText().length() + 1);
+				min = Math.max(min, prior.getVisPos() + prior.getText().length() + 1);
 			} else {
 				min = Math.max(min, token.dent().indents * ops.settings.tabWidth);
 			}
@@ -92,22 +93,33 @@ public class Grid {
 		return min;
 	}
 
-	public boolean isEmpty(int cIdx, int lnum) {
-		return get(cIdx, lnum) == null;
+	public boolean isEmpty(int cIdx, int row) {
+		return get(cIdx, row) == null;
 	}
 
+	/** Returns the number of grid columns. */
 	public int size() {
 		return grid.size();
 	}
 
+	public void debug() {
+		StringBuilder sb = new StringBuilder("|");
+		for (int idx = 0; idx < size(); idx++) {
+			sb.append(String.format(" %3s |", minCol(idx)));
+		}
+		Log.debug(this, sb.toString());
+	}
+
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int lnum = first; lnum < lcnt; lnum++) {
+		StringBuilder sb = new StringBuilder(Strings.EOL);
+		for (int row = first; row < first + lcnt; row++) {
+			sb.append("|");
 			for (Col col : grid) {
-				AdeptToken token = col.cells.get(lnum);
+				AdeptToken token = col.cells.get(row);
 				String txt = (token != null) ? token.getText() : "";
-				sb.append(String.format(" %2s |", txt));
+				String msg = !txt.isEmpty() ? " '%1s' |" : " %3s |";
+				sb.append(String.format(msg, txt));
 			}
 			sb.append(Strings.EOL);
 		}

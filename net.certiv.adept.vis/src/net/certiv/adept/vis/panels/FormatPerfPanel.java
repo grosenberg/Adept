@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -19,8 +19,8 @@ import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.core.util.Function;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
+import net.certiv.adept.util.Function;
 import net.certiv.adept.util.Refs;
 import net.certiv.adept.util.Time;
 
@@ -147,7 +147,7 @@ public class FormatPerfPanel extends JPanel {
 	}
 
 	public void loadPerfData(CoreMgr mgr) {
-		ParseRecord rec = mgr.getDocModel().getParseRecord();
+		Record rec = mgr.getDocModel().getParseRecord();
 		Refs.setup(rec.getRuleNames(), rec.getTokenNames());
 
 		txtLoad.setText(Time.elapsed(Function.LOAD, MsFmt));

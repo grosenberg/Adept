@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Certiv Analytics. All rights reserved.
- * Use of this file is governed by the Eclipse Public License v1.0
+ * Use of this file is governed by the Myers Public License v1.0
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
@@ -22,7 +22,7 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
 
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.Feature;
 
 public class FeaturePanel extends JPanel {
@@ -139,7 +139,7 @@ public class FeaturePanel extends JPanel {
 		this.tokenNames = tokenNames;
 	}
 
-	public void load(ParseRecord data, String pathname, Feature feature) {
+	public void load(Record data, String pathname, Feature feature) {
 		textDocName.setText(pathname.replace('\\', '/'));
 		textNode.setText(String.format("%s  (%s)", feature.getNodeName(), feature.getType()));
 		// textText.setText(feature.getText());

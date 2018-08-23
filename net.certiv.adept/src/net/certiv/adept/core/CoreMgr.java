@@ -17,7 +17,6 @@ import java.util.Map;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.util.Function;
 import net.certiv.adept.lang.ISourceParser;
 import net.certiv.adept.lang.antlr.parser.AntlrSourceParser;
 import net.certiv.adept.lang.java.parser.JavaSourceParser;
@@ -31,6 +30,7 @@ import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
 import net.certiv.adept.tool.ErrorDesc;
 import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.util.Function;
 import net.certiv.adept.util.Time;
 
 public class CoreMgr {

@@ -207,17 +207,15 @@ fragment DQuote			: '"'	;
 fragment Hws			: [ \t]			;
 fragment Vws			: '\r'? [\n\f]	;
 
-fragment DocComment		: '/**' .*? ('*/' | EOF)	;
-fragment BlockComment	: '/*'  .*? ('*/' | EOF)	;
-
-fragment LineComment	: '//' ~[\r\n]* 							;
-fragment LineCommentExt	: '//' ~[\r\n]* ( '\r'? '\n' Hws* '//' ~[\r\n]* )*	;
+fragment DocComment		: '/**' .*? ( '*/'   | EOF )	;
+fragment BlockComment	: '/*'  .*? ( '*/'   | EOF )	;
+fragment LineComment	: '//'  ( ~[\r\n\f]* | EOF )	;
 
 fragment EscSeq
 	:	Esc
-		( [btnfr"'\\]	// The standard escaped character set such as tab, newline, etc.
-		| UnicodeEsc	// A Unicode escape sequence
-		| .				// Invalid escape character
+		( [btnfr"'\\]	// Standard escaped character set such as tab, newline, etc.
+		| UnicodeEsc	// Unicode escape sequence
+		| .				// Other escaped character
 		| EOF			// Incomplete at EOF
 		)
 	;

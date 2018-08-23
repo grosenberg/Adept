@@ -186,12 +186,12 @@ fragment Or			: '|'	;
 fragment Not		: '!'	;
 fragment Dollar		: '$'	;
 
-fragment Hws			:  [ \t]	;
-fragment Vws			:  '\r'? [\n\f]	;
+fragment Hws			: [ \t]			;
+fragment Vws			: '\r'? [\n\f]	;
 
-fragment DocComment		: '/**' .*? '*/' ;
-fragment BlockComment	: '/#' .*? '#/' ;
-fragment LineComment	: '#' ~'\n'* ( '\n' Hws* '#' ~'\n'* )*	;
+fragment DocComment		: '/**' .*? ( '*/'   | EOF )	;
+fragment BlockComment	: '/#'  .*? ( '*/'   | EOF )	;
+fragment LineComment	: '#'   ( ~[\r\n\f]* | EOF )	;
 
 fragment
 NameChar

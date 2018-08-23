@@ -16,18 +16,18 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.unit.TreeMultilist;
 
 public class Aligner {
 
-	private ParseRecord data;
+	private Record data;
 	private Group lastCmtGroup;
 
 	// key=owning context of group; value=group
 	private final Map<ParserRuleContext, Group> groups = new HashMap<>();
 
-	public Aligner(ParseRecord data) {
+	public Aligner(Record data) {
 		this.data = data;
 	}
 
@@ -81,7 +81,7 @@ public class Aligner {
 
 		Group group = groups.get(ctx);
 		for (AdeptToken token : symbols(nodes)) {
-			group.addMembers(scheme, token.getLine(), token);
+			group.addMembers(scheme, token.getLinePos(), token);
 		}
 
 		if (scheme != Scheme.GROUP) groupEnd(ctx);
@@ -147,7 +147,7 @@ public class Aligner {
 	private Place[] findPlace(TreeMultilist<Integer, AdeptToken> lines, AdeptToken token) {
 		Place[] result = new Place[2];
 
-		int num = token.getLine();
+		int num = token.getLinePos();
 		if (num == lines.firstKey()) {
 			result[0] = Place.BEG;
 		} else if (num == lines.lastKey()) {
@@ -178,7 +178,7 @@ public class Aligner {
 
 	// private static final int[] reach = new int[] { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5 };
 
-	// private final ParseRecord data;
+	// private final Record data;
 	// private final int tabWidth;
 
 	// key=stopCol; values=line/group marks

@@ -14,7 +14,7 @@ import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.lang.ParseRecord;
+import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Spacing;

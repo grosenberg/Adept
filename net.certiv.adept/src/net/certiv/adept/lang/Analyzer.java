@@ -9,21 +9,21 @@ package net.certiv.adept.lang;
 import java.util.List;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.core.util.Form;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.util.Calc;
+import net.certiv.adept.util.Form;
 import net.certiv.adept.util.Refs;
 
 public class Analyzer {
 
 	private static Tool _tool;
-	private static ParseRecord _data;
+	private static Record _data;
 	private static List<Feature> _features;
 
 	private Analyzer() {}
 
-	public static void evaluate(Tool tool, ParseRecord data, List<Feature> features) {
+	public static void evaluate(Tool tool, Record data, List<Feature> features) {
 		_tool = tool;
 		_data = data;
 		_features = features;

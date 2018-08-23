@@ -3,11 +3,14 @@ package net.certiv.adept.lang;
 import java.util.Arrays;
 import java.util.List;
 
+import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonToken;
-import org.antlr.v4.runtime.CommonTokenFactory;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenFactory;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -19,9 +22,28 @@ public abstract class SourceParser implements ISourceParser {
 
 	protected Tool tool;
 	protected Builder builder;
+	private AdeptTokenFactory factory;
 	protected int errCount;
 
+	protected final ANTLRErrorListener syntaxErrListener = new BaseErrorListener() {
+
+		@Override
+		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine,
+				String msg, RecognitionException e) {
+			errCount++;
+			throw e;
+		}
+	};
+
 	public SourceParser() {}
+
+	@Override
+	public TokenFactory<?> getTokenFactory() {
+		if (factory == null) {
+			factory = new AdeptTokenFactory();
+		}
+		return factory;
+	}
 
 	@Override
 	public ParseTree getParseTree() {
@@ -29,7 +51,7 @@ public abstract class SourceParser implements ISourceParser {
 	}
 
 	@Override
-	public ParseRecord getParseData() {
+	public Record getParseData() {
 		return builder;
 	}
 
@@ -37,7 +59,7 @@ public abstract class SourceParser implements ISourceParser {
 	public List<String> getRuleNames() {
 		if (builder == null) {
 			builder = new Builder();
-			setup(CommonTokenFactory.DEFAULT, "");
+			setup(getTokenFactory(), "");
 		}
 		return Arrays.asList(builder.parser.getRuleNames());
 	}
@@ -47,7 +69,7 @@ public abstract class SourceParser implements ISourceParser {
 	public List<String> getTokenNames() {
 		if (builder == null) {
 			builder = new Builder();
-			setup(CommonTokenFactory.DEFAULT, "");
+			setup(getTokenFactory(), "");
 		}
 		return Arrays.asList(builder.lexer.getTokenNames());
 	}
