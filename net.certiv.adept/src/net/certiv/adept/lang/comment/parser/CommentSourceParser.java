@@ -50,12 +50,10 @@ public class CommentSourceParser extends BaseErrorListener {
 			tree = parser.comment();
 
 		} catch (RecognitionException e) {
-			// Log.error(this, ErrorDesc.PARSE_ERROR.msg + ": " + comment.toString());
 			tool.toolError(this, ErrorDesc.PARSE_ERROR, e, comment.toString());
 			return false;
 
 		} catch (Exception e) {
-			// Log.error(this, ErrorDesc.PARSE_FAILURE.msg + ": " + comment.toString());
 			tool.toolError(this, ErrorDesc.PARSE_FAILURE, e, comment.toString());
 			return false;
 

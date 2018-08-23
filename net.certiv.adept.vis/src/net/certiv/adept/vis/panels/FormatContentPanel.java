@@ -187,7 +187,9 @@ public class FormatContentPanel extends JPanel {
 		lhs.setText(lhsContent);
 		rhs.setText(rhsContent);
 
-		diff();
+		if (!lhsContent.isEmpty() && !rhsContent.isEmpty()) {
+			diff();
+		}
 	}
 
 	private void diff() {

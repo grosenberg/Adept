@@ -52,9 +52,9 @@ public class CommentProcessor extends AbstractProcessor {
 
 	private static final Pattern Star = Pattern.compile("\\s*\\*");
 
-	private CommentSourceParser parser;
-	private ParseTreeProperty<TypeToken> properties;
-	private String oneTab;
+	private final CommentSourceParser parser;
+	private final ParseTreeProperty<TypeToken> properties;
+	private final String oneTab;
 
 	private int visCol;
 	private int lastBlankIndex;
@@ -62,7 +62,6 @@ public class CommentProcessor extends AbstractProcessor {
 
 	private String prefix1; 	// first line of wrappable words
 	private String prefixN; 	// subsequent lines
-
 	private int listLevel = -1; // in list iff > -1
 	private String itemPrefix1; // overrides for within lists
 	private String itemPrefixN;
@@ -81,8 +80,6 @@ public class CommentProcessor extends AbstractProcessor {
 	public void dispose() {
 		super.dispose();
 		parser.dispose();
-		parser = null;
-		properties = null;
 		comment = null;
 	}
 
@@ -123,6 +120,7 @@ public class CommentProcessor extends AbstractProcessor {
 
 		prefix1 = BlkMid;
 		prefixN = BlkMid;
+		listLevel = -1;
 		int num = buildDescription((DescToken) properties.get(ctx.desc()), content);
 
 		int tags = ctx.param().size();
@@ -148,6 +146,7 @@ public class CommentProcessor extends AbstractProcessor {
 
 		prefix1 = BlkMid;
 		prefixN = BlkMid;
+		listLevel = -1;
 		int num = buildDescription((DescToken) properties.get(desc), content);
 
 		if (num == 1) {
@@ -165,6 +164,8 @@ public class CommentProcessor extends AbstractProcessor {
 
 		prefix1 = LineBeg;
 		prefixN = LineBeg;
+		listLevel = -1;
+
 		DescToken rec = new DescToken(ctx.getRuleIndex());
 		for (ParseTree child : ctx.children) {
 			TypeToken prop = properties.get(child);
