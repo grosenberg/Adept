@@ -31,16 +31,16 @@ public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<Tex
 
 	private int priority;			// edit priority level
 
-	private int replOffset;			// starting char offset inclusive
-	private int replLen;			// existing length to replacement
-	private int replLine;			// starting line
-	private int replCol;			// starting col
+	private int editOffset;			// starting char offset inclusive
+	private int editLen;			// existing length to replacement
+	private int editLine;			// starting line
+	private int editCol;			// starting col
 
 	private String msg;				// edit type message
 
 	/**
-	 * Define an edit to replacement the existing text (should be ws only) between the given token
-	 * indexes (exclusive) with the new given string value.
+	 * Define an edit to replace the text existing between the given tokens (exclusive) with the new
+	 * given string value.
 	 * <p>
 	 * If a document starts with whitespace, beg could be null; if it ends with whitespace end will be
 	 * EOF.
@@ -61,15 +61,15 @@ public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<Tex
 		begIndex = beg != null ? beg.getTokenIndex() : 0;
 		endIndex = end.getTokenIndex();
 		if (beg != null) {
-			replOffset = beg.getStopIndex() + 1;
-			replLine = beg.getLinePos();
-			replCol = beg.getCharPositionInLine();
+			editOffset = beg.getStopIndex() + 1;
+			editLine = beg.getLinePos();
+			editCol = beg.getCharPositionInLine();
 		}
-		replLen = end.getStartIndex() - replOffset;
+		editLen = end.getStartIndex() - editOffset;
 	}
 
 	/**
-	 * Define an edit to replacement the existing text of a token (should be a comment) with the new
+	 * Define an edit to replace the existing text of a token (should be a comment token) with the new
 	 * given string value.
 	 *
 	 * @param token token representing the existing text
@@ -84,11 +84,10 @@ public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<Tex
 		this.msg = msg;
 
 		begIndex = endIndex = token.getTokenIndex();
-		replOffset = token.getStartIndex();
-		replLine = token.getLinePos();
-		replCol = token.getCharPositionInLine();
-		replLen = token.getStopIndex() - replOffset + 1;
-
+		editOffset = token.getStartIndex();
+		editLine = token.getLinePos();
+		editCol = token.getCharPositionInLine();
+		editLen = token.getStopIndex() - editOffset + 1;
 	}
 
 	public Region getRegion() {
@@ -127,23 +126,23 @@ public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<Tex
 	}
 
 	@Override
-	public int replOffset() {
-		return replOffset;
+	public int editOffset() {
+		return editOffset;
 	}
 
 	@Override
-	public int replLen() {
-		return replLen;
+	public int editLen() {
+		return editLen;
 	}
 
 	@Override
-	public int replLine() {
-		return replLine;
+	public int editLine() {
+		return editLine;
 	}
 
 	@Override
-	public int replCol() {
-		return replCol;
+	public int editCol() {
+		return editCol;
 	}
 
 	/** Trims upto n spaces from the end of the replacement string. */
@@ -218,7 +217,7 @@ public class TextEdit implements ITextEdit, Comparable<TextEdit>, Comparator<Tex
 	public String toString() {
 		String now = Strings.encodeWS(existing);
 		String rep = Strings.encodeWS(replacement);
-		return String.format(Msg, msg + ":", replLine + 1, replCol + 1, begIndex, endIndex, replOffset, replLen, now,
+		return String.format(Msg, msg + ":", editLine + 1, editCol + 1, begIndex, endIndex, editOffset, editLen, now,
 				rep);
 	}
 }

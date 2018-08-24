@@ -34,7 +34,7 @@ public class AlignProcessor extends AbstractProcessor {
 		ops.buildLinesIndexes();
 		ops.collectSerials();
 
-		for (Group group : ops.data.groupIndex) {
+		for (Group group : ops.rec.groupIndex) {
 			TableMultilist<Scheme, Integer, AdeptToken> members = group.getMembers();
 			for (Scheme align : members.keySet()) {
 				TreeMultilist<Integer, AdeptToken> lines = members.get(align);
@@ -67,7 +67,7 @@ public class AlignProcessor extends AbstractProcessor {
 	public void alignComments() {
 		ops.buildLinesIndexes();
 
-		for (Group group : ops.data.groupIndex) {
+		for (Group group : ops.rec.groupIndex) {
 			TreeMultilist<Integer, AdeptToken> lines = group.get(Scheme.COMMENT);
 			if (lines != null) {
 				lines = update(lines);

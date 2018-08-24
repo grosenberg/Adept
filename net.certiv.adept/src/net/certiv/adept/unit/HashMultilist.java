@@ -8,7 +8,6 @@ package net.certiv.adept.unit;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,45 +22,45 @@ import java.util.Set;
  */
 public class HashMultilist<K, V> {
 
-	private final LinkedHashMap<K, List<V>> keyMap;
+	private final LinkedHashMap<K, List<V>> map;
 
 	public HashMultilist() {
-		keyMap = new LinkedHashMap<>();
+		map = new LinkedHashMap<>();
 	}
 
 	public HashMultilist(Map<K, List<V>> keyMap) {
 		this();
-		this.keyMap.putAll(keyMap);
+		this.map.putAll(keyMap);
 	}
 
 	public List<V> get(K key) {
-		return keyMap.get(key);
+		return map.get(key);
 	}
 
 	public boolean put(K key, V value) {
 		List<V> values = get(key);
 		if (values == null) {
 			values = new ArrayList<>();
-			keyMap.put(key, values);
+			map.put(key, values);
 		}
 		return values.add(value);
 	}
 
 	public boolean put(K key, Collection<V> values) {
-		List<V> list = keyMap.get(key);
+		List<V> list = map.get(key);
 		if (list == null) {
 			list = new ArrayList<>();
-			keyMap.put(key, list);
+			map.put(key, list);
 		}
 		return list.addAll(values);
 	}
 
 	public void removeKey(K key) {
-		keyMap.remove(key);
+		map.remove(key);
 	}
 
 	public boolean containsKey(K key) {
-		return keyMap.containsKey(key);
+		return map.containsKey(key);
 	}
 
 	public boolean containsEntry(K key, V value) {
@@ -71,47 +70,45 @@ public class HashMultilist<K, V> {
 	}
 
 	public List<K> keyList() {
-		return new ArrayList<>(keyMap.keySet());
+		return new ArrayList<>(map.keySet());
 	}
 
 	public Set<K> keySet() {
-		return keyMap.keySet();
+		return map.keySet();
 	}
 
 	/** Returns a list of the value lists held in this HashMultilist. */
 	public List<List<V>> valuesList() {
-		return new ArrayList<>(keyMap.values());
+		return new ArrayList<>(map.values());
 	}
 
 	/** Returns a list of all of the values held in this HashMultilist. */
 	public List<V> values() {
 		List<V> values = new ArrayList<>();
-		for (List<V> subList : keyMap.values()) {
+		for (List<V> subList : map.values()) {
 			values.addAll(subList);
 		}
 		return values;
 	}
 
-	public HashMultilist<K, V> sort(Comparator<V> comp) {
-		HashMultilist<K, V> sorted = new HashMultilist<>(keyMap);
-		for (K key : sorted.keySet()) {
-			Collections.sort(sorted.get(key), comp);
+	public void sort(Comparator<V> comp) {
+		for (K key : map.keySet()) {
+			map.get(key).sort(comp);
 		}
-		return sorted;
 	}
 
 	public boolean isEmpty() {
-		return keyMap.isEmpty();
+		return map.isEmpty();
 	}
 
 	public int keySize() {
-		return keyMap.size();
+		return map.size();
 	}
 
 	/** Returns the size (total number of held values) of this HashMultilist. */
 	public int size() {
 		int cnt = 0;
-		for (List<V> values : keyMap.values()) {
+		for (List<V> values : map.values()) {
 			cnt += values.size();
 		}
 		return cnt;
@@ -119,8 +116,8 @@ public class HashMultilist<K, V> {
 
 	public void clear() {
 		for (K key : keySet()) {
-			keyMap.get(key).clear();
+			map.get(key).clear();
 		}
-		keyMap.clear();
+		map.clear();
 	}
 }

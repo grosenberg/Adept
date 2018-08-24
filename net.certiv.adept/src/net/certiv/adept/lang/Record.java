@@ -61,18 +61,14 @@ public class Record {
 
 	// ---------------------------------------------------------
 
-	/**
-	 * Primary index of a parsed document. Ordered by token index.
-	 * <p>
-	 * key=real token; value=feature
-	 */
+	/** key=real (non-ws) token; value=feature */
 	public TreeMap<AdeptToken, Feature> index;
 
-	/** key=real token index; value=token */
+	/** key=token index; value=token; limited to real (non-ws) tokens */
 	public TreeMap<Integer, AdeptToken> tokenIndex;
 
 	/** key=feature id; value=feature */
-	public HashMap<Integer, Feature> featureIndex;
+	public HashMap<Integer, Feature> featureIdIndex;
 
 	/** value=comment tokens */
 	public List<AdeptToken> commentIndex;
@@ -99,7 +95,7 @@ public class Record {
 		this.doc = doc;
 		index = new TreeMap<>();
 		tokenIndex = new TreeMap<>();
-		featureIndex = new HashMap<>();
+		featureIdIndex = new HashMap<>();
 		groupIndex = new ArrayList<>();
 		lineTokensIndex = new TreeMultilist<>();
 		lineStartIndex = new HashMap<>();
@@ -114,7 +110,7 @@ public class Record {
 	public void dispose() {
 		index.clear();
 		tokenIndex.clear();
-		featureIndex.clear();
+		featureIdIndex.clear();
 		groupIndex.clear();
 		lineTokensIndex.clear();
 		lineStartIndex.clear();
@@ -268,7 +264,7 @@ public class Record {
 
 	/** Returns the unique features created for the parsed document. */
 	public List<Feature> getFeatures() {
-		return new ArrayList<>(featureIndex.values());
+		return new ArrayList<>(featureIdIndex.values());
 	}
 
 	public Feature getFeature(AdeptToken token) {

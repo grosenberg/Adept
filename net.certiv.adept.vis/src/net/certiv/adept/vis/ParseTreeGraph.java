@@ -220,7 +220,7 @@ public class ParseTreeGraph extends AbstractViewBase {
 		tool.setSourceFiles(pathname);
 		tool.execute();
 
-		Record data = tool.getDocument().getParseRecord();
+		Record data = tool.getDocument().getRecord();
 
 		// graphical rep of tree
 		viewer.inspect(data.getParseTreeRoot(), data.getRuleNames());

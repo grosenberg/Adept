@@ -29,7 +29,7 @@ public class FormatterOps {
 
 	Tool tool;
 	Document doc;
-	Record data;
+	Record rec;
 	Settings settings;
 	String tabEquiv;
 
@@ -54,7 +54,7 @@ public class FormatterOps {
 	public FormatterOps(DocModel model, Settings settings) {
 		this.tool = model.getMgr().getTool();
 		this.doc = model.getDocument();
-		this.data = doc.getParseRecord();
+		this.rec = doc.getRecord();
 		this.settings = settings;
 		this.tabEquiv = Strings.spaces(settings.tabWidth);
 
@@ -68,7 +68,7 @@ public class FormatterOps {
 
 	public void dispose() {
 		doc = null;
-		data = null;
+		rec = null;
 		edits.clear();
 		edits = null;
 		contents = null;
@@ -93,7 +93,7 @@ public class FormatterOps {
 	/** Create a meta group for each set of serial groups. */
 	protected void collectSerials() {
 		Group serials = new Group();
-		for (Group group : data.groupIndex) {
+		for (Group group : rec.groupIndex) {
 			for (Scheme scheme : group.getSchemes()) {
 				if (group.colinear(scheme)) {
 					TreeMultilist<Integer, AdeptToken> members = group.get(scheme);
@@ -111,12 +111,12 @@ public class FormatterOps {
 			if (group.isEmpty() || group.contiguous(Scheme.SERIAL, lnum)) {
 				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			} else {
-				data.groupIndex.add(group);
+				rec.groupIndex.add(group);
 				group = new Group();
 				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			}
 		}
-		if (!group.isEmpty()) data.groupIndex.add(group);
+		if (!group.isEmpty()) rec.groupIndex.add(group);
 
 	}
 
@@ -131,7 +131,7 @@ public class FormatterOps {
 
 		// examine all real tokens
 		AdeptToken prior = null;
-		for (AdeptToken token : data.index.keySet()) {
+		for (AdeptToken token : rec.index.keySet()) {
 			String ws = findWsLeft(token);
 			int nls = Strings.countVWS(ws);
 
@@ -230,7 +230,7 @@ public class FormatterOps {
 			String ws = createWs(0, toVisPos);
 			edit.replUpdate(ws);
 		} else {
-			AdeptToken prior = data.tokenIndex.get(edit.begIndex());
+			AdeptToken prior = rec.tokenIndex.get(edit.begIndex());
 			int from = prior.getVisPos() + prior.getText().length();
 			if (from > toVisPos) {
 				String msg = String.format("Err: shift %s to %s: %s", from, toVisPos, token.toString());
@@ -262,7 +262,7 @@ public class FormatterOps {
 
 	/** Returns the left adjacent TextEdit or {@code null}. */
 	protected TextEdit findEditLeft(AdeptToken token) {
-		AdeptToken left = data.getRealLeft(token.getTokenIndex());
+		AdeptToken left = rec.getRealLeft(token.getTokenIndex());
 		return edits.get(Region.key(left, token));
 	}
 
@@ -278,9 +278,9 @@ public class FormatterOps {
 		return token.refToken().lActual;
 	}
 
-	/** Returns the left nearest visible token or {@code null}. */
+	/** Returns the left nearest real (non-ws) token or {@code null}. */
 	protected AdeptToken findTokenLeft(AdeptToken token) {
-		Entry<Integer, AdeptToken> entry = data.tokenIndex.lowerEntry(token.getTokenIndex());
+		Entry<Integer, AdeptToken> entry = rec.tokenIndex.lowerEntry(token.getTokenIndex());
 		return entry != null ? entry.getValue() : null;
 	}
 
@@ -320,7 +320,7 @@ public class FormatterOps {
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Define an edit for the existing text (should be ws only) between the given tokens (exclusive).
+	 * Creates an edit for the existing text (will be ws only) between the given tokens (exclusive).
 	 *
 	 * @param prior left token
 	 * @param token right token
@@ -328,12 +328,12 @@ public class FormatterOps {
 	 */
 	protected TextEdit createEdit(AdeptToken prior, AdeptToken token) {
 		int priorIdx = prior != null ? prior.getTokenIndex() : 0;
-		String existing = data.getTextBetween(priorIdx, token.getTokenIndex());
+		String existing = rec.getTextBetween(priorIdx, token.getTokenIndex());
 		return createEdit(prior, token, existing, existing, 0, "");
 	}
 
 	/**
-	 * Define an edit to replace the existing text (should be ws only) between the given token indexes
+	 * Creates an edit to replace the existing text (should be ws only) between the given token indexes
 	 * (exclusive) with the new given string value.
 	 *
 	 * @param beg left token index
@@ -346,8 +346,8 @@ public class FormatterOps {
 	 */
 	protected TextEdit createEdit(int begIndex, int endIndex, String existing, String replacement, int priority,
 			String msg) {
-		AdeptToken beg = begIndex > -1 ? data.getToken(begIndex) : null;
-		AdeptToken end = endIndex > -1 ? data.getToken(endIndex) : null;
+		AdeptToken beg = begIndex > -1 ? rec.getToken(begIndex) : null;
+		AdeptToken end = endIndex > -1 ? rec.getToken(endIndex) : null;
 		return createEdit(beg, end, existing, replacement, priority, msg);
 	}
 
@@ -369,7 +369,7 @@ public class FormatterOps {
 		if ((beg == null && end == null) || existing == null || replacement == null) {
 			throw new IllegalArgumentException("Malformed text edit create request.");
 		}
-		if (end == null) end = data.getToken(data.getTokenStream().size() - 1);
+		if (end == null) end = rec.getToken(rec.getTokenStream().size() - 1);
 		if (msg == null) msg = "";
 		return new TextEdit(beg, end, existing, replacement, priority, msg);
 	}

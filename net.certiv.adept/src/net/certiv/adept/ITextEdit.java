@@ -15,14 +15,14 @@ public interface ITextEdit {
 	String replacement();
 
 	/** Returns the starting stream char offset for the replacement text (0-based). */
-	int replOffset();
+	int editOffset();
 
 	/** Returns the char length of the existing text that is to be replaced. */
-	int replLen();
+	int editLen();
 
 	/** Returns the document line for the replacement text (0-based). */
-	int replLine();
+	int editLine();
 
 	/** Returns the document column for the replacement text (0-based) */
-	int replCol();
+	int editCol();
 }

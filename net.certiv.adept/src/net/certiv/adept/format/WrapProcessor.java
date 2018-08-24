@@ -13,7 +13,7 @@ public class WrapProcessor extends AbstractProcessor {
 	}
 
 	// TODO
-	public void breakLongLines() {
+	public void wrapLines() {
 		ops.buildLinesIndexes();
 	}
 }

@@ -6,6 +6,8 @@
  *******************************************************************************/
 package net.certiv.adept.format;
 
+import org.antlr.v4.runtime.Token;
+
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.Spacing;
@@ -17,22 +19,27 @@ public class SpacingProcessor extends AbstractProcessor {
 		super(ops);
 	}
 
-	// consider prior right match and current left match
-	// favor left over right
-	public void formatWhiteSpace() {
+	/**
+	 * Traverse all real (non-ws) tokens and adjust adjacent whitespace. For a given token, prefer using
+	 * the match defined new left ws value over the match defined new right ws value of the prior token.
+	 */
+	public void formatSpacing() {
 		ops.buildLinesIndexes();
 
-		for (AdeptToken token : ops.data.index.keySet()) { // real tokens
+		for (AdeptToken token : ops.rec.index.keySet()) {
 			RefToken current = token.refToken();
 
 			if (current.matched != null) {
+				if (current.lIndex == 27) {
+					System.out.println("");
+				}
 				TextEdit edit = createEditLeft(current);
 				if (edit != null) {
 					ops.edits.put(edit.getRegion(), edit);
 				}
 
 			} else {
-				RefToken prior = ops.data.getTokenRef(current.lIndex);
+				RefToken prior = ops.rec.getTokenRef(current.lIndex);
 				if (prior != null && prior.matched != null) {
 					TextEdit edit = createEditRight(prior);
 					if (edit != null) {
@@ -50,7 +57,7 @@ public class SpacingProcessor extends AbstractProcessor {
 	}
 
 	private TextEdit createEditRight(RefToken ref) {
-		if (ref.index > AdeptToken.EOF) return null;
+		if (ref.index > Token.EOF) return null;
 		String repl = calcSpacing(ref.matched.rSpacing, ref.matched.rActual, ref.matched.dent.indents);
 		return ops.createEdit(ref.index, ref.rIndex, ref.rActual, repl, 2, "R Nom");
 	}

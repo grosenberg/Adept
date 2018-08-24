@@ -48,7 +48,7 @@ public class Document {
 		this.model = model;
 	}
 
-	public Record getParseRecord() {
+	public Record getRecord() {
 		return data;
 	}
 

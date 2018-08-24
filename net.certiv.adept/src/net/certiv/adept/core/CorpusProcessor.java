@@ -81,7 +81,7 @@ public class CorpusProcessor extends BaseProcessor {
 				Calc.inc(Form.DOCS);
 				Feature.clearPool();
 				processDocument(doc, false);
-				Calc.delta(Form.TOKS, doc.getParseRecord().tokenStream.size());
+				Calc.delta(Form.TOKS, doc.getRecord().tokenStream.size());
 				corModel.merge(builder);	// merge document features into the corpus
 			}
 		}

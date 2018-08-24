@@ -29,7 +29,7 @@ public class Region implements Comparator<Region>, Comparable<Region> {
 	}
 
 	public static Region key(int idx1, int idx2) {
-		Region region = POOL.get(idx1, idx1);
+		Region region = POOL.get(idx1, idx2);
 		if (region != null) return region;
 		return new Region(idx1, idx2);
 	}

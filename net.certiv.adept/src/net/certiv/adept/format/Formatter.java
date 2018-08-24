@@ -18,26 +18,26 @@ import net.certiv.adept.unit.HashMultilist;
 /** Document formatter. */
 public class Formatter extends FormatterOps {
 
-	private SpacingProcessor spacer;
-	private WrapProcessor breaker;
-	private AlignProcessor aligner;
-	private CommentProcessor commenter;
+	private SpacingProcessor spcProc;
+	private WrapProcessor wrpProc;
+	private AlignProcessor algProc;
+	private CommentProcessor cmtProc;
 
 	public Formatter(DocModel model, Settings settings) {
 		super(model, settings);
 
-		spacer = new SpacingProcessor(this);
-		breaker = new WrapProcessor(this);
-		aligner = new AlignProcessor(this);
-		commenter = new CommentProcessor(this);
+		spcProc = new SpacingProcessor(this);
+		wrpProc = new WrapProcessor(this);
+		algProc = new AlignProcessor(this);
+		cmtProc = new CommentProcessor(this);
 	}
 
 	@Override
 	public void dispose() {
-		spacer.dispose();
-		breaker.dispose();
-		aligner.dispose();
-		commenter.dispose();
+		spcProc.dispose();
+		wrpProc.dispose();
+		algProc.dispose();
+		cmtProc.dispose();
 		super.dispose();
 	}
 
@@ -55,34 +55,40 @@ public class Formatter extends FormatterOps {
 	}
 
 	public List<TextEdit> createEdits() {
-		if (settings.format) spacer.formatWhiteSpace();
-		if (settings.breakLongLines) breaker.breakLongLines();
-		if (settings.alignFields) aligner.alignFields();
-		if (settings.alignComments) aligner.alignComments();
-		if (settings.formatComments) commenter.formatComments();
+		if (settings.formatComments) cmtProc.format();
+		if (settings.format) spcProc.formatSpacing();
+		if (settings.breakLongLines) wrpProc.wrapLines();
+		if (settings.alignFields) algProc.alignFields();
+		if (settings.alignComments) algProc.alignComments();
 
 		return getTextEdits();
 	}
 
 	public boolean applyEdits(List<TextEdit> edits) {
-		HashMultilist<Integer, TextEdit> editsIdx = new HashMultilist<>();
+		HashMultilist<Integer, TextEdit> edIdx = new HashMultilist<>();
 		for (TextEdit edit : edits) {
-			editsIdx.put(edit.begIndex(), edit);
+			edIdx.put(edit.begIndex(), edit);
 		}
-		editsIdx.sort(TextEdit.Comp);
+		edIdx.sort(TextEdit.Comp);
 
-		List<AdeptToken> tokens = data.getTokens();
+		// process all tokens, applying edits
+		List<AdeptToken> tokens = rec.getTokens();
 		for (int idx = 0, len = tokens.size() - 1; idx < len;) {
 			AdeptToken token = tokens.get(idx);
-			List<TextEdit> editSet = editsIdx.get(token.getTokenIndex());
-			if (editSet != null) {
-				for (TextEdit edit : editSet) {
-					if (token.isComment() && edit.getRegion().range() == 1) {
+			List<TextEdit> edlist = edIdx.get(token.getTokenIndex());
+			if (edlist != null) {
+				for (TextEdit edit : edlist) {
+					if (edit.getRegion().range() == 1) {
 						contents.append(edit.replacement());
 						idx++;
 
 					} else {
-						contents.append(token.getText());
+						if (idx == token.getTokenIndex()) {
+							contents.append(token.getText());
+						}
+					}
+
+					if (edit.getRegion().range() > 1) {
 						contents.append(edit.replacement());
 						idx = edit.endIndex();
 					}

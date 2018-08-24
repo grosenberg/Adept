@@ -221,7 +221,7 @@ public class Builder extends Record {
 
 		Feature feature = Feature.create(mgr, doc, toRulePath(parents), token);
 		index.put(token, feature);
-		featureIndex.put(feature.getId(), feature);
+		featureIdIndex.put(feature.getId(), feature);
 	}
 
 	// ---------------------------------------------------------------------

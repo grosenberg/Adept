@@ -35,10 +35,10 @@ import net.certiv.adept.lang.comment.parser.gen.CommentParser.WordContext;
 import net.certiv.adept.util.Strings;
 
 /**
- * Format the contents of comments. The formatting results replace the text of the comment token.
+ * Formats the contents of comments. The formatting operation replaces the text of the comment
+ * token.
  * <p>
- * Depends on the {@code visCol} comment token value being accurate. Does not depend on the
- * formatter line indexes.
+ * Uses the current {@code visCol} comment token value to determine the internal line wrap column.
  */
 public class CommentProcessor extends AbstractProcessor {
 
@@ -83,10 +83,10 @@ public class CommentProcessor extends AbstractProcessor {
 		comment = null;
 	}
 
-	public void formatComments() {
-		if (!ops.data.commentIndex.isEmpty()) {
-			for (int idx = firstCmtIdx(); idx < ops.data.commentIndex.size(); idx++) {
-				AdeptToken token = ops.data.commentIndex.get(idx);
+	public void format() {
+		if (!ops.rec.commentIndex.isEmpty()) {
+			for (int idx = firstCmtIdx(); idx < ops.rec.commentIndex.size(); idx++) {
+				AdeptToken token = ops.rec.commentIndex.get(idx);
 				if (process(token)) {
 					ops.updateOrCreateCommentEdit(token, getResult(), 1, "");
 				}
@@ -97,8 +97,8 @@ public class CommentProcessor extends AbstractProcessor {
 	private int firstCmtIdx() {
 		int idx = 0;
 		if (!ops.settings.formatHdrComment) {
-			AdeptToken firstCmt = ops.data.commentIndex.get(idx);
-			AdeptToken prior = ops.data.getRealLeft(firstCmt.getTokenIndex());
+			AdeptToken firstCmt = ops.rec.commentIndex.get(idx);
+			AdeptToken prior = ops.rec.getRealLeft(firstCmt.getTokenIndex());
 			if (prior == null && !firstCmt.isLineComment()) idx++;
 		}
 		return idx;
