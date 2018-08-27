@@ -21,9 +21,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.Tool;
 import net.certiv.adept.core.CoreMgr;
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Indenter;
-import net.certiv.adept.format.plan.Place;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Indenter;
+import net.certiv.adept.format.prep.Place;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.Kind;

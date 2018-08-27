@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.format.plan;
+package net.certiv.adept.format.prep;
 
 import java.util.Comparator;
 import java.util.Map.Entry;

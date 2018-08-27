@@ -4,11 +4,15 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.format.plan;
+package net.certiv.adept.format.prep;
 
-// Indent binding relative to index
-public enum Bind {
-	BEFORE,
-	AFTER,
-	WRAP;
+// Mark operations
+public enum Op {
+	ROOT,	// 0 indent level (force)
+
+	IN,		// indent
+	OUT,	// dedent
+
+	BEG,	// wrappable statement
+	END;
 }

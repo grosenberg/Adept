@@ -15,7 +15,7 @@ import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.CmdBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.PrimaryContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleSpecContext;
-import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4ParserBaseListener;
 
 public class IndentVisitor extends Antlr4ParserBaseListener {

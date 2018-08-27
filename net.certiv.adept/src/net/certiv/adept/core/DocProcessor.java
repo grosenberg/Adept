@@ -10,8 +10,8 @@ import java.util.List;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.format.Formatter;
-import net.certiv.adept.format.plan.Group;
-import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.format.prep.Group;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.CorpusModel;
 import net.certiv.adept.model.DocModel;

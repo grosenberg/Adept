@@ -10,12 +10,33 @@ import net.certiv.adept.unit.TreeMultilist;
 import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
+/**
+ * <pre>
+ * <code>
+ *	 IntegerLiteral
+ *		:	('0' | [1-9] ( Digits? | '_'+ Digits )) [lL]?				// decimal
+ *		|	'0' [xX] [0-9a-fA-F] ([0-9a-fA-F_]* [0-9a-fA-F])? [lL]?		// hex
+ *		|	'0' '_'* [0-7] ([0-7_]* [0-7])? [lL]?						// octal
+ *		|	'0' [bB] [01] ([01_]* [01])? [lL]?							// binary
+ *		;
+ *
+ *
+ *	| '(' | '|' | '(' | '|' | ')' | ')' |
+ *	| '(' |     |     |     | ')' |     |
+ *	| '(' |     |     |     | ')' |     |
+ *	| '(' |     |     |     | ')' |     |
+ *
+ *
+ *
+ * </code>
+ * </pre>
+ */
 public class Grid {
 
 	private FormatterOps ops;
 	private int first;
 	private int lcnt;
-	private List<Col> grid = new ArrayList<>();
+	private final List<Col> grid = new ArrayList<>();
 
 	private class Col {
 
@@ -32,6 +53,11 @@ public class Grid {
 		void add(int row, AdeptToken token) {
 			cells.put(row, token);
 		}
+
+		@Override
+		public String toString() {
+			return String.format("Col [mark=%s, cells=%s]", mark, cells);
+		}
 	}
 
 	public Grid(FormatterOps ops, TreeMultilist<Integer, AdeptToken> lines) {
@@ -39,7 +65,36 @@ public class Grid {
 		this.first = lines.firstKey();
 		this.lcnt = lines.size();
 		build(lines);
+		// populate(lines.keySet());
 	}
+
+	// -----
+	//
+	// @SuppressWarnings("unused")
+	// private void populate(Set<Integer> lnum) {
+	// for (Integer num : lnum) {
+	// List<AdeptToken> tokens = ops.lineTokensIndex.get(num);
+	// mkRow(num, tokens);
+	// }
+	// }
+	//
+	// private void mkRow(int row, List<AdeptToken> tokens) {
+	// for (int idx = 0; idx < tokens.size(); idx++) {
+	// AdeptToken token = tokens.get(idx);
+	// put(idx, row, token);
+	// }
+	// }
+	//
+	// private void put(int colnum, int row, AdeptToken token) {
+	// Col col = grid.get(colnum);
+	// if (col == null) {
+	// col = new Col(null);
+	// grid.add(col);
+	// }
+	// col.add(row, token);
+	// }
+	//
+	// -----
 
 	private void build(TreeMultilist<Integer, AdeptToken> lines) {
 		for (Integer row : lines.keySet()) {
@@ -51,10 +106,11 @@ public class Grid {
 	private void addRow(int row, List<AdeptToken> tokens) {
 		int at = 0;
 		for (int idx = 0; idx < tokens.size(); idx++) {
-			String mark = tokens.get(idx).getText();
+			AdeptToken token = tokens.get(idx);
+			String mark = token.getText();
 			at = findCol(at, mark);
 			Col col = grid.get(at);
-			col.add(row, tokens.get(idx));
+			col.add(row, token);
 			at++;
 		}
 	}

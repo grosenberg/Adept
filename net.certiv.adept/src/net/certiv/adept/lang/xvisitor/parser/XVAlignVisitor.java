@@ -6,11 +6,11 @@
  *******************************************************************************/
 package net.certiv.adept.lang.xvisitor.parser;
 
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.XaltContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.XmainContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.XpathContext;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParserBaseListener;
 
 public class XVAlignVisitor extends XVisitorParserBaseListener {

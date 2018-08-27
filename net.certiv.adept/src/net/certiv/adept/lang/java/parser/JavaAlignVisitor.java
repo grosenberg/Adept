@@ -6,7 +6,7 @@
  *******************************************************************************/
 package net.certiv.adept.lang.java.parser;
 
-import net.certiv.adept.format.plan.Aligner;
+import net.certiv.adept.format.prep.Aligner;
 import net.certiv.adept.lang.java.parser.gen.Java8ParserBaseListener;
 
 public class JavaAlignVisitor extends Java8ParserBaseListener {

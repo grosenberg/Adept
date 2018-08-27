@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
-import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.Context;
 import net.certiv.adept.model.RefToken;

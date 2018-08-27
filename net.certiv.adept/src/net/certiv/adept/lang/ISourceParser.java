@@ -13,8 +13,8 @@ import org.antlr.v4.runtime.TokenFactory;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.model.Document;
 
 public interface ISourceParser extends IParseErrorReporter {

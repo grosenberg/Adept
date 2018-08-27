@@ -3,6 +3,8 @@
 .classpath
 /**/.settings/
 
+net.certiv.adept.nn/
+
 /**/attic/
 /**/bak/
 /**/bin/

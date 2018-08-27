@@ -6,6 +6,7 @@
  *******************************************************************************/
 package net.certiv.adept.format;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -14,8 +15,8 @@ import java.util.TreeMap;
 
 import net.certiv.adept.Settings;
 import net.certiv.adept.Tool;
-import net.certiv.adept.format.plan.Group;
-import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.format.prep.Group;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.DocModel;
@@ -92,6 +93,8 @@ public class FormatterOps {
 
 	/** Create a meta group for each set of serial groups. */
 	protected void collectSerials() {
+
+		// filter all schemes to get single line members
 		Group serials = new Group();
 		for (Group group : rec.groupIndex) {
 			for (Scheme scheme : group.getSchemes()) {
@@ -104,20 +107,30 @@ public class FormatterOps {
 		}
 
 		TreeMultilist<Integer, AdeptToken> members = serials.get(Scheme.SERIAL);
-		if (members == null) return;
+		if (members == null || members.size() < 2) return;
 
+		// split 'serials' group into unique contiguous groups
+		List<Group> unqGroups = new ArrayList<>();
 		Group group = new Group();
 		for (int lnum : members.keySet()) {
 			if (group.isEmpty() || group.contiguous(Scheme.SERIAL, lnum)) {
 				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			} else {
-				rec.groupIndex.add(group);
+				unqGroups.add(group);
 				group = new Group();
 				group.addMembers(Scheme.SERIAL, lnum, members.get(lnum));
 			}
 		}
-		if (!group.isEmpty()) rec.groupIndex.add(group);
+		if (!group.isEmpty()) unqGroups.add(group);
 
+		// split each contiguous group into contiguous 'similar' groups
+		List<Group> simGroups = new ArrayList<>();
+		for (Group unique : unqGroups) {
+			simGroups.addAll(unique.partition());
+		}
+
+		// add final set of serial groups to group index
+		rec.groupIndex.addAll(simGroups);
 	}
 
 	/**

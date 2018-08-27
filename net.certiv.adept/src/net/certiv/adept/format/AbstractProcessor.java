@@ -6,12 +6,18 @@
  *******************************************************************************/
 package net.certiv.adept.format;
 
+import net.certiv.adept.tool.ToolBase;
+
 public abstract class AbstractProcessor {
 
 	protected FormatterOps ops;
 
 	public AbstractProcessor(FormatterOps ops) {
 		this.ops = ops;
+	}
+
+	public ToolBase report() {
+		return ops.tool;
 	}
 
 	public void dispose() {

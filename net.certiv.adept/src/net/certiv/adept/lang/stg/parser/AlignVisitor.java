@@ -6,13 +6,13 @@
  *******************************************************************************/
 package net.certiv.adept.lang.stg.parser;
 
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Scheme;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltBlockContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AltListContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.AssignStmtContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.ElementsContext;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4Parser.RuleBlockContext;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.antlr.parser.gen.Antlr4ParserBaseListener;
 
 public class AlignVisitor extends Antlr4ParserBaseListener {

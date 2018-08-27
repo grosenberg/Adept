@@ -14,8 +14,8 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Pair;
 
-import net.certiv.adept.format.plan.Dent;
-import net.certiv.adept.format.plan.Place;
+import net.certiv.adept.format.prep.Dent;
+import net.certiv.adept.format.prep.Place;
 import net.certiv.adept.model.Bias;
 import net.certiv.adept.model.Kind;
 import net.certiv.adept.model.RefToken;

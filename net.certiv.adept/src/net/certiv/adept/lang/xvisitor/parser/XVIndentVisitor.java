@@ -6,13 +6,13 @@
  *******************************************************************************/
 package net.certiv.adept.lang.xvisitor.parser;
 
-import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.ActionBlockContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.GrammarSpecContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.OptionContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.OptionsSpecContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.XmainContext;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParser.XpathContext;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.lang.xvisitor.parser.gen.XVisitorParserBaseListener;
 
 public class XVIndentVisitor extends XVisitorParserBaseListener {

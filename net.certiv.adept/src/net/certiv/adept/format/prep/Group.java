@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.format.plan;
+package net.certiv.adept.format.prep;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +67,31 @@ public class Group {
 	public int lastLine(Scheme scheme) {
 		TreeMultilist<Integer, AdeptToken> sub = members.get(scheme);
 		return sub.lastKey();
+	}
+
+	// based on similar number of elements of similar type in similar order
+	public List<Group> partition() {
+		TreeMultilist<Integer, AdeptToken> lines = members.get(Scheme.SERIAL);
+		int beg = lines.firstKey();
+		int end = lines.lastKey();
+
+		List<Group> parts = new ArrayList<>();
+		Group group = new Group();
+		int cnt0 = -1;
+		for (int idx = beg; idx <= end; idx++) {
+			int cnt1 = lines.get(idx).size();
+			if (group.isEmpty() || cnt0 == cnt1) {
+				group.addMembers(Scheme.SERIAL, idx, lines.get(idx));
+			} else {
+				parts.add(group);
+				group = new Group();
+				group.addMembers(Scheme.SERIAL, idx, lines.get(idx));
+			}
+			cnt0 = cnt1;
+		}
+		if (!group.isEmpty()) parts.add(group);
+
+		return parts;
 	}
 
 	public boolean contiguous(Scheme scheme, int line) {

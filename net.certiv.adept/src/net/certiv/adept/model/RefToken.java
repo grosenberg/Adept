@@ -17,10 +17,10 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.gson.annotations.Expose;
 
-import net.certiv.adept.format.plan.Count;
-import net.certiv.adept.format.plan.Dent;
-import net.certiv.adept.format.plan.Place;
-import net.certiv.adept.format.plan.Scheme;
+import net.certiv.adept.format.prep.Count;
+import net.certiv.adept.format.prep.Dent;
+import net.certiv.adept.format.prep.Place;
+import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.Ranked;
 import net.certiv.adept.unit.TreeMultiset;

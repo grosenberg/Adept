@@ -21,9 +21,9 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Group;
-import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Group;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;

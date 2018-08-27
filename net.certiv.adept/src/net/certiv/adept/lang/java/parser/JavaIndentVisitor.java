@@ -6,9 +6,9 @@
  *******************************************************************************/
 package net.certiv.adept.lang.java.parser;
 
-import net.certiv.adept.format.plan.Indenter;
 import net.certiv.adept.lang.java.parser.gen.Java8Parser.BlockContext;
 import net.certiv.adept.lang.java.parser.gen.Java8Parser.CompilationUnitContext;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.lang.java.parser.gen.Java8ParserBaseListener;
 
 public class JavaIndentVisitor extends Java8ParserBaseListener {

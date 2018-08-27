@@ -21,8 +21,8 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import net.certiv.adept.Tool;
-import net.certiv.adept.format.plan.Aligner;
-import net.certiv.adept.format.plan.Indenter;
+import net.certiv.adept.format.prep.Aligner;
+import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.ParserErrorListener;
