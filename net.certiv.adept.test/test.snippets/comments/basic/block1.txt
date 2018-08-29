@@ -1,0 +1,3 @@
+/*
+ * Productions from §10 (Arrays)
+ */

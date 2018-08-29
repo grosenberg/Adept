@@ -30,9 +30,9 @@ WS		: ( VWs | HWs )+ -> skip 	;
 
 
 mode block ;
-	END		: '*/'	-> popMode ;
-	BLANK	: . 	{ atBol(true) }? HWs* VWs ;
-	MID		: Star  { atBol(false) }? -> skip ;
+	END		: HWs* '*/'	-> popMode ;
+	BLANK	: { atBol() }? HWs* (Star HWs*)? VWs ;
+	MID		: { atBol() }? HWs* Star  -> skip ;
 
 	PREFORM	: '<pre>' .*? '</pre>' ;
 	HDRET	: TagBeg Break  TagEnd ;
@@ -42,8 +42,8 @@ mode block ;
 	ITEM	: TagBeg Item   TagEnd ;
 
 	CODE	: Code		-> pushMode(code) ;
-	PARAM	: Param		{ atBol(true) }? ;
-	ATTAG	: AtTag		{ atBol(true) }? ;
+	PARAM	: Param	;
+	ATTAG	: AtTag	;
 
 	CHAR	: Char	{ more(WORD); } ;
 	BWS		: ( VWs | HWs ) -> skip ;

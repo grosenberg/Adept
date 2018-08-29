@@ -7,7 +7,6 @@ import java.util.Map;
 
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.util.Log;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -65,36 +64,7 @@ public class Grid {
 		this.first = lines.firstKey();
 		this.lcnt = lines.size();
 		build(lines);
-		// populate(lines.keySet());
 	}
-
-	// -----
-	//
-	// @SuppressWarnings("unused")
-	// private void populate(Set<Integer> lnum) {
-	// for (Integer num : lnum) {
-	// List<AdeptToken> tokens = ops.lineTokensIndex.get(num);
-	// mkRow(num, tokens);
-	// }
-	// }
-	//
-	// private void mkRow(int row, List<AdeptToken> tokens) {
-	// for (int idx = 0; idx < tokens.size(); idx++) {
-	// AdeptToken token = tokens.get(idx);
-	// put(idx, row, token);
-	// }
-	// }
-	//
-	// private void put(int colnum, int row, AdeptToken token) {
-	// Col col = grid.get(colnum);
-	// if (col == null) {
-	// col = new Col(null);
-	// grid.add(col);
-	// }
-	// col.add(row, token);
-	// }
-	//
-	// -----
 
 	private void build(TreeMultilist<Integer, AdeptToken> lines) {
 		for (Integer row : lines.keySet()) {
@@ -156,14 +126,6 @@ public class Grid {
 	/** Returns the number of grid columns. */
 	public int size() {
 		return grid.size();
-	}
-
-	public void debug() {
-		StringBuilder sb = new StringBuilder("|");
-		for (int idx = 0; idx < size(); idx++) {
-			sb.append(String.format(" %3s |", minCol(idx)));
-		}
-		Log.debug(this, sb.toString());
 	}
 
 	@Override

@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -223,6 +224,11 @@ public class Record {
 			sb.append(token.getText());
 		}
 		return sb.toString();
+	}
+
+	/** Returns the text of the tokens in the range defined by the given tokens, inclusive. */
+	public String getText(Token beg, Token end) {
+		return charStream.getText(Interval.of(beg.getStartIndex(), end.getStopIndex()));
 	}
 
 	/**

@@ -59,8 +59,8 @@ public class CodePane extends JTextPane {
 		ACT_DEL = new SimpleAttributeSet();
 		StyleConstants.setForeground(ACT_DEL, Color.RED);
 		StyleConstants.setBackground(ACT_DEL, new Color(255, 192, 192));
-		StyleConstants.setBold(ACT_DEL, false);
-		StyleConstants.setItalic(ACT_DEL, true);
+		StyleConstants.setBold(ACT_DEL, true);
+		StyleConstants.setItalic(ACT_DEL, false);
 
 		ACT_MOD = new SimpleAttributeSet();
 		StyleConstants.setForeground(ACT_MOD, new Color(0, 192, 0));

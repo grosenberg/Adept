@@ -80,7 +80,7 @@ public class Group {
 		int cnt0 = -1;
 		for (int idx = beg; idx <= end; idx++) {
 			int cnt1 = lines.get(idx).size();
-			if (group.isEmpty() || cnt0 == cnt1) {
+			if (group.isEmpty() || Math.abs(cnt0 - cnt1) < 3) {
 				group.addMembers(Scheme.SERIAL, idx, lines.get(idx));
 			} else {
 				parts.add(group);

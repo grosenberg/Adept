@@ -53,7 +53,7 @@ public class AlignProcessor extends AbstractProcessor {
 						break;
 
 					case SERIAL:
-						gridAlign(lines, false);
+						gridAlign(lines, true);
 						break;
 
 					default:
@@ -114,7 +114,7 @@ public class AlignProcessor extends AbstractProcessor {
 
 	private void gridAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabFirst) {
 		Grid grid = new Grid(ops, lines);
-		report().toolInfo(this, grid.toString());
+		// report().toolInfo(this, grid.toString());
 
 		for (int col = 0; col < grid.size(); col++) {
 			int alignCol = 0;

@@ -1,0 +1,7 @@
+/*
+   Derived from
+   https://eclipse.org/aspectj/doc/next/quick5.pdf
+   https://eclipse.org/aspectj/doc/next/progguide/starting.html
+   
+   https://eclipse.org/aspectj/doc/next/adk15notebook/grammar.html
+ */

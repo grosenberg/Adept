@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.LexerNoViableAltException;
@@ -169,8 +168,7 @@ public abstract class CommentLexerAdaptor extends Lexer {
 							_mStartCharIndex - 1, _tokenStartLine, _tokenStartCharPositionInLine);
 					emit(t);
 
-					if (_type != SKIP) {
-						// stage token that terminated the modified more
+					if (_type != SKIP) { // stage token that terminated the modified more
 						_mtoken = _factory.create(_tokenFactorySourcePair, _type, _text, _channel, _mStartCharIndex,
 								getCharIndex() - 1, _mStartLine, _mStartCharPositionInLine);
 					}
@@ -185,28 +183,8 @@ public abstract class CommentLexerAdaptor extends Lexer {
 		}
 	}
 
-	public boolean atBol(boolean allowStar) {
-		if (_tokenStartCharIndex == 0) return true;
-
-		CodePointCharStream cpcs = (CodePointCharStream) _input;
-		int off = _tokenStartCharIndex - cpcs.index(); // LA relative to beg of just matched token
-		int bol = off - _tokenStartCharPositionInLine; // LA relative to beg of line
-		for (int dot = off - 1; dot >= bol; dot--) {
-			char c = (char) cpcs.LA(dot);
-			switch (c) {
-				case '\t':
-				case ' ':
-					continue;
-				case '\r':
-				case '\n':
-					return true;
-				case '*':
-					if (allowStar) continue;
-				default:
-					return false;
-			}
-		}
-		return true;
+	public boolean atBol() {
+		return _tokenStartCharPositionInLine == 0;
 	}
 
 	public boolean at(String s) {

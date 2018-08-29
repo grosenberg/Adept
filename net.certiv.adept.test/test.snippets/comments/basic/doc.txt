@@ -1,0 +1,5 @@
+
+  /**
+Configure the tool using command-line styled arguments.
+	@param args command-line styled arguments
+	 * @return true iff all of the command-line styled arguments are recognized 	*/
