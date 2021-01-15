@@ -13,7 +13,7 @@ import java.util.List;
 import com.google.gson.annotations.Expose;
 
 import net.certiv.adept.lang.Record;
-import net.certiv.adept.unit.Ranked;
+import net.certiv.adept.store.Ranked;
 
 public class Context implements Ranked, Comparable<Context>, Cloneable {
 

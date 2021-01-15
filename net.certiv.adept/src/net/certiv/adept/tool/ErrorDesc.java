@@ -6,9 +6,11 @@
  *******************************************************************************/
 package net.certiv.adept.tool;
 
+import net.certiv.adept.util.Strings;
+
 public enum ErrorDesc {
 
-	INFO(-1, "", ErrorKind.INFO),
+	INFO(-1, Strings.EMPTY, ErrorKind.INFO),
 
 	// ---
 

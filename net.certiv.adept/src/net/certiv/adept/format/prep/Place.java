@@ -6,6 +6,10 @@
  *******************************************************************************/
 package net.certiv.adept.format.prep;
 
+import java.util.List;
+
+import net.certiv.adept.lang.AdeptToken;
+
 public enum Place {
 
 	SOLO(0),
@@ -28,6 +32,16 @@ public enum Place {
 
 	public boolean atEOL() {
 		return this == END;
+	}
+
+	public static Place characterize(List<AdeptToken> tokens, AdeptToken token) {
+		int idx = tokens.indexOf(token);
+		if (idx == -1) return ANY;
+		int len = tokens.size();
+		if (len == 1) return SOLO;
+		if (idx == 0) return BEG;
+		if (idx == len) return Place.END;
+		return MID;
 	}
 
 	// ANY -> MID = 0.0

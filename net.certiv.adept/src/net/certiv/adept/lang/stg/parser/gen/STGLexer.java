@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STGLexer.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STGLexer.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.stg.parser.gen;
 
@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class STGLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -32,28 +32,37 @@ public class STGLexer extends Lexer {
 		"DEFAULT_MODE"
 	};
 
-	public static final String[] ruleNames = {
-		"DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", "HORZ_WS", 
-		"VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
-		"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
-		"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
-		"ID", "Assign", "LBang", "RBang", "LPct", "RPct", "LDAngle", "RDAngle", 
-		"Hws", "Vws", "DocComment", "BlockComment", "LineComment", "EscSeq", "UnicodeEsc", 
-		"HexDigit", "String", "NameChar", "NameStartChar", "True", "False", "Esc", 
-		"At", "Colon", "Semi", "Dot", "Comma", "Equal", "DQuote", "Underscore", 
-		"LParen", "RParen", "LBrace", "RBrace", "LBrack", "RBrack", "LShift", 
-		"RShift"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", "HORZ_WS", 
+			"VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
+			"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
+			"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
+			"ID", "Assign", "LBang", "RBang", "LPct", "RPct", "LDAngle", "RDAngle", 
+			"Hws", "Vws", "DocComment", "BlockComment", "LineComment", "EscSeq", 
+			"UnicodeEsc", "HexDigit", "String", "NameChar", "NameStartChar", "True", 
+			"False", "Esc", "At", "Colon", "Semi", "Dot", "Comma", "Equal", "DQuote", 
+			"Underscore", "LParen", "RParen", "LBrace", "RBrace", "LBrack", "RBrack", 
+			"LShift", "RShift"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", 
-		"HORZ_WS", "VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
-		"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
-		"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
-		"ID"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", 
+			"HORZ_WS", "VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
+			"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
+			"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
+			"ID"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

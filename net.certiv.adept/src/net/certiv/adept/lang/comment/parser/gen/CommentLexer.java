@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/comment/parser/CommentLexer.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/comment/parser/CommentLexer.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.comment.parser.gen;
 	import net.certiv.adept.lang.comment.parser.CommentLexerAdaptor;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CommentLexer extends CommentLexerAdaptor {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -33,23 +33,32 @@ public class CommentLexer extends CommentLexerAdaptor {
 		"DEFAULT_MODE", "block", "line", "code"
 	};
 
-	public static final String[] ruleNames = {
-		"DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", "HDRET", 
-		"INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", "CHAR", "BWS", 
-		"NL", "LINLINE", "LCODE", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS", "TagBeg", 
-		"TagEnd", "Style", "EscSeq", "UnicodeEsc", "HexDigit", "Char", "Code", 
-		"Param", "AtTag", "Inline", "Break", "Flow", "List", "Item", "Esc", "Nl", 
-		"HWs", "VWs", "Underscore", "LBrace", "RBrace", "LAngle", "RAngle", "Slash", 
-		"Star", "At", "Eq"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", "HDRET", 
+			"INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", "CHAR", "BWS", 
+			"NL", "LINLINE", "LCODE", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS", "TagBeg", 
+			"TagEnd", "Style", "EscSeq", "UnicodeEsc", "HexDigit", "Char", "Code", 
+			"Param", "AtTag", "Inline", "Break", "Flow", "List", "Item", "Esc", "Nl", 
+			"HWs", "VWs", "Underscore", "LBrace", "RBrace", "LAngle", "RAngle", "Slash", 
+			"Star", "At", "Eq"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "WORD", "DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", 
-		"HDRET", "INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", "CHAR", 
-		"BWS", "NL", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "WORD", "DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", 
+			"HDRET", "INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", 
+			"CHAR", "BWS", "NL", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

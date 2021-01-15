@@ -6,8 +6,8 @@ options {
 }
 
 @header {
-	package net.certiv.antlrdt.core.parser.gen;
-	import net.certiv.antlrdt.core.parser.StructureAdaptor;
+	package net.certiv.antlr.dt.core.parser.gen;
+	import net.certiv.antlr.dt.core.parser.StructureAdaptor;
 }
 
 structure
@@ -52,9 +52,9 @@ channelsStatement	: //channelsSpec//id
 							{ processChannelsStatement(); }
 					;
 
-optionsBlock		: //prequelConstruct/optionsSpec			
-							{ onEntry: begOptionsBlock(); } 	
-							{ onExit:  endBlock(); }	
+optionsBlock		: //prequelConstruct/optionsSpec
+							{ onEntry: begOptionsBlock(); }
+							{ onExit:  endBlock(); }
 					;
 
 optionStatement		: //prequelConstruct/optionsSpec/option
@@ -74,7 +74,7 @@ tokenStatement		: //tokensSpec//id
 
 parserRuleBlock		: //parserRuleSpec
 							{ onEntry: begParserRule(); }
-							{ onExit:  endBlock(); }	
+							{ onExit:  endBlock(); }
 					;
 
 parserBlock			: //block
@@ -104,7 +104,7 @@ fragmentRuleBlock	: //fragmentRuleSpec
 
 modeBlock			: //modeRuleSpec
 							{ onEntry: begModeBlock(); }
-							{ onExit:  endBlock(); }	
+							{ onExit:  endBlock(); }
 					;
 
 lexerBlock			: //lexerBlock

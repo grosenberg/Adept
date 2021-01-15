@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/antlr/parser/Antlr4Lexer.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/antlr/parser/Antlr4Lexer.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.antlr.parser.gen;
 	import net.certiv.adept.lang.antlr.parser.AntlrLexerAdaptor;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class Antlr4Lexer extends AntlrLexerAdaptor {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -40,43 +40,53 @@ public class Antlr4Lexer extends AntlrLexerAdaptor {
 		"DEFAULT_MODE", "Action", "Args", "Options", "ListBlock"
 	};
 
-	public static final String[] ruleNames = {
-		"BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", "BEG_ARGS", 
-		"OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", "LMORE", 
-		"LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
-		"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
-		"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", "COMMA", 
-		"SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", "RARROW", 
-		"EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", "RANGE", 
-		"DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", "ERRCHAR", 
-		"ACT_NESTED", "END_ACTION", "ACT_DOC", "ACT_BLOCK", "ACT_LINE", "ACT_STRING", 
-		"ACT_CHAR", "ACT_ESCAPE", "ACT_EOF", "ACT_CONTENT", "ARG_NESTED", "END_ARGS", 
-		"ARG_ESC", "ARG_STRING", "ARG_CHAR", "ARG_EOF", "ARG_CONTENT", "OPT_DOC", 
-		"OPT_BLOCK", "OPT_LINE", "OPT_HWS", "OPT_VWS", "OPT_LBRACE", "OPT_RBRACE", 
-		"OPT_ID", "OPT_DOT", "OPT_ASSIGN", "OPT_STRING", "OPT_INT", "OPT_STAR", 
-		"OPT_SEMI", "LST_DOC", "LST_BLOCK", "LST_LINE", "LST_HWS", "LST_VWS", 
-		"LST_LBRACE", "LST_RBRACE", "LST_ID", "LST_DOT", "LST_COMMA", "Id", "At", 
-		"Colon", "ColonColon", "Comma", "Semi", "LParen", "RParen", "LBrace", 
-		"RBrace", "LBrack", "RBrack", "RArrow", "Eq", "QMark", "Star", "Plus", 
-		"Pluseq", "Not", "Or", "Dot", "Range", "Dollar", "Pound", "Esc", "SQuote", 
-		"DQuote", "Hws", "Vws", "DocComment", "BlockComment", "LineComment", "EscSeq", 
-		"UnicodeEsc", "Int", "DecDigit", "HexDigit", "SQuoteLiteral", "DQuoteLiteral", 
-		"NameChar", "NameStartChar"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", 
+			"BEG_ARGS", "OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", 
+			"LMORE", "LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
+			"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
+			"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", 
+			"COMMA", "SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", 
+			"RARROW", "EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", 
+			"RANGE", "DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", 
+			"ERRCHAR", "ACT_NESTED", "END_ACTION", "ACT_DOC", "ACT_BLOCK", "ACT_LINE", 
+			"ACT_STRING", "ACT_CHAR", "ACT_ESCAPE", "ACT_EOF", "ACT_CONTENT", "ARG_NESTED", 
+			"END_ARGS", "ARG_ESC", "ARG_STRING", "ARG_CHAR", "ARG_EOF", "ARG_CONTENT", 
+			"OPT_DOC", "OPT_BLOCK", "OPT_LINE", "OPT_HWS", "OPT_VWS", "OPT_LBRACE", 
+			"OPT_RBRACE", "OPT_ID", "OPT_DOT", "OPT_ASSIGN", "OPT_STRING", "OPT_INT", 
+			"OPT_STAR", "OPT_SEMI", "LST_DOC", "LST_BLOCK", "LST_LINE", "LST_HWS", 
+			"LST_VWS", "LST_LBRACE", "LST_RBRACE", "LST_ID", "LST_DOT", "LST_COMMA", 
+			"Id", "At", "Colon", "ColonColon", "Comma", "Semi", "LParen", "RParen", 
+			"LBrace", "RBrace", "LBrack", "RBrack", "RArrow", "Eq", "QMark", "Star", 
+			"Plus", "Pluseq", "Not", "Or", "Dot", "Range", "Dollar", "Pound", "Esc", 
+			"SQuote", "DQuote", "Hws", "Vws", "DocComment", "BlockComment", "LineComment", 
+			"EscSeq", "UnicodeEsc", "Int", "DecDigit", "HexDigit", "SQuoteLiteral", 
+			"DQuoteLiteral", "NameChar", "NameStartChar"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", 
-		"BEG_ARGS", "OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", 
-		"LMORE", "LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
-		"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
-		"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", "COMMA", 
-		"SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", "RARROW", 
-		"EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", "RANGE", 
-		"DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", "ERRCHAR", 
-		"END_ACTION", "ACT_EOF", "ACT_CONTENT", "END_ARGS", "ARG_EOF", "ARG_CONTENT"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", 
+			"BEG_ARGS", "OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", 
+			"LMORE", "LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
+			"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
+			"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", 
+			"COMMA", "SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", 
+			"RARROW", "EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", 
+			"RANGE", "DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", 
+			"ERRCHAR", "END_ACTION", "ACT_EOF", "ACT_CONTENT", "END_ARGS", "ARG_EOF", 
+			"ARG_CONTENT"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

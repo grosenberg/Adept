@@ -28,8 +28,8 @@ import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
 import net.certiv.adept.model.load.CorpusDocs;
+import net.certiv.adept.store.TreeMultiset;
 import net.certiv.adept.tool.ErrorDesc;
-import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Function;
 import net.certiv.adept.util.Time;
 

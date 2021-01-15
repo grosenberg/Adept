@@ -10,8 +10,8 @@
 lexer grammar XVisitorLexer;
 
 @header {
-	package net.certiv.xvisitordt.core.parser.gen;
-	import  net.certiv.xvisitordt.core.parser.LexerAdaptor;
+	package net.certiv.xvisitor.dt.core.parser.gen;
+	import  net.certiv.xvisitor.dt.core.parser.LexerAdaptor;
 }
 
 options {

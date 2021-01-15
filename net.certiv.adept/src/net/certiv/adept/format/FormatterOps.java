@@ -22,7 +22,7 @@ import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.DocModel;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Spacing;
-import net.certiv.adept.unit.TreeMultilist;
+import net.certiv.adept.store.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
 /** Operations to collect and manage {@code TextEdit}s during the multiple stages of formatting. */

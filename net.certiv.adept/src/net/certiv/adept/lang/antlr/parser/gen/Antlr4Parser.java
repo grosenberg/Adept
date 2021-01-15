@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/antlr/parser/Antlr4Parser.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/antlr/parser/Antlr4Parser.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.antlr.parser.gen;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class Antlr4Parser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -38,27 +38,37 @@ public class Antlr4Parser extends Parser {
 		RULE_function = 21, RULE_attrValue = 22, RULE_dottedID = 23, RULE_label = 24, 
 		RULE_id = 25, RULE_keyword = 26, RULE_prefix = 27, RULE_attribute = 28, 
 		RULE_op = 29, RULE_mod = 30, RULE_other = 31;
-	public static final String[] ruleNames = {
-		"antlr", "statement", "primary", "cmdBlock", "body", "listStmt", "assignStmt", 
-		"atBlock", "ruleSpec", "ruleBlock", "argsBlock", "prequel", "altList", 
-		"elements", "element", "namedElement", "altBlock", "set", "pred", "action", 
-		"arguments", "function", "attrValue", "dottedID", "label", "id", "keyword", 
-		"prefix", "attribute", "op", "mod", "other"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"antlr", "statement", "primary", "cmdBlock", "body", "listStmt", "assignStmt", 
+			"atBlock", "ruleSpec", "ruleBlock", "argsBlock", "prequel", "altList", 
+			"elements", "element", "namedElement", "altBlock", "set", "pred", "action", 
+			"arguments", "function", "attrValue", "dottedID", "label", "id", "keyword", 
+			"prefix", "attribute", "op", "mod", "other"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", 
-		"BEG_ARGS", "OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", 
-		"LMORE", "LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
-		"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
-		"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", "COMMA", 
-		"SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", "RARROW", 
-		"EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", "RANGE", 
-		"DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", "ERRCHAR", 
-		"END_ACTION", "ACT_EOF", "ACT_CONTENT", "END_ARGS", "ARG_EOF", "ARG_CONTENT"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "BLOCKCOMMENT", "LINECOMMENT", "INT", "SET", "STRING", "BEG_ACTION", 
+			"BEG_ARGS", "OPTIONS", "TOKENS", "CHANNELS", "IMPORT", "CHANNEL", "LSKIP", 
+			"LMORE", "LHIDDEN", "LEOF", "MODE", "PUSHMODE", "POPMODE", "TYPE", "FRAGMENT", 
+			"LEXER", "PARSER", "GRAMMAR", "PROTECTED", "PUBLIC", "PRIVATE", "RETURNS", 
+			"LOCALS", "THROWS", "CATCH", "FINALLY", "AT", "COLON", "COLONCOLON", 
+			"COMMA", "SEMI", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", 
+			"RARROW", "EQ", "QMARK", "STAR", "PLUS", "PLUSEQ", "NOT", "OR", "DOT", 
+			"RANGE", "DOLLAR", "POUND", "ESC", "SQUOTE", "DQUOTE", "ID", "HWS", "VWS", 
+			"ERRCHAR", "END_ACTION", "ACT_EOF", "ACT_CONTENT", "END_ARGS", "ARG_EOF", 
+			"ARG_CONTENT"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

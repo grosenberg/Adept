@@ -28,8 +28,10 @@ import net.certiv.adept.format.prep.Indenter;
 import net.certiv.adept.model.Document;
 import net.certiv.adept.model.Feature;
 import net.certiv.adept.model.RefToken;
-import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.unit.TreeTable;
+import net.certiv.adept.model.sup.Field;
+import net.certiv.adept.store.TableMultilist;
+import net.certiv.adept.store.TreeMultilist;
+import net.certiv.adept.store.TreeTable;
 import net.certiv.adept.util.Utils;
 
 /** Record of the information generated through the parsing of a single Document. */
@@ -80,14 +82,20 @@ public class Record {
 	/** alignment groups */
 	public List<Group> groupIndex;
 
-	/** key=line number; value=bol char offset */
-	public HashMap<Integer, Integer> lineStartIndex;
+	/** row=line num; col=line start offset; value=tokens */
+	public TableMultilist<Integer, Integer, AdeptToken> lines;
 
-	/** key=line number; value=blank? */
-	public HashMap<Integer, Boolean> blanklines;
+	/** row=key token type; col=peer token type; value=context list */
+	public TableMultilist<Integer, Integer, Field> tuples;
+
+	/** key=line number; value=bol char offset */
+	@Deprecated public HashMap<Integer, Integer> lineStartIndex;
 
 	/** key=line number; value=list of real tokens */
-	public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
+	@Deprecated public TreeMultilist<Integer, AdeptToken> lineTokensIndex;
+
+	/** key=line number; value=blank? */
+	@Deprecated public HashMap<Integer, Boolean> blanklines;
 
 	// ---------------------------------------------------------
 
@@ -280,5 +288,41 @@ public class Record {
 	public boolean isBlankLine(int line) {
 		if (line < 0 && line >= blanklines.size()) return true;
 		return blanklines.get(line);
+	}
+
+	public boolean isWhitespace(AdeptToken token) {
+		int type = token.getType();
+		return type != HWS && type != VWS;
+	}
+
+	public List<Integer> getAncestorPath(ParserRuleContext ctx) {
+		return toRulePath(getAncestors(ctx));
+	}
+
+	/** Convert ancestor list to integers. */
+	public List<Integer> toRulePath(List<ParseTree> nodes) {
+		List<Integer> path = new ArrayList<>();
+		for (ParseTree node : nodes) {
+			try {
+				path.add(((ParserRuleContext) node).getRuleIndex());
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Ancestors must be rules.", e);
+			}
+		}
+		return path;
+	}
+
+	/**
+	 * Returns the parents of given context, including the current context ordered from the current
+	 * context to farthest parent context.
+	 */
+	public List<ParseTree> getAncestors(ParserRuleContext ctx) {
+		List<ParseTree> parents = new ArrayList<>();
+		ParserRuleContext parent = ctx;
+		for (int idx = 0; parent != null && idx < AncesLimit; idx++) {
+			parents.add(parent);
+			parent = parent.getParent();
+		}
+		return parents;
 	}
 }

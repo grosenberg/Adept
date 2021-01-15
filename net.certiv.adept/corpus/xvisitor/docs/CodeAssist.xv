@@ -5,9 +5,9 @@ options {
 }
 
 @header {
-	
-	package net.certiv.antlrdt.core.parser.gen;
-	import net.certiv.antlrdt.core.parser.AntlrDTSourceParser;
+
+	package net.certiv.antlr.dt.core.parser.gen;
+	import net.certiv.antlr.dt.core.parser.AntlrDTSourceParser;
 	import org.antlr.v4.runtime.Token;
 }
 

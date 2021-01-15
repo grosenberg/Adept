@@ -6,9 +6,9 @@ options {
 }
 
 @header {
-	package net.certiv.antlrdt.core.parser.gen;
+	package net.certiv.antlr.dt.core.parser.gen;
 
-	import net.certiv.antlrdt.core.parser.PathAdaptor;
+	import net.certiv.antlr.dt.core.parser.PathAdaptor;
 }
 
 paths

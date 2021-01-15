@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STGParser.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STGParser.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.stg.parser.gen;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class STGParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -29,21 +29,30 @@ public class STGParser extends Parser {
 		RULE_importSpec = 4, RULE_template = 5, RULE_formalArgList = 6, RULE_commaArg = 7, 
 		RULE_formalArg = 8, RULE_dict = 9, RULE_dictPairs = 10, RULE_keyValuePair = 11, 
 		RULE_defaultValuePair = 12, RULE_keyValue = 13;
-	public static final String[] ruleNames = {
-		"group", "groupSpec", "delimiters", "imports", "importSpec", "template", 
-		"formalArgList", "commaArg", "formalArg", "dict", "dictPairs", "keyValuePair", 
-		"defaultValuePair", "keyValue"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"group", "groupSpec", "delimiters", "imports", "importSpec", "template", 
+			"formalArgList", "commaArg", "formalArg", "dict", "dictPairs", "keyValuePair", 
+			"defaultValuePair", "keyValue"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", 
-		"HORZ_WS", "VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
-		"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
-		"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
-		"ID"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", 
+			"HORZ_WS", "VERT_WS", "STRING", "BIGSTRING", "BIGSTRING_NO_NL", "ANON_TEMPLATE", 
+			"ASSIGN", "EQUAL", "DOT", "COMMA", "SEMI", "COLON", "LPAREN", "RPAREN", 
+			"LBRACK", "RBRACK", "AT", "TRUE", "FALSE", "GROUP", "DELIMITERS", "IMPORT", 
+			"ID"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

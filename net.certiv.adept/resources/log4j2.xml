@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration
-	status="WARN"
-	name="AdeptConfig">
+<!DOCTYPE log4j:configuration SYSTEM 
+	"http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
+
+<Configuration status="WARN" name="AdeptConfig">
 	<Properties>
 		<Property name="logName">./Adept.log</Property>
-		<Property name="logPattern">%d{HH:mm:ss} [%-5p] %-40.90C{-3} : %-4L - %m%n
+		<Property name="logPattern">
+			%d{HH:mm:ss} [%-5p] %-40.90C{-3} : %-4L -
+			%m%n
 		</Property>
 	</Properties>
 
 	<Appenders>
-		<Console
-			name="Console"
-			target="SYSTEM_OUT">
+		<Console name="Console" target="SYSTEM_OUT">
 			<PatternLayout pattern="${logPattern}" />
 		</Console>
 
-		<File
-			name="Adept"
-			fileName="${logName}">
+		<File name="Adept" fileName="${logName}">
 			<PatternLayout pattern="${logPattern}" />
 		</File>
 
@@ -25,12 +24,8 @@
 
 	<Loggers>
 		<Root level="TRACE">
-			<AppenderRef
-				ref="Console"
-				level="DEBUG" />
-			<AppenderRef
-				ref="Adept"
-				level="DEBUG" />
+			<AppenderRef ref="Console" level="DEBUG" />
+			<AppenderRef ref="Adept" level="DEBUG" />
 		</Root>
 	</Loggers>
 </Configuration>

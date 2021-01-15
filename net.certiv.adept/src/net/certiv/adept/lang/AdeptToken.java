@@ -39,6 +39,15 @@ import net.certiv.adept.util.Strings;
 public class AdeptToken extends CommonToken implements Comparable<AdeptToken>, Comparator<AdeptToken> {
 
 	public static final int BOF = Token.EOF;
+	public static final Comparator<AdeptToken> CompVPos = new Comparator<AdeptToken>() {
+
+		@Override
+		public int compare(AdeptToken t1, AdeptToken t2) {
+			if (t1.getVisPos() < t2.getVisPos()) return -1;
+			if (t1.getVisPos() > t2.getVisPos()) return 1;
+			return 0;
+		}
+	};
 
 	// for transfer to Feature/RefToken
 	private Kind kind = Kind.WHITESPACE;

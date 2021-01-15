@@ -4,26 +4,26 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import net.certiv.adept.unit.ArrayMultilist.Entry;
+import net.certiv.adept.store.ArrayLists2.Entry;
 
 /**
- * Multilist implemented as an ArrayList with List instance data
+ * ArrayList with List instance data
  *
  * @param <K> ident type
  * @param <V> value type
  */
-public class ArrayMultilist<K, V> implements Iterable<Entry<K, V>> {
+public class ArrayLists2<K, V> implements Iterable<Entry<K, V>> {
 
 	private final List<Entry<K, V>> keyMap;
 
-	public ArrayMultilist() {
+	public ArrayLists2() {
 		keyMap = new ArrayList<>();
 	}
 

@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -27,27 +26,26 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 
 /**
- * Multimap implemented as a TreeMap with NavigableSet instance values. The NavigableSet is
- * specialized to rank duplicate added elements while remaining consistent with the Set interface.
+ * Multimap implemented as a TreeMap with ordered Set instance values
  *
  * @param <K> key
  * @param <V> value
  */
-public class TreeNavset<K, V> {
+public class TreeMultiset<K, V> {
 
 	private final TreeMap<K, Set<V>> map;
 	private Comparator<? super K> keyComp;
 	private Comparator<? super V> valComp;
 
-	public TreeNavset() {
+	public TreeMultiset() {
 		this(null, null);
 	}
 
-	public TreeNavset(Comparator<? super K> keyComp) {
+	public TreeMultiset(Comparator<? super K> keyComp) {
 		this(keyComp, null);
 	}
 
-	public TreeNavset(Comparator<? super K> keyComp, Comparator<? super V> valComp) {
+	public TreeMultiset(Comparator<? super K> keyComp, Comparator<? super V> valComp) {
 		this.map = new TreeMap<>(keyComp);
 		this.keyComp = keyComp;
 		this.valComp = valComp;
@@ -57,9 +55,9 @@ public class TreeNavset<K, V> {
 		this.valComp = valComp;
 	}
 
-	/** Get as navigable set. */
-	public NavigableSet<V> get(K key) {
-		return (NavigableSet<V>) map.get(key);
+	/** Get as set. */
+	public Set<V> get(K key) {
+		return map.get(key);
 	}
 
 	/** Get as list. */
@@ -79,13 +77,13 @@ public class TreeNavset<K, V> {
 	public boolean put(K key, Collection<V> values) {
 		Set<V> set = map.get(key);
 		if (set == null) {
-			set = new RankSet<>(valComp);
+			set = new ArraySet<>(valComp);
 			map.put(key, set);
 		}
 		return set.addAll(values);
 	}
 
-	public boolean put(TreeNavset<K, V> map) {
+	public boolean put(TreeMultiset<K, V> map) {
 		boolean ok = true;
 		for (K key : map.keySet()) {
 			Set<V> val = map.get(key);
@@ -173,8 +171,8 @@ public class TreeNavset<K, V> {
 	}
 
 	/** Returns an empty, initialized map. */
-	public TreeNavset<K, V> empty() {
-		return new TreeNavset<>(keyComp, valComp);
+	public TreeMultiset<K, V> empty() {
+		return new TreeMultiset<>(keyComp, valComp);
 	}
 
 	public Map<K, Set<V>> asMap() {
@@ -195,15 +193,15 @@ public class TreeNavset<K, V> {
 	}
 
 	public static final class TreeMultimapAdapter<K, V>
-			implements JsonSerializer<TreeNavset<K, V>>, JsonDeserializer<TreeNavset<K, V>> {
+			implements JsonSerializer<TreeMultiset<K, V>>, JsonDeserializer<TreeMultiset<K, V>> {
 
 		@Override
-		public JsonElement serialize(TreeNavset<K, V> src, Type typeOfSrc, JsonSerializationContext context) {
+		public JsonElement serialize(TreeMultiset<K, V> src, Type typeOfSrc, JsonSerializationContext context) {
 			return context.serialize(src.asMap(), src.asMapType());
 		}
 
 		@Override
-		public TreeNavset<K, V> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+		public TreeMultiset<K, V> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 				throws JsonParseException {
 
 			final Type key = ((ParameterizedType) typeOfT).getActualTypeArguments()[0];
@@ -211,15 +209,15 @@ public class TreeNavset<K, V> {
 			final Type type = asActualMap(key, val).asMapType();
 
 			Map<K, Set<V>> asMap = context.deserialize(json, type);
-			TreeNavset<K, V> multimap = new TreeNavset<>();
+			TreeMultiset<K, V> multimap = new TreeMultiset<>();
 			for (Entry<K, Set<V>> entry : asMap.entrySet()) {
 				multimap.put(entry.getKey(), entry.getValue());
 			}
 			return multimap;
 		}
 
-		private static <T, U> TreeNavset<T, U> asActualMap(T key, U value) {
-			return new TreeNavset<>();
+		private static <T, U> TreeMultiset<T, U> asActualMap(T key, U value) {
+			return new TreeMultiset<>();
 		}
 	}
 }

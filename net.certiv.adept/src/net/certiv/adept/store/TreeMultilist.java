@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +17,8 @@ import java.util.TreeMap;
 
 /**
  * Multimap implemented as a TreeMap with List instance values
+ * <p>
+ * TODO: add {@code extends AbstractMap<K, List<V>> }
  *
  * @param <K> key
  * @param <V> value

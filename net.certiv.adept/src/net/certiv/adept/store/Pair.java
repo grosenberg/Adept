@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 public class Pair<A, B> {
 

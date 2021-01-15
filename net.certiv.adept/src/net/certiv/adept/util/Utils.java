@@ -21,7 +21,7 @@ import java.util.Map;
 import org.antlr.v4.runtime.Token;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.store.HashMultilist;
 
 public class Utils {
 

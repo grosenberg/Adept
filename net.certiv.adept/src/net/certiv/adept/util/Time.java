@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import net.certiv.adept.unit.Pair;
+import net.certiv.adept.store.Pair;
 
 /** For keeping running measurements of 'time'. */
 public class Time {

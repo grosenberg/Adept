@@ -1,7 +1,7 @@
 /**
  * Version 1.0 - 2010.07.29
  * Version 4.0 - 2013.12.22 - Updated to AntlrV4 & AntlrXTree
- * Version 4.1 - 2014.01.05 
+ * Version 4.1 - 2014.01.05
  */
 xvisitor grammar Indent;
 
@@ -11,11 +11,11 @@ options {
 }
 
 @header {
-	
-	package net.certiv.antlrdt.core.parser.gen;
 
-	import static net.certiv.antlrdt.core.preferences.PrefsKey.*;
-	import net.certiv.antlrdt.core.formatter.IndentAdaptor;
+	package net.certiv.antlr.dt.core.parser.gen;
+
+	import static net.certiv.antlr.dt.core.preferences.PrefsKey.*;
+	import net.certiv.antlr.dt.core.formatter.IndentAdaptor;
 }
 
 indent

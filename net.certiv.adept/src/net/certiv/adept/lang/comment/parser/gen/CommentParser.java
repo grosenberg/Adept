@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/comment/parser/CommentParser.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/comment/parser/CommentParser.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.comment.parser.gen;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CommentParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -26,18 +26,27 @@ public class CommentParser extends Parser {
 		RULE_comment = 0, RULE_doc = 1, RULE_block = 2, RULE_line = 3, RULE_desc = 4, 
 		RULE_param = 5, RULE_code = 6, RULE_word = 7, RULE_preform = 8, RULE_inline = 9, 
 		RULE_hdret = 10, RULE_flow = 11, RULE_list = 12, RULE_item = 13, RULE_blank = 14;
-	public static final String[] ruleNames = {
-		"comment", "doc", "block", "line", "desc", "param", "code", "word", "preform", 
-		"inline", "hdret", "flow", "list", "item", "blank"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"comment", "doc", "block", "line", "desc", "param", "code", "word", "preform", 
+			"inline", "hdret", "flow", "list", "item", "blank"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "WORD", "DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", 
-		"HDRET", "INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", "CHAR", 
-		"BWS", "NL", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "WORD", "DOC", "BLOCK", "LINE", "WS", "END", "BLANK", "MID", "PREFORM", 
+			"HDRET", "INLINE", "FLOW", "LIST", "ITEM", "CODE", "PARAM", "ATTAG", 
+			"CHAR", "BWS", "NL", "LCHAR", "LWS", "RBRACE", "CCHAR", "CWS"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

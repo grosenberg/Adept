@@ -15,21 +15,27 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Helper class to provide String manipulation functions not available in standard JDK. */
+/**
+ * Helper class to provide String manipulation functions not available in
+ * standard JDK.
+ */
 public class Strings {
 
-	private static final Pattern nl = Pattern.compile(".*?(\\R)");
-
-	public static final String PARA_MARK = "\u00B6";
-	public static final String SPACE_MARK = "\u00B7";
-	public static final String TAB_MARK = "\u1E6F";		// double left arrow: "\u00BB";
-	public static final String ELLIPSIS_MARK = "\u2026";
-	public static final String LARR_MARK = "\u2190";
-	public static final String RARR_MARK = "\u2192";
+	private static final Pattern NL = Pattern.compile(".*?(\\R)");
 
 	public static final char EOP = File.separatorChar;	// path
 	public static final String EOL = System.lineSeparator();
+
+	public static final String TTAB_MARK = "\u1E6F"; 		// t underbar ṯ
+	public static final String TAB_MARK = "\u2666";			// diamond ♦
+	public static final String PARA_MARK = "\u00B6";		// pillcrow ¶
+	public static final String SPACE_MARK = "\u00B7";		// middle dot ·
+	public static final String ELLIPSIS_MARK = "\u2026"; 	// ellipsis …
+	public static final String LARR_MARK = "\u2190";		// leftwards arrow
+	public static final String RARR_MARK = "\u2192";		// rightwards arrow →
 	public static final String SPACE = " ";
+	public static final String EMPTY = "";
+
 	public static final char SPC = ' ';
 	public static final char TAB = '\t';
 	public static final char RET = '\r';
@@ -39,12 +45,12 @@ public class Strings {
 	private Strings() {}
 
 	/**
-	 * Returns a separator delimited string representation of the given values. The returned string will
-	 * not include a trailing separator.
+	 * Returns a separator delimited string representation of the given values. The
+	 * returned string will not include a trailing separator.
 	 *
 	 * @param values ordered list of string values
-	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix to each list value,
-	 *            otherwise as a suffix
+	 * @param asPrefix if <code>true</code>, the separator is positioned as a prefix
+	 *            to each list value, otherwise as a suffix
 	 * @param sep the string literal to be used as a list string separator
 	 * @return separator delimited string
 	 */
@@ -83,8 +89,8 @@ public class Strings {
 	}
 
 	/**
-	 * Join the given strings into one string using the passed line delimiter as a delimiter. No
-	 * delimiter is added to the last line.
+	 * Join the given strings into one string using the passed line delimiter as a
+	 * delimiter. No delimiter is added to the last line.
 	 *
 	 * @param lines the lines
 	 * @param delimiter line delimiter
@@ -193,13 +199,13 @@ public class Strings {
 	}
 
 	/**
-	 * Returns <code>true</code> if the given string only consists of white spaces according to Java. If
-	 * the string is blank, <code>true
+	 * Returns <code>true</code> if the given string only consists of white spaces
+	 * according to Java. If the string is blank, <code>true
 	 * </code> is returned.
 	 *
 	 * @param s the string to test
-	 * @return <code>true</code> if the string only consists of white spaces; otherwise
-	 *         <code>false</code> is returned
+	 * @return <code>true</code> if the string only consists of white spaces;
+	 *             otherwise <code>false</code> is returned
 	 * @see java.lang.Character#isWhitespace(char)
 	 */
 	public static boolean containsOnlyWhitespaces(String s) {
@@ -253,7 +259,8 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the index of the first non-horizontal whitespace character in the given string.
+	 * Returns the index of the first non-horizontal whitespace character in the
+	 * given string.
 	 *
 	 * @param str the string to check
 	 * @return index of the first non-whitespace character
@@ -268,7 +275,8 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the index of the last non-horizontal whitespace character in the given string.
+	 * Returns the index of the last non-horizontal whitespace character in the
+	 * given string.
 	 *
 	 * @param str the string to check
 	 * @return index of the last non-whitespace character
@@ -283,23 +291,25 @@ public class Strings {
 	}
 
 	/**
-	 * Returns <code>true</code> if the given character is an indentation character. Indentation
-	 * character are all whitespace characters except the line delimiter characters.
+	 * Returns <code>true</code> if the given character is an indentation character.
+	 * Indentation character are all whitespace characters except the line delimiter
+	 * characters.
 	 *
 	 * @param ch the given character
-	 * @return Returns <code>true</code> if this the character is a indent character, <code>false</code>
-	 *         otherwise
+	 * @return Returns <code>true</code> if this the character is a indent
+	 *             character, <code>false</code> otherwise
 	 */
 	public static boolean isHWs(char ch) {
 		return Character.isWhitespace(ch) && !isLineDelimiterChar(ch);
 	}
 
 	/**
-	 * Returns <code>true</code> if the given character is a line delimiter character.
+	 * Returns <code>true</code> if the given character is a line delimiter
+	 * character.
 	 *
 	 * @param ch the given character
-	 * @return Returns <code>true</code> if this the character is a line delimiter character,
-	 *         <code>false</code> otherwise
+	 * @return Returns <code>true</code> if this the character is a line delimiter
+	 *             character, <code>false</code> otherwise
 	 */
 	public static boolean isLineDelimiterChar(char ch) {
 		return ch == '\n' || ch == '\r';
@@ -310,7 +320,10 @@ public class Strings {
 		return getN(count, SPACE);
 	}
 
-	/** Returns a string containing {@code count} sequential copies of the given character. */
+	/**
+	 * Returns a string containing {@code count} sequential copies of the given
+	 * character.
+	 */
 	public static String getN(int count, char c) {
 		if (count <= 0) return "";
 
@@ -321,7 +334,10 @@ public class Strings {
 		return buf.toString();
 	}
 
-	/** Returns a string containing {@code count} sequential copies of the given text. */
+	/**
+	 * Returns a string containing {@code count} sequential copies of the given
+	 * text.
+	 */
 	public static String getN(int count, String text) {
 		if (count <= 0) return "";
 
@@ -333,8 +349,9 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the indentation of the given line in indentation units. Odd spaces are not counted. This
-	 * method only analyzes the content of <code>line</code> up to the first non-whitespace character.
+	 * Returns the indentation of the given line in indentation units. Odd spaces
+	 * are not counted. This method only analyzes the content of <code>line</code>
+	 * up to the first non-whitespace character.
 	 *
 	 * @param line the string to measure the indent of
 	 * @param tabWidth the width of one tab character in space equivalents
@@ -342,7 +359,8 @@ public class Strings {
 	 * @return the number of indentation units that line is indented by
 	 * @exception IllegalArgumentException if:
 	 *                <ul>
-	 *                <li>the given <code>indentWidth</code> is lower or equals to zero</li>
+	 *                <li>the given <code>indentWidth</code> is lower or equals to
+	 *                zero</li>
 	 *                <li>the given <code>tabWidth</code> is lower than zero</li>
 	 *                <li>the given <code>line</code> is null</li>
 	 *                </ul>
@@ -359,9 +377,9 @@ public class Strings {
 	/**
 	 * Returns the indentation of the given line in space equivalents.
 	 * <p>
-	 * Tab characters are counted using the given <code>tabWidth</code> and every other indent character
-	 * as one. This method analyzes the content of <code>line</code> up to the first non-whitespace
-	 * character.
+	 * Tab characters are counted using the given <code>tabWidth</code> and every
+	 * other indent character as one. This method analyzes the content of
+	 * <code>line</code> up to the first non-whitespace character.
 	 * </p>
 	 *
 	 * @param line the string to measure the indent of
@@ -403,8 +421,9 @@ public class Strings {
 	}
 
 	/**
-	 * Returns the visual width of the given text starting from the given offset within a line. Width is
-	 * reset each time a line separator character is encountered.
+	 * Returns the visual width of the given text starting from the given offset
+	 * within a line. Width is reset each time a line separator character is
+	 * encountered.
 	 *
 	 * @param text the string to measure
 	 * @param tabWidth the visual width of a tab
@@ -456,33 +475,6 @@ public class Strings {
 		return out + ELLIPSIS_MARK;
 	}
 
-	/** Encodes WS as visible characters. */
-	public static String encodeWS(String in) {
-		StringBuilder sb = new StringBuilder();
-		for (int idx = 0; idx < in.length(); idx++) {
-			char c = in.charAt(idx);
-			switch (c) {
-				case ' ':
-					sb.append(SPACE_MARK);
-					break;
-				case TAB:
-					sb.append(TAB_MARK);
-					break;
-				case '\r':
-					if (idx + 1 == in.length() || in.charAt(idx + 1) != '\n') {
-						sb.append(PARA_MARK);
-					}
-					break;
-				case '\n':
-					sb.append(PARA_MARK);
-					break;
-				default:
-					sb.append(c);
-			}
-		}
-		return sb.toString();
-	}
-
 	public static List<String> encodeWS(List<String> in) {
 		if (in != null) {
 			for (int idx = 0; idx < in.size(); idx++) {
@@ -490,6 +482,33 @@ public class Strings {
 			}
 		}
 		return in;
+	}
+
+	/** Encodes WS as visible characters. */
+	public static String encodeWS(String in) {
+		StringBuilder sb = new StringBuilder();
+		for (int idx = 0; idx < in.length(); idx++) {
+			char c = in.charAt(idx);
+			switch (c) {
+				case SPC:
+					sb.append(SPACE_MARK);
+					break;
+				case TAB:
+					sb.append(TAB_MARK);
+					break;
+				case RET:
+					if (idx + 1 == in.length() || in.charAt(idx + 1) != NLC) {
+						sb.append(PARA_MARK);
+					}
+					break;
+				case NLC:
+					sb.append(PARA_MARK);
+					break;
+				default:
+					sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 
 	/** Split all lines, preserving blank last line, if any. */
@@ -506,14 +525,16 @@ public class Strings {
 		if (txt == null || txt.isEmpty()) return 0;
 
 		int cnt = 0;
-		Matcher m = nl.matcher(txt);
+		Matcher m = NL.matcher(txt);
 		while (m.find()) {
 			cnt++;
 		}
 		return cnt;
 	}
 
-	/** Returns the column of the tab stop equal to or larger than the given column. */
+	/**
+	 * Returns the column of the tab stop equal to or larger than the given column.
+	 */
 	public static int nextTabCol(int col, int tabWidth) {
 		int rem = col % tabWidth;
 		if (rem == 0) return col;

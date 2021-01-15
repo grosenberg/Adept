@@ -9,7 +9,7 @@ package net.certiv.adept.format;
 import java.util.Comparator;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.TreeTable;
+import net.certiv.adept.store.TreeTable;
 
 /**
  * Defines a contiguous range of tokens by the indexes of the real token end-points. A beginning

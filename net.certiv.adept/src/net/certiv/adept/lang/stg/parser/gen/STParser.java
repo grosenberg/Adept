@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STParser.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STParser.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.stg.parser.gen;
 	
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class STParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -34,23 +34,32 @@ public class STParser extends Parser {
 		RULE_expr = 14, RULE_mapExpr = 15, RULE_memberExpr = 16, RULE_mapTemplateRef = 17, 
 		RULE_includeExpr = 18, RULE_primary = 19, RULE_list = 20, RULE_args = 21, 
 		RULE_argExprList = 22, RULE_namedArg = 23;
-	public static final String[] ruleNames = {
-		"template", "element", "singleElement", "compoundElement", "exprTag", 
-		"region", "subtemplate", "ifstat", "conditional", "andConditional", "notConditional", 
-		"notConditionalExpr", "exprOptions", "option", "expr", "mapExpr", "memberExpr", 
-		"mapTemplateRef", "includeExpr", "primary", "list", "args", "argExprList", 
-		"namedArg"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"template", "element", "singleElement", "compoundElement", "exprTag", 
+			"region", "subtemplate", "ifstat", "conditional", "andConditional", "notConditional", 
+			"notConditionalExpr", "exprOptions", "option", "expr", "mapExpr", "memberExpr", 
+			"mapTemplateRef", "includeExpr", "primary", "list", "args", "argExprList", 
+			"namedArg"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "LBRACE", "RDELIM", "COMMA", "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", 
-		"TMPL_COMMENT", "HORZ_WS", "VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", 
-		"STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", "END", "TRUE", "FALSE", 
-		"AT", "ELLIPSIS", "DOT", "COLON", "SEMI", "AND", "OR", "LPAREN", "RPAREN", 
-		"LBRACK", "RBRACK", "EQUALS", "BANG", "ERR_CHAR", "ID", "PIPE"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "LBRACE", "RDELIM", "COMMA", "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", 
+			"TMPL_COMMENT", "HORZ_WS", "VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", 
+			"STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", "END", "TRUE", "FALSE", 
+			"AT", "ELLIPSIS", "DOT", "COLON", "SEMI", "AND", "OR", "LPAREN", "RPAREN", 
+			"LBRACK", "RBRACK", "EQUALS", "BANG", "ERR_CHAR", "ID", "PIPE"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

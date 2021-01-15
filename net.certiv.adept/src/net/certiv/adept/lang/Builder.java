@@ -248,19 +248,6 @@ public class Builder extends Record {
 		return Spacing.UNKNOWN;
 	}
 
-	// convert ancestor list to integers
-	private List<Integer> toRulePath(List<ParseTree> nodes) {
-		List<Integer> path = new ArrayList<>();
-		for (ParseTree node : nodes) {
-			try {
-				path.add(((ParserRuleContext) node).getRuleIndex());
-			} catch (Exception e) {
-				throw new IllegalArgumentException("Ancestors must be rules.", e);
-			}
-		}
-		return path;
-	}
-
 	private String findWsLeft(int tokenIndex) {
 		AdeptToken left = getRealLeft(tokenIndex);
 		return getTextBetween(left.getTokenIndex(), tokenIndex);
@@ -319,18 +306,6 @@ public class Builder extends Record {
 	}
 
 	// ---------------------------------------------------------------------
-
-	// parents of given context, including the current context
-	// ordered from the current context to farthest parent context
-	private List<ParseTree> getAncestors(ParserRuleContext ctx) {
-		List<ParseTree> parents = new ArrayList<>();
-		ParserRuleContext parent = ctx;
-		for (int idx = 0; parent != null && idx < AncesLimit; idx++) {
-			parents.add(parent);
-			parent = parent.getParent();
-		}
-		return parents;
-	}
 
 	// 'start' is token at BOL - returns the visual offset of 'token' (0..n+)
 	private int calcVisualPosition(Token start, Token token, int tabWidth) {

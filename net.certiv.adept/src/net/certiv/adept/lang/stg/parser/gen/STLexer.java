@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STLexer.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/stg/parser/STLexer.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.stg.parser.gen;
 	import  net.certiv.adept.lang.stg.parser.STLexerAdaptor;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class STLexer extends STLexerAdaptor {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -36,30 +36,39 @@ public class STLexer extends STLexerAdaptor {
 		"DEFAULT_MODE", "Template", "SubTemplate"
 	};
 
-	public static final String[] ruleNames = {
-		"DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", "HORZ_WS", 
-		"VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", "IN_HORZ_WS", "IN_VERT_WS", 
-		"LBRACE", "RDELIM", "STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", 
-		"END", "TRUE", "FALSE", "AT", "ELLIPSIS", "DOT", "COMMA", "COLON", "SEMI", 
-		"AND", "OR", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "EQUALS", "BANG", 
-		"ERR_CHAR", "SUB_HORZ_WS", "SUB_VERT_WS", "ID", "SUB_COMMA", "PIPE", "TmplComment", 
-		"LTmplMark", "RTmplMark", "Hws", "Vws", "DocComment", "BlockComment", 
-		"LineComment", "LineCommentExt", "EscSeq", "EscAny", "UnicodeEsc", "HexDigits", 
-		"HexDigit", "String", "NameStartChar", "NameChar", "True", "False", "Esc", 
-		"At", "Colon", "Semi", "Dot", "Comma", "Equal", "DQuote", "Underscore", 
-		"Dash", "Bang", "Pipe", "LParen", "RParen", "LBrace", "RBrace", "LBrack", 
-		"RBrack", "LShift", "RShift", "And", "Or", "Ellipsis"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "TMPL_COMMENT", "HORZ_WS", 
+			"VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", "IN_HORZ_WS", "IN_VERT_WS", 
+			"LBRACE", "RDELIM", "STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", 
+			"END", "TRUE", "FALSE", "AT", "ELLIPSIS", "DOT", "COMMA", "COLON", "SEMI", 
+			"AND", "OR", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "EQUALS", "BANG", 
+			"ERR_CHAR", "SUB_HORZ_WS", "SUB_VERT_WS", "ID", "SUB_COMMA", "PIPE", 
+			"TmplComment", "LTmplMark", "RTmplMark", "Hws", "Vws", "DocComment", 
+			"BlockComment", "LineComment", "LineCommentExt", "EscSeq", "EscAny", 
+			"UnicodeEsc", "HexDigits", "HexDigit", "String", "NameStartChar", "NameChar", 
+			"True", "False", "Esc", "At", "Colon", "Semi", "Dot", "Comma", "Equal", 
+			"DQuote", "Underscore", "Dash", "Bang", "Pipe", "LParen", "RParen", "LBrace", 
+			"RBrace", "LBrack", "RBrack", "LShift", "RShift", "And", "Or", "Ellipsis"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "LBRACE", "RDELIM", "COMMA", "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", 
-		"TMPL_COMMENT", "HORZ_WS", "VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", 
-		"STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", "END", "TRUE", "FALSE", 
-		"AT", "ELLIPSIS", "DOT", "COLON", "SEMI", "AND", "OR", "LPAREN", "RPAREN", 
-		"LBRACK", "RBRACK", "EQUALS", "BANG", "ERR_CHAR", "ID", "PIPE"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "LBRACE", "RDELIM", "COMMA", "DOC_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", 
+			"TMPL_COMMENT", "HORZ_WS", "VERT_WS", "ESCAPE", "LDELIM", "RBRACE", "TEXT", 
+			"STRING", "IF", "ELSEIF", "ELSE", "ENDIF", "SUPER", "END", "TRUE", "FALSE", 
+			"AT", "ELLIPSIS", "DOT", "COLON", "SEMI", "AND", "OR", "LPAREN", "RPAREN", 
+			"LBRACK", "RBRACK", "EQUALS", "BANG", "ERR_CHAR", "ID", "PIPE"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

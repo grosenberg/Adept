@@ -11,9 +11,8 @@ import java.util.List;
 import net.certiv.adept.format.prep.Group;
 import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.TableMultilist;
-import net.certiv.adept.unit.TreeMultilist;
-import net.certiv.adept.util.Maths;
+import net.certiv.adept.store.TableMultilist;
+import net.certiv.adept.store.TreeMultilist;
 import net.certiv.adept.util.Strings;
 
 /**
@@ -113,28 +112,8 @@ public class AlignProcessor extends AbstractProcessor {
 	}
 
 	private void gridAlign(TreeMultilist<Integer, AdeptToken> lines, boolean tabFirst) {
-		Grid grid = new Grid(ops, lines);
-		// report().toolInfo(this, grid.toString());
-
-		for (int col = 0; col < grid.size(); col++) {
-			int alignCol = 0;
-			if (col == 0 && tabFirst) {
-				alignCol = grid.minTabCol(col);
-			} else {
-				alignCol = grid.minCol(col);
-			}
-
-			for (int lnum : lines.keySet()) {
-				if (!grid.isEmpty(col, lnum)) {
-					AdeptToken token = grid.get(col, lnum);
-					boolean mid = col != 0 && col != grid.size() - 1;
-					int excess = Maths.delta(alignCol, token.getVisPos());
-					if (!mid || (mid && excess <= ops.settings.tabWidth)) {
-						ops.prepEditAndShiftLine(lnum, token, alignCol);
-					}
-				}
-			}
-		}
+		Cluster grid = new Cluster(ops, lines);
+		grid.eval(tabFirst, ops.settings.tabWidth);
 	}
 
 	private int minTabCol(TreeMultilist<Integer, AdeptToken> alignables, int col) {

@@ -9,7 +9,7 @@ package net.certiv.adept.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.store.HashMultilist;
 
 /** For keeping running counts of 'things'. */
 public class Calc {

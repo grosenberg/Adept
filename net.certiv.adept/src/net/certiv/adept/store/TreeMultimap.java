@@ -1,4 +1,4 @@
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;

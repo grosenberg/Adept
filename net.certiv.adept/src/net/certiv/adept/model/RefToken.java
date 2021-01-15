@@ -22,8 +22,8 @@ import net.certiv.adept.format.prep.Dent;
 import net.certiv.adept.format.prep.Place;
 import net.certiv.adept.format.prep.Scheme;
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.Ranked;
-import net.certiv.adept.unit.TreeMultiset;
+import net.certiv.adept.store.Ranked;
+import net.certiv.adept.store.TreeMultiset;
 import net.certiv.adept.util.Strings;
 
 /**

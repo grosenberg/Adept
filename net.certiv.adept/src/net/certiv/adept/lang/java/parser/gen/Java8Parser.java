@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/java/parser/Java8Parser.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/java/parser/Java8Parser.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.java.parser.gen;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class Java8Parser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -81,62 +81,72 @@ public class Java8Parser extends Parser {
 		RULE_dimExpr = 120, RULE_expression = 121, RULE_assignment = 122, RULE_castExpression = 123, 
 		RULE_lambdaExpression = 124, RULE_lambdaParameters = 125, RULE_unaryExpression = 126, 
 		RULE_postfixExpression = 127;
-	public static final String[] ruleNames = {
-		"compilationUnit", "packageDeclaration", "importDeclaration", "typeDeclaration", 
-		"classModifier", "qualifiedName", "classDeclaration", "typeParameters", 
-		"classTypeList", "classBody", "classBodyDeclaration", "classMemberDeclaration", 
-		"fieldDeclaration", "fieldModifier", "variableDeclaratorList", "variableDeclarator", 
-		"variableInitializer", "literal", "baseType", "primitiveType", "numericType", 
-		"referenceType", "classType", "classOrInterfaceType", "arrayType", "dims", 
-		"typeParameter", "typeBound", "additionalBound", "typeArguments", "typeArgumentList", 
-		"typeArgument", "wildcard", "methodDeclaration", "methodModifier", "methodHeader", 
-		"result", "methodDeclarator", "formalParameterList", "formalParameters", 
-		"formalParameter", "lastFormalParameter", "receiverParameter", "throws_", 
-		"exceptionTypeList", "exceptionType", "methodBody", "constructorDeclaration", 
-		"constructorModifier", "constructorDeclarator", "constructorBody", "explicitConstructorInvocation", 
-		"enumDeclaration", "enumBody", "enumConstantList", "enumConstant", "interfaceDeclaration", 
-		"interfaceBody", "interfaceMemberDeclaration", "constantDeclaration", 
-		"constantModifier", "interfaceMethodDeclaration", "interfaceMethodModifier", 
-		"annotationTypeDeclaration", "annotationTypeBody", "annotationTypeMemberDeclaration", 
-		"annotationTypeElementDeclaration", "defaultValue", "annotation", "normalAnnotation", 
-		"elementValuePairList", "elementValuePair", "elementValue", "elementValueArrayInitializer", 
-		"elementValueList", "markerAnnotation", "singleElementAnnotation", "arrayInitializer", 
-		"variableInitializerList", "block", "blockStatement", "localVariableDeclaration", 
-		"statement", "statementExpression", "switchBlock", "switchBlockStatementGroup", 
-		"switchLabel", "tryStatement", "forControl", "forInit", "statementExpressionList", 
-		"catches", "catchFormalParameter", "catchType", "resourceList", "resource", 
-		"primary", "primaryNoNewArray_lfno_arrayAccess", "primaryNoNewArray_lf_primary", 
-		"primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary", "primaryNoNewArray_lfno_primary", 
-		"primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary", "arrayCreationExpression", 
-		"arrayAccess", "arrayAccess_lf_primary", "arrayAccess_lfno_primary", "arrayAccessExpression", 
-		"classInstanceCreationExpression", "classInstanceCreationExpression_lf_primary", 
-		"classInstanceCreationExpression_lfno_primary", "instanceCreationExpression", 
-		"typeArgumentsOrDiamond", "fieldAccess", "fieldAccess_lf_primary", "fieldAccess_lfno_primary", 
-		"methodInvocation", "methodInvocation_lfno_primary", "argumentList", "methodReference", 
-		"methodReference_lfno_primary", "dimExpr", "expression", "assignment", 
-		"castExpression", "lambdaExpression", "lambdaParameters", "unaryExpression", 
-		"postfixExpression"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"compilationUnit", "packageDeclaration", "importDeclaration", "typeDeclaration", 
+			"classModifier", "qualifiedName", "classDeclaration", "typeParameters", 
+			"classTypeList", "classBody", "classBodyDeclaration", "classMemberDeclaration", 
+			"fieldDeclaration", "fieldModifier", "variableDeclaratorList", "variableDeclarator", 
+			"variableInitializer", "literal", "baseType", "primitiveType", "numericType", 
+			"referenceType", "classType", "classOrInterfaceType", "arrayType", "dims", 
+			"typeParameter", "typeBound", "additionalBound", "typeArguments", "typeArgumentList", 
+			"typeArgument", "wildcard", "methodDeclaration", "methodModifier", "methodHeader", 
+			"result", "methodDeclarator", "formalParameterList", "formalParameters", 
+			"formalParameter", "lastFormalParameter", "receiverParameter", "throws_", 
+			"exceptionTypeList", "exceptionType", "methodBody", "constructorDeclaration", 
+			"constructorModifier", "constructorDeclarator", "constructorBody", "explicitConstructorInvocation", 
+			"enumDeclaration", "enumBody", "enumConstantList", "enumConstant", "interfaceDeclaration", 
+			"interfaceBody", "interfaceMemberDeclaration", "constantDeclaration", 
+			"constantModifier", "interfaceMethodDeclaration", "interfaceMethodModifier", 
+			"annotationTypeDeclaration", "annotationTypeBody", "annotationTypeMemberDeclaration", 
+			"annotationTypeElementDeclaration", "defaultValue", "annotation", "normalAnnotation", 
+			"elementValuePairList", "elementValuePair", "elementValue", "elementValueArrayInitializer", 
+			"elementValueList", "markerAnnotation", "singleElementAnnotation", "arrayInitializer", 
+			"variableInitializerList", "block", "blockStatement", "localVariableDeclaration", 
+			"statement", "statementExpression", "switchBlock", "switchBlockStatementGroup", 
+			"switchLabel", "tryStatement", "forControl", "forInit", "statementExpressionList", 
+			"catches", "catchFormalParameter", "catchType", "resourceList", "resource", 
+			"primary", "primaryNoNewArray_lfno_arrayAccess", "primaryNoNewArray_lf_primary", 
+			"primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary", "primaryNoNewArray_lfno_primary", 
+			"primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary", "arrayCreationExpression", 
+			"arrayAccess", "arrayAccess_lf_primary", "arrayAccess_lfno_primary", 
+			"arrayAccessExpression", "classInstanceCreationExpression", "classInstanceCreationExpression_lf_primary", 
+			"classInstanceCreationExpression_lfno_primary", "instanceCreationExpression", 
+			"typeArgumentsOrDiamond", "fieldAccess", "fieldAccess_lf_primary", "fieldAccess_lfno_primary", 
+			"methodInvocation", "methodInvocation_lfno_primary", "argumentList", 
+			"methodReference", "methodReference_lfno_primary", "dimExpr", "expression", 
+			"assignment", "castExpression", "lambdaExpression", "lambdaParameters", 
+			"unaryExpression", "postfixExpression"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "ABSTRACT", "ASSERT", "BOOLEAN", "BREAK", "BYTE", "CASE", "CATCH", 
-		"CHAR", "CLASS", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE", "ELSE", 
-		"ENUM", "EXTENDS", "FINAL", "FINALLY", "FLOAT", "FOR", "IF", "GOTO", "IMPLEMENTS", 
-		"IMPORT", "INSTANCEOF", "INT", "INTERFACE", "LONG", "NATIVE", "NEW", "PACKAGE", 
-		"PRIVATE", "PROTECTED", "PUBLIC", "RETURN", "SHORT", "STATIC", "STRICTFP", 
-		"SUPER", "SWITCH", "SYNCHRONIZED", "THIS", "THROW", "THROWS", "TRANSIENT", 
-		"TRY", "VOID", "VOLATILE", "WHILE", "IntegerLiteral", "FloatingPointLiteral", 
-		"BooleanLiteral", "CharacterLiteral", "StringLiteral", "NullLiteral", 
-		"LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", "SEMI", "COMMA", 
-		"DOT", "ASSIGN", "GT", "LT", "BANG", "TILDE", "QMARK", "COLON", "DCOLON", 
-		"EQUAL", "LE", "GE", "NOTEQUAL", "AND", "OR", "INC", "DEC", "ADD", "SUB", 
-		"STAR", "DIV", "BITAND", "BITOR", "CARET", "MOD", "ARROW", "ADD_ASSIGN", 
-		"SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN", "AND_ASSIGN", "OR_ASSIGN", "XOR_ASSIGN", 
-		"MOD_ASSIGN", "LSHIFT_ASSIGN", "RSHIFT_ASSIGN", "URSHIFT_ASSIGN", "AT", 
-		"ELLIPSIS", "Identifier", "HWS", "VWS", "BLOCKCOMMENT", "LINECOMMENT"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "ABSTRACT", "ASSERT", "BOOLEAN", "BREAK", "BYTE", "CASE", "CATCH", 
+			"CHAR", "CLASS", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE", "ELSE", 
+			"ENUM", "EXTENDS", "FINAL", "FINALLY", "FLOAT", "FOR", "IF", "GOTO", 
+			"IMPLEMENTS", "IMPORT", "INSTANCEOF", "INT", "INTERFACE", "LONG", "NATIVE", 
+			"NEW", "PACKAGE", "PRIVATE", "PROTECTED", "PUBLIC", "RETURN", "SHORT", 
+			"STATIC", "STRICTFP", "SUPER", "SWITCH", "SYNCHRONIZED", "THIS", "THROW", 
+			"THROWS", "TRANSIENT", "TRY", "VOID", "VOLATILE", "WHILE", "IntegerLiteral", 
+			"FloatingPointLiteral", "BooleanLiteral", "CharacterLiteral", "StringLiteral", 
+			"NullLiteral", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK", 
+			"SEMI", "COMMA", "DOT", "ASSIGN", "GT", "LT", "BANG", "TILDE", "QMARK", 
+			"COLON", "DCOLON", "EQUAL", "LE", "GE", "NOTEQUAL", "AND", "OR", "INC", 
+			"DEC", "ADD", "SUB", "STAR", "DIV", "BITAND", "BITOR", "CARET", "MOD", 
+			"ARROW", "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN", "AND_ASSIGN", 
+			"OR_ASSIGN", "XOR_ASSIGN", "MOD_ASSIGN", "LSHIFT_ASSIGN", "RSHIFT_ASSIGN", 
+			"URSHIFT_ASSIGN", "AT", "ELLIPSIS", "Identifier", "HWS", "VWS", "BLOCKCOMMENT", 
+			"LINECOMMENT"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

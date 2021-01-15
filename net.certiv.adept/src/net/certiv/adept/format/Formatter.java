@@ -13,7 +13,7 @@ import java.util.List;
 import net.certiv.adept.Settings;
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.model.DocModel;
-import net.certiv.adept.unit.HashMultilist;
+import net.certiv.adept.store.HashMultilist;
 
 /** Document formatter. */
 public class Formatter extends FormatterOps {

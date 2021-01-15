@@ -25,9 +25,9 @@ import net.certiv.adept.lang.Builder;
 import net.certiv.adept.lang.Record;
 import net.certiv.adept.model.load.CorpusData;
 import net.certiv.adept.model.load.FeatureSet;
+import net.certiv.adept.store.HashMultilist;
+import net.certiv.adept.store.TreeMultiset;
 import net.certiv.adept.tool.ErrorDesc;
-import net.certiv.adept.unit.HashMultilist;
-import net.certiv.adept.unit.TreeMultiset;
 import net.certiv.adept.util.Utils;
 
 public class CorpusModel {

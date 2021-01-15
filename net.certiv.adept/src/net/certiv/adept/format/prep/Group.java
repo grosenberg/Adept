@@ -15,8 +15,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import net.certiv.adept.lang.AdeptToken;
-import net.certiv.adept.unit.TableMultilist;
-import net.certiv.adept.unit.TreeMultilist;
+import net.certiv.adept.store.TableMultilist;
+import net.certiv.adept.store.TreeMultilist;
 
 public class Group {
 

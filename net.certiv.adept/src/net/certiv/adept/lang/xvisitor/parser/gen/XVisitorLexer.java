@@ -1,4 +1,4 @@
-// Generated from D:/DevFiles/Eclipse/Adept/net.certiv.adept/src/net/certiv/adept/lang/xvisitor/parser/XVisitorLexer.g4 by ANTLR 4.7.1
+// Generated from D:/DevFiles/Eclipse/Tools/Adept/net.certiv.adept/src/net/certiv/adept/lang/xvisitor/parser/XVisitorLexer.g4 by ANTLR 4.7.2
 
 	package net.certiv.adept.lang.xvisitor.parser.gen;
 	import net.certiv.adept.lang.xvisitor.parser.XVLexerAdaptor;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class XVisitorLexer extends XVLexerAdaptor {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -36,31 +36,40 @@ public class XVisitorLexer extends XVLexerAdaptor {
 		"DEFAULT_MODE", "Options", "ActionBlock"
 	};
 
-	public static final String[] ruleNames = {
-		"BLOCK_COMMENT", "LINE_COMMENT", "OPTIONS", "LBRACE", "GRAMMAR", "XVISITOR", 
-		"COLON", "COMMA", "SEMI", "ASSIGN", "QUESTION", "STAR", "AT", "ANY", "SEP", 
-		"DOT", "OR", "NOT", "ID", "LITERAL", "HORZ_WS", "VERT_WS", "ERRCHAR", 
-		"OPT_LBRACE", "OPT_RBRACE", "OPT_ID", "OPT_LITERAL", "OPT_DOT", "OPT_ASSIGN", 
-		"OPT_SEMI", "OPT_STAR", "OPT_INT", "OPT_DOC_COMMENT", "OPT_BLOCK_COMMENT", 
-		"OPT_LINE_COMMENT", "OPT_HORZ_WS", "OPT_VERT_WS", "ABLOCK_LBRACE", "ABLOCK_RBRACE", 
-		"ABLOCK_DOC_COMMENT", "ABLOCK_BLOCK_COMMENT", "ABLOCK_LINE_COMMENT", "ONENTRY", 
-		"ONEXIT", "ABLOCK_STRING", "ABLOCK_CHAR", "REFERENCE", "ABLOCK_TEXT", 
-		"ABLOCK_OTHER", "Colon", "Comma", "Semi", "Assign", "Question", "Star", 
-		"At", "Any", "Sep", "Bang", "Dot", "LBrace", "RBrace", "Or", "Not", "Dollar", 
-		"Hws", "Vws", "DocComment", "BlockComment", "LineComment", "NameChar", 
-		"NameStartChar", "SQLiteral", "DQLiteral", "EscSeq", "Int", "HexDigit"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"BLOCK_COMMENT", "LINE_COMMENT", "OPTIONS", "LBRACE", "GRAMMAR", "XVISITOR", 
+			"COLON", "COMMA", "SEMI", "ASSIGN", "QUESTION", "STAR", "AT", "ANY", 
+			"SEP", "DOT", "OR", "NOT", "ID", "LITERAL", "HORZ_WS", "VERT_WS", "ERRCHAR", 
+			"OPT_LBRACE", "OPT_RBRACE", "OPT_ID", "OPT_LITERAL", "OPT_DOT", "OPT_ASSIGN", 
+			"OPT_SEMI", "OPT_STAR", "OPT_INT", "OPT_DOC_COMMENT", "OPT_BLOCK_COMMENT", 
+			"OPT_LINE_COMMENT", "OPT_HORZ_WS", "OPT_VERT_WS", "ABLOCK_LBRACE", "ABLOCK_RBRACE", 
+			"ABLOCK_DOC_COMMENT", "ABLOCK_BLOCK_COMMENT", "ABLOCK_LINE_COMMENT", 
+			"ONENTRY", "ONEXIT", "ABLOCK_STRING", "ABLOCK_CHAR", "REFERENCE", "ABLOCK_TEXT", 
+			"ABLOCK_OTHER", "Colon", "Comma", "Semi", "Assign", "Question", "Star", 
+			"At", "Any", "Sep", "Bang", "Dot", "LBrace", "RBrace", "Or", "Not", "Dollar", 
+			"Hws", "Vws", "DocComment", "BlockComment", "LineComment", "NameChar", 
+			"NameStartChar", "SQLiteral", "DQLiteral", "EscSeq", "Int", "HexDigit"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "TEXT", "RBRACE", "BLOCK_COMMENT", "LINE_COMMENT", "OPTIONS", "LBRACE", 
-		"GRAMMAR", "XVISITOR", "COLON", "COMMA", "SEMI", "ASSIGN", "QUESTION", 
-		"STAR", "AT", "ANY", "SEP", "DOT", "OR", "NOT", "ID", "LITERAL", "HORZ_WS", 
-		"VERT_WS", "ERRCHAR", "OPT_LBRACE", "OPT_RBRACE", "OPT_ID", "OPT_LITERAL", 
-		"OPT_DOT", "OPT_ASSIGN", "OPT_SEMI", "OPT_STAR", "OPT_INT", "ABLOCK_RBRACE", 
-		"ONENTRY", "ONEXIT", "REFERENCE"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "TEXT", "RBRACE", "BLOCK_COMMENT", "LINE_COMMENT", "OPTIONS", "LBRACE", 
+			"GRAMMAR", "XVISITOR", "COLON", "COMMA", "SEMI", "ASSIGN", "QUESTION", 
+			"STAR", "AT", "ANY", "SEP", "DOT", "OR", "NOT", "ID", "LITERAL", "HORZ_WS", 
+			"VERT_WS", "ERRCHAR", "OPT_LBRACE", "OPT_RBRACE", "OPT_ID", "OPT_LITERAL", 
+			"OPT_DOT", "OPT_ASSIGN", "OPT_SEMI", "OPT_STAR", "OPT_INT", "ABLOCK_RBRACE", 
+			"ONENTRY", "ONEXIT", "REFERENCE"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

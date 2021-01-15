@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import net.certiv.adept.lang.AdeptToken;
 import net.certiv.adept.lang.Record;
-import net.certiv.adept.unit.TreeMultilist;
+import net.certiv.adept.store.TreeMultilist;
 
 public class Aligner {
 

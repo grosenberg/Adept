@@ -4,7 +4,7 @@
  * that can be found in the LICENSE.txt file in the project root,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package net.certiv.adept.unit;
+package net.certiv.adept.store;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,36 +15,42 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class TableMultilist<K, N, V> {
+public class TableMultilist<R, C, V> {
 
-	private TreeMap<K, TreeMultilist<N, V>> map;
+	private TreeMap<R, TreeMultilist<C, V>> map;
 
-	private Comparator<? super N> idxComp;
+	private Comparator<? super C> colComp;
 	private Comparator<? super V> valComp;
 
 	public TableMultilist() {
 		this(null, null);
 	}
 
-	public TableMultilist(Comparator<? super K> keyComp) {
+	public TableMultilist(Comparator<? super R> keyComp) {
 		this(keyComp, null);
 	}
 
-	public TableMultilist(Comparator<? super K> compKey, Comparator<? super N> idxComp) {
-		this.map = new TreeMap<>(compKey);
-		this.idxComp = idxComp;
+	public TableMultilist(Comparator<? super R> keyComp, Comparator<? super C> colComp) {
+		this.map = new TreeMap<>(keyComp);
+		this.colComp = colComp;
 	}
 
 	public void setValueComp(Comparator<? super V> valComp) {
 		this.valComp = valComp;
 	}
 
-	public TreeMultilist<N, V> get(K key) {
-		return map.get(key);
+	/**
+	 * Returns the value to which the specified key is mapped. Returns an empty list if this map
+	 * contains no mapping for the key.
+	 */
+	public TreeMultilist<C, V> get(R key) {
+		TreeMultilist<C, V> keyMap = map.get(key);
+		if (keyMap != null) return keyMap;
+		return new TreeMultilist<>();
 	}
 
-	public List<V> get(K key, N name) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public List<V> get(R key, C name) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap != null) {
 			List<V> nameMap = keyMap.get(name);
 			if (nameMap != null) return nameMap;
@@ -52,28 +58,28 @@ public class TableMultilist<K, N, V> {
 		return Collections.emptyList();
 	}
 
-	public boolean put(K key, N name, V value) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public boolean put(R key, C name, V value) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap == null) {
-			keyMap = new TreeMultilist<>(idxComp, valComp);
+			keyMap = new TreeMultilist<>(colComp, valComp);
 			map.put(key, keyMap);
 		}
 		return keyMap.put(name, value);
 	}
 
-	public boolean put(K key, N name, Collection<V> values) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public boolean put(R key, C name, Collection<V> values) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap == null) {
-			keyMap = new TreeMultilist<>(idxComp, valComp);
+			keyMap = new TreeMultilist<>(colComp, valComp);
 			map.put(key, keyMap);
 		}
 		return keyMap.put(name, values);
 	}
 
-	public boolean put(K key, TreeMultilist<N, V> valueList) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public boolean put(R key, TreeMultilist<C, V> valueList) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap == null) {
-			keyMap = new TreeMultilist<>(idxComp, valComp);
+			keyMap = new TreeMultilist<>(colComp, valComp);
 			map.put(key, keyMap);
 		}
 		return keyMap.put(valueList);
@@ -85,35 +91,35 @@ public class TableMultilist<K, N, V> {
 	 *
 	 * @param other mappings to be stored in this map
 	 */
-	public void put(TableMultilist<K, N, V> other) {
-		for (K key : other.keySet()) {
+	public void put(TableMultilist<R, C, V> other) {
+		for (R key : other.keySet()) {
 			map.put(key, other.get(key));
 		}
 	}
 
-	public boolean containsKey(K key) {
+	public boolean containsKey(R key) {
 		return map.containsKey(key);
 	}
 
-	public boolean containsKey(K key, N name) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public boolean containsKey(R key, C name) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap == null) return false;
 		return keyMap.containsKey(name);
 	}
 
-	public Set<K> keySet() {
+	public Set<R> keySet() {
 		return map.keySet();
 	}
 
-	public List<N> indexList(K key) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public List<C> indexList(R key) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap != null) return keyMap.keyList();
 
 		return Collections.emptyList();
 	}
 
-	public Set<Entry<N, List<V>>> entrySet(K key) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public Set<Entry<C, List<V>>> entrySet(R key) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap != null) return keyMap.entrySet();
 
 		return Collections.emptySet();
@@ -122,24 +128,24 @@ public class TableMultilist<K, N, V> {
 	/** Returns all of the values V contained in this map. */
 	public List<V> values() {
 		List<V> values = new ArrayList<>();
-		for (K key : map.keySet()) {
-			TreeMultilist<N, V> indexLists = map.get(key);
-			for (Entry<N, List<V>> entry : indexLists.entrySet()) {
+		for (R key : map.keySet()) {
+			TreeMultilist<C, V> indexLists = map.get(key);
+			for (Entry<C, List<V>> entry : indexLists.entrySet()) {
 				values.addAll(entry.getValue());
 			}
 		}
 		return values;
 	}
 
-	public TreeMultilist<N, V> values(K key) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public TreeMultilist<C, V> values(R key) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap != null) return keyMap;
 
-		return new TreeMultilist<>(idxComp, valComp);
+		return new TreeMultilist<>(colComp, valComp);
 	}
 
-	public List<V> values(K key, N idx) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public List<V> values(R key, C idx) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		if (keyMap != null) {
 			List<V> values = keyMap.get(idx);
 			if (values != null) return values;
@@ -155,17 +161,17 @@ public class TableMultilist<K, N, V> {
 		return map.size();
 	}
 
-	public int size(K key) {
-		TreeMultilist<N, V> keyMap = map.get(key);
+	public int size(R key) {
+		TreeMultilist<C, V> keyMap = map.get(key);
 		return keyMap != null ? keyMap.size() : 0;
 	}
 
-	public TreeMultilist<N, V> remove(K key) {
+	public TreeMultilist<C, V> remove(R key) {
 		return map.remove(key);
 	}
 
 	public void clear() {
-		for (K key : keySet()) {
+		for (R key : keySet()) {
 			map.get(key).clear();
 		}
 		map.clear();
